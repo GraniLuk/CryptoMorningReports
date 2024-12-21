@@ -84,9 +84,9 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
                 today_price = round(df['Close'].iloc[-1], 3)
                 today_rsi = round(df['RSI'].iloc[-1], 2)
                 
-                # Get 24h high/low prices
-                day_high = round(df['High'].iloc[-1], 3)
-                day_low = round(df['Low'].iloc[-1], 3)
+                # Get max high and min low from last 2 days
+                day_high = round(max(df['High'].iloc[-2:]), 3)  # Max high from today and yesterday
+                day_low = round(min(df['Low'].iloc[-2:]), 3)    # Min low from today and yesterday
                 
                 # Store the results
                 rsi_values.append((symbol, today_price, day_high, day_low, today_rsi))
