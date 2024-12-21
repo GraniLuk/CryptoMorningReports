@@ -150,3 +150,8 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
     except Exception as e:
         logging.error('Function failed with error: %s', str(e))
         raise
+
+@app.route(route="manual-trigger")
+def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
+    BitcoinChecker(None)  # Call the existing function
+    return func.HttpResponse("Function executed successfully", status_code=200)
