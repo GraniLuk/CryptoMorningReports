@@ -22,26 +22,24 @@ def calculate_rsi(series, window=14):
     return rsi
 
 # Update send_telegram_message function definition:
-async def send_telegram_message(enabled, token, chat_ids, message, parse_mode="HTML"):
+async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HTML"):
     if not enabled:
         logging.info('Telegram notifications are disabled')
         return
     
-    logging.info('Sending Telegram message to %d recipients', len(chat_ids))
-    for chat_id in chat_ids:
-        try:
-            url = f"https://api.telegram.org/bot{token}/sendMessage"
-            data = {
-                "chat_id": chat_id,
-                "text": message,
-                "parse_mode": parse_mode
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=data) as response:
-                    result = await response.text()
-                    logging.info('Telegram API response: %s', result)
-        except Exception as e:
-            logging.error('Failed to send Telegram message: %s', str(e))
+    try:
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        data = {
+            "chat_id": chat_id,
+            "text": message,
+            "parse_mode": parse_mode
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=data) as response:
+                result = await response.text()
+                logging.info('Telegram API response: %s', result)
+    except Exception as e:
+        logging.error('Failed to send Telegram message: %s', str(e))
 
 # Get debug status from environment variable
 is_debug = os.environ.get('AZURE_FUNCTIONS_ENVIRONMENT') == 'Development'
