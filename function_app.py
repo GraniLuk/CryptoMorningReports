@@ -47,7 +47,7 @@ is_debug = os.environ.get('AZURE_FUNCTIONS_ENVIRONMENT') == 'Development'
 @app.timer_trigger(
     schedule="0 5,12 * * *", 
     arg_name="myTimer", 
-    run_on_startup=True,  # Only run on startup in debug/development
+    run_on_startup=False, 
     use_monitor=False
 ) 
 def BitcoinChecker(myTimer: func.TimerRequest) -> None:
