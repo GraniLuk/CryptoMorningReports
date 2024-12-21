@@ -47,12 +47,7 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
 # Get debug status from environment variable
 is_debug = os.environ.get('AZURE_FUNCTIONS_ENVIRONMENT') == 'Development'
 
-@app.timer_trigger(
-    schedule="0 5,12 * * *", 
-    arg_name="myTimer", 
-    use_monitor=False
-) 
-def BitcoinChecker(myTimer: func.TimerRequest) -> None:
+def process_bitcoin_checker():
     logging.info('BitcoinChecker function started at %s', datetime.now().isoformat())
     
     try:
@@ -151,7 +146,21 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
         logging.error('Function failed with error: %s', str(e))
         raise
 
+@app.timer_trigger(
+    schedule="0 5,12 * * *", 
+    arg_name="myTimer", 
+    use_monitor=False
+) 
+def BitcoinChecker(myTimer: func.TimerRequest) -> None:
+    process_bitcoin_checker()
+
 @app.route(route="manual-trigger")
 def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
-    BitcoinChecker(None)  # Call the existing function
-    return func.HttpResponse("Function executed successfully", status_code=200)
+    logging.info("manual_trigger function started")
+    try:
+        process_bitcoin_checker()
+        logging.info("BitcoinChecker function completed successfully")
+        return func.HttpResponse("Function executed successfully", status_code=200)
+    except Exception as e:
+        logging.error(f"Error in manual_trigger: {str(e)}")
+        return func.HttpResponse(f"Function execution failed: {str(e)}", status_code=500)
