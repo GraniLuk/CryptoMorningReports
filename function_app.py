@@ -98,21 +98,21 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
             return symbol.replace('-USD', '')
 
         # Create first table for prices and RSI
-        table1 = ['| Symbol | Current Price | RSI  |']
-        table1.append('|--------|---------------|------|')
-
+        table1 = ['<table><tr><th>Symbol</th><th>Current Price</th><th>RSI</th></tr>']
+        
         for row in rsi_values:
             symbol = clean_symbol(row[0])
             price = row[1]
             rsi = row[4]
             
             if rsi > 80:
-                row_md = f'| {symbol} | {price} | **{rsi}** |'
+                row_html = f'<tr style="color: green"><td>{symbol}</td><td>{price}</td><td>{rsi}</td></tr>'
             else:
-                row_md = f'| {symbol} | {price} | {rsi} |'
+                row_html = f'<tr><td>{symbol}</td><td>{price}</td><td>{rsi}</td></tr>'
                 
-            table1.append(row_md)
-
+            table1.append(row_html)
+        
+        table1.append('</table>')
         table1 = '\n'.join(table1)
 
         # Create second table for 24h ranges
@@ -140,18 +140,18 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Format message with Markdown
+        # Format message with HTML
         message = f"RSI Report: {today_date}\n"
-        message += f"{table1}\n\n"
-        message += f"24h Range Report:\n```\n{table2}\n```"
+        message += f"<pre>{table1}</pre>\n\n"
+        message += f"24h Range Report:\n<pre>{table2}</pre>"
 
-        # Run the async function with Markdown parse mode
+        # Run the async function with HTML parse mode
         asyncio.run(send_telegram_message(
             telegram_enabled, 
             telegram_token, 
             telegram_chat_id, 
             message,
-            parse_mode="Markdown"
+            parse_mode="HTML"
         ))
     except Exception as e:
         logging.error('Function failed with error: %s', str(e))
