@@ -97,23 +97,15 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
         def clean_symbol(symbol):
             return symbol.replace('-USD', '')
 
-        # Create first table for prices and RSI
-        table1 = ['<table><tr><th>Symbol</th><th>Current Price</th><th>RSI</th></tr>']
+        # Create first table for RSI and prices
+        table1 = PrettyTable()
+        table1.field_names = ["Symbol", "Current Price", "RSI"]
         
         for row in rsi_values:
             symbol = clean_symbol(row[0])
             price = row[1]
             rsi = row[4]
-            
-            if rsi > 80:
-                row_html = f'<tr style="color: green"><td>{symbol}</td><td>{price}</td><td>{rsi}</td></tr>'
-            else:
-                row_html = f'<tr><td>{symbol}</td><td>{price}</td><td>{rsi}</td></tr>'
-                
-            table1.append(row_html)
-        
-        table1.append('</table>')
-        table1 = '\n'.join(table1)
+            table1.add_row([symbol, price, rsi])
 
         # Create second table for 24h ranges
         table2 = PrettyTable()
@@ -140,7 +132,7 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Format message with HTML
+        # Format message with pre tags
         message = f"RSI Report: {today_date}\n"
         message += f"<pre>{table1}</pre>\n\n"
         message += f"24h Range Report:\n<pre>{table2}</pre>"
