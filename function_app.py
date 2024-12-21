@@ -10,6 +10,9 @@ import requests
 from azure.data.tables import TableServiceClient
 import aiohttp
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = func.FunctionApp()
 
@@ -47,7 +50,6 @@ is_debug = os.environ.get('AZURE_FUNCTIONS_ENVIRONMENT') == 'Development'
 @app.timer_trigger(
     schedule="0 5,12 * * *", 
     arg_name="myTimer", 
-    run_on_startup=False, 
     use_monitor=False
 ) 
 def BitcoinChecker(myTimer: func.TimerRequest) -> None:
