@@ -76,5 +76,7 @@ jobs:
         with:
           app-name: 'BitcoinChecker'
           slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: 'release.zip'
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
           
