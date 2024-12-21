@@ -100,21 +100,21 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
             return symbol.replace('-USD', '')
 
         # Create first table for prices and RSI
-        table1 = ['<table><tr><th>Symbol</th><th>Current Price</th><th>RSI</th></tr>']
-        
+        table1 = ['| Symbol | Current Price | RSI  |']
+        table1.append('|--------|---------------|------|')
+
         for row in rsi_values:
             symbol = clean_symbol(row[0])
             price = row[1]
             rsi = row[4]
             
             if rsi > 80:
-                row_html = f'<tr style="color: green"><td>{symbol}</td><td>{price}</td><td>{rsi}</td></tr>'
+                row_md = f'| {symbol} | {price} | **{rsi}** |'
             else:
-                row_html = f'<tr><td>{symbol}</td><td>{price}</td><td>{rsi}</td></tr>'
+                row_md = f'| {symbol} | {price} | {rsi} |'
                 
-            table1.append(row_html)
-        
-        table1.append('</table>')
+            table1.append(row_md)
+
         table1 = '\n'.join(table1)
 
         # Create second table for 24h ranges
@@ -142,18 +142,18 @@ def BitcoinChecker(myTimer: func.TimerRequest) -> None:
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Format message with HTML
+        # Format message with Markdown
         message = f"RSI Report: {today_date}\n"
-        message += f"<pre>{table1}</pre>\n\n"
-        message += f"24h Range Report:\n<pre>{table2}</pre>"
+        message += f"{table1}\n\n"
+        message += f"24h Range Report:\n```\n{table2}\n```"
 
-        # Run the async function with HTML parse mode
+        # Run the async function with Markdown parse mode
         asyncio.run(send_telegram_message(
             telegram_enabled, 
             telegram_token, 
             telegram_chat_id, 
             message,
-            parse_mode="HTML"
+            parse_mode="Markdown"
         ))
     except Exception as e:
         logging.error('Function failed with error: %s', str(e))
