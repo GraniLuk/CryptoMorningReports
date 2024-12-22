@@ -63,7 +63,7 @@ def process_bitcoin_checker():
                    'NEXO-USD', 'DYM-USD', 'OSMO-USD']
         logging.info('Processing %d symbols...', len(symbols))
 
-        rsi_values = []
+        all_values = []
 
         for symbol in symbols:
             try:
@@ -89,12 +89,12 @@ def process_bitcoin_checker():
                 day_low = round(min(df['Low'].iloc[-2:]), 3)    # Min low from today and yesterday
                 
                 # Store the results
-                rsi_values.append((symbol, today_price, day_high, day_low, today_rsi, today_MA50, today_MA200))
+                all_values.append((symbol, today_price, day_high, day_low, today_rsi, today_MA50, today_MA200))
             except Exception as e:
                 logging.error('Error processing symbol %s: %s', symbol, str(e))
 
         # Sort by RSI value in descending order
-        rsi_values.sort(key=lambda x: x[4], reverse=True)
+        all_values.sort(key=lambda x: x[4], reverse=True)
 
         def clean_symbol(symbol):
             return symbol.replace('-USD', '')
@@ -103,7 +103,7 @@ def process_bitcoin_checker():
         table1 = PrettyTable()
         table1.field_names = ["Symbol", "Current Price", "RSI", "MA50", "MA200"]
         
-        for row in rsi_values:
+        for row in all_values:
             symbol = clean_symbol(row[0])
             price = row[1]
             rsi = row[4]
@@ -117,7 +117,7 @@ def process_bitcoin_checker():
         
         # Store rows with range calculation
         range_rows = []
-        for row in rsi_values:
+        for row in all_values:
             symbol, _, high, low, _, _, _ = row
             price_range = ((high - low) / low) * 100
             range_rows.append((clean_symbol(symbol), low, high, price_range))
