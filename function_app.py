@@ -107,7 +107,9 @@ def process_bitcoin_checker():
             symbol = clean_symbol(row[0])
             price = row[1]
             rsi = row[4]
-            table1.add_row([symbol, price, rsi,today_MA50, today_MA200])
+            ma50 = row[5]
+            ma200 = row[6]
+            table1.add_row([symbol, price, rsi,ma50, ma200])
 
         # Create second table for 24h ranges
         table2 = PrettyTable()
@@ -116,7 +118,7 @@ def process_bitcoin_checker():
         # Store rows with range calculation
         range_rows = []
         for row in rsi_values:
-            symbol, _, high, low, _ = row
+            symbol, _, high, low, _, _, _ = row
             price_range = ((high - low) / low) * 100
             range_rows.append((clean_symbol(symbol), low, high, price_range))
         
