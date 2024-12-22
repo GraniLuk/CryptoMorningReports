@@ -11,6 +11,7 @@ from azure.data.tables import TableServiceClient
 import aiohttp
 import os
 from dotenv import load_dotenv
+from collections import namedtuple
 
 load_dotenv()
 
@@ -65,6 +66,8 @@ def process_bitcoin_checker():
 
         all_values = []
 
+        CryptoData = namedtuple('CryptoData', ['symbol', 'current_price', 'high', 'low', 'rsi', 'ma50', 'ma200'])
+
         for symbol in symbols:
             try:
                 logging.info('Processing symbol: %s', symbol)
@@ -89,36 +92,54 @@ def process_bitcoin_checker():
                 day_low = round(min(df['Low'].iloc[-2:]), 3)    # Min low from today and yesterday
                 
                 # Store the results
-                all_values.append((symbol, today_price, day_high, day_low, today_rsi, today_MA50, today_MA200))
+                all_values.append(CryptoData(
+                    symbol=symbol,
+                    current_price=today_price,
+                    high=day_high,
+                    low=day_low,
+                    rsi=today_rsi,
+                    ma50=today_MA50,
+                    ma200=today_MA200
+                ))
             except Exception as e:
                 logging.error('Error processing symbol %s: %s', symbol, str(e))
 
         # Sort by RSI value in descending order
-        all_values.sort(key=lambda x: x[4], reverse=True)
+        all_values.sort(key=lambda x: x.rsi, reverse=True)
 
         def clean_symbol(symbol):
             return symbol.replace('-USD', '')
 
         # Create first table for RSI and prices
-        table1 = PrettyTable()
-        table1.field_names = ["Symbol", "Current Price", "RSI", "MA50", "MA200"]
+        rsi_table = PrettyTable()
+        rsi_table.field_names = ["Symbol", "Current Price", "RSI"]
         
         for row in all_values:
-            symbol = clean_symbol(row[0])
-            price = row[1]
-            rsi = row[4]
-            ma50 = row[5]
-            ma200 = row[6]
-            table1.add_row([symbol, price, rsi,ma50, ma200])
+            symbol = clean_symbol(row.symbol)
+            price = row.current_price
+            rsi = row.rsi
+            rsi_table.add_row([symbol, price, rsi])
+
+        average_table = PrettyTable()
+        average_table.field_names = ["Symbol", "Current Price", "MA50", "MA200"]
+        
+        for row in all_values:
+            symbol = clean_symbol(row.symbol)
+            price = row.current_price
+            ma50 = row.ma50
+            ma200 = row.ma200
+            average_table.add_row([symbol, price ,ma50, ma200])
 
         # Create second table for 24h ranges
-        table2 = PrettyTable()
-        table2.field_names = ["Symbol", "24h Low", "24h High", "Range %"]
+        range_table = PrettyTable()
+        range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]
         
         # Store rows with range calculation
         range_rows = []
         for row in all_values:
-            symbol, _, high, low, _, _, _ = row
+            symbol = clean_symbol(row.symbol)
+            high = row.high
+            low = row.low
             price_range = ((high - low) / low) * 100
             range_rows.append((clean_symbol(symbol), low, high, price_range))
         
@@ -127,19 +148,21 @@ def process_bitcoin_checker():
         
         # Add sorted rows to table
         for row in range_rows:
-            table2.add_row([row[0], row[1], row[2], f"{row[3]:.2f}%"])
+            range_table.add_row([row[0], row[1], row[2], f"{row[3]:.2f}%"])
 
         # Print tables
-        logging.info(table1)
-        logging.info(table2)
+        logging.info(rsi_table)
+        logging.info(average_table)
+        logging.info(range_table)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
 
         # Format message with pre tags
-        message = f"RSI Report: {today_date}\n"
-        message += f"<pre>{table1}</pre>\n\n"
-        message += f"24h Range Report:\n<pre>{table2}</pre>"
+        message = f"Crypto Report: {today_date}\n"
+        message += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
+        message += f"Average Report: <pre>{average_table}</pre>\n\n"
+        message += f"24h Range Report:\n<pre>{range_table}</pre>"
 
         # Run the async function with HTML parse mode
         asyncio.run(send_telegram_message(
