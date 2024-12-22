@@ -75,6 +75,11 @@ def process_bitcoin_checker():
                 df['RSI'] = calculate_rsi(df['Close'])
                 logging.info('%s: Price=%f, RSI=%f', symbol, df['Close'].iloc[-1], df['RSI'].iloc[-1])
                 
+                df['MA50'] = df['Close'].rolling(window=50).mean()
+                today_MA50 = round(df['MA50'].iloc[-1],3)
+                df['MA200'] = df['Close'].rolling(window=200).mean()
+                today_MA200 = round(df['MA200'].iloc[-1],3)
+
                 # Get today's price and RSI
                 today_price = round(df['Close'].iloc[-1], 3)
                 today_rsi = round(df['RSI'].iloc[-1], 2)
@@ -84,7 +89,7 @@ def process_bitcoin_checker():
                 day_low = round(min(df['Low'].iloc[-2:]), 3)    # Min low from today and yesterday
                 
                 # Store the results
-                rsi_values.append((symbol, today_price, day_high, day_low, today_rsi))
+                rsi_values.append((symbol, today_price, day_high, day_low, today_rsi, today_MA50, today_MA200))
             except Exception as e:
                 logging.error('Error processing symbol %s: %s', symbol, str(e))
 
@@ -96,13 +101,13 @@ def process_bitcoin_checker():
 
         # Create first table for RSI and prices
         table1 = PrettyTable()
-        table1.field_names = ["Symbol", "Current Price", "RSI"]
+        table1.field_names = ["Symbol", "Current Price", "RSI", "MA50", "MA200"]
         
         for row in rsi_values:
             symbol = clean_symbol(row[0])
             price = row[1]
             rsi = row[4]
-            table1.add_row([symbol, price, rsi])
+            table1.add_row([symbol, price, rsi,today_MA50, today_MA200])
 
         # Create second table for 24h ranges
         table2 = PrettyTable()

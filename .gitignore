@@ -5,6 +5,8 @@ csx
 edge
 Publish
 
+ManualTrigger.ps1
+
 *.user
 *.suo
 *.cscfg
