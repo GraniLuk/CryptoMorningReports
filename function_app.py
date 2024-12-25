@@ -12,6 +12,8 @@ import aiohttp
 import os
 from dotenv import load_dotenv
 from collections import namedtuple
+from utils import clean_symbol
+from binance24 import fetch_range_price
 
 load_dotenv()
 
@@ -19,8 +21,8 @@ app = func.FunctionApp()
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    gain = delta.where(delta > 0, 0).ewm(span=window, adjust=False).mean()
+    loss = -delta.where(delta < 0, 0).ewm(span=window, adjust=False).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
@@ -60,19 +62,19 @@ def process_bitcoin_checker():
         logging.info('Configuration loaded. Telegram enabled: %s', telegram_enabled)
 
         # List of symbols
-        symbols = ['BTC-USD', 'ETH-USD', 'XRP-USD', 'ATOM-USD', 'DOT-USD', 'HBAR-USD', 'KCS-USD', 'FLOW-USD', 'MATIC-USD', 'AKT-USD',
+        symbols = ['BTC-USD', 'ETH-USD', 'XRP-USD', 'ATOM-USD', 'DOT-USD', 'HBAR-USD', 'KCS-USD', 'FLOW-USD', 'POL-USD', 'AKT-USD',
                    'NEXO-USD', 'DYM-USD', 'OSMO-USD']
         logging.info('Processing %d symbols...', len(symbols))
 
         all_values = []
 
-        CryptoData = namedtuple('CryptoData', ['symbol', 'current_price', 'high', 'low', 'rsi', 'ma50', 'ma200'])
+        CryptoData = namedtuple('CryptoData', ['symbol', 'current_price', 'rsi', 'ma50', 'ma200'])
 
         for symbol in symbols:
             try:
                 logging.info('Processing symbol: %s', symbol)
                 ticker = yf.Ticker(symbol)
-                df = ticker.history(interval="1d", period="max")
+                df = ticker.history(interval="1d", period="6mo")
                 logging.info('Retrieved %d data points for %s', len(df), symbol)
                 
                 df['RSI'] = calculate_rsi(df['Close'])
@@ -87,16 +89,10 @@ def process_bitcoin_checker():
                 today_price = round(df['Close'].iloc[-1], 3)
                 today_rsi = round(df['RSI'].iloc[-1], 2)
                 
-                # Get max high and min low from last 2 days
-                day_high = round(max(df['High'].iloc[-2:]), 3)  # Max high from today and yesterday
-                day_low = round(min(df['Low'].iloc[-2:]), 3)    # Min low from today and yesterday
-                
                 # Store the results
                 all_values.append(CryptoData(
                     symbol=symbol,
                     current_price=today_price,
-                    high=day_high,
-                    low=day_low,
                     rsi=today_rsi,
                     ma50=today_MA50,
                     ma200=today_MA200
@@ -106,9 +102,6 @@ def process_bitcoin_checker():
 
         # Sort by RSI value in descending order
         all_values.sort(key=lambda x: x.rsi, reverse=True)
-
-        def clean_symbol(symbol):
-            return symbol.replace('-USD', '')
 
         # Create first table for RSI and prices
         rsi_table = PrettyTable()
@@ -131,25 +124,7 @@ def process_bitcoin_checker():
             average_table.add_row([symbol, price ,ma50, ma200])
 
         # Create second table for 24h ranges
-        range_table = PrettyTable()
-        range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]
-        
-        # Store rows with range calculation
-        range_rows = []
-        for row in all_values:
-            symbol = clean_symbol(row.symbol)
-            high = row.high
-            low = row.low
-            price_range = ((high - low) / low) * 100
-            range_rows.append((clean_symbol(symbol), low, high, price_range))
-        
-        # Sort by price range descending
-        range_rows.sort(key=lambda x: x[3], reverse=True)
-        
-        # Add sorted rows to table
-        for row in range_rows:
-            range_table.add_row([row[0], row[1], row[2], f"{row[3]:.2f}%"])
-
+        range_table = fetch_range_price(symbols)
         # Print tables
         logging.info(rsi_table)
         logging.info(average_table)
