@@ -21,8 +21,8 @@ app = func.FunctionApp()
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
-    gain = delta.where(delta > 0, 0).ewm(span=window, adjust=False).mean()
-    loss = -delta.where(delta < 0, 0).ewm(span=window, adjust=False).mean()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
