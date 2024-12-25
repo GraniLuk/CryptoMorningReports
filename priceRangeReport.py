@@ -28,10 +28,30 @@ def fetch_kucoin_price(symbol, api_key, api_secret, api_passphrase):
     except Exception as e:
         print(f"Kucoin error for {symbol}: {str(e)}")
         return None
+    
+def fetch_binance_price(symbol):
+    """Fetch price data from Binance exchange."""
+    # Initialize the client
+    client = BinanceClient()
+    try:
+        # Get 24hr stats
+        symbol = convert_to_binance_symbol(symbol)
+        ticker = client.get_ticker(symbol=symbol)
+        
+        return BinancePrice(
+            symbol=symbol,
+            low=float(ticker['lowPrice']),
+            high=float(ticker['highPrice'])
+        )
+    except BinanceAPIException as e:
+        print(f"Error fetching {symbol}: {e.message}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error for {symbol}: {str(e)}")
+        return None
 
 def fetch_range_price(symbols=["AKT-USDT"]):
     results = []
-    binance_client = BinanceClient()
     kucoin_credentials = get_kucoin_credentials()
     
     for symbol in symbols:
@@ -50,14 +70,7 @@ def fetch_range_price(symbols=["AKT-USDT"]):
                 continue
                 
             # Regular Binance fetch
-            symbol = convert_to_binance_symbol(symbol)
-            ticker = binance_client.get_ticker(symbol=symbol)
-            
-            price_data = BinancePrice(
-                symbol=symbol,
-                low=float(ticker['lowPrice']),
-                high=float(ticker['highPrice'])
-            )
+            price_data = fetch_binance_price(symbol)
             results.append(price_data)
             
         except BinanceAPIException as e:
