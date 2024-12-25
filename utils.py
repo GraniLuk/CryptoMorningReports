@@ -8,8 +8,10 @@ def clean_symbol(symbol: str) -> str:
     """
     if not symbol:
         return ""
-    symbol.replace("USDT", "")
-    return symbol.replace("-USDT", "")
+    symbol = symbol.replace("-USDT", "")
+    symbol = symbol.replace("-USD", "")
+    symbol = symbol.replace("USDT", "")
+    return symbol.replace("USD", "")
 
 # Mapping of yfinance to binance symbols
 YFINANCE_TO_BINANCE = {

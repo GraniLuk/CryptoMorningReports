@@ -8,9 +8,18 @@ from dotenv import load_dotenv
 from binance24 import fetch_range_price
 from RSIReport import create_rsi_table
 from AverageReport import create_average_table
+
+# Load environment variables from .env file
 load_dotenv()
 
 app = func.FunctionApp()
+
+def get_kucoin_credentials():
+    return {
+        'api_key': os.getenv('KUCOIN_API_KEY'),
+        'api_secret': os.getenv('KUCOIN_API_SECRET'),
+        'api_passphrase': os.getenv('KUCOIN_API_PASSPHRASE')
+    }
 
 def process_bitcoin_checker():
     logging.info('BitcoinChecker function started at %s', datetime.now().isoformat())
