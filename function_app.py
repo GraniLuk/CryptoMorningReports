@@ -5,7 +5,7 @@ import azure.functions as func
 import aiohttp
 import os
 from dotenv import load_dotenv
-from binance24 import fetch_range_price
+from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
 from AverageReport import create_average_table
 
