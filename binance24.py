@@ -2,7 +2,7 @@ from collections import namedtuple
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
 from prettytable import PrettyTable
-from utils import clean_symbol_binance, convert_to_binance_symbol
+from utils import clean_symbol, convert_to_binance_symbol
 
 # Define namedtuple for price data
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
@@ -41,12 +41,12 @@ def fetch_range_price(symbols=["BTCUSDT"]):
     # Store rows with range calculation
     range_rows = []
     for result in sorted_results:
-        symbol = clean_symbol_binance(result.symbol)
+        symbol = clean_symbol(result.symbol)
         high = result.high
         low = result.low
         price_range = ((high - low) / low) * 100
         price_range_percent = f"{price_range:.2f}%"
-        range_rows.append((clean_symbol_binance(symbol), low, high, price_range_percent)) 
+        range_rows.append((clean_symbol(symbol), low, high, price_range_percent)) 
 
     for row in range_rows:
         range_table.add_row(row)

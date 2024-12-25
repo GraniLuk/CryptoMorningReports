@@ -8,19 +8,8 @@ def clean_symbol(symbol: str) -> str:
     """
     if not symbol:
         return ""
-    return symbol.strip().upper()
-
-def clean_symbol_binance(symbol: str) -> str:
-    """Remove USDT suffix from binance symbol.
-    
-    Args:
-        symbol (str): Symbol with USDT (e.g. 'BTCUSDT')
-    Returns:
-        str: Clean symbol (e.g. 'BTC')
-    """
-    if not symbol:
-        return ""
-    return symbol.replace("USDT", "")
+    symbol.replace("USDT", "")
+    return symbol.replace("-USDT", "")
 
 # Mapping of yfinance to binance symbols
 YFINANCE_TO_BINANCE = {
