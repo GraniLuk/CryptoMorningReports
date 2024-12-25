@@ -12,3 +12,4 @@ azure-data-tables
 requests
 aiohttp
 python-dotenv
+python-binance
