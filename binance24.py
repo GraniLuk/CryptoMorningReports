@@ -1,6 +1,6 @@
 from collections import namedtuple
-import requests
-import json
+from binance.client import Client
+from binance.exceptions import BinanceAPIException
 from prettytable import PrettyTable
 from utils import clean_symbol_binance, convert_to_binance_symbol
 
@@ -8,47 +8,30 @@ from utils import clean_symbol_binance, convert_to_binance_symbol
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
 
 def fetch_range_price(symbols=["BTCUSDT"]):
-    # Binance API endpoint
-    url = "https://api.binance.com/api/v3/ticker/24hr"
+    # Initialize Binance client (no auth needed for public endpoints)
+    client = Client()
     
     results = []
     for symbol in symbols:
-        # Parameters for the request
-        symbol = convert_to_binance_symbol(symbol)
-        params = {
-            "symbol": symbol
-        }
-        
         try:
-            # Make the GET request
-            response = requests.get(url, params=params)
+            # Convert symbol format
+            symbol = convert_to_binance_symbol(symbol)
             
-            # Check if the request was successful
-            if response.status_code == 200:
-                # Parse the JSON response
-                data = json.loads(response.text)
-                
-                # Create namedtuple instance
-                price_data = BinancePrice(
-                    symbol=symbol,
-                    low=float(data['lowPrice']),
-                    high=float(data['highPrice']),
-                )
-                
-                results.append(price_data)
-                
-                # Print the results
-                print(f"{symbol} 24h Low Price: ${price_data.low:,.2f}")
-                print(f"{symbol} 24h High Price: ${price_data.high:,.2f}")
-            else:
-                print(f"Error: Unable to fetch data for {symbol}. Status code: {response.status_code}")
-        
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching {symbol}: {e}")
-        except json.JSONDecodeError:
-            print(f"Error: Unable to parse JSON response for {symbol}")
-        except KeyError:
-            print(f"Error: Required data not found in response for {symbol}")
+            # Get 24hr ticker price change statistics
+            ticker = client.get_ticker(symbol=symbol)
+            
+            # Create namedtuple instance
+            price_data = BinancePrice(
+                symbol=symbol,
+                low=float(ticker['lowPrice']),
+                high=float(ticker['highPrice'])
+            )
+            results.append(price_data)
+            
+        except BinanceAPIException as e:
+            print(f"Error fetching {symbol}: {e.message}")
+        except Exception as e:
+            print(f"Unexpected error for {symbol}: {str(e)}")
     
     range_table = PrettyTable()
     range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]
