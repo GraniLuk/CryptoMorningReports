@@ -1,26 +1,58 @@
+from kucoin import Client as KucoinClient
 from collections import namedtuple
-from binance.client import Client
+from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 from prettytable import PrettyTable
 from utils import clean_symbol, convert_to_binance_symbol
+from function_app import get_kucoin_credentials
+
+# Define constants
+KUCOIN_SYMBOLS = {'AKT-USD', 'KCS-USD'}
 
 # Define namedtuple for price data
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
 
-def fetch_range_price(symbols=["BTCUSDT"]):
-    # Initialize Binance client (no auth needed for public endpoints)
-    client = Client()
-    
+def fetch_kucoin_price(symbol, api_key, api_secret, api_passphrase):
+    """Fetch price data from Kucoin exchange."""
+    # Initialize the client
+    client = KucoinClient(api_key, api_secret, api_passphrase)
+    try:           
+        # Get 24hr stats
+        ticker = client.get_24hr_stats(symbol)
+        
+        return BinancePrice(
+            symbol=symbol,
+            low=float(ticker['low']),
+            high=float(ticker['high'])
+        )
+    except Exception as e:
+        print(f"Kucoin error for {symbol}: {str(e)}")
+        return None
+
+def fetch_range_price(symbols=["AKT-USDT"]):
     results = []
+    binance_client = BinanceClient()
+    kucoin_credentials = get_kucoin_credentials()
+    
     for symbol in symbols:
         try:
-            # Convert symbol format
+            # Check if symbol should be fetched from Kucoin
+            if (symbol in KUCOIN_SYMBOLS):
+                symbol = symbol.replace("-USD", "-USDT")
+                price_data = fetch_kucoin_price(
+                    symbol,
+                    kucoin_credentials['api_key'],
+                    kucoin_credentials['api_secret'],
+                    kucoin_credentials['api_passphrase']
+                )
+                if price_data:
+                    results.append(price_data)
+                continue
+                
+            # Regular Binance fetch
             symbol = convert_to_binance_symbol(symbol)
+            ticker = binance_client.get_ticker(symbol=symbol)
             
-            # Get 24hr ticker price change statistics
-            ticker = client.get_ticker(symbol=symbol)
-            
-            # Create namedtuple instance
             price_data = BinancePrice(
                 symbol=symbol,
                 low=float(ticker['lowPrice']),
