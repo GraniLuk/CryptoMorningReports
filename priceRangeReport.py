@@ -3,11 +3,9 @@ from collections import namedtuple
 from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 from prettytable import PrettyTable
+from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from utils import clean_symbol, convert_to_binance_symbol
 from configuration import get_kucoin_credentials
-
-# Define constants
-KUCOIN_SYMBOLS = {'AKT-USD', 'KCS-USD'}
 
 # Define namedtuple for price data
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
