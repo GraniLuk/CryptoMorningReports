@@ -13,3 +13,4 @@ requests
 aiohttp
 python-dotenv
 python-binance
+pandas
