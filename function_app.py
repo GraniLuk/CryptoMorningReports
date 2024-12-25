@@ -74,7 +74,7 @@ def process_bitcoin_checker():
             try:
                 logging.info('Processing symbol: %s', symbol)
                 ticker = yf.Ticker(symbol)
-                df = ticker.history(interval="1d", period="6mo")
+                df = ticker.history(interval="1d", period="max")
                 logging.info('Retrieved %d data points for %s', len(df), symbol)
                 
                 df['RSI'] = calculate_rsi(df['Close'])
