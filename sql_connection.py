@@ -2,12 +2,38 @@ import pyodbc
 import pandas as pd
 from dataclasses import dataclass
 from typing import List
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env file
 
 @dataclass
 class Symbol:
     symbol_id: int
     symbol_name: str
     full_name: str
+    
+    @property
+    def kucoin_name(self) -> str:
+        return f"{self.symbol_name}-USDT"
+    
+    @property
+    def binance_name(self) -> str:
+        return f"{self.symbol_name}USDT"
+    
+    @property
+    def yf_name(self) -> str:
+        return f"{self.symbol_name}-USD"
+
+    @staticmethod
+    def get_symbol_names(symbols: List['Symbol']) -> List[str]:
+        """Convert List of Symbols to List of symbol names"""
+        return [symbol.symbol_name for symbol in symbols]
+
+    @staticmethod
+    def get_symbol_names_usd(symbols: List['Symbol']) -> List[str]:
+        """Convert List of Symbols to List of symbol names with USD suffix"""
+        return [f"{symbol.symbol_name}-USD" for symbol in symbols]
 
 def connect_to_sql():
     try:
@@ -15,7 +41,7 @@ def connect_to_sql():
         server = 'tcp:crypto-alerts.database.windows.net,1433'
         database = 'Crypto'
         username = 'grani'
-        password = '{your_password_here}'  # Replace with actual password
+        password = os.getenv('SQL_PASSWORD')
         
         # Create connection string
         conn_str = (

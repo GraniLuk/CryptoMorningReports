@@ -4,9 +4,10 @@ from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 from prettytable import PrettyTable
 from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
-from utils import clean_symbol, convert_to_binance_symbol
 from configuration import get_kucoin_credentials
 from telegram_logging_handler import app_logger
+from typing import List
+from sql_connection import Symbol
 
 # Define namedtuple for price data
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
@@ -34,7 +35,6 @@ def fetch_binance_price(symbol):
     client = BinanceClient()
     try:
         # Get 24hr stats
-        symbol = convert_to_binance_symbol(symbol)
         ticker = client.get_ticker(symbol=symbol)
         
         return BinancePrice(
@@ -49,17 +49,16 @@ def fetch_binance_price(symbol):
         app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
         return None
 
-def fetch_range_price(symbols=["AKT-USDT"]):
+def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
     results = []
     kucoin_credentials = get_kucoin_credentials()
     
     for symbol in symbols:
         try:
             # Check if symbol should be fetched from Kucoin
-            if (symbol in KUCOIN_SYMBOLS):
-                symbol = symbol.replace("-USD", "-USDT")
+            if (symbol.symbol_name in KUCOIN_SYMBOLS):
                 price_data = fetch_kucoin_price(
-                    symbol,
+                    symbol.kucoin_name,
                     kucoin_credentials['api_key'],
                     kucoin_credentials['api_secret'],
                     kucoin_credentials['api_passphrase']
@@ -69,13 +68,13 @@ def fetch_range_price(symbols=["AKT-USDT"]):
                 continue
                 
             # Regular Binance fetch
-            price_data = fetch_binance_price(symbol)
+            price_data = fetch_binance_price(symbol.binance_name)
             results.append(price_data)
             
         except BinanceAPIException as e:
-            app_logger.error(f"Error fetching {symbol}: {e.message}")
+            app_logger.error(f"Error fetching {symbol.symbol_name}: {e.message}")
         except Exception as e:
-            app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+            app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
     
     range_table = PrettyTable()
     range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]
@@ -85,12 +84,12 @@ def fetch_range_price(symbols=["AKT-USDT"]):
     # Store rows with range calculation
     range_rows = []
     for result in sorted_results:
-        symbol = clean_symbol(result.symbol)
+        symbol = result.symbol
         high = result.high
         low = result.low
         price_range = ((high - low) / low) * 100
         price_range_percent = f"{price_range:.2f}%"
-        range_rows.append((clean_symbol(symbol), low, high, price_range_percent)) 
+        range_rows.append(symbol, low, high, price_range_percent)
 
     for row in range_rows:
         range_table.add_row(row)
