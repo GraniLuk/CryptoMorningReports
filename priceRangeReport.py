@@ -12,16 +12,16 @@ from sql_connection import Symbol
 # Define namedtuple for price data
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
 
-def fetch_kucoin_price(symbol, api_key, api_secret, api_passphrase):
+def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
     """Fetch price data from Kucoin exchange."""
     # Initialize the client
     client = KucoinClient(api_key, api_secret, api_passphrase)
     try:           
         # Get 24hr stats
-        ticker = client.get_24hr_stats(symbol)
+        ticker = client.get_24hr_stats(symbol.kucoin_name)
         
         return BinancePrice(
-            symbol=symbol,
+            symbol=symbol.symbol_name,
             low=float(ticker['low']),
             high=float(ticker['high'])
         )
@@ -29,16 +29,16 @@ def fetch_kucoin_price(symbol, api_key, api_secret, api_passphrase):
         app_logger.error(f"Kucoin error for {symbol}: {str(e)}")
         return None
     
-def fetch_binance_price(symbol):
+def fetch_binance_price(symbol : Symbol) -> BinancePrice:
     """Fetch price data from Binance exchange."""
     # Initialize the client
     client = BinanceClient()
     try:
         # Get 24hr stats
-        ticker = client.get_ticker(symbol=symbol)
+        ticker = client.get_ticker(symbol=symbol.binance_name)
         
         return BinancePrice(
-            symbol=symbol,
+            symbol=symbol.symbol_name,
             low=float(ticker['lowPrice']),
             high=float(ticker['highPrice'])
         )
@@ -58,7 +58,7 @@ def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
             # Check if symbol should be fetched from Kucoin
             if (symbol.symbol_name in KUCOIN_SYMBOLS):
                 price_data = fetch_kucoin_price(
-                    symbol.kucoin_name,
+                    symbol,
                     kucoin_credentials['api_key'],
                     kucoin_credentials['api_secret'],
                     kucoin_credentials['api_passphrase']
@@ -68,7 +68,7 @@ def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
                 continue
                 
             # Regular Binance fetch
-            price_data = fetch_binance_price(symbol.binance_name)
+            price_data = fetch_binance_price(symbol)
             results.append(price_data)
             
         except BinanceAPIException as e:
