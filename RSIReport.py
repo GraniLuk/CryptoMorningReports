@@ -15,7 +15,7 @@ def calculate_rsi(series, window=14):
 
     gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-    
+
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
@@ -145,7 +145,7 @@ def create_rsi_table(symbols=["AKT-USD"]):
                 symbol = convert_to_binance_symbol(symbol)
                 df = fetch_close_prices_from_Binance(symbol)
             if not df.empty:
-                df['RSI'] = calculate_rsi_using_RMA(df['close'])
+                df['RSI'] = calculate_rsi_using_EMA(df['close'])
                 df['symbol'] = symbol
                 # Take only latest row
                 latest_row = df.iloc[-1:]
