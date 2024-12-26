@@ -12,8 +12,10 @@ import time
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
+
     gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
@@ -37,16 +39,17 @@ def calculate_rsi_using_EMA(series, period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
-def calculate_rsi_using_RMA(data, periods=14):
-    delta = data.diff()
+def calculate_rsi_using_RMA(series, periods=14):
+    delta = series.diff()
     
-    up = delta.clip(lower=0)
-    down = -1 * delta.clip(upper=0)
+    # Separate gains and losses
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
     
     alpha = 1.0 / periods
     
-    avg_gain = up.ewm(alpha=alpha, adjust=False).mean()
-    avg_loss = down.ewm(alpha=alpha, adjust=False).mean()
+    avg_gain = gain.ewm(alpha=alpha, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=alpha, adjust=False).mean()
     
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
