@@ -1,10 +1,14 @@
 import logging
-from binance.client import Client
+from binance.client import Client as BinanceClient
+from kucoin import Client as KucoinClient
 from binance.exceptions import BinanceAPIException
 import pandas as pd
 from datetime import datetime, timedelta
+from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
+from configuration import get_kucoin_credentials
 from utils import clean_symbol, convert_to_binance_symbol
 from prettytable import PrettyTable
+import time
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
@@ -85,7 +89,7 @@ def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.
         
         klines = client.get_historical_klines(
             symbol=symbol,
-            interval=Client.KLINE_INTERVAL_1DAY,
+            interval=BinanceClient.KLINE_INTERVAL_1DAY,
             start_str=start_time.strftime('%d %b %Y'),
             limit=lookback_days
         )
@@ -111,13 +115,16 @@ def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.
         print(f"Unexpected error for {symbol}: {str(e)}")
         return pd.DataFrame()
 
-def create_rsi_table(symbols=["BTCUSDT"]):
+def create_rsi_table(symbols=["AKT-USD"]):
     all_values = pd.DataFrame()
     
     for symbol in symbols:
         try:
-            symbol = convert_to_binance_symbol(symbol)
-            df = fetch_close_prices(symbol)
+            if (symbol in KUCOIN_SYMBOLS):
+                df = fetch_close_prices_from_Kucoin(symbol)
+            else:
+                symbol = convert_to_binance_symbol(symbol)
+                df = fetch_close_prices_from_Binance(symbol)
             if not df.empty:
                 df['RSI'] = calculate_rsi_using_EMA(df['close'])
                 df['symbol'] = symbol
