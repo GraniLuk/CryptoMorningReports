@@ -9,6 +9,7 @@ from configuration import get_kucoin_credentials
 from utils import clean_symbol, convert_to_binance_symbol
 from prettytable import PrettyTable
 import time
+from telegram_logging_handler import app_logger
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
@@ -97,7 +98,7 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         return df
     
     except Exception as e:
-        print(f"Error fetching data from Kucoin: {str(e)}")
+        app_logger.error(f"Error fetching data from Kucoin: {str(e)}")
         return pd.DataFrame()
 
 def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.DataFrame:
@@ -128,10 +129,10 @@ def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.
         return df
         
     except BinanceAPIException as e:
-        print(f"Error fetching data for {symbol}: {e.message}")
+        app_logger.error(f"Error fetching data for {symbol}: {e.message}")
         return pd.DataFrame()
     except Exception as e:
-        print(f"Unexpected error for {symbol}: {str(e)}")
+        app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
         return pd.DataFrame()
 
 def create_rsi_table(symbols=["AKT-USD"]):
@@ -150,9 +151,9 @@ def create_rsi_table(symbols=["AKT-USD"]):
                 # Take only latest row
                 latest_row = df.iloc[-1:]
                 all_values = pd.concat([all_values, latest_row])
-                logging.info('%s: Price=%f, RSI=%f', symbol, latest_row['close'].iloc[-1], latest_row['RSI'].iloc[-1])
+                app_logger.info('%s: Price=%f, RSI=%f', symbol, latest_row['close'].iloc[-1], latest_row['RSI'].iloc[-1])
         except Exception as e:
-            print(f"Error processing {symbol}: {str(e)}")
+            app_logger.error(f"Error processing {symbol}: {str(e)}")
     
     # Sort by RSI descending
     all_values = all_values.sort_values('RSI', ascending=False)

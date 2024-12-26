@@ -6,6 +6,7 @@ from prettytable import PrettyTable
 from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from utils import clean_symbol, convert_to_binance_symbol
 from configuration import get_kucoin_credentials
+from telegram_logging_handler import app_logger
 
 # Define namedtuple for price data
 BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
@@ -24,7 +25,7 @@ def fetch_kucoin_price(symbol, api_key, api_secret, api_passphrase):
             high=float(ticker['high'])
         )
     except Exception as e:
-        print(f"Kucoin error for {symbol}: {str(e)}")
+        app_logger.error(f"Kucoin error for {symbol}: {str(e)}")
         return None
     
 def fetch_binance_price(symbol):
@@ -42,10 +43,10 @@ def fetch_binance_price(symbol):
             high=float(ticker['highPrice'])
         )
     except BinanceAPIException as e:
-        print(f"Error fetching {symbol}: {e.message}")
+        app_logger.error(f"Error fetching {symbol}: {e.message}")
         return None
     except Exception as e:
-        print(f"Unexpected error for {symbol}: {str(e)}")
+        app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
         return None
 
 def fetch_range_price(symbols=["AKT-USDT"]):
@@ -72,9 +73,9 @@ def fetch_range_price(symbols=["AKT-USDT"]):
             results.append(price_data)
             
         except BinanceAPIException as e:
-            print(f"Error fetching {symbol}: {e.message}")
+            app_logger.error(f"Error fetching {symbol}: {e.message}")
         except Exception as e:
-            print(f"Unexpected error for {symbol}: {str(e)}")
+            app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
     
     range_table = PrettyTable()
     range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]

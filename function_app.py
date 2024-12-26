@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
 from AverageReport import create_average_table
+from telegram_logging_handler import app_logger
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,13 +23,14 @@ def process_bitcoin_checker():
         logging.info('Loading configuration...')
         telegram_enabled = os.environ["TELEGRAM_ENABLED"].lower() == "true"
         telegram_token = os.environ["TELEGRAM_TOKEN"]
-        telegram_chat_id = os.environ["TELEGRAM_CHAT_ID"]
-        logging.info('Configuration loaded. Telegram enabled: %s', telegram_enabled)
+        telegram_chat_id = os.environ["TELEGRAM_CHAT_ID"]    
+        logger = app_logger
+        logger.info('Configuration loaded. Telegram enabled: %s', telegram_enabled)
 
         # List of symbols
         symbols = ['BTC-USD', 'ETH-USD', 'XRP-USD', 'ATOM-USD', 'DOT-USD', 'HBAR-USD', 'KCS-USD', 'FLOW-USD', 'POL-USD', 'AKT-USD',
                    'NEXO-USD', 'DYM-USD', 'OSMO-USD']
-        logging.info('Processing %d symbols...', len(symbols))
+        logger.info('Processing %d symbols...', len(symbols))
         
         # Create first table for RSI and prices
         rsi_table = create_rsi_table(symbols)
@@ -39,9 +41,9 @@ def process_bitcoin_checker():
         # Create second table for 24h ranges
         range_table = fetch_range_price(symbols)
         # Print tables
-        logging.info(rsi_table)
-        logging.info(average_table)
-        logging.info(range_table)
+        logger.info(rsi_table)
+        logger.info(average_table)
+        logger.info(range_table)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
@@ -61,7 +63,7 @@ def process_bitcoin_checker():
             parse_mode="HTML"
         ))
     except Exception as e:
-        logging.error('Function failed with error: %s', str(e))
+        logger.error('Function failed with error: %s', str(e))
         raise
 
 

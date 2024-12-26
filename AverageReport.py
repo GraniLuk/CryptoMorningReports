@@ -3,6 +3,7 @@ import logging
 import yfinance as yf
 from utils import clean_symbol
 from prettytable import PrettyTable
+from telegram_logging_handler import app_logger
 
 def create_average_table(symbols=["BTCUSDT"]):
     all_values = []
@@ -10,10 +11,10 @@ def create_average_table(symbols=["BTCUSDT"]):
 
     for symbol in symbols:
         try:
-            logging.info('Processing symbol: %s', symbol)
+            app_logger.info('Processing symbol: %s', symbol)
             ticker = yf.Ticker(symbol)
             df = ticker.history(interval="1d", period="max")
-            logging.info('Retrieved %d data points for %s', len(df), symbol)
+            app_logger.info('Retrieved %d data points for %s', len(df), symbol)
             df['MA50'] = df['Close'].rolling(window=50).mean()
             today_MA50 = round(df['MA50'].iloc[-1],3)
             df['MA200'] = df['Close'].rolling(window=200).mean()
@@ -27,7 +28,7 @@ def create_average_table(symbols=["BTCUSDT"]):
                 ma200=today_MA200
             ))
         except Exception as e:
-            logging.error('Error processing symbol %s: %s', symbol, str(e))
+            app_logger.error('Error processing symbol %s: %s', symbol, str(e))
 
     
     average_table = PrettyTable()
