@@ -9,6 +9,7 @@ from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
 from AverageReport import create_average_table
 from telegram_logging_handler import app_logger
+from sql_connection import fetch_symbols, Symbol
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,8 +29,7 @@ def process_bitcoin_checker():
         logger.info('Configuration loaded. Telegram enabled: %s', telegram_enabled)
 
         # List of symbols
-        symbols = ['BTC-USD', 'ETH-USD', 'XRP-USD', 'ATOM-USD', 'DOT-USD', 'HBAR-USD', 'KCS-USD', 'FLOW-USD', 'POL-USD', 'AKT-USD',
-                   'NEXO-USD', 'DYM-USD', 'OSMO-USD']
+        symbols = fetch_symbols()
         logger.info('Processing %d symbols...', len(symbols))
         
         # Create first table for RSI and prices

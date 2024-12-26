@@ -1,2 +1,2 @@
 # Define constants
-KUCOIN_SYMBOLS = {'AKT-USD', 'KCS-USD'}
+KUCOIN_SYMBOLS = {'AKT', 'KCS'}
