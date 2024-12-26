@@ -89,7 +89,7 @@ def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
         low = result.low
         price_range = ((high - low) / low) * 100
         price_range_percent = f"{price_range:.2f}%"
-        range_rows.append(symbol, low, high, price_range_percent)
+        range_rows.append((symbol, low, high, price_range_percent))
 
     for row in range_rows:
         range_table.add_row(row)
