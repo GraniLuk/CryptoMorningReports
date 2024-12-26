@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from binance.client import Client as BinanceClient
 from kucoin import Client as KucoinClient
 from binance.exceptions import BinanceAPIException
@@ -6,10 +7,10 @@ import pandas as pd
 from datetime import datetime, timedelta
 from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from configuration import get_kucoin_credentials
-from utils import clean_symbol, convert_to_binance_symbol
 from prettytable import PrettyTable
 import time
 from telegram_logging_handler import app_logger
+from sql_connection import Symbol
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
@@ -68,16 +69,13 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         api_secret = kucoin_credentials['api_secret']
         api_passphrase = kucoin_credentials['api_passphrase']
         client = KucoinClient(api_key, api_secret, api_passphrase)
-
-        # Adjust symbol format (e.g., BTCUSDT -> BTC-USDT)
-        kucoin_symbol = symbol.replace('-USD', '-USDT')
         
         # Calculate start time (limit days ago)
         end_time = int(time.time())
         start_time = int((datetime.now() - timedelta(days=limit)).timestamp())
         
         # Get kline data with start and end time
-        klines = client.get_kline_data(kucoin_symbol, '1day', start=start_time, end=end_time)
+        klines = client.get_kline_data(symbol, '1day', start=start_time, end=end_time)
         
         # Kucoin returns data in format:
         # [timestamp, open, close, high, low, volume, turnover]
@@ -135,25 +133,24 @@ def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.
         app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
         return pd.DataFrame()
 
-def create_rsi_table(symbols=["AKT-USD"]):
+def create_rsi_table(symbols : List[Symbol]) -> PrettyTable:
     all_values = pd.DataFrame()
     
     for symbol in symbols:
         try:
-            if (symbol in KUCOIN_SYMBOLS):
-                df = fetch_close_prices_from_Kucoin(symbol)
+            if (symbol.symbol_name in KUCOIN_SYMBOLS):
+                df = fetch_close_prices_from_Kucoin(symbol.kucoin_name)
             else:
-                symbol = convert_to_binance_symbol(symbol)
-                df = fetch_close_prices_from_Binance(symbol)
+                df = fetch_close_prices_from_Binance(symbol.binance_name)
             if not df.empty:
                 df['RSI'] = calculate_rsi_using_EMA(df['close'])
-                df['symbol'] = symbol
+                df['symbol'] = symbol.symbol_name
                 # Take only latest row
                 latest_row = df.iloc[-1:]
                 all_values = pd.concat([all_values, latest_row])
-                app_logger.info('%s: Price=%f, RSI=%f', symbol, latest_row['close'].iloc[-1], latest_row['RSI'].iloc[-1])
+                app_logger.info('%s: Price=%f, RSI=%f', symbol.symbol_name, latest_row['close'].iloc[-1], latest_row['RSI'].iloc[-1])
         except Exception as e:
-            app_logger.error(f"Error processing {symbol}: {str(e)}")
+            app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
     
     # Sort by RSI descending
     all_values = all_values.sort_values('RSI', ascending=False)
@@ -163,7 +160,7 @@ def create_rsi_table(symbols=["AKT-USD"]):
     rsi_table.field_names = ["Symbol", "Current Price", "RSI"]
     
     for _, row in all_values.iterrows():
-        symbol = clean_symbol(row['symbol'])
+        symbol = row['symbol']
         price = float(row['close'])
         rsi = float(row['RSI'])
         rsi_table.add_row([
