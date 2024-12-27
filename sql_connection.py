@@ -43,19 +43,18 @@ def connect_to_sql():
         username = 'grani'
         password = os.getenv('SQL_PASSWORD')
         
-        # Create connection string
-        conn_str = (
-            f'DRIVER={{ODBC Driver 18 for SQL Server}};'
-            f'SERVER={server};'
-            f'DATABASE={database};'
-            f'UID={username};'
-            f'PWD={password};'
-            'Encrypt=yes;'
-            'TrustServerCertificate=no;'
-        )
-        
-        # Create connection
-        conn = pyodbc.connect(conn_str)
+       # Define the UMI client ID
+        user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")  # Set this in your app settings
+
+        # Authenticate using ManagedIdentityCredential
+        credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
+        access_token = credential.get_token("https://database.windows.net/.default").token
+
+        # Define connection string
+        connection_string = f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};DATABASE={database};"
+
+        # Connect using token
+        conn = pyodbc.connect(connection_string, attrs_before={"AccessToken": access_token})
         return conn
     
     except pyodbc.Error as e:
