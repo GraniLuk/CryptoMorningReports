@@ -16,3 +16,4 @@ python-binance
 pandas
 python-kucoin
 pyodbc
+azure-identity
