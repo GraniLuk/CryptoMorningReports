@@ -5,6 +5,8 @@ from typing import List
 from dotenv import load_dotenv
 import os
 from azure.identity import ManagedIdentityCredential
+import logging
+import time
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -36,35 +38,62 @@ class Symbol:
         """Convert List of Symbols to List of symbol names with USD suffix"""
         return [f"{symbol.symbol_name}-USD" for symbol in symbols]
 
-def connect_to_sql():
-    try:
-        # Connection parameters
-        server = 'tcp:crypto-alerts.database.windows.net,1433'
-        database = 'Crypto'
-        username = 'grani'
-        password = os.getenv('SQL_PASSWORD')
-        
-        # Check if running in Azure vs Local Development
-        environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
-        is_azure = environment is not None and environment.lower() != "development"
-        
-        if is_azure:
-            # Azure environment - use Managed Identity
-            user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
-            credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
-            access_token = credential.get_token("https://database.windows.net/.default").token
-            connection_string = f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};DATABASE={database};"
-            conn = pyodbc.connect(connection_string, attrs_before={"AccessToken": access_token})
-        else:
-            # Local environment - use SQL authentication
-            connection_string = f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
-            conn = pyodbc.connect(connection_string)
+def connect_to_sql(max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            # Connection parameters
+            server = 'tcp:crypto-alerts.database.windows.net,1433'
+            database = 'Crypto'
+            username = 'grani'
+            password = os.getenv('SQL_PASSWORD')
             
-        return conn
-    
-    except pyodbc.Error as e:
-        print(f"Error connecting to SQL Server: {str(e)}")
-        raise
+            # Enhanced logging
+            environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
+            is_azure = environment is not None and environment.lower() != "development"
+            logging.info(f"Attempt {attempt + 1}/{max_retries}")
+            logging.info(f"Environment: {environment}")
+            logging.info(f"Is Azure: {is_azure}")
+            
+            if is_azure:
+                user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
+                logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
+                credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
+                access_token = credential.get_token("https://database.windows.net/.default").token
+                connection_string = (
+                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                    f"SERVER={server};"
+                    f"DATABASE={database};"
+                    "Connection Timeout=30;"
+                    "Encrypt=yes;"
+                    "TrustServerCertificate=no"
+                )
+                logging.info(f"Azure connection string (without token): {connection_string}")
+                conn = pyodbc.connect(connection_string, attrs_before={"AccessToken": access_token})
+            else:
+                connection_string = (
+                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                    f"SERVER={server};"
+                    f"DATABASE={database};"
+                    f"UID={username};"
+                    "Connection Timeout=30;"
+                    "Encrypt=yes;"
+                    "TrustServerCertificate=no"
+                )
+                logging.info(f"Local connection string (without password): {connection_string}")
+                conn = pyodbc.connect(connection_string + f";PWD={password}")
+                
+            logging.info("Connection successful")
+            return conn
+            
+        except pyodbc.Error as e:
+            logging.error(f"Attempt {attempt + 1} failed:")
+            logging.error(f"Error state: {e.args[0] if e.args else 'No state'}")
+            logging.error(f"Error message: {str(e)}")
+            
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+                continue
+            raise
 
 def fetch_symbols() -> List[Symbol]:
     """
