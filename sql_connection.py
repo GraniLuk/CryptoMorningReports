@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from dotenv import load_dotenv
 import os
-from azure.identity import ManagedIdentityCredential
+from azure.identity import DefaultAzureCredential
 import logging
 import time
 import subprocess
@@ -63,40 +63,33 @@ def connect_to_sql(max_retries=3):
                 try:
                     user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
                     logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
-                    
+                    credential = DefaultAzureCredential(client_id=user_assigned_client_id)
+                    token = credential.get_token("https://database.windows.net/.default").token
                     # Get token explicitly
-                    credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
-                    token = credential.get_token("https://database.windows.net/.default")
+                    logging.info('Python HTTP trigger function processed a request.')
+                    server="crypto-alerts.database.windows.net"
+                    database="Crypto"
+                    driver="{ODBC Driver 18 for SQL Server}"
+                    # Optional to use username and password for authentication
+                    # username = 'name' 
+                    # password = 'pass'
+                    db_token = token
+                    connection_string = 'DRIVER='+driver+';SERVER='+server+';DATABASE='+database
+                    #When MSI is enabled
+              
+                    conn = pyodbc.connect(connection_string+';Authentication=ActiveDirectoryMsi')
                     
-                    # Verify we have all required values
-                    if not user_assigned_client_id or not token.token:
-                        logging.error(f"Missing required values: client_id present: {bool(user_assigned_client_id)}, token present: {bool(token.token)}")
-                        raise ValueError("Missing required authentication values")
-                        
-                    logging.info(f"Token obtained successfully. Length: {len(token.token)}")
                     
-                    connection_string = (
-                        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-                        f"SERVER={server};"
-                        f"DATABASE={database};"
-                        "Authentication=ActiveDirectoryServicePrincipal;"
-                        f"UID={user_assigned_client_id};"
-                        f"PWD={token.token};"
-                        "Connection Timeout=60;"
-                        "Encrypt=yes;"
-                        "TrustServerCertificate=no"
-                    )
-                    
-                    # Log connection string (without sensitive info)
-                    safe_conn_string = connection_string.replace(token.token, "REDACTED")
-                    logging.info(f"Attempting connection with string: {safe_conn_string}")
-                    
-                    conn = pyodbc.connect(connection_string)
+
                     logging.info("Successfully connected to database")
+                    return conn
+                    
                 except pyodbc.Error as e:
-                    app_logger.error(f"ODBC Error: {e}")
+                    logging.error(f"ODBC Error: {e}")
+                    raise
                 except Exception as e:
-                    app_logger.error(f"Failed to connect to the database: {str(e)}")
+                    logging.error(f"Unexpected error: {str(e)}")
+                    raise
             else:
                 try:
                     connection_string = (
