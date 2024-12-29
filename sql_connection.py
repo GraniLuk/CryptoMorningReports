@@ -54,6 +54,8 @@ def connect_to_sql(max_retries=3):
             logging.info(f"Environment: {environment}")
             logging.info(f"Is Azure: {is_azure}")
             
+            conn = None  # Initialize the conn variable
+
             if is_azure:
                 try:
                     user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
@@ -111,21 +113,29 @@ def fetch_symbols() -> List[Symbol]:
     """
     try:
         conn = connect_to_sql()
-        cursor = conn.cursor()
-        query = "SELECT SymbolID, SymbolName, FullName FROM Symbols"
-        
-        symbols = []
-        for row in cursor.execute(query):
-            symbol = Symbol(
-                symbol_id=row[0],
-                symbol_name=row[1],
-                full_name=row[2]
-            )
-            symbols.append(symbol)
-            
-        cursor.close()
-        conn.close()
-        return symbols
+        if conn:
+            try:
+                cursor = conn.cursor()
+                query = "SELECT SymbolID, SymbolName, FullName FROM Symbols"
+                
+                symbols = []
+                for row in cursor.execute(query):
+                    symbol = Symbol(
+                        symbol_id=row[0],
+                        symbol_name=row[1],
+                        full_name=row[2]
+                    )
+                    symbols.append(symbol)
+                    
+                cursor.close()
+                conn.close()
+                return symbols
+            except Exception as e:
+                logging.error(f"Error fetching symbols: {str(e)}")
+            finally:
+                conn.close()
+        else:
+            logging.error("Database connection was not established.")
     
     except Exception as e:
         print(f"Error fetching symbols: {str(e)}")
