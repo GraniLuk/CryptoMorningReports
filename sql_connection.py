@@ -72,7 +72,7 @@ def connect_to_sql(max_retries=3):
                     )
                     logging.info(f"Access token: {access_token}")
                     logging.info(f"Azure connection string (with token): {connection_string}")
-                    conn = pyodbc.connect(connection_string, attrs_before={'AccessToken': access_token.token})
+                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token.token})
                     logging.info("Successfully connected to the database.")
                 except Exception as e:
                     logging.error(f"Failed to connect to the database: {str(e)}")
