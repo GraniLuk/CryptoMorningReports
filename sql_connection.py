@@ -8,6 +8,7 @@ from azure.identity import ManagedIdentityCredential
 import logging
 import time
 import subprocess
+from telegram_logging_handler import app_logger
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -76,9 +77,9 @@ def connect_to_sql(max_retries=3):
                     conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
                     logging.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
-                    logging.error(f"ODBC Error: {e}")
+                    app_logger.error(f"ODBC Error: {e}")
                 except Exception as e:
-                    logging.error(f"Failed to connect to the database: {str(e)}")
+                    app_logger.error(f"Failed to connect to the database: {str(e)}")
             else:
                 try:
                     connection_string = (
