@@ -55,31 +55,38 @@ def connect_to_sql(max_retries=3):
             logging.info(f"Is Azure: {is_azure}")
             
             if is_azure:
-                user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
-                logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
-                credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
-                access_token = credential.get_token("https://database.windows.net/.default").token
-                connection_string = (
-                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-                    f"SERVER={server};"
-                    f"DATABASE={database};"
-                    "Connection Timeout=60;"
-                    "Encrypt=yes;"
-                    "TrustServerCertificate=no"
-                )
-                logging.info(f"Azure connection string (without token): {connection_string}")
-                conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
+                try:
+                    user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
+                    logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
+                    credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
+                    access_token = credential.get_token("https://database.windows.net/.default").token
+                    connection_string = (
+                        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                        f"SERVER={server};"
+                        f"DATABASE={database};"
+                        "Connection Timeout=60;"
+                        "Encrypt=yes;"
+                        "TrustServerCertificate=no"
+                    )
+                    logging.info(f"Azure connection string (without token): {connection_string}")
+                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
+                    logging.info("Successfully connected to the database.")
+                except Exception as e:
+                    logging.error(f"Failed to connect to the database: {str(e)}")
             else:
-                connection_string = (
-                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-                    f"SERVER={server};"
-                    f"DATABASE={database};"
-                    "Connection Timeout=60;"
-                    "Encrypt=yes;"
-                    "TrustServerCertificate=no"
-                )
-                logging.info(f"Local connection string (without password): {connection_string}")
-                conn = pyodbc.connect(connection_string + f";PWD={password}")
+                try:
+                    connection_string = (
+                        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                        f"SERVER={server};"
+                        f"DATABASE={database};"
+                        "Connection Timeout=60;"
+                        "Encrypt=yes;"
+                        "TrustServerCertificate=no"
+                    )
+                    conn = pyodbc.connect(connection_string)
+                    logging.info("Successfully connected to the database.")
+                except Exception as e:
+                    logging.error(f"Failed to connect to the database: {str(e)}")
                 
             logging.info("Connection successful")
             return conn
