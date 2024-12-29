@@ -62,19 +62,27 @@ def connect_to_sql(max_retries=3):
             if is_azure:
                 try:
                     user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
+                    logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
+                    
+                    # Get token explicitly
+                    credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
+                    token = credential.get_token("https://database.windows.net/.default")
+                    logging.info(f"Successfully obtained token. Token length: {len(token.token)}")
+                    
                     connection_string = (
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                         f"SERVER={server};"
                         f"DATABASE={database};"
-                        "Authentication=ActiveDirectoryMsi;"
+                        "Authentication=ActiveDirectoryServicePrincipal;"
                         f"User Id={user_assigned_client_id};"
+                        f"Password={token.token};"
                         "Connection Timeout=60;"
                         "Encrypt=yes;"
                         "TrustServerCertificate=no"
                     )
-                    logging.info(f"Attempting connection with MSI auth: {connection_string}")
+                    logging.info("Attempting connection with token auth...")
                     conn = pyodbc.connect(connection_string)
-                    logging.info("Successfully connected to the database.")
+                    logging.info("Successfully connected to database")
                 except pyodbc.Error as e:
                     app_logger.error(f"ODBC Error: {e}")
                 except Exception as e:
