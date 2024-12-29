@@ -70,7 +70,8 @@ def connect_to_sql(max_retries=3):
                         "Encrypt=yes;"
                         "TrustServerCertificate=no;"
                     )
-                    logging.info(f"Azure connection string (without token): {connection_string}")
+                    logging.info(f"Access token: {access_token}")
+                    logging.info(f"Azure connection string (with token): {connection_string}")
                     conn = pyodbc.connect(connection_string, attrs_before={'AccessToken': access_token.token})
                     logging.info("Successfully connected to the database.")
                 except Exception as e:
