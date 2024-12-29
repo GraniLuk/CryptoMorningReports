@@ -49,7 +49,7 @@ def connect_to_sql(max_retries=3):
             
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
-            is_azure = environment.lower() != "development"
+            is_azure = environment is None or environment.lower() != "development"
             logging.info(f"Attempt {attempt + 1}/{max_retries}")
             logging.info(f"Environment: {environment}")
             logging.info(f"Is Azure: {is_azure}")
