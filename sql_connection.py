@@ -61,10 +61,10 @@ def connect_to_sql(max_retries=3):
 
             if is_azure:
                 try:
-                    user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
-                    logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
-                    credential = DefaultAzureCredential(client_id=user_assigned_client_id)
-                    token = credential.get_token("https://database.windows.net/.default").token
+                    # user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
+                    # logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
+                    # credential = DefaultAzureCredential(client_id=user_assigned_client_id)
+                    # token = credential.get_token("https://database.windows.net/.default").token
                     # Get token explicitly
                     logging.info('Python HTTP trigger function processed a request.')
                     server="crypto-alerts.database.windows.net"
@@ -73,7 +73,7 @@ def connect_to_sql(max_retries=3):
                     # Optional to use username and password for authentication
                     # username = 'name' 
                     # password = 'pass'
-                    db_token = token
+                    # db_token = token
                     connection_string = 'DRIVER='+driver+';SERVER='+server+';DATABASE='+database
                     #When MSI is enabled
               
