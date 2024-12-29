@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from dotenv import load_dotenv
 import os
-from azure.identity import ManagedIdentityCredential
+from azure.identity import DefaultAzureCredential
 import logging
 import time
 import subprocess
@@ -62,7 +62,7 @@ def connect_to_sql(max_retries=3):
                 try:
                     user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
                     logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
-                    credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
+                    credential = DefaultAzureCredential()
                     access_token = credential.get_token("https://database.windows.net/.default").token
                     connection_string = (
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
@@ -73,7 +73,7 @@ def connect_to_sql(max_retries=3):
                         "TrustServerCertificate=no;"
                     )
                     logging.info(f"Access token: {access_token}")
-                    logging.info(f"Azure connection string (with token): {connection_string}")
+                    logging.info(f"Azure connection string (without token): {connection_string}")
                     conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
                     logging.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
