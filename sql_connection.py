@@ -61,7 +61,7 @@ def connect_to_sql(max_retries=3):
                     user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
                     logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
                     credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
-                    access_token = credential.get_token("https://database.windows.net/.default")
+                    access_token = credential.get_token("https://database.windows.net/.default").token
                     connection_string = (
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                         f"SERVER={server};"
@@ -72,8 +72,10 @@ def connect_to_sql(max_retries=3):
                     )
                     logging.info(f"Access token: {access_token}")
                     logging.info(f"Azure connection string (with token): {connection_string}")
-                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token.token})
+                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
                     logging.info("Successfully connected to the database.")
+                except pyodbc.Error as e:
+                    logging.error(f"ODBC Error: {e}")
                 except Exception as e:
                     logging.error(f"Failed to connect to the database: {str(e)}")
             else:
@@ -88,6 +90,8 @@ def connect_to_sql(max_retries=3):
                     )
                     conn = pyodbc.connect(connection_string)
                     logging.info("Successfully connected to the database.")
+                except pyodbc.Error as e:
+                    logging.error(f"ODBC Error: {e}")
                 except Exception as e:
                     logging.error(f"Failed to connect to the database: {str(e)}")
                 
@@ -130,6 +134,8 @@ def fetch_symbols() -> List[Symbol]:
                 cursor.close()
                 conn.close()
                 return symbols
+            except pyodbc.Error as e:
+                logging.error(f"ODBC Error while fetching symbols: {e}")
             except Exception as e:
                 logging.error(f"Error fetching symbols: {str(e)}")
             finally:
