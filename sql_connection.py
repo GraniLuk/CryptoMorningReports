@@ -9,6 +9,7 @@ import logging
 import time
 import subprocess
 from telegram_logging_handler import app_logger
+import struct
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -64,6 +65,9 @@ def connect_to_sql(max_retries=3):
                     logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
                     credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
                     access_token = credential.get_token("https://database.windows.net/.default").token
+                    token_bytes = access_token.encode('utf-8')
+                    exptoken = token_bytes + b'\0'
+                    tokenstruct = struct.pack("=i", len(exptoken)) + exptoken
                     connection_string = (
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                         f"SERVER={server};"
@@ -74,7 +78,7 @@ def connect_to_sql(max_retries=3):
                     )
                     logging.info(f"Access token: {access_token}")
                     logging.info(f"Azure connection string (with token): {connection_string}")
-                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
+                    conn = pyodbc.connect(connection_string, attrs_before={1256: tokenstruct})
                     logging.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     app_logger.error(f"ODBC Error: {e}")
