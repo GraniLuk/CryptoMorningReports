@@ -67,20 +67,30 @@ def connect_to_sql(max_retries=3):
                     # Get token explicitly
                     credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
                     token = credential.get_token("https://database.windows.net/.default")
-                    logging.info(f"Successfully obtained token. Token length: {len(token.token)}")
+                    
+                    # Verify we have all required values
+                    if not user_assigned_client_id or not token.token:
+                        logging.error(f"Missing required values: client_id present: {bool(user_assigned_client_id)}, token present: {bool(token.token)}")
+                        raise ValueError("Missing required authentication values")
+                        
+                    logging.info(f"Token obtained successfully. Length: {len(token.token)}")
                     
                     connection_string = (
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                         f"SERVER={server};"
                         f"DATABASE={database};"
                         "Authentication=ActiveDirectoryServicePrincipal;"
-                        f"User Id={user_assigned_client_id};"
-                        f"Password={token.token};"
+                        f"UID={user_assigned_client_id};"
+                        f"PWD={token.token};"
                         "Connection Timeout=60;"
                         "Encrypt=yes;"
                         "TrustServerCertificate=no"
                     )
-                    logging.info("Attempting connection with token auth...")
+                    
+                    # Log connection string (without sensitive info)
+                    safe_conn_string = connection_string.replace(token.token, "REDACTED")
+                    logging.info(f"Attempting connection with string: {safe_conn_string}")
+                    
                     conn = pyodbc.connect(connection_string)
                     logging.info("Successfully connected to database")
                 except pyodbc.Error as e:
