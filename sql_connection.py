@@ -76,8 +76,9 @@ def connect_to_sql(max_retries=3):
                     # db_token = token
                     connection_string = 'DRIVER='+driver+';SERVER='+server+';DATABASE='+database
                     #When MSI is enabled
+                    
               
-                    conn = pyodbc.connect(connection_string+';Authentication=ActiveDirectoryMsi')
+                    conn = pyodbc.connect(connection_string+';Authentication=Active Directory Managed Identity')
                     
                     
 
