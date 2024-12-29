@@ -68,14 +68,13 @@ def connect_to_sql(max_retries=3):
                     "TrustServerCertificate=no"
                 )
                 logging.info(f"Azure connection string (without token): {connection_string}")
-                conn = pyodbc.connect(connection_string, attrs_before={"AccessToken": access_token})
+                conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
             else:
                 connection_string = (
                     f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                     f"SERVER={server};"
                     f"DATABASE={database};"
-                    f"UID={username};"
-                    "Connection Timeout=30;"
+                    "Connection Timeout=60;"
                     "Encrypt=yes;"
                     "TrustServerCertificate=no"
                 )
