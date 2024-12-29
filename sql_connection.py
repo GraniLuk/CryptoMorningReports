@@ -61,7 +61,7 @@ def connect_to_sql(max_retries=3):
                     user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
                     logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
                     credential = ManagedIdentityCredential(client_id=user_assigned_client_id)
-                    access_token = credential.get_token("https://database.windows.net/.default").token
+                    access_token = credential.get_token("https://database.windows.net/.default")
                     connection_string = (
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                         f"SERVER={server};"
