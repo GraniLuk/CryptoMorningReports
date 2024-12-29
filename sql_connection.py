@@ -44,7 +44,7 @@ def connect_to_sql(max_retries=3):
     for attempt in range(max_retries):
         try:
             # Connection parameters
-            server = 'tcp:crypto-alerts.database.windows.net,1433'
+            server = 'crypto-alerts.database.windows.net'
             database = 'Crypto'
             username = 'grani'
             password = os.getenv('SQL_PASSWORD')
