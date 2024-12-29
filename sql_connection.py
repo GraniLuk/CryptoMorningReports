@@ -7,6 +7,7 @@ import os
 from azure.identity import ManagedIdentityCredential
 import logging
 import time
+import subprocess
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -46,7 +47,7 @@ def connect_to_sql(max_retries=3):
             database = 'Crypto'
             username = 'grani'
             password = os.getenv('SQL_PASSWORD')
-            
+            check_odbc_driver_version()
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
             is_azure = environment is None or environment.lower() != "development"
@@ -108,6 +109,23 @@ def connect_to_sql(max_retries=3):
                 continue
             raise
 
+
+def check_odbc_driver_version():
+    try:
+        # Run the command to list the installed ODBC drivers
+        result = subprocess.run(
+            ['odbcinst', '-q', '-d'],  # Query for installed ODBC drivers
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True
+        )
+        odbc_drivers = result.stdout.decode('utf-8')
+        logging.info(f"ODBC Drivers installed: {odbc_drivers}")
+        return odbc_drivers
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error checking ODBC drivers: {e.stderr.decode('utf-8')}")
+        return None
+    
 def fetch_symbols() -> List[Symbol]:
     """
     Fetches all symbols from the database and returns them as a list of Symbol objects
