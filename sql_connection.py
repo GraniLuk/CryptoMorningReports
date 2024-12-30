@@ -85,6 +85,7 @@ def connect_to_sql(max_retries=3):
                     f"DATABASE={database};"
                     f"UID={username};"
                     "Connection Timeout=120;"
+                    "Login Timeout=120;"  # Add Login Timeout
                     "Encrypt=yes;"
                     "TrustServerCertificate=no"
                     )
