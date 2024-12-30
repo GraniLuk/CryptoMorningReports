@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from dotenv import load_dotenv
 import os
-from azure.identity import DefaultAzureCredential
+from azure import identity
 import logging
 import time
 import subprocess
@@ -52,7 +52,7 @@ def connect_to_sql(max_retries=3):
             check_odbc_driver_version()
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
-            is_azure = environment is not None and environment.lower() != "development"
+            is_azure = environment is None or environment.lower() != "development"
             logging.info(f"Attempt {attempt + 1}/{max_retries}")
             logging.info(f"Environment: {environment}")
             logging.info(f"Is Azure: {is_azure}")
@@ -61,21 +61,15 @@ def connect_to_sql(max_retries=3):
 
             if is_azure:
                 try:
-                    user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
-                    logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
-                    credential = DefaultAzureCredential()
-                    access_token = credential.get_token("https://database.windows.net/.default").token
-                    connection_string = (
-                        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-                        f"SERVER={server};"
-                        f"DATABASE={database};"
-                        "Connection Timeout=120;"
-                        "Encrypt=yes;"
-                        "TrustServerCertificate=no;"
-                    )
-                    logging.info(f"Access token: {access_token}")
+                    connection_string = os.environ["AZURE_SQL_CONNECTIONSTRING"]
+                    credential = identity.DefaultAzureCredential(exclude_interactive_browser_credential=False)
+                    token_bytes = credential.get_token("https://database.windows.net/.default").token.encode("UTF-16-LE")
+                    token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
+                    SQL_COPT_SS_ACCESS_TOKEN = 1256  # This connection option is defined by microsoft in msodbcsql.h
+                    
+                    logging.info(f"Access token: {token_struct}")
                     logging.info(f"Azure connection string (without token): {connection_string}")
-                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
+                    conn = pyodbc.connect(connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})
                     logging.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     logging.error(f"ODBC Error: {e}")
