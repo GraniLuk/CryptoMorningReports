@@ -65,6 +65,8 @@ def process_bitcoin_checker():
     except Exception as e:
         logger.error('Function failed with error: %s', str(e))
         raise
+    finally:
+        conn.close()
 
 
 # Update send_telegram_message function definition:
