@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from dotenv import load_dotenv
 import os
-from azure.identity import ManagedIdentityCredential
+from azure.identity import DefaultAzureCredential
 import logging
 import time
 import subprocess
