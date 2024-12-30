@@ -69,7 +69,7 @@ def connect_to_sql(max_retries=3):
                         f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                         f"SERVER={server};"
                         f"DATABASE={database};"
-                        "Connection Timeout=60;"
+                        "Connection Timeout=120;"
                         "Encrypt=yes;"
                         "TrustServerCertificate=no;"
                     )
@@ -90,7 +90,7 @@ def connect_to_sql(max_retries=3):
                     f"SERVER={server};"
                     f"DATABASE={database};"
                     f"UID={username};"
-                    "Connection Timeout=90;"
+                    "Connection Timeout=120;"
                     "Encrypt=yes;"
                     "TrustServerCertificate=no"
                     )
