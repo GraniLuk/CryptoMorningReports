@@ -42,6 +42,7 @@ class Symbol:
         return [f"{symbol.symbol_name}-USD" for symbol in symbols]
 
 def connect_to_sql(max_retries=3):
+    conn = None
     for attempt in range(max_retries):
         try:
             # Connection parameters
@@ -56,26 +57,25 @@ def connect_to_sql(max_retries=3):
             logging.info(f"Environment: {environment}")
             logging.info(f"Is Azure: {is_azure}")
             
-            conn = None  # Initialize the conn variable
-
             if is_azure:
                 try:
                     connection_string = os.environ["AZURE_SQL_CONNECTIONSTRING"]
                     credential = identity.DefaultAzureCredential(exclude_interactive_browser_credential=False)
-                    token_bytes = credential.get_token("https://database.windows.net/.default").token.encode("UTF-16-LE")
+                    token = credential.get_token("https://database.windows.net/.default").token
+                    logging.info(f"Access token: {token}")
+                    token_bytes = token.encode("UTF-16-LE")
                     token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
                     SQL_COPT_SS_ACCESS_TOKEN = 1256  # This connection option is defined by microsoft in msodbcsql.h
                     
-                    logging.info(f"Access token: {token_struct}")
                     logging.info(f"Azure connection string (without token): {connection_string}")
                     conn = pyodbc.connect(connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})
                     logging.info("Successfully connected to the database.")
                     return conn
                 except pyodbc.Error as e:
-                    logging.error(f"ODBC Error: {e}")
+                    app_logger.error(f"ODBC Error: {e}")
                     raise
                 except Exception as e:
-                    logging.error(f"Unexpected error: {str(e)}")
+                    app_logger.error(f"Unexpected error: {str(e)}")
                     raise
             else:
                 try:
@@ -94,22 +94,26 @@ def connect_to_sql(max_retries=3):
                     logging.info("Successfully connected to the database.")
                     return conn
                 except pyodbc.Error as e:
-                    logging.error(f"ODBC Error: {e}")
+                    app_logger.error(f"ODBC Error: {e}")
                 except Exception as e:
-                    logging.error(f"Failed to connect to the database: {str(e)}")
+                    app_logger.error(f"Failed to connect to the database: {str(e)}")
                 
             logging.info("Connection successful")
             return conn
             
         except pyodbc.Error as e:
-            logging.error(f"Attempt {attempt + 1} failed:")
-            logging.error(f"Error state: {e.args[0] if e.args else 'No state'}")
-            logging.error(f"Error message: {str(e)}")
+            app_logger.error(f"Attempt {attempt + 1} failed:")
+            app_logger.error(f"Error state: {e.args[0] if e.args else 'No state'}")
+            app_logger.error(f"Error message: {str(e)}")
             
             if attempt < max_retries - 1:
                 time.sleep(30 ** attempt)  # Exponential backoff
                 continue
-            raise
+            else:
+                raise RuntimeError("Failed to connect to the database after maximum retries")
+
+    if conn is None:
+        raise RuntimeError("Failed to connect to the database after maximum retries")
     
 def fetch_symbols(conn) -> List[Symbol]:
     """
