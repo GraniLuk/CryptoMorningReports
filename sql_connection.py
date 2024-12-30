@@ -140,11 +140,11 @@ def fetch_symbols(conn) -> List[Symbol]:
                 cursor.close()
                 return symbols
             except pyodbc.Error as e:
-                logging.error(f"ODBC Error while fetching symbols: {e}")
+                app_logger.error(f"ODBC Error while fetching symbols: {e}")
             except Exception as e:
-                logging.error(f"Error fetching symbols: {str(e)}")
+                app_logger.error(f"Error fetching symbols: {str(e)}")
         else:
-            logging.error("Database connection was not established.")
+            app_logger.error("Database connection was not established.")
     except Exception as e:
-        logging.error(f"Error fetching symbols: {str(e)}")
+        app_logger.error(f"Error fetching symbols: {str(e)}")
         raise
