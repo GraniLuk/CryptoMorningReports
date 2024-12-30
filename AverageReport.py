@@ -32,7 +32,7 @@ def create_average_table(symbols : List[Symbol]) -> PrettyTable:
 
     
     average_table = PrettyTable()
-    average_table.field_names = ["Symbol", "Current Price", "MA50", "MA200"]
+    average_table.field_names = ["Symbol", "Current", "MA50", "MA200"]
 
     for row in all_values:
         symbol = row.symbol
