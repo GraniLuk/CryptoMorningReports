@@ -49,7 +49,6 @@ def connect_to_sql(max_retries=3):
             database = 'Crypto'
             username = 'grani'
             password = os.getenv('SQL_PASSWORD')
-            check_odbc_driver_version()
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
             is_azure = environment is None or environment.lower() != "development"
@@ -71,6 +70,7 @@ def connect_to_sql(max_retries=3):
                     logging.info(f"Azure connection string (without token): {connection_string}")
                     conn = pyodbc.connect(connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})
                     logging.info("Successfully connected to the database.")
+                    return conn
                 except pyodbc.Error as e:
                     logging.error(f"ODBC Error: {e}")
                     raise
@@ -91,6 +91,7 @@ def connect_to_sql(max_retries=3):
                     logging.info(f"Local connection string (without password): {connection_string}")
                     conn = pyodbc.connect(connection_string + f";PWD={password}")
                     logging.info("Successfully connected to the database.")
+                    return conn
                 except pyodbc.Error as e:
                     logging.error(f"ODBC Error: {e}")
                 except Exception as e:
@@ -108,25 +109,8 @@ def connect_to_sql(max_retries=3):
                 time.sleep(2 ** attempt)  # Exponential backoff
                 continue
             raise
-
-
-def check_odbc_driver_version():
-    try:
-        # Run the command to list the installed ODBC drivers
-        result = subprocess.run(
-            ['odbcinst', '-q', '-d'],  # Query for installed ODBC drivers
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True
-        )
-        odbc_drivers = result.stdout.decode('utf-8')
-        logging.info(f"ODBC Drivers installed: {odbc_drivers}")
-        return odbc_drivers
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error checking ODBC drivers: {e.stderr.decode('utf-8')}")
-        return None
     
-def fetch_symbols() -> List[Symbol]:
+def fetch_symbols(conn) -> List[Symbol]:
     """
     Fetches all symbols from the database and returns them as a list of Symbol objects
     
@@ -134,7 +118,6 @@ def fetch_symbols() -> List[Symbol]:
         List[Symbol]: List of cryptocurrency symbols
     """
     try:
-        conn = connect_to_sql()
         if conn:
             try:
                 cursor = conn.cursor()
@@ -150,17 +133,13 @@ def fetch_symbols() -> List[Symbol]:
                     symbols.append(symbol)
                     
                 cursor.close()
-                conn.close()
                 return symbols
             except pyodbc.Error as e:
                 logging.error(f"ODBC Error while fetching symbols: {e}")
             except Exception as e:
                 logging.error(f"Error fetching symbols: {str(e)}")
-            finally:
-                conn.close()
         else:
             logging.error("Database connection was not established.")
-    
     except Exception as e:
-        print(f"Error fetching symbols: {str(e)}")
+        logging.error(f"Error fetching symbols: {str(e)}")
         raise
