@@ -52,7 +52,7 @@ def connect_to_sql(max_retries=3):
             check_odbc_driver_version()
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
-            is_azure = environment is None or environment.lower() != "development"
+            is_azure = environment is not None and environment.lower() != "development"
             logging.info(f"Attempt {attempt + 1}/{max_retries}")
             logging.info(f"Environment: {environment}")
             logging.info(f"Is Azure: {is_azure}")
@@ -86,14 +86,16 @@ def connect_to_sql(max_retries=3):
             else:
                 try:
                     connection_string = (
-                        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-                        f"SERVER={server};"
-                        f"DATABASE={database};"
-                        "Connection Timeout=60;"
-                        "Encrypt=yes;"
-                        "TrustServerCertificate=no"
+                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                    f"SERVER={server};"
+                    f"DATABASE={database};"
+                    f"UID={username};"
+                    "Connection Timeout=30;"
+                    "Encrypt=yes;"
+                    "TrustServerCertificate=no"
                     )
-                    conn = pyodbc.connect(connection_string)
+                    logging.info(f"Local connection string (without password): {connection_string}")
+                    conn = pyodbc.connect(connection_string + f";PWD={password}")
                     logging.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     logging.error(f"ODBC Error: {e}")
