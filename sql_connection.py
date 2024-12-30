@@ -107,7 +107,7 @@ def connect_to_sql(max_retries=3):
             logging.error(f"Error message: {str(e)}")
             
             if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
+                time.sleep(30 ** attempt)  # Exponential backoff
                 continue
             raise
     
