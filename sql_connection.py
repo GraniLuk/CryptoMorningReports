@@ -90,7 +90,7 @@ def connect_to_sql(max_retries=3):
                     f"SERVER={server};"
                     f"DATABASE={database};"
                     f"UID={username};"
-                    "Connection Timeout=30;"
+                    "Connection Timeout=90;"
                     "Encrypt=yes;"
                     "TrustServerCertificate=no"
                     )
