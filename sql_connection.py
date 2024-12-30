@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from dotenv import load_dotenv
 import os
-from azure.identity import DefaultAzureCredential
+from azure.identity import ManagedIdentityCredential
 import logging
 import time
 import subprocess
@@ -45,7 +45,7 @@ def connect_to_sql(max_retries=3):
     for attempt in range(max_retries):
         try:
             # Connection parameters
-            server = 'tcp:crypto-alerts.database.windows.net,1433'
+            server = 'crypto-alerts.database.windows.net'
             database = 'Crypto'
             username = 'grani'
             password = os.getenv('SQL_PASSWORD')
@@ -61,30 +61,22 @@ def connect_to_sql(max_retries=3):
 
             if is_azure:
                 try:
-                    # user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
-                    # logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
-                    # credential = DefaultAzureCredential(client_id=user_assigned_client_id)
-                    # token = credential.get_token("https://database.windows.net/.default").token
-                    # Get token explicitly
-                    logging.info('Python HTTP trigger function processed a request.')
-                    server="crypto-alerts.database.windows.net"
-                    database="Crypto"
-                    driver="{ODBC Driver 18 for SQL Server}"
-                    # Optional to use username and password for authentication
-                    # username = 'name' 
-                    # password = 'pass'
-                    # db_token = token
-                    connection_string = 'DRIVER='+driver+';SERVER='+server+';DATABASE='+database
-                    #When MSI is enabled
-                    
-              
-                    conn = pyodbc.connect(connection_string+';Authentication=Active Directory Managed Identity')
-                    
-                    
-
-                    logging.info("Successfully connected to database")
-                    return conn
-                    
+                    user_assigned_client_id = os.getenv("USER_ASSIGNED_CLIENT_ID")
+                    logging.info(f"Using Managed Identity with client ID: {user_assigned_client_id}")
+                    credential = DefaultAzureCredential()
+                    access_token = credential.get_token("https://database.windows.net/.default").token
+                    connection_string = (
+                        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                        f"SERVER={server};"
+                        f"DATABASE={database};"
+                        "Connection Timeout=60;"
+                        "Encrypt=yes;"
+                        "TrustServerCertificate=no;"
+                    )
+                    logging.info(f"Access token: {access_token}")
+                    logging.info(f"Azure connection string (without token): {connection_string}")
+                    conn = pyodbc.connect(connection_string, attrs_before={1256: access_token})
+                    logging.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     logging.error(f"ODBC Error: {e}")
                     raise
