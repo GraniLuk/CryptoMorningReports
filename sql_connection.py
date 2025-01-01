@@ -72,10 +72,10 @@ def connect_to_sql(max_retries=3):
                     logging.info("Successfully connected to the database.")
                     return conn
                 except pyodbc.Error as e:
-                    app_logger.error(f"ODBC Error: {e}")
+                    app_logger.warning(f"ODBC Error: {e}")
                     raise
                 except Exception as e:
-                    app_logger.error(f"Unexpected error: {str(e)}")
+                    app_logger.warning(f"Unexpected error: {str(e)}")
                     raise
             else:
                 try:
@@ -94,9 +94,9 @@ def connect_to_sql(max_retries=3):
                     logging.info("Successfully connected to the database.")
                     return conn
                 except pyodbc.Error as e:
-                    app_logger.error(f"ODBC Error: {e}")
+                    app_logger.warning(f"ODBC Error: {e}")
                 except Exception as e:
-                    app_logger.error(f"Failed to connect to the database: {str(e)}")
+                    app_logger.warning(f"Failed to connect to the database: {str(e)}")
                 
             logging.info("Connection successful")
             return conn
