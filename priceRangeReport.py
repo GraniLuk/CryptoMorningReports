@@ -1,16 +1,12 @@
 from kucoin import Client as KucoinClient
-from collections import namedtuple
-from binance.client import Client as BinanceClient
-from binance.exceptions import BinanceAPIException
+from sharedCode.commonPrice import BinancePrice
+from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from configuration import get_kucoin_credentials
 from telegram_logging_handler import app_logger
 from typing import List
 from sql_connection import Symbol
-
-# Define namedtuple for price data
-BinancePrice = namedtuple('BinancePrice', ['symbol', 'low', 'high'])
 
 def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
     """Fetch price data from Kucoin exchange."""
@@ -27,26 +23,6 @@ def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
         )
     except Exception as e:
         app_logger.error(f"Kucoin error for {symbol}: {str(e)}")
-        return None
-    
-def fetch_binance_price(symbol : Symbol) -> BinancePrice:
-    """Fetch price data from Binance exchange."""
-    # Initialize the client
-    client = BinanceClient()
-    try:
-        # Get 24hr stats
-        ticker = client.get_ticker(symbol=symbol.binance_name)
-        
-        return BinancePrice(
-            symbol=symbol.symbol_name,
-            low=float(ticker['lowPrice']),
-            high=float(ticker['highPrice'])
-        )
-    except BinanceAPIException as e:
-        app_logger.error(f"Error fetching {symbol}: {e.message}")
-        return None
-    except Exception as e:
-        app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
         return None
 
 def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
@@ -71,8 +47,6 @@ def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
             price_data = fetch_binance_price(symbol)
             results.append(price_data)
             
-        except BinanceAPIException as e:
-            app_logger.error(f"Error fetching {symbol.symbol_name}: {e.message}")
         except Exception as e:
             app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
     
