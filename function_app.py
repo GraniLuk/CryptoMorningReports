@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
 from AverageReport import create_average_table
+from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
 
@@ -40,10 +41,14 @@ def process_bitcoin_checker():
 
         # Create second table for 24h ranges
         range_table = fetch_range_price(symbols)
+
+        # Create table for stepN report
+        stepn_table = fetch_stepn_report()
         # Print tables
         logger.info(rsi_table)
         logger.info(average_table)
         logger.info(range_table)
+        logger.info(stepn_table)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
@@ -53,6 +58,7 @@ def process_bitcoin_checker():
         message += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
         message += f"Average Report: <pre>{average_table}</pre>\n\n"
         message += f"24h Range Report:\n<pre>{range_table}</pre>"
+        message += f"StepN Report: <pre>{stepn_table}</pre>"
 
         # Run the async function with HTML parse mode
         asyncio.run(send_telegram_message(

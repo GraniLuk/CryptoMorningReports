@@ -1,0 +1,60 @@
+from sharedCode.commonPrice import BinancePrice
+from sharedCode.binance import fetch_binance_price
+from prettytable import PrettyTable
+from telegram_logging_handler import app_logger
+from sql_connection import Symbol
+from pycoingecko import CoinGeckoAPI
+
+def fetch_stepn_report() -> PrettyTable:
+    symbols = [
+    Symbol(symbol_id=1, symbol_name='GMT', full_name='STEPN Token'),
+    Symbol(symbol_id=2, symbol_name='GST', full_name='green-satoshi-token-bsc')
+    ]
+    results = []
+    
+    try:
+        gmt_price = fetch_binance_price(symbols[0])
+        results.append(gmt_price)
+    except Exception as e:
+        app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
+    
+    try: 
+        gst_price = fetch_coingecko_price(symbols[1])
+        results.append(gst_price)
+    except Exception as e:
+        app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
+             
+    
+    stepn_table = PrettyTable()
+    stepn_table.field_names = ["Symbol", "Current Price"]
+
+    results.append(BinancePrice(symbol='GMT/GST', low = 0, high = 0, last=results[0].last/results[1].last))
+
+    # Store rows with range calculation
+    range_rows = []
+    for result in results:
+        symbol = result.symbol
+        last = result.last
+        range_rows.append((symbol, last))
+
+    for row in range_rows:
+        stepn_table.add_row(row)
+    return stepn_table
+
+def fetch_coingecko_price(symbol: Symbol) -> BinancePrice:
+    """Fetch current price from CoinGecko API and return as BinancePrice object"""
+    try:
+        cg = CoinGeckoAPI()
+        price_data = cg.get_price(ids=symbol.full_name, vs_currencies='usd')
+        return BinancePrice(
+            symbol=symbol.symbol_name,
+            low=price_data[symbol.full_name]['usd'],
+            high=price_data[symbol.full_name]['usd'],
+            last=price_data[symbol.full_name]['usd']
+        )
+    except Exception as e:
+        app_logger.error(f"Error fetching price from CoinGecko: {e}")
+        raise
+
+if __name__ == "__main__":
+    fetch_stepn_report()
