@@ -5,10 +5,10 @@ from binance.exceptions import BinanceAPIException
 import pandas as pd
 from sql_connection import Symbol
 from telegram_logging_handler import app_logger
-from sharedCode.commonPrice import BinancePrice
+from sharedCode.commonPrice import TickerPrice
 
 
-def fetch_binance_price(symbol : Symbol) -> BinancePrice:
+def fetch_binance_price(symbol : Symbol) -> TickerPrice:
     """Fetch price data from Binance exchange."""
     # Initialize the client
     client = BinanceClient()
@@ -16,7 +16,7 @@ def fetch_binance_price(symbol : Symbol) -> BinancePrice:
         # Get 24hr stats
         ticker = client.get_ticker(symbol=symbol.binance_name)
         
-        return BinancePrice(
+        return TickerPrice(
             symbol=symbol.symbol_name,
             low=float(ticker['lowPrice']),
             high=float(ticker['highPrice']),

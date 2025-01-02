@@ -1,5 +1,5 @@
 from kucoin import Client as KucoinClient
-from sharedCode.commonPrice import BinancePrice
+from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
@@ -16,7 +16,7 @@ def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
         # Get 24hr stats
         ticker = client.get_24hr_stats(symbol.kucoin_name)
         
-        return BinancePrice(
+        return TickerPrice(
             symbol=symbol.symbol_name,
             low=float(ticker['low']),
             high=float(ticker['high'])

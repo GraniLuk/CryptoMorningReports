@@ -1,4 +1,4 @@
-from sharedCode.commonPrice import BinancePrice
+from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from telegram_logging_handler import app_logger
@@ -28,7 +28,7 @@ def fetch_stepn_report() -> PrettyTable:
     stepn_table = PrettyTable()
     stepn_table.field_names = ["Symbol", "Current Price"]
 
-    results.append(BinancePrice(symbol='GMT/GST', low = 0, high = 0, last=results[0].last/results[1].last))
+    results.append(TickerPrice(symbol='GMT/GST', low = 0, high = 0, last=results[0].last/results[1].last))
 
     # Store rows with range calculation
     range_rows = []
@@ -41,12 +41,12 @@ def fetch_stepn_report() -> PrettyTable:
         stepn_table.add_row(row)
     return stepn_table
 
-def fetch_coingecko_price(symbol: Symbol) -> BinancePrice:
+def fetch_coingecko_price(symbol: Symbol) -> TickerPrice:
     """Fetch current price from CoinGecko API and return as BinancePrice object"""
     try:
         cg = CoinGeckoAPI()
         price_data = cg.get_price(ids=symbol.full_name, vs_currencies='usd')
-        return BinancePrice(
+        return TickerPrice(
             symbol=symbol.symbol_name,
             low=price_data[symbol.full_name]['usd'],
             high=price_data[symbol.full_name]['usd'],
