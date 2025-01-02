@@ -102,14 +102,13 @@ def connect_to_sql(max_retries=3):
             return conn
             
         except pyodbc.Error as e:
-            app_logger.error(f"Attempt {attempt + 1} failed:")
-            app_logger.error(f"Error state: {e.args[0] if e.args else 'No state'}")
-            app_logger.error(f"Error message: {str(e)}")
-            
+            app_logger.warning(f"Attempt {attempt + 1} failed:")
+            app_logger.warning(f"Error state: {e.args[0] if e.args else 'No state'}")
             if attempt < max_retries - 1:
-                time.sleep(30 ** attempt)  # Exponential backoff
+                time.sleep(45 ** attempt)  # Exponential backoff
                 continue
             else:
+                app_logger.error(f"Error message: {str(e)}")
                 raise RuntimeError("Failed to connect to the database after maximum retries")
 
     if conn is None:
