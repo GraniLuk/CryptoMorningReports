@@ -5,6 +5,7 @@ from binance.exceptions import BinanceAPIException
 import pandas as pd
 from sql_connection import Symbol
 from telegram_logging_handler import app_logger
+from sharedCode.commonPrice import BinancePrice
 
 
 def fetch_binance_price(symbol : Symbol) -> BinancePrice:
@@ -18,7 +19,8 @@ def fetch_binance_price(symbol : Symbol) -> BinancePrice:
         return BinancePrice(
             symbol=symbol.symbol_name,
             low=float(ticker['lowPrice']),
-            high=float(ticker['highPrice'])
+            high=float(ticker['highPrice']),
+            last=float(ticker['lastPrice'])
         )
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching {symbol}: {e.message}")
