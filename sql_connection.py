@@ -52,7 +52,7 @@ def connect_to_sql(max_retries=3):
             password = os.getenv('SQL_PASSWORD')
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
-            is_azure = environment is None or environment.lower() != "development"
+            is_azure = environment is not None and environment.lower() != "development"
             logging.info(f"Attempt {attempt + 1}/{max_retries}")
             logging.info(f"Environment: {environment}")
             logging.info(f"Is Azure: {is_azure}")
@@ -146,4 +146,32 @@ def fetch_symbols(conn) -> List[Symbol]:
             app_logger.error("Database connection was not established.")
     except Exception as e:
         app_logger.error(f"Error fetching symbols: {str(e)}")
+        raise
+
+def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float) -> None:
+    """
+    Saves STEPN results to the database
+    
+    Args:
+        conn: Database connection
+        gmt_price (float): Current GMT price
+        gst_price (float): Current GST price
+        ratio (float): GMT/GST ratio
+    """
+    try:
+        if conn:
+            cursor = conn.cursor()
+            query = """
+                INSERT INTO StepnResults (GMTPrice, GSTPrice, Ratio, DateTime)
+                VALUES (?, ?, ?, GETUTCDATE())
+            """
+            cursor.execute(query, (gmt_price, gst_price, ratio))
+            conn.commit()
+            cursor.close()
+            app_logger.info("Successfully saved STEPN results to database")
+    except pyodbc.Error as e:
+        app_logger.error(f"ODBC Error while saving STEPN results: {e}")
+        raise
+    except Exception as e:
+        app_logger.error(f"Error saving STEPN results: {str(e)}")
         raise

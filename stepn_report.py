@@ -2,7 +2,7 @@ from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol
+from sql_connection import Symbol, connect_to_sql, save_stepn_results
 from pycoingecko import CoinGeckoAPI
 
 def fetch_stepn_report() -> PrettyTable:
@@ -16,19 +16,32 @@ def fetch_stepn_report() -> PrettyTable:
         gmt_price = fetch_binance_price(symbols[0])
         results.append(gmt_price)
     except Exception as e:
-        app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
+        app_logger.error(f"Unexpected error for GMT: {str(e)}")
+        raise
     
     try: 
         gst_price = fetch_coingecko_price(symbols[1])
         results.append(gst_price)
     except Exception as e:
-        app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
+        app_logger.error(f"Unexpected error for GST: {str(e)}")
+        raise
              
+    # Calculate ratio
+    gmt_gst_ratio = results[0].last/results[1].last
     
+    # Save results to database
+    try:
+        conn = connect_to_sql()
+        save_stepn_results(conn, results[0].last, results[1].last, gmt_gst_ratio)
+        conn.close()
+    except Exception as e:
+        app_logger.error(f"Error saving STEPN results to database: {str(e)}")
+    
+    # Create table for display
     stepn_table = PrettyTable()
     stepn_table.field_names = ["Symbol", "Current Price"]
 
-    results.append(TickerPrice(symbol='GMT/GST', low = 0, high = 0, last=results[0].last/results[1].last))
+    results.append(TickerPrice(symbol='GMT/GST', low=0, high=0, last=gmt_gst_ratio))
 
     # Store rows with range calculation
     range_rows = []
