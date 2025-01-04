@@ -162,8 +162,13 @@ def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float) -
         if conn:
             cursor = conn.cursor()
             query = """
-                INSERT INTO StepnResults (GMTPrice, GSTPrice, Ratio, DateTime)
-                VALUES (?, ?, ?, GETUTCDATE())
+                MERGE INTO StepNResults AS target
+				USING (SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, CAST(GETDATE() AS DATE) AS Date) 
+					AS source (GMTPrice, GSTPrice, Ratio, Date)
+				ON target.Date = source.Date
+				WHEN NOT MATCHED THEN
+					INSERT (GMTPrice, GSTPrice, Ratio, Date)
+					VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date);
             """
             cursor.execute(query, (gmt_price, gst_price, ratio))
             conn.commit()
