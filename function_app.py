@@ -43,7 +43,7 @@ def process_bitcoin_checker():
         range_table = fetch_range_price(symbols)
 
         # Create table for stepN report
-        stepn_table = fetch_stepn_report()
+        stepn_table = fetch_stepn_report(conn)
         # Print tables
         logger.info(rsi_table)
         logger.info(average_table)
