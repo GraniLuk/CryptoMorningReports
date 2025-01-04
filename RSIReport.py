@@ -9,7 +9,7 @@ from configuration import get_kucoin_credentials
 from prettytable import PrettyTable
 import time
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol
+from sql_connection import Symbol, save_rsi_results
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
@@ -98,7 +98,7 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         app_logger.error(f"Error fetching data from Kucoin: {str(e)}")
         return pd.DataFrame()
 
-def create_rsi_table(symbols : List[Symbol]) -> PrettyTable:
+def create_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
     all_values = pd.DataFrame()
     
     for symbol in symbols:
@@ -113,7 +113,21 @@ def create_rsi_table(symbols : List[Symbol]) -> PrettyTable:
                 # Take only latest row
                 latest_row = df.iloc[-1:]
                 all_values = pd.concat([all_values, latest_row])
-                app_logger.info('%s: Price=%f, RSI=%f', symbol.symbol_name, latest_row['close'].iloc[-1], latest_row['RSI'].iloc[-1])
+                
+                # Save to database if connection is available
+                if conn:
+                    try:
+                        save_rsi_results(
+                            conn=conn,
+                            symbol_id=symbol.symbol_id,
+                            closed_price=float(latest_row['close'].iloc[-1]),
+                            rsi=float(latest_row['RSI'].iloc[-1])
+                        )
+                    except Exception as e:
+                        app_logger.error(f"Failed to save RSI results for {symbol.symbol_name}: {str(e)}")
+                
+                app_logger.info('%s: Price=%f, RSI=%f', symbol.symbol_name, 
+                              latest_row['close'].iloc[-1], latest_row['RSI'].iloc[-1])
         except Exception as e:
             app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
     

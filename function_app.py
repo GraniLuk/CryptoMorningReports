@@ -34,7 +34,7 @@ def process_bitcoin_checker():
         logger.info('Processing %d symbols...', len(symbols))
         
         # Create first table for RSI and prices
-        rsi_table = create_rsi_table(symbols)
+        rsi_table = create_rsi_table(symbols, conn)
 
         # Create second table for 50d and 200d averages
         average_table = create_average_table(symbols)

@@ -5,7 +5,7 @@ from telegram_logging_handler import app_logger
 from sql_connection import Symbol, connect_to_sql, save_stepn_results
 from pycoingecko import CoinGeckoAPI
 
-def fetch_stepn_report() -> PrettyTable:
+def fetch_stepn_report(conn) -> PrettyTable:
     symbols = [
     Symbol(symbol_id=1, symbol_name='GMT', full_name='STEPN Token'),
     Symbol(symbol_id=2, symbol_name='GST', full_name='green-satoshi-token-bsc')
@@ -31,9 +31,7 @@ def fetch_stepn_report() -> PrettyTable:
     
     # Save results to database
     try:
-        conn = connect_to_sql()
         save_stepn_results(conn, results[0].last, results[1].last, gmt_gst_ratio)
-        conn.close()
     except Exception as e:
         app_logger.error(f"Error saving STEPN results to database: {str(e)}")
     
