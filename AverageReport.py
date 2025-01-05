@@ -1,8 +1,9 @@
 from collections import namedtuple
 import yfinance as yf
 from prettytable import PrettyTable
+from moving_averages_repository import save_moving_averages_results
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol, save_moving_averages_results
+from sql_connection import Symbol
 from typing import List
 
 def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
