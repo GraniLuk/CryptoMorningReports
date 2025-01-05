@@ -40,7 +40,7 @@ def process_bitcoin_checker():
         average_table = create_average_table(symbols)
 
         # Create second table for 24h ranges
-        range_table = fetch_range_price(symbols)
+        range_table = fetch_range_price(symbols, conn)
 
         # Create table for stepN report
         stepn_table = fetch_stepn_report(conn)

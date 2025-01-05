@@ -6,7 +6,7 @@ from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from configuration import get_kucoin_credentials
 from telegram_logging_handler import app_logger
 from typing import List
-from sql_connection import Symbol
+from sql_connection import Symbol, connect_to_sql, save_price_range_results
 
 def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
     """Fetch price data from Kucoin exchange."""
@@ -25,7 +25,7 @@ def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
         app_logger.error(f"Kucoin error for {symbol}: {str(e)}")
         return None
 
-def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
+def fetch_range_price(symbols : List[Symbol], conn) -> PrettyTable:
     results = []
     kucoin_credentials = get_kucoin_credentials()
     
@@ -46,6 +46,20 @@ def fetch_range_price(symbols : List[Symbol]) -> PrettyTable:
             # Regular Binance fetch
             price_data = fetch_binance_price(symbol)
             results.append(price_data)
+            
+            # Save to database if connection is available
+            if conn and price_data:
+                try:
+                    price_range_percent = ((price_data.high - price_data.low) / price_data.low) * 100
+                    save_price_range_results(
+                        conn=conn,
+                        symbol_id=symbol.symbol_id,
+                        low_price=price_data.low,
+                        high_price=price_data.high,
+                        range_percent=price_range_percent
+                    )
+                except Exception as e:
+                    app_logger.error(f"Failed to save price range results for {symbol.symbol_name}: {str(e)}")
             
         except Exception as e:
             app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
