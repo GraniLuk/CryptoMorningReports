@@ -37,7 +37,7 @@ def process_bitcoin_checker():
         rsi_table = create_rsi_table(symbols, conn)
 
         # Create second table for 50d and 200d averages
-        average_table = create_average_table(symbols)
+        average_table = create_average_table(symbols, conn)
 
         # Create second table for 24h ranges
         range_table = fetch_range_price(symbols, conn)
