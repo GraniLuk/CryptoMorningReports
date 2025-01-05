@@ -96,7 +96,7 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
         logging.error('Failed to send Telegram message: %s', str(e))
 
 @app.timer_trigger(
-    schedule="0 5,12 * * *", 
+    schedule="0 5 * * *", 
     arg_name="myTimer", 
     use_monitor=False
 ) 
