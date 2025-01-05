@@ -1,7 +1,7 @@
 from collections import namedtuple
 import yfinance as yf
 from prettytable import PrettyTable
-from moving_averages_repository import save_moving_averages_results
+from moving_averages_repository import save_moving_averages_results, fetch_yesterday_moving_averages
 from telegram_logging_handler import app_logger
 from sql_connection import Symbol
 from typing import List
@@ -9,6 +9,7 @@ from typing import List
 def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
     all_values = []
     CryptoData = namedtuple('CryptoData', ['symbol', 'current_price', 'ma50', 'ma200'])
+    yesterdayValues = fetch_yesterday_moving_averages(conn)
 
     for symbol in symbols:
         try:
@@ -24,6 +25,26 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
             today_MA200 = round(df['MA200'].iloc[-1], 3)
             
             today_price = round(df['Close'].iloc[-1], 3)
+            
+            # Check for MA crossovers if we have yesterday's data
+            if not yesterdayValues.empty:
+                yesterday_data = yesterdayValues[yesterdayValues['SymbolName'] == symbol.symbol_name]
+                if not yesterday_data.empty:
+                    yesterday_price = yesterday_data['CurrentPrice'].iloc[0]
+                    yesterday_ma50 = yesterday_data['MA50'].iloc[0]
+                    yesterday_ma200 = yesterday_data['MA200'].iloc[0]
+                    
+                    # Check MA50 crossovers
+                    if yesterday_price < yesterday_ma50 and today_price > today_MA50:
+                        app_logger.info(f"{symbol.symbol_name} crossed above MA50")
+                    elif yesterday_price > yesterday_ma50 and today_price < today_MA50:
+                        app_logger.info(f"{symbol.symbol_name} crossed below MA50")
+                    
+                    # Check MA200 crossovers
+                    if yesterday_price < yesterday_ma200 and today_price > today_MA200:
+                        app_logger.info(f"{symbol.symbol_name} crossed above MA200")
+                    elif yesterday_price > yesterday_ma200 and today_price < today_MA200:
+                        app_logger.info(f"{symbol.symbol_name} crossed below MA200")
             
             # Store the results
             all_values.append(CryptoData(
