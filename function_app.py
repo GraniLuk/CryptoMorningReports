@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
-from AverageReport import create_average_table
+from movingAveragesReport import create_average_table
 from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
