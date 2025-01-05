@@ -1,6 +1,6 @@
-import logging
 from typing import List
 from kucoin import Client as KucoinClient
+from rsi_repository import save_rsi_results
 from sharedCode.binance import fetch_close_prices_from_Binance
 import pandas as pd
 from datetime import datetime, timedelta
@@ -9,7 +9,7 @@ from configuration import get_kucoin_credentials
 from prettytable import PrettyTable
 import time
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol, save_rsi_results
+from sql_connection import Symbol
 
 def calculate_rsi(series, window=14):
     delta = series.diff()

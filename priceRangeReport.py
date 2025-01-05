@@ -1,4 +1,5 @@
 from kucoin import Client as KucoinClient
+from priceRangeRepository import save_price_range_results
 from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
@@ -6,7 +7,7 @@ from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from configuration import get_kucoin_credentials
 from telegram_logging_handler import app_logger
 from typing import List
-from sql_connection import Symbol, save_price_range_results
+from sql_connection import Symbol
 
 def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
     """Fetch price data from Kucoin exchange."""

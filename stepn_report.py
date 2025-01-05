@@ -1,8 +1,9 @@
 from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
+from stepn_repository import save_stepn_results
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol, save_stepn_results
+from sql_connection import Symbol
 from pycoingecko import CoinGeckoAPI
 
 def fetch_stepn_report(conn) -> PrettyTable:
