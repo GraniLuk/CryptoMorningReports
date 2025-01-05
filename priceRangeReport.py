@@ -6,7 +6,7 @@ from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from configuration import get_kucoin_credentials
 from telegram_logging_handler import app_logger
 from typing import List
-from sql_connection import Symbol, connect_to_sql, save_price_range_results
+from sql_connection import Symbol, save_price_range_results
 
 def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
     """Fetch price data from Kucoin exchange."""
