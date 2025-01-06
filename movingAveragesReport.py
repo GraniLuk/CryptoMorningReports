@@ -26,9 +26,9 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
             
             today_price = round(df['Close'].iloc[-1], 3)
             
-            # Initialize status indicators
-            ma50_status = "⬆️" if today_price > today_MA50 else "⬇️"
-            ma200_status = "⬆️" if today_price > today_MA200 else "⬇️"
+            # Initialize status indicators with colored circles
+            ma50_status = "🟢" if today_price > today_MA50 else "🔴"
+            ma200_status = "🟢" if today_price > today_MA200 else "🔴"
             
             # Check for MA crossovers if we have yesterday's data
             if not yesterdayValues.empty:
@@ -40,18 +40,18 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
                     
                     # Update MA50 status with alert if crossed
                     if yesterday_price < yesterday_ma50 and today_price > today_MA50:
-                        ma50_status = "🚨⬆️"
+                        ma50_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above MA50")
                     elif yesterday_price > yesterday_ma50 and today_price < today_MA50:
-                        ma50_status = "🚨⬇️"
+                        ma50_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA50")
                     
                     # Update MA200 status with alert if crossed
                     if yesterday_price < yesterday_ma200 and today_price > today_MA200:
-                        ma200_status = "🚨⬆️"
+                        ma200_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above MA200")
                     elif yesterday_price > yesterday_ma200 and today_price < today_MA200:
-                        ma200_status = "🚨⬇️"
+                        ma200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA200")
             
             # Store the results
