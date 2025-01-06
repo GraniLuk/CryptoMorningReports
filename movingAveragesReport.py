@@ -101,16 +101,14 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
         return str_price
 
     average_table = PrettyTable()
-    average_table.field_names = ["Symbol", "Current", "MA50", "X", "MA200", "Y"]
+    average_table.field_names = ["Symbol", "Current", "MA50", "MA200"]
 
     for row in all_values:
         average_table.add_row([
             row.symbol,
             format_price(row.current_price),
-            format_price(row.ma50),
-            row.ma50_status,
-            format_price(row.ma200),
-            row.ma200_status
+            f"{format_price(row.ma50)} {row.ma50_status}",
+            f"{format_price(row.ma200)} {row.ma200_status}",
         ])
 
     return average_table
