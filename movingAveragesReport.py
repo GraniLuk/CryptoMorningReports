@@ -19,12 +19,12 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
             app_logger.info('Retrieved %d data points for %s', len(df), symbol.symbol_name)
             
             df['MA50'] = df['Close'].rolling(window=50).mean()
-            today_MA50 = round(df['MA50'].iloc[-1], 3)
+            today_MA50 = df['MA50'].iloc[-1]
             
             df['MA200'] = df['Close'].rolling(window=200).mean()
-            today_MA200 = round(df['MA200'].iloc[-1], 3)
+            today_MA200 = df['MA200'].iloc[-1]
             
-            today_price = round(df['Close'].iloc[-1], 3)
+            today_price = df['Close'].iloc[-1]
             
             # Initialize status indicators with colored circles
             ma50_status = "🟢" if today_price > today_MA50 else "🔴"
@@ -54,7 +54,7 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
                         ma200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA200")
             
-            # Store the results
+            # Store the results (keeping original float values)
             all_values.append(CryptoData(
                 symbol=symbol.symbol_name,
                 current_price=today_price,
@@ -64,7 +64,7 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
                 ma200_status=ma200_status
             ))
             
-            # Save to database if connection is available
+            # Save to database with original float values
             if conn:
                 try:
                     save_moving_averages_results(
@@ -80,16 +80,36 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
         except Exception as e:
             app_logger.error('Error processing symbol %s: %s', symbol.symbol_name, str(e))
 
+    # Format numbers just before displaying in table
+    def format_price(price):
+        # Convert to string with standard notation (no scientific)
+        str_price = f"{price:.10f}"
+        # Remove trailing zeros after decimal
+        str_price = str_price.rstrip('0').rstrip('.')
+        # Count total digits excluding decimal point
+        total_digits = sum(c.isdigit() for c in str_price)
+        
+        if total_digits > 6:
+            # If more than 6 digits, round to appropriate decimal places
+            decimal_idx = str_price.find('.')
+            if decimal_idx == -1:
+                return str(round(price))[:6]  # No decimal point
+            else:
+                before_decimal = decimal_idx
+                allowed_after_decimal = 6 - before_decimal
+                return f"{price:.{max(0, allowed_after_decimal)}f}"
+        return str_price
+
     average_table = PrettyTable()
-    average_table.field_names = ["Symbol", "Current", "MA50", "X", "MA200", "Y"]
+    average_table.field_names = ["Symbol", "Current", "MA50", "MA50 Status", "MA200", "MA200 Status"]
 
     for row in all_values:
         average_table.add_row([
             row.symbol,
-            row.current_price,
-            row.ma50,
+            format_price(row.current_price),
+            format_price(row.ma50),
             row.ma50_status,
-            row.ma200,
+            format_price(row.ma200),
             row.ma200_status
         ])
 
