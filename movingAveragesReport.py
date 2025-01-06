@@ -81,7 +81,7 @@ def create_average_table(symbols: List[Symbol], conn) -> PrettyTable:
             app_logger.error('Error processing symbol %s: %s', symbol.symbol_name, str(e))
 
     average_table = PrettyTable()
-    average_table.field_names = ["Symbol", "Current", "MA50", "MA50 Status", "MA200", "MA200 Status"]
+    average_table.field_names = ["Symbol", "Current", "MA50", "X", "MA200", "X"]
 
     for row in all_values:
         average_table.add_row([
