@@ -1,3 +1,6 @@
+from telegram import Bot
+
+
 def clean_symbol(symbol: str) -> str:
     """Clean and validate trading symbol string.
     
@@ -44,3 +47,8 @@ def convert_to_binance_symbol(yfinance_symbol: str) -> str:
         return YFINANCE_TO_BINANCE[yfinance_symbol]
     except KeyError:
         raise KeyError(f"No binance symbol mapping found for {yfinance_symbol}")
+    
+async def send_telegram_message(telegram_token, chat_id, message):        
+    bot = Bot(token=telegram_token)
+    async with bot:  # This handles cleanup automatically
+        await bot.send_message(chat_id=chat_id.strip(), text=message)
