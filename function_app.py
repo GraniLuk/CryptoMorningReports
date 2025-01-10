@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
-from movingAveragesReport import create_average_table
+from movingAveragesReport import create_moving_averages_tables
 from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
@@ -37,7 +37,7 @@ def process_bitcoin_checker():
         rsi_table = create_rsi_table(symbols, conn)
 
         # Create second table for 50d and 200d averages
-        average_table = create_average_table(symbols, conn)
+        ma_average_table, ema_average_table = create_moving_averages_tables(symbols, conn)
 
         # Create second table for 24h ranges
         range_table = fetch_range_price(symbols, conn)
@@ -46,7 +46,8 @@ def process_bitcoin_checker():
         stepn_table = fetch_stepn_report(conn)
         # Print tables
         logger.info(rsi_table)
-        logger.info(average_table)
+        logger.info(ma_average_table)
+        logger.info(ema_average_table)
         logger.info(range_table)
         logger.info(stepn_table)
 
@@ -56,7 +57,8 @@ def process_bitcoin_checker():
         # Format message with pre tags
         message = f"Crypto Report: {today_date}\n"
         message += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
-        message += f"Average Report: <pre>{average_table}</pre>\n\n"
+        message += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
+        message += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
         message += f"24h Range Report:\n<pre>{range_table}</pre>"
         message += f"StepN Report: <pre>{stepn_table}</pre>"
 
