@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from priceRangeReport import fetch_range_price
 from RSIReport import create_rsi_table
-from movingAveragesReport import create_moving_averages_tables
+from movingAveragesReport import calculate_indicators
 from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
@@ -37,7 +37,7 @@ def process_bitcoin_checker():
         rsi_table = create_rsi_table(symbols, conn)
 
         # Create second table for 50d and 200d averages
-        ma_average_table, ema_average_table = create_moving_averages_tables(symbols, conn)
+        ma_average_table, ema_average_table = calculate_indicators(symbols, conn)
 
         # Create second table for 24h ranges
         range_table = fetch_range_price(symbols, conn)
