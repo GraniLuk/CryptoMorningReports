@@ -35,6 +35,8 @@ def calculate_indicators(symbols: List[Symbol], conn, target_date: date = None) 
                 app_logger.warning(f"No data available for {symbol.symbol_name} on {target_date}")
                 continue
                 
+            # Convert DataFrame index to timezone-naive
+            df.index = df.index.tz_localize(None)
             # Find the target date's data
             # Convert target_date to timestamp for comparison
             target_timestamp = pd.Timestamp(target_date)
@@ -141,7 +143,7 @@ def calculate_indicators(symbols: List[Symbol], conn, target_date: date = None) 
                     app_logger.error(f"Failed to save moving averages results for {symbol.symbol_name}: {str(e)}")
                     
         except Exception as e:
-            app_logger.error('Error processing symbol %s: %s', symbol.symbol_name, str(e))
+            app_logger.error('Error processing moving average for symbol %s: %s', symbol.symbol_name, str(e))
 
     # Create MA table
     ma_table = PrettyTable()
