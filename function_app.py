@@ -61,20 +61,29 @@ def process_bitcoin_checker():
         today_date = datetime.now().strftime("%Y-%m-%d")
 
         # Format message with pre tags
-        message = f"Crypto Report: {today_date}\n"
-        message += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
-        message += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
-        message += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
-        message += f"MACD Report: <pre>{macd_table}</pre>\n\n"
-        message += f"24h Range Report:\n<pre>{range_table}</pre>"
-        message += f"StepN Report: <pre>{stepn_table}</pre>"
+        message_part1 = f"Crypto Report: {today_date}\n"
+        message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
+        message_part1 += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
+        message_part1 += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
+        
+        message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
+        message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
+        message_part2 += f"StepN Report: <pre>{stepn_table}</pre>"
 
-        # Run the async function with HTML parse mode
+        # Run the async function with HTML parse mode for both messages
         asyncio.run(send_telegram_message(
             telegram_enabled, 
             telegram_token, 
             telegram_chat_id, 
-            message,
+            message_part1,
+            parse_mode="HTML"
+        ))
+        
+        asyncio.run(send_telegram_message(
+            telegram_enabled, 
+            telegram_token, 
+            telegram_chat_id, 
+            message_part2,
             parse_mode="HTML"
         ))
     except Exception as e:
