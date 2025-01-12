@@ -33,8 +33,8 @@ def calculate_macd(symbols: List[Symbol], conn, target_date: date = None) -> Pre
             if df.empty:
                 continue
                 
-            # Find the target date's data
-            target_timestamp = pd.Timestamp(target_date)
+            # Convert target_date to a timezone-aware timestamp
+            target_timestamp = pd.Timestamp(target_date).tz_localize('UTC')
             df = df[df.index <= target_timestamp]
             
             if df.empty:
