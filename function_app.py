@@ -11,6 +11,7 @@ from movingAveragesReport import calculate_indicators
 from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
+from macd_report import calculate_macd
 
 # Load environment variables from .env file
 load_dotenv()
@@ -44,12 +45,17 @@ def process_bitcoin_checker():
 
         # Create table for stepN report
         stepn_table = fetch_stepn_report(conn)
+
+        # Add MACD table calculation
+        macd_table = calculate_macd(symbols, conn)
+
         # Print tables
         logger.info(rsi_table)
         logger.info(ma_average_table)
         logger.info(ema_average_table)
         logger.info(range_table)
         logger.info(stepn_table)
+        logger.info(macd_table)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
@@ -59,6 +65,7 @@ def process_bitcoin_checker():
         message += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
         message += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
         message += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
+        message += f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message += f"24h Range Report:\n<pre>{range_table}</pre>"
         message += f"StepN Report: <pre>{stepn_table}</pre>"
 
