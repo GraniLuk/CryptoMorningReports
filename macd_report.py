@@ -33,8 +33,11 @@ def calculate_macd(symbols: List[Symbol], conn, target_date: date = None) -> Pre
             if df.empty:
                 continue
                 
-            # Convert target_date to a timezone-aware timestamp
-            target_timestamp = pd.Timestamp(target_date).tz_localize('UTC')
+            # Convert DataFrame index to timezone-naive
+            df.index = df.index.tz_localize(None)
+            
+            # Use timezone-naive timestamp for comparison
+            target_timestamp = pd.Timestamp(target_date)
             df = df[df.index <= target_timestamp]
             
             if df.empty:
