@@ -1,6 +1,6 @@
 import logging
 import asyncio
-from datetime import datetime
+from datetime import date, datetime
 import azure.functions as func
 import aiohttp
 import os
@@ -69,6 +69,78 @@ def process_bitcoin_checker():
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
         message_part2 += f"StepN Report: <pre>{stepn_table}</pre>"
+
+        # Run the async function with HTML parse mode for both messages
+        asyncio.run(send_telegram_message(
+            telegram_enabled, 
+            telegram_token, 
+            telegram_chat_id, 
+            message_part1,
+            parse_mode="HTML"
+        ))
+        
+        asyncio.run(send_telegram_message(
+            telegram_enabled, 
+            telegram_token, 
+            telegram_chat_id, 
+            message_part2,
+            parse_mode="HTML"
+        ))
+    except Exception as e:
+        logger.error('Function failed with error: %s', str(e))
+        raise
+    finally:
+        conn.close()
+
+def process_past_reports(target_date: date = None):
+    logging.info('BitcoinChecker function started at %s', datetime.now().isoformat())
+    
+    try:
+        # Load configuration
+        logging.info('Loading configuration...')
+        telegram_enabled = os.environ["TELEGRAM_ENABLED"].lower() == "true"
+        telegram_token = os.environ["TELEGRAM_TOKEN"]
+        telegram_chat_id = os.environ["TELEGRAM_CHAT_ID"]    
+        logger = app_logger
+        logger.info('Configuration loaded. Telegram enabled: %s', telegram_enabled)
+        conn = connect_to_sql()
+        # List of symbols
+        symbols = fetch_symbols(conn)
+        logger.info('Processing %d symbols...', len(symbols))
+        
+        # Create first table for RSI and prices
+        #rsi_table = create_rsi_table(symbols, conn)
+
+        # Create second table for 50d and 200d averages
+        ma_average_table, ema_average_table = calculate_indicators(symbols, conn, target_date)
+
+        # Create second table for 24h ranges
+        #range_table = fetch_range_price(symbols, conn)
+
+        # Create table for stepN report
+        #stepn_table = fetch_stepn_report(conn)
+
+        # Add MACD table calculation
+        macd_table = calculate_macd(symbols, conn, target_date)
+
+        # Print tables
+        #logger.info(rsi_table)
+        logger.info(ma_average_table)
+        logger.info(ema_average_table)
+        #logger.info(range_table)
+        #logger.info(stepn_table)
+        logger.info(macd_table)
+
+
+        # Format message with pre tags
+        message_part1 = f"Crypto Report: {target_date}\n"
+        #message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
+        message_part1 += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
+        message_part1 += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
+        
+        message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
+        #message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
+        #message_part2 += f"StepN Report: <pre>{stepn_table}</pre>"
 
         # Run the async function with HTML parse mode for both messages
         asyncio.run(send_telegram_message(
