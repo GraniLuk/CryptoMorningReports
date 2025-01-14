@@ -12,6 +12,7 @@ from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
 from macd_report import calculate_macd
+from launchpool_report import fetch_user_tweets_with_word
 
 # Load environment variables from .env file
 load_dotenv()
@@ -49,6 +50,9 @@ def process_bitcoin_checker():
         # Add MACD table calculation
         macd_table = calculate_macd(symbols, conn)
 
+        # Check if there is new launchpool
+        launchpool_report = asyncio.run(fetch_user_tweets_with_word('KucoinPoland','GemPool'))
+
         # Print tables
         logger.info(rsi_table)
         logger.info(ma_average_table)
@@ -56,6 +60,7 @@ def process_bitcoin_checker():
         logger.info(range_table)
         logger.info(stepn_table)
         logger.info(macd_table)
+        logger.info(launchpool_report)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
@@ -86,6 +91,16 @@ def process_bitcoin_checker():
             message_part2,
             parse_mode="HTML"
         ))
+
+        if (launchpool_report):
+            message_part3 = f"New Launchpool Report: <pre>{launchpool_report}</pre>"
+            asyncio.run(send_telegram_message(
+                telegram_enabled, 
+                telegram_token, 
+                telegram_chat_id, 
+                message_part3,
+                parse_mode="HTML"
+            ))
     except Exception as e:
         logger.error('Function failed with error: %s', str(e))
         raise
