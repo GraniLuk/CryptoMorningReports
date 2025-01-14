@@ -18,3 +18,4 @@ python-kucoin
 pyodbc
 azure-identity
 pycoingecko
+twikit
