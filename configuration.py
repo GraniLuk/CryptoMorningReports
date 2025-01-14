@@ -10,3 +10,10 @@ def get_kucoin_credentials():
         'api_secret': os.getenv('KUCOIN_API_SECRET'),
         'api_passphrase': os.getenv('KUCOIN_API_PASSPHRASE')
     }
+
+def get_twitter_credentials():
+    return {
+        'login': os.getenv('TWITTER_LOGIN'),
+        'email': os.getenv('TWITTER_EMAIL'),
+        'password': os.getenv('TWITTER_PASSWORD')
+    }
