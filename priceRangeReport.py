@@ -25,11 +25,10 @@ def fetch_range_price(symbols : List[Symbol], conn) -> PrettyTable:
                 )
                 if price_data:
                     results.append(price_data)
-                continue
-                
-            # Regular Binance fetch
-            price_data = fetch_binance_price(symbol)
-            results.append(price_data)
+            else:
+                # Regular Binance fetch
+                price_data = fetch_binance_price(symbol)
+                results.append(price_data)
             
             # Save to database if connection is available
             if conn and price_data:
