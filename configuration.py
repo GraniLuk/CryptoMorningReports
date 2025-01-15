@@ -15,5 +15,7 @@ def get_twitter_credentials():
     return {
         'login': os.getenv('TWITTER_LOGIN'),
         'email': os.getenv('TWITTER_EMAIL'),
-        'password': os.getenv('TWITTER_PASSWORD')
+        'password': os.getenv('TWITTER_PASSWORD'),
+        'auth_token': os.getenv('TWITTER_AUTH_TOKEN'),
+        'ct0': os.getenv('TWITTER_CT0')
     }

@@ -7,12 +7,11 @@ async def fetch_user_tweets_with_word(username, word, limit=5):
     
     config = get_twitter_credentials()
 
-    # Activate the client (required for guest access)
-    await client.login(
-        auth_info_1=config['login'],
-        auth_info_2=config['email'],
-        password=config['password']
-    )
+    # Set the cookies directly
+    client.set_cookies({
+    "auth_token": config['auth_token'],
+    "ct0": config['ct0'],
+})
     
     # Get the user by screen name
     user = await client.get_user_by_screen_name(username)
