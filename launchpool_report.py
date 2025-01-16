@@ -1,36 +1,44 @@
-import asyncio
-from twikit import Client
-from configuration import get_twitter_credentials
-from datetime import datetime, timezone
-async def fetch_user_tweets_with_word(username, word, limit=5):
-    client = Client()
-    
-    config = get_twitter_credentials()
+import requests
+import json
+import os
+from datetime import datetime
 
-    # Set the cookies directly
-    client.set_cookies({
-    "auth_token": config['auth_token'],
-    "ct0": config['ct0'],
-})
-    
-    # Get the user by screen name
-    user = await client.get_user_by_screen_name(username)
-    
-    # Fetch tweets from the user's timeline
-    tweets = await client.get_user_tweets(user.id, 'Tweets', count=limit)
-    
-    current_time = datetime.now(timezone.utc)
-    matching_tweets = []
-    
-    for tweet in tweets:
-        tweet_time_utc = tweet.created_at_datetime.replace(tzinfo=timezone.utc)
-        time_diff = current_time - tweet_time_utc
-        
-        # Check if the specific word is in the tweet text
-        if word.lower() in tweet.text.lower():
-            matching_tweets.append({
-                "text": tweet.text,
-                "created_at": tweet.created_at,
-                "time_ago": str(time_diff)
-            })
-    return matching_tweets
+# Endpoint to fetch articles
+URL = "https://www.kucoin.com/_api/seo-content-eco-service/web/article/searchRec?keyword=gempool&lang=en_US"
+
+def check_gempool_articles():
+
+    seen_articles = set()
+
+    # Fetch articles from the API
+    response = requests.get(URL)
+
+    if response.status_code == 200:
+        data = response.json()
+        if data.get("success") and "items" in data:
+            new_articles = []
+
+            for item in data["items"]:
+                article_id = item["id"]
+                article_code = item["articleCode"]
+                title = item["title"].replace("<em>", "").replace("</em>", "")  # Clean up formatting tags
+                article_url = f"https://www.kucoin.com/news/flash/{article_code}"
+
+                # Check if the article is new
+                if article_id not in seen_articles:
+                    seen_articles.add(article_id)
+                    new_articles.append(f"Title: {title}\nURL: {article_url}\n")
+
+            # Notify if there are new articles
+            if new_articles:
+                print("New Gempool Articles Found:\n")
+                for article in new_articles:
+                    print(article)
+            else:
+                print("No new articles found.")
+        else:
+            print("Failed to fetch articles: Unexpected response format.")
+    else:
+        print(f"Failed to fetch articles: HTTP {response.status_code}")
+
+    return seen_articles
