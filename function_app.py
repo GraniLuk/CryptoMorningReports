@@ -12,7 +12,7 @@ from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
 from sql_connection import connect_to_sql, fetch_symbols, Symbol
 from macd_report import calculate_macd
-from launchpool_report import fetch_user_tweets_with_word
+from launchpool_report import check_gempool_articles
 
 # Load environment variables from .env file
 load_dotenv()
@@ -51,7 +51,7 @@ def process_bitcoin_checker():
         macd_table = calculate_macd(symbols, conn)
 
         # Check if there is new launchpool
-        launchpool_report = asyncio.run(fetch_user_tweets_with_word('KucoinPoland','GemPool'))
+        launchpool_report = check_gempool_articles()
 
         # Print tables
         logger.info(rsi_table)
