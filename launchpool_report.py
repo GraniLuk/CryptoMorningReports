@@ -41,4 +41,4 @@ def check_gempool_articles():
     else:
         print(f"Failed to fetch articles: HTTP {response.status_code}")
 
-    return seen_articles
+    return new_articles
