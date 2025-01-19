@@ -100,7 +100,7 @@ def calculate_macd(symbols: List[Symbol], conn, target_date: date = None) -> Pre
 
     # Create MACD table
     macd_table = PrettyTable()
-    macd_table.field_names = ["Symbol", "Price", "MACD", "Signal", "Hist"]
+    macd_table.field_names = ["Symbol", "Price", "MACD", "Hist"]
 
     def format_number(num):
         return f"{num:.6f}".rstrip('0').rstrip('.')
@@ -111,7 +111,6 @@ def calculate_macd(symbols: List[Symbol], conn, target_date: date = None) -> Pre
             row.symbol,
             format_number(row.current_price),
             format_number(row.macd),
-            format_number(row.signal),
             f"{format_number(row.histogram)} {row.status}"
         ])
 
