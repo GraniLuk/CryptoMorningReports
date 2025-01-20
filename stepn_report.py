@@ -1,10 +1,11 @@
 from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
-from stepn_repository import save_stepn_results
+from stepn_repository import save_stepn_results, fetch_stepn_results_last_14_days
 from telegram_logging_handler import app_logger
 from sql_connection import Symbol
 from pycoingecko import CoinGeckoAPI
+import pandas as pd
 
 def fetch_stepn_report(conn) -> PrettyTable:
     symbols = [
@@ -29,10 +30,16 @@ def fetch_stepn_report(conn) -> PrettyTable:
              
     # Calculate ratio
     gmt_gst_ratio = results[0].last/results[1].last
+
+    last_14_days_results = fetch_stepn_results_last_14_days(conn)
+    ratios = [record[2] for record in last_14_days_results]  # Extracting ratios separately
+    ratios.append(gmt_gst_ratio)
+
+    ema14_results = calculate_ema14(ratios)
     
     # Save results to database
     try:
-        save_stepn_results(conn, results[0].last, results[1].last, gmt_gst_ratio)
+        save_stepn_results(conn, results[0].last, results[1].last, gmt_gst_ratio, ema14_results[-1])
     except Exception as e:
         app_logger.error(f"Error saving STEPN results to database: {str(e)}")
     
@@ -41,6 +48,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
     stepn_table.field_names = ["Symbol", "Current Price"]
 
     results.append(TickerPrice(symbol='GMT/GST', low=0, high=0, last=gmt_gst_ratio))
+    results.append(TickerPrice(symbol='EMA14', low=0, high=0, last=ema14_results[-1]))
 
     # Store rows with range calculation
     range_rows = []
@@ -52,6 +60,24 @@ def fetch_stepn_report(conn) -> PrettyTable:
     for row in range_rows:
         stepn_table.add_row(row)
     return stepn_table
+
+def calculate_ema14(ratios):
+        """
+        Calculates the 14-day Exponential Moving Average (EMA) for the ratio column using pandas.
+
+        Args:
+            ratios (list of float): List of ratio values.
+
+        Returns:
+            list: EMA14 values for the provided ratios.
+        """
+        if not ratios:
+            return []
+
+        df = pd.DataFrame(ratios, columns=["Ratio"])
+        df["EMA14"] = df["Ratio"].ewm(span=14, adjust=False).mean()
+
+        return df["EMA14"].tolist()
 
 def fetch_coingecko_price(symbol: Symbol) -> TickerPrice:
     """Fetch current price from CoinGecko API and return as BinancePrice object"""
