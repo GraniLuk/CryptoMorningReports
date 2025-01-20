@@ -10,9 +10,10 @@ from RSIReport import create_rsi_table
 from movingAveragesReport import calculate_indicators
 from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
-from sql_connection import connect_to_sql, fetch_symbols, Symbol
+from sql_connection import connect_to_sql, fetch_symbols
 from macd_report import calculate_macd
 from launchpool_report import check_gempool_articles
+from news_agent import get_crypto_news_summary
 
 # Load environment variables from .env file
 load_dotenv()
@@ -53,6 +54,8 @@ def process_bitcoin_checker():
         # Check if there is new launchpool
         launchpool_report = check_gempool_articles()
 
+        news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"])
+
         # Print tables
         logger.info(rsi_table)
         logger.info(ma_average_table)
@@ -61,6 +64,7 @@ def process_bitcoin_checker():
         logger.info(stepn_table)
         logger.info(macd_table)
         logger.info(launchpool_report)
+        logger.info(news_report)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
@@ -101,6 +105,14 @@ def process_bitcoin_checker():
                 message_part3,
                 parse_mode="HTML"
             ))
+
+        asyncio.run(send_telegram_message(
+            telegram_enabled,
+            telegram_token,
+            telegram_chat_id,
+            news_report,
+            parse_mode="HTML"
+        ))
     except Exception as e:
         logger.error('Function failed with error: %s', str(e))
         raise
