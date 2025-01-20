@@ -1,7 +1,7 @@
 import pyodbc
 from telegram_logging_handler import app_logger
 
-def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float) -> None:
+def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, ema: float) -> None:
     """
     Saves STEPN results to the database
     
@@ -24,7 +24,7 @@ def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float) -
                     INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14)
                     VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, source.EMA14);
             """
-            cursor.execute(query, (gmt_price, gst_price, ratio))
+            cursor.execute(query, (gmt_price, gst_price, ratio, ema))
             conn.commit()
             cursor.close()
             app_logger.info("Successfully saved STEPN results to database")
