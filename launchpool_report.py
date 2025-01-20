@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 # Endpoint to fetch articles
-URL = "https://www.kucoin.com/_api/seo-content-eco-service/web/article/searchRec?keyword=gempool&lang=en_US"
+URL = "https://www.kucoin.com/_api/seo-content-eco-service/web/article/searchRec?keyword=gempool+burningdrop&lang=en_US"
 
 def check_gempool_articles():
 
