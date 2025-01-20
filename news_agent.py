@@ -9,7 +9,7 @@ def get_crypto_news_summary(api_key):
     }
     
     data = {
-        "model": "pplx-7b-chat",
+        "model": "llama-3.1-sonar-large-128k-online",
         "messages": [
             {
                 "role": "system",
