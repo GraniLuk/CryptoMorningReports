@@ -17,7 +17,7 @@ def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, e
             cursor = conn.cursor()
             query = """
                 MERGE INTO StepNResults AS target
-                USING (SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, CAST(GETDATE() AS DATE) AS Date), ? AS EMA14
+                USING (SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, CAST(GETDATE() AS DATE) AS Date, ? AS EMA14)
                     AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14)
                 ON target.Date = source.Date
                 WHEN NOT MATCHED THEN
