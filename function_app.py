@@ -54,8 +54,6 @@ def process_bitcoin_checker():
         # Check if there is new launchpool
         launchpool_report = check_gempool_articles()
 
-        news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"])
-
         # Print tables
         logger.info(rsi_table)
         logger.info(ma_average_table)
@@ -64,7 +62,6 @@ def process_bitcoin_checker():
         logger.info(stepn_table)
         logger.info(macd_table)
         logger.info(launchpool_report)
-        logger.info(news_report)
 
         # Get today's date
         today_date = datetime.now().strftime("%Y-%m-%d")
@@ -74,10 +71,12 @@ def process_bitcoin_checker():
         message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
         message_part1 += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
         message_part1 += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
-        
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
-        message_part2 += f"StepN Report: <pre>{stepn_table}</pre>"
+
+        news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2)
+
+        stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
 
         # Run the async function with HTML parse mode for both messages
         asyncio.run(send_telegram_message(
@@ -93,6 +92,14 @@ def process_bitcoin_checker():
             telegram_token, 
             telegram_chat_id, 
             message_part2,
+            parse_mode="HTML"
+        ))
+
+        asyncio.run(send_telegram_message(
+            telegram_enabled, 
+            telegram_token, 
+            telegram_chat_id, 
+            stepn_report,
             parse_mode="HTML"
         ))
 
