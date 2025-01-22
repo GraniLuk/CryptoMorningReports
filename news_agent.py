@@ -1,6 +1,6 @@
 import requests
 
-def get_crypto_news_summary(api_key):
+def get_crypto_news_summary(api_key, indicators_message):
     url = "https://api.perplexity.ai/chat/completions"
     
     headers = {
@@ -17,7 +17,7 @@ def get_crypto_news_summary(api_key):
             },
             {
                 "role": "user",
-                "content": "Summarize today's top crypto news and provide sentiment analysis for major cryptocurrencies."
+                "content": "Summarize today's top crypto news and provide sentiment analysis for major cryptocurrencies. You can also base your analysis on the following indicators: " + indicators_message
             }
         ]
     }
