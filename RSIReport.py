@@ -9,7 +9,7 @@ from configuration import get_kucoin_credentials
 from prettytable import PrettyTable
 import time
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol
+from source_repository import Symbol
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
