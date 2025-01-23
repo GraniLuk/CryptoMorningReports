@@ -3,7 +3,7 @@ from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from stepn_repository import save_stepn_results, fetch_stepn_results_last_14_days
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol
+from source_repository import Symbol
 from pycoingecko import CoinGeckoAPI
 import pandas as pd
 

@@ -6,7 +6,7 @@ from configuration import get_kucoin_credentials
 from sharedCode.kucoin import fetch_kucoin_price
 from telegram_logging_handler import app_logger
 from typing import List
-from sql_connection import Symbol
+from source_repository import Symbol
 
 
 def fetch_range_price(symbols : List[Symbol], conn) -> PrettyTable:
