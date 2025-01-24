@@ -9,7 +9,7 @@ from configuration import get_kucoin_credentials
 from prettytable import PrettyTable
 import time
 from telegram_logging_handler import app_logger
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 
 def calculate_rsi(series, window=14):
     delta = series.diff()
@@ -103,10 +103,12 @@ def create_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
     
     for symbol in symbols:
         try:
-            if (symbol.symbol_name in KUCOIN_SYMBOLS):
+            if (symbol.source_id == SourceID.KUCOIN):
                 df = fetch_close_prices_from_Kucoin(symbol.kucoin_name)
-            else:
+            if (symbol.source_id == SourceID.BINANCE):
                 df = fetch_close_prices_from_Binance(symbol.binance_name)
+            if (symbol.source_id == SourceID.COINGECKO):
+                df = fetch_close_prices_from_Coingecko(symbol.symbol_name)
             if not df.empty:
                 df['RSI'] = calculate_rsi_using_EMA(df['close'])
                 df['symbol'] = symbol.symbol_name
