@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from configuration import get_kucoin_credentials
-from sql_connection import Symbol
+from source_repository import Symbol
 from sharedCode.commonPrice import TickerPrice
 from kucoin import Client as KucoinClient
 from telegram_logging_handler import app_logger

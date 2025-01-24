@@ -10,7 +10,8 @@ from RSIReport import create_rsi_table
 from movingAveragesReport import calculate_indicators
 from stepn_report import fetch_stepn_report
 from telegram_logging_handler import app_logger
-from sql_connection import connect_to_sql, fetch_symbols
+from sql_connection import connect_to_sql
+from source_repository import fetch_symbols
 from macd_report import calculate_macd
 from launchpool_report import check_gempool_articles
 from news_agent import get_crypto_news_summary

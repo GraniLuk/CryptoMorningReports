@@ -2,10 +2,10 @@ from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from stepn_repository import save_stepn_results, fetch_stepn_results_last_14_days
-from telegram_logging_handler import app_logger
-from sql_connection import Symbol
-from pycoingecko import CoinGeckoAPI
 import pandas as pd
+from sharedCode.coingecko import fetch_coingecko_price
+from source_repository import Symbol
+from telegram_logging_handler import app_logger
 
 def fetch_stepn_report(conn) -> PrettyTable:
     symbols = [
@@ -78,21 +78,6 @@ def calculate_ema14(ratios):
         df["EMA14"] = df["Ratio"].ewm(span=14, adjust=False).mean()
 
         return df["EMA14"].tolist()
-
-def fetch_coingecko_price(symbol: Symbol) -> TickerPrice:
-    """Fetch current price from CoinGecko API and return as BinancePrice object"""
-    try:
-        cg = CoinGeckoAPI()
-        price_data = cg.get_price(ids=symbol.full_name, vs_currencies='usd')
-        return TickerPrice(
-            symbol=symbol.symbol_name,
-            low=price_data[symbol.full_name]['usd'],
-            high=price_data[symbol.full_name]['usd'],
-            last=price_data[symbol.full_name]['usd']
-        )
-    except Exception as e:
-        app_logger.error(f"Error fetching price from CoinGecko: {e}")
-        raise
 
 if __name__ == "__main__":
     fetch_stepn_report()

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 import pandas as pd
-from sql_connection import Symbol
+from source_repository import Symbol
 from telegram_logging_handler import app_logger
 from sharedCode.commonPrice import TickerPrice
 
