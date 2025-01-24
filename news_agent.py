@@ -1,6 +1,6 @@
 import requests
 
-def get_crypto_news_summary(api_key, indicators_message):
+def get_crypto_news_summary(api_key, news_feeded, indicators_message):
     url = "https://api.perplexity.ai/chat/completions"
     
     headers = {
@@ -9,15 +9,15 @@ def get_crypto_news_summary(api_key, indicators_message):
     }
     
     data = {
-        "model": "llama-3.1-sonar-large-128k-online",
+        "model": "sonar-pro",
         "messages": [
             {
                 "role": "system",
-                "content": "You are a crypto news analyst. Summarize the latest crypto news, focusing on major cryptocurrencies like Bitcoin and Ethereum. Provide a brief overview of market sentiment (bullish or bearish) for each major cryptocurrency mentioned."
+                "content": "You are a crypto news analyst. Summarize the latest crypto news, focusing on cryptocurrencies mentioned in news and technical indicators tables. Provide a brief overview of market sentiment (bullish or bearish) for each major cryptocurrency mentioned."
             },
             {
                 "role": "user",
-                "content": "Summarize today's top crypto news and provide sentiment analysis for major cryptocurrencies. You can also base your analysis on the following indicators: " + indicators_message
+                "content": f"Summarize today's top crypto news content provided here {news_feeded} and provide sentiment analysis for major cryptocurrencies. You can also base your analysis on the following indicators: " + indicators_message
             }
         ]
     }
