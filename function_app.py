@@ -76,9 +76,7 @@ def process_bitcoin_checker():
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
 
-        url = "https://decrypt.co/feed"
-        news_feeded = fetch_rss_news(url)
-        news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"], news_feeded, message_part1 + message_part2)
+        news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2)
 
         stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
 
