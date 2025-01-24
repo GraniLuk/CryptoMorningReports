@@ -3,7 +3,7 @@ import yfinance as yf
 from prettytable import PrettyTable
 from macd_repository import save_macd_results, fetch_yesterday_macd
 from telegram_logging_handler import app_logger
-from sql_connection import Symbol
+from source_repository import Symbol
 from typing import List
 from datetime import date, timedelta
 import pandas as pd
