@@ -9,8 +9,8 @@ from telegram_logging_handler import app_logger
 
 def fetch_stepn_report(conn) -> PrettyTable:
     symbols = [
-    Symbol(symbol_id=1, symbol_name='GMT', full_name='STEPN Token'),
-    Symbol(symbol_id=2, symbol_name='GST', full_name='green-satoshi-token-bsc')
+    Symbol(symbol_id=1, symbol_name='GMT', full_name='STEPN Token', source_id=3),
+    Symbol(symbol_id=2, symbol_name='GST', full_name='green-satoshi-token-bsc', source_id=3)
     ]
     results = []
     
