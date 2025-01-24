@@ -1,14 +1,23 @@
 from dataclasses import dataclass
 from typing import List
 import pyodbc
+from enum import Enum
 from telegram_logging_handler import app_logger
+
+class SourceID(Enum):
+    BINANCE = 1
+    KUCOIN = 2
+    COINGECKO = 3
+    COINMARKETCAP = 4
+    BYBIT = 5
 
 @dataclass
 class Symbol:
     symbol_id: int
     symbol_name: str
     full_name: str
-    
+    source_id: SourceID  # Use enum for SourceID
+
     @property
     def kucoin_name(self) -> str:
         return f"{self.symbol_name}-USDT"
@@ -42,14 +51,15 @@ def fetch_symbols(conn) -> List[Symbol]:
         if conn:
             try:
                 cursor = conn.cursor()
-                query = "SELECT SymbolID, SymbolName, FullName FROM Symbols"
+                query = "SELECT SymbolID, SymbolName, FullName, SourceID FROM Symbols"
                 
                 symbols = []
                 for row in cursor.execute(query):
                     symbol = Symbol(
                         symbol_id=row[0],
                         symbol_name=row[1],
-                        full_name=row[2]
+                        full_name=row[2],
+                        source_id=SourceID(row[3])  # Convert to SourceID enum
                     )
                     symbols.append(symbol)
                     
