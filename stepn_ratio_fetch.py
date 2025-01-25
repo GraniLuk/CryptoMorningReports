@@ -15,9 +15,10 @@ def fetch_gstgmt_ratio_range():
         # Query to fetch last 24h min and max
         query = """
         customMetrics
-        | where timestamp >= ago(24h)
-        | where name == "crypto_ratio"
-        | summarize min_value = min(valueDouble), max_value = max(valueDouble)
+            | where timestamp >= ago(24h)
+            | where name == "crypto_ratio"
+            | extend customMetric_value = iif(itemType == 'customMetric', valueMin, todouble(''))
+            | summarize dailyMin = min(customMetric_value), dailyMax = max(customMetric_value)
         """
 
         response = client.query_workspace(workspace_id, query)
