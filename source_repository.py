@@ -51,7 +51,7 @@ def fetch_symbols(conn) -> List[Symbol]:
         if conn:
             try:
                 cursor = conn.cursor()
-                query = "SELECT SymbolID, SymbolName, FullName, SourceID FROM Symbols"
+                query = "SELECT SymbolID, SymbolName, FullName, SourceID FROM Symbols WHERE IsActive = 1"
                 
                 symbols = []
                 for row in cursor.execute(query):
