@@ -1,12 +1,11 @@
 from priceRangeRepository import save_price_range_results
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
-from KUCOIN_SYMBOLS import KUCOIN_SYMBOLS
 from configuration import get_kucoin_credentials
 from sharedCode.kucoin import fetch_kucoin_price
 from telegram_logging_handler import app_logger
 from typing import List
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 
 
 def fetch_range_price(symbols : List[Symbol], conn) -> PrettyTable:
@@ -16,7 +15,7 @@ def fetch_range_price(symbols : List[Symbol], conn) -> PrettyTable:
     for symbol in symbols:
         try:
             # Check if symbol should be fetched from Kucoin
-            if (symbol.symbol_name in KUCOIN_SYMBOLS):
+            if (symbol.source_id == SourceID.KUCOIN):
                 price_data = fetch_kucoin_price(
                     symbol,
                     kucoin_credentials['api_key'],
