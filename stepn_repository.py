@@ -1,7 +1,8 @@
 import pyodbc
 from telegram_logging_handler import app_logger
 
-def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, ema: float) -> None:
+def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, ema: float, 
+                      min_24h: float = None, max_24h: float = None, range_24h: float = None) -> None:
     """
     Saves STEPN results to the database
     
@@ -11,20 +12,27 @@ def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, e
         gst_price (float): Current GST price
         ratio (float): GMT/GST ratio
         EMA14 (float): EMA14 value
+        min_24h (float, optional): Minimum value in the last 24 hours
+        max_24h (float, optional): Maximum value in the last 24 hours
+        range_24h (float, optional): Range in the last 24 hours
     """
     try:
         if conn:
             cursor = conn.cursor()
             query = """
                 MERGE INTO StepNResults AS target
-                USING (SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, CAST(GETDATE() AS DATE) AS Date, ? AS EMA14)
-                    AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14)
+                USING (
+                    SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, 
+                           CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
+                           ? AS Min24Value, ? AS Max24Value, ? AS Range24
+                ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24)
                 ON target.Date = source.Date
                 WHEN NOT MATCHED THEN
-                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14)
-                    VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, source.EMA14);
+                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24)
+                    VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, 
+                           source.EMA14, source.Min24Value, source.Max24Value, source.Range24);
             """
-            cursor.execute(query, (gmt_price, gst_price, ratio, ema))
+            cursor.execute(query, (gmt_price, gst_price, ratio, ema, min_24h, max_24h, range_24h))
             conn.commit()
             cursor.close()
             app_logger.info("Successfully saved STEPN results to database")

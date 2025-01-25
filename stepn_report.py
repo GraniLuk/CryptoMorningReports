@@ -38,13 +38,23 @@ def fetch_stepn_report(conn) -> PrettyTable:
 
     ema14_results = calculate_ema14(ratios)
     
+    # Fetch and calculate 24h range
+    min_24h, max_24h, range_percent = fetch_gstgmt_ratio_range()
+    
     # Save results to database
     try:
-        save_stepn_results(conn, results[0].last, results[1].last, gmt_gst_ratio, ema14_results[-1])
+        save_stepn_results(
+            conn=conn, 
+            gmt_price=results[0].last, 
+            gst_price=results[1].last, 
+            ratio=gmt_gst_ratio, 
+            ema=ema14_results[-1],
+            min_24h=min_24h,
+            max_24h=max_24h,
+            range_24h=range_percent
+        )
     except Exception as e:
         app_logger.error(f"Error saving STEPN results to database: {str(e)}")
-        
-    ratio_range = fetch_gstgmt_ratio_range()
     
     # Create table for display
     stepn_table = PrettyTable()
@@ -59,6 +69,12 @@ def fetch_stepn_report(conn) -> PrettyTable:
         symbol = result.symbol
         last = result.last
         range_rows.append((symbol, last))
+
+    # Add 24h statistics
+    if min_24h and max_24h and range_percent:
+        range_rows.append(('24h Min', round(min_24h, 4)))
+        range_rows.append(('24h Max', round(max_24h, 4)))
+        range_rows.append(('24h Range %', round(range_percent, 2)))
 
     for row in range_rows:
         stepn_table.add_row(row)
