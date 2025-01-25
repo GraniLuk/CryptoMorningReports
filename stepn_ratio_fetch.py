@@ -2,6 +2,7 @@ from azure.monitor.query import LogsQueryClient
 from azure.identity import DefaultAzureCredential
 from telegram_logging_handler import app_logger
 import os
+from datetime import timedelta
 
 def fetch_gstgmt_ratio_range():
     try:
@@ -21,7 +22,9 @@ def fetch_gstgmt_ratio_range():
             | summarize dailyMin = min(customMetric_value), dailyMax = max(customMetric_value)
         """
 
-        response = client.query_workspace(workspace_id, query)
+        # Add timespan parameter for 24 hours
+        timespan = timedelta(hours=24)
+        response = client.query_workspace(workspace_id, query, timespan=timespan)
         if response and len(response.tables) > 0 and len(response.tables[0].rows) > 0:
             min_value = response.tables[0].rows[0][0]
             max_value = response.tables[0].rows[0][1]
