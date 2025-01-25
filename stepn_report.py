@@ -74,7 +74,8 @@ def fetch_stepn_report(conn) -> PrettyTable:
     if min_24h and max_24h and range_percent:
         range_rows.append(('24h Min', round(min_24h, 4)))
         range_rows.append(('24h Max', round(max_24h, 4)))
-        range_rows.append(('24h Range %', round(range_percent, 2)))
+        range_percent_formatted = f"{range_percent:.2f}%"
+        range_rows.append(('24h Range %', range_percent_formatted))
 
     for row in range_rows:
         stepn_table.add_row(row)

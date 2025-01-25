@@ -11,7 +11,7 @@ def fetch_gstgmt_ratio_range():
         client = LogsQueryClient(credential)
 
         # Define your Application Insights workspace ID
-        workspace_id = os.getenv('PriceAlerts_APPINSIGHTS_WORKSPACE_ID')
+        workspace_id = os.environ.get("WORKSPACE_ID")
         if not workspace_id:
             app_logger.error("Workspace ID environment variable not set")
             return None
@@ -20,11 +20,10 @@ def fetch_gstgmt_ratio_range():
 
         # Query to fetch last 24h min and max
         query = """
-        customMetrics
-            | where timestamp >= ago(24h)
-            | where name == "crypto_ratio"
-            | extend customMetric_value = iif(itemType == 'customMetric', valueMin, todouble(''))
-            | summarize dailyMin = min(customMetric_value), dailyMax = max(customMetric_value)
+        AppMetrics
+| where TimeGenerated >= ago(24h)
+| where Name == "crypto_ratio"
+| summarize dailyMin = min(Sum), dailyMax = max(Sum)
         """
 
         # Add timespan parameter for 24 hours
@@ -39,3 +38,6 @@ def fetch_gstgmt_ratio_range():
     except Exception as e:
         app_logger.error(f"Error fetching ratio range: {str(e)}")
         return None, None, None
+    
+if __name__ == "__main__":
+   print(fetch_gstgmt_ratio_range())
