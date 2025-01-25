@@ -12,6 +12,11 @@ def fetch_gstgmt_ratio_range():
 
         # Define your Application Insights workspace ID
         workspace_id = os.getenv('PriceAlerts_APPINSIGHTS_WORKSPACE_ID')
+        if not workspace_id:
+            app_logger.error("Workspace ID environment variable not set")
+            return None
+            
+        app_logger.info(f"Using workspace ID: {workspace_id}")
 
         # Query to fetch last 24h min and max
         query = """
