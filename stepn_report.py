@@ -6,6 +6,7 @@ import pandas as pd
 from sharedCode.coingecko import fetch_coingecko_price
 from source_repository import Symbol
 from telegram_logging_handler import app_logger
+from stepn_ratio_fetch import fetch_gstgmt_ratio_range
 
 def fetch_stepn_report(conn) -> PrettyTable:
     symbols = [
@@ -42,6 +43,8 @@ def fetch_stepn_report(conn) -> PrettyTable:
         save_stepn_results(conn, results[0].last, results[1].last, gmt_gst_ratio, ema14_results[-1])
     except Exception as e:
         app_logger.error(f"Error saving STEPN results to database: {str(e)}")
+        
+    ratio_range = fetch_gstgmt_ratio_range()
     
     # Create table for display
     stepn_table = PrettyTable()

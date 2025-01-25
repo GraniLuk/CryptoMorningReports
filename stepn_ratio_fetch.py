@@ -2,6 +2,7 @@ from azure.monitor.query import LogsQueryClient
 from azure.identity import DefaultAzureCredential
 from datetime import datetime, timedelta
 from telegram_logging_handler import app_logger
+import os
 
 def fetch_gstgmt_ratio_range():
     # Initialize credentials and Logs Query Client
@@ -9,7 +10,7 @@ def fetch_gstgmt_ratio_range():
     client = LogsQueryClient(credential)
 
     # Define your Application Insights workspace ID
-    workspace_id = "<WORKSPACE_ID>"
+    workspace_id = os.getenv('PriceAlerts_APPINSIGHTS_WORKSPACE_ID')
 
     # Query to fetch yesterday's min and max
     query = """
@@ -21,7 +22,7 @@ def fetch_gstgmt_ratio_range():
     """
 
     # Query time range for the past 2 days
-    end_time = datetime.utcnow() - timedelta(days=1)
+    end_time = datetime.now()
     start_time = end_time - timedelta(days=1)
 
     # Run the query
