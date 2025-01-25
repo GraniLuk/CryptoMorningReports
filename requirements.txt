@@ -9,6 +9,8 @@ configparser
 prettytable
 python-telegram-bot
 azure-data-tables
+azure-identity
+azure-monitor-query
 requests
 aiohttp
 python-dotenv
@@ -16,7 +18,6 @@ python-binance
 pandas
 python-kucoin
 pyodbc
-azure-identity
 pycoingecko
 twikit
 feedparser
