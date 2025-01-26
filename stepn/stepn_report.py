@@ -5,7 +5,7 @@ from stepn_repository import save_stepn_results, fetch_stepn_results_last_14_day
 import pandas as pd
 from sharedCode.coingecko import fetch_coingecko_price
 from source_repository import Symbol
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from stepn_ratio_fetch import fetch_gstgmt_ratio_range
 
 def fetch_stepn_report(conn) -> PrettyTable:

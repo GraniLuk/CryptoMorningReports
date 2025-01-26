@@ -1,9 +1,9 @@
 from priceRangeRepository import save_price_range_results
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
-from configuration import get_kucoin_credentials
+from infra.configuration import get_kucoin_credentials
 from sharedCode.kucoin import fetch_kucoin_price
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from typing import List
 from source_repository import SourceID, Symbol
 

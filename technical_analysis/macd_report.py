@@ -2,7 +2,7 @@ from collections import namedtuple
 import yfinance as yf
 from prettytable import PrettyTable
 from macd_repository import save_macd_results, fetch_yesterday_macd
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from typing import List
 from datetime import date, timedelta

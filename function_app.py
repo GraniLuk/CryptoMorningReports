@@ -5,17 +5,16 @@ import azure.functions as func
 import aiohttp
 import os
 from dotenv import load_dotenv
-from priceRangeReport import fetch_range_price
-from RSIReport import create_rsi_table
-from movingAveragesReport import calculate_indicators
-from rss_parser import fetch_rss_news
-from stepn_report import fetch_stepn_report
-from telegram_logging_handler import app_logger
-from sql_connection import connect_to_sql
+from technical_analysis.priceRangeReport import fetch_range_price
+from technical_analysis.RSIReport import create_rsi_table
+from technical_analysis.movingAveragesReport import calculate_indicators
+from technical_analysis.macd_report import calculate_macd
+from stepn.stepn_report import fetch_stepn_report
+from infra.telegram_logging_handler import app_logger
+from infra.sql_connection import connect_to_sql
 from source_repository import fetch_symbols
-from macd_report import calculate_macd
-from launchpool_report import check_gempool_articles
-from news_agent import get_crypto_news_summary
+from launchpool.launchpool_report import check_gempool_articles
+from news.news_agent import get_crypto_news_summary
 
 # Load environment variables from .env file
 load_dotenv()

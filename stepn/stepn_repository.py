@@ -1,5 +1,5 @@
 import pyodbc
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 
 def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, ema: float, 
                       min_24h: float = None, max_24h: float = None, range_24h: float = None) -> None:

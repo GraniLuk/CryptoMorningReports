@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 import pyodbc
 from enum import Enum
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 
 class SourceID(Enum):
     BINANCE = 1
