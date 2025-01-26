@@ -1,6 +1,6 @@
 from azure.monitor.query import LogsQueryClient
 from azure.identity import DefaultAzureCredential
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 import os
 
 def fetch_gstgmt_ratio_range():

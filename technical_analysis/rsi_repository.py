@@ -1,5 +1,5 @@
 import pyodbc
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 
 def save_rsi_results(conn, symbol_id: int, closed_price: float, rsi: float) -> None:
     """

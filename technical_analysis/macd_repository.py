@@ -1,6 +1,6 @@
 import pandas as pd
 import pyodbc
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from datetime import date, timedelta
 
 def save_macd_results(conn, symbol_id: int, current_price: float, macd: float, 

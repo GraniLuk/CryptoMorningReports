@@ -1,5 +1,5 @@
 import pyodbc
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 
 def save_price_range_results(conn, symbol_id: int, low_price: float, high_price: float, range_percent: float) -> None:
     """
