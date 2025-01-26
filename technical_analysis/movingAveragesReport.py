@@ -5,7 +5,7 @@ from moving_averages_repository import save_moving_averages_results, fetch_yeste
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from typing import List
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 import pandas as pd
 
 def calculate_indicators(symbols: List[Symbol], conn, target_date: date = None) -> tuple[PrettyTable, PrettyTable]:
