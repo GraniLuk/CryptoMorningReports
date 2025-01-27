@@ -1,4 +1,4 @@
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from pycoingecko import CoinGeckoAPI
 from sharedCode.commonPrice import TickerPrice

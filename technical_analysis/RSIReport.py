@@ -5,10 +5,10 @@ from sharedCode.binance import fetch_close_prices_from_Binance
 from sharedCode.coingecko import fetch_coingecko_price
 import pandas as pd
 from datetime import datetime, timedelta
-from configuration import get_kucoin_credentials
+from infra.configuration import get_kucoin_credentials
 from prettytable import PrettyTable
 import time
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from source_repository import SourceID, Symbol
 
 def calculate_rsi(series, window=14):

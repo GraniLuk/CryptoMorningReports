@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
-from configuration import get_kucoin_credentials
+from infra.configuration import get_kucoin_credentials
 from source_repository import Symbol
 from sharedCode.commonPrice import TickerPrice
 from kucoin import Client as KucoinClient
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 
 
 def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):

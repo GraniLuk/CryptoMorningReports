@@ -3,7 +3,7 @@ import os
 from azure import identity
 import logging
 import time
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 import struct
 import pyodbc
 

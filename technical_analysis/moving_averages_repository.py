@@ -1,6 +1,6 @@
 import pandas as pd
 import pyodbc
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from datetime import date, timedelta
 
 def save_moving_averages_results(conn, symbol_id: int, current_price: float, ma50: float, ma200: float, 
