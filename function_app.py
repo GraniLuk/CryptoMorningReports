@@ -14,7 +14,7 @@ from infra.telegram_logging_handler import app_logger
 from infra.sql_connection import connect_to_sql
 from source_repository import fetch_symbols
 from launchpool.launchpool_report import check_gempool_articles
-from news.news_agent import get_crypto_news_summary
+from news.news_agent import get_crypto_news_summary, highlight_articles
 
 # Load environment variables from .env file
 load_dotenv()
@@ -78,6 +78,8 @@ def process_bitcoin_checker():
         news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2)
 
         stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
+        
+        highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], news_report, symbols)
 
         # Run the async function with HTML parse mode for both messages
         asyncio.run(send_telegram_message(
@@ -119,6 +121,14 @@ def process_bitcoin_checker():
             telegram_token,
             telegram_chat_id,
             news_report,
+            parse_mode="HTML"
+        ))
+        
+        asyncio.run(send_telegram_message(
+            telegram_enabled,
+            telegram_token,
+            telegram_chat_id,
+            highlight_articles_message,
             parse_mode="HTML"
         ))
     except Exception as e:
