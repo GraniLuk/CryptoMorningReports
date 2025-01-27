@@ -1,6 +1,6 @@
 from typing import List
 from kucoin import Client as KucoinClient
-from rsi_repository import save_rsi_results
+from technical_analysis.rsi_repository import save_rsi_results
 from sharedCode.binance import fetch_close_prices_from_Binance
 from sharedCode.coingecko import fetch_coingecko_price
 import pandas as pd
