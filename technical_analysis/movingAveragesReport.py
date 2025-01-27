@@ -2,10 +2,10 @@ from collections import namedtuple
 import yfinance as yf
 from prettytable import PrettyTable
 from moving_averages_repository import save_moving_averages_results, fetch_yesterday_moving_averages
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from typing import List
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 import pandas as pd
 
 def calculate_indicators(symbols: List[Symbol], conn, target_date: date = None) -> tuple[PrettyTable, PrettyTable]:

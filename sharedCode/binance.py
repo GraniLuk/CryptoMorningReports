@@ -4,7 +4,7 @@ from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 import pandas as pd
 from source_repository import Symbol
-from telegram_logging_handler import app_logger
+from infra.telegram_logging_handler import app_logger
 from sharedCode.commonPrice import TickerPrice
 
 
