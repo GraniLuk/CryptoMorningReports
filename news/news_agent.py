@@ -1,6 +1,6 @@
 import requests
 
-from rss_parser import fetch_rss_news
+from news.rss_parser import fetch_rss_news
 
 def get_crypto_news_summary(api_key, indicators_message):
     url = "https://api.perplexity.ai/chat/completions"
