@@ -21,7 +21,7 @@ def get_crypto_news_summary(api_key, indicators_message):
             },
             {
                 "role": "user",
-                "content": f"Summarize today's top crypto news content provided here {news_feeded} and provide sentiment analysis for major cryptocurrencies. You can also base your analysis on the following indicators: " + indicators_message
+                "content": f"Summarize today's top crypto news content provided here {news_feeded} and provide sentiment analysis for major cryptocurrencies. You can also base your analysis on the following indicators: {indicators_message}"
             }
         ]
     }
