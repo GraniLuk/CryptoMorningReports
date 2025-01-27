@@ -34,11 +34,12 @@ def get_crypto_news_summary(api_key, indicators_message):
         return f"Error: {response.status_code} - {response.text}"
     
 def get_news():
-    
         decrypt = "https://decrypt.co/feed"
         coindesk = "https://www.coindesk.com/arc/outboundfeeds/rss"
+        newsBTC = "https://www.newsbtc.com/feed"
         news_feeded = fetch_rss_news(decrypt)
         news_feeded += fetch_rss_news(coindesk)
+        news_feeded += fetch_rss_news(newsBTC)
         return news_feeded
     
 def highlight_articles(api_key, news_feeded, user_crypto_list):

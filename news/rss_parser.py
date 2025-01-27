@@ -13,5 +13,5 @@ def fetch_rss_news(feed_url):
     return latest_news
 
 if __name__ == "__main__":
-    url = "https://decrypt.co/feed"
+    url = "https://www.newsbtc.com/feed"
     print(fetch_rss_news(url))
