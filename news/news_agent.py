@@ -37,10 +37,8 @@ def get_news():
     
         decrypt = "https://decrypt.co/feed"
         coindesk = "https://www.coindesk.com/arc/outboundfeeds/rss"
-        crypto_panic = "https://cryptopanic.com/news/rss/"
         news_feeded = fetch_rss_news(decrypt)
         news_feeded += fetch_rss_news(coindesk)
-        news_feeded += fetch_rss_news(crypto_panic)
         return news_feeded
     
 def highlight_articles(api_key, news_feeded, user_crypto_list):
