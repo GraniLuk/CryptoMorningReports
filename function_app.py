@@ -14,7 +14,7 @@ from infra.telegram_logging_handler import app_logger
 from infra.sql_connection import connect_to_sql
 from source_repository import fetch_symbols
 from launchpool.launchpool_report import check_gempool_articles
-from news.news_agent import get_crypto_news_summary, highlight_articles
+from news.news_agent import get_detailed_crypto_analysis, highlight_articles
 
 # Load environment variables from .env file
 load_dotenv()
@@ -75,7 +75,7 @@ def process_bitcoin_checker():
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
 
-        news_report = get_crypto_news_summary(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2)
+        news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2)
 
         stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
         
