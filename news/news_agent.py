@@ -2,7 +2,7 @@ import requests
 
 from news.rss_parser import fetch_rss_news
 
-def get_crypto_news_summary(api_key, indicators_message):
+def get_detailed_crypto_analysis(api_key, indicators_message):
     url = "https://api.perplexity.ai/chat/completions"
     
     news_feeded = get_news()
@@ -17,11 +17,11 @@ def get_crypto_news_summary(api_key, indicators_message):
         "messages": [
             {
                 "role": "system",
-                "content": "You are a crypto news analyst. Summarize the latest crypto news, focusing on cryptocurrencies mentioned in news and technical indicators tables. Provide a brief overview of market sentiment (bullish or bearish) for each major cryptocurrency mentioned."
+                "content": "You are an advanced crypto analyst specializing in detailed technical and on-chain analysis. Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation."
             },
             {
                 "role": "user",
-                "content": f"Summarize today's top crypto news content provided here {news_feeded} and provide sentiment analysis for major cryptocurrencies. You can also base your analysis on the following indicators: {indicators_message}"
+                "content": f"Analyze the following crypto news and data: {news_feeded}. Focus on:\n1. Detailed technical analysis, explaining why specific resistance/support levels are important.\n2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.\n3. Statistical data and charts that support your analysis.\n4. Market sentiment with specific reasons.\nBase your analysis on these indicators as well: {indicators_message}"
             }
         ]
     }
@@ -63,11 +63,11 @@ def highlight_articles(api_key, news_feeded, user_crypto_list):
         "messages": [
             {
                 "role": "system",
-                "content": "You are a crypto news curator. Highlight articles that are educational, impactful for the market, or discuss cryptocurrencies with high growth potential not in the user's current list."
+                "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics."
             },
             {
                 "role": "user",
-                "content": f"From the following news articles {news_feeded}, highlight the most important ones to read. Focus on articles that are educational, could impact the market significantly, or discuss cryptocurrencies with high growth potential not in this list: {symbol_names}. Provide a brief explanation for each highlighted article and include the URL to read it."
+                "content": f"From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Prioritize articles that:\n1. Offer in-depth technical analysis with clear explanations of resistance/support levels.\n2. Provide comprehensive on-chain analysis with interpretation of key metrics.\n3. Include statistical data, charts, or graphs to support their analysis.\n4. Discuss cryptocurrencies with high growth potential not in this list: {symbol_names}.\n5. Explain complex market dynamics or new technological developments in the crypto space.\nFor each highlighted article, provide a brief explanation of its key insights and include the URL."
             }
         ]
     }
