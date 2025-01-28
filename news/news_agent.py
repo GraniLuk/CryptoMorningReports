@@ -39,11 +39,13 @@ def get_news():
         newsBTC = "https://www.newsbtc.com/feed"
         coinJournal = "https://coinjournal.net/feed"
         coinpedia = "https://coinpedia.org/feed"
+        cryptopotato = "https://cryptopotato.com/feed"
         news_feeded = fetch_rss_news(decrypt)
         news_feeded += fetch_rss_news(coindesk)
         news_feeded += fetch_rss_news(newsBTC)
         news_feeded += fetch_rss_news(coinJournal)
         news_feeded += fetch_rss_news(coinpedia)
+        news_feeded += fetch_rss_news(cryptopotato)
         return news_feeded
     
 def highlight_articles(api_key, news_feeded, user_crypto_list):
