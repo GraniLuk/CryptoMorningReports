@@ -1,6 +1,5 @@
 import requests
-
-from news.rss_parser import fetch_rss_news
+from news.rss_parser import get_news
 
 def get_detailed_crypto_analysis(api_key, indicators_message):
     url = "https://api.perplexity.ai/chat/completions"
@@ -33,20 +32,6 @@ def get_detailed_crypto_analysis(api_key, indicators_message):
     else:
         return f"Error: {response.status_code} - {response.text}"
     
-def get_news():
-        decrypt = "https://decrypt.co/feed"
-        coindesk = "https://www.coindesk.com/arc/outboundfeeds/rss"
-        newsBTC = "https://www.newsbtc.com/feed"
-        coinJournal = "https://coinjournal.net/feed"
-        coinpedia = "https://coinpedia.org/feed"
-        cryptopotato = "https://cryptopotato.com/feed"
-        news_feeded = fetch_rss_news(decrypt)
-        news_feeded += fetch_rss_news(coindesk)
-        news_feeded += fetch_rss_news(newsBTC)
-        news_feeded += fetch_rss_news(coinJournal)
-        news_feeded += fetch_rss_news(coinpedia)
-        news_feeded += fetch_rss_news(cryptopotato)
-        return news_feeded
     
 def highlight_articles(api_key, news_feeded, user_crypto_list):
     url = "https://api.perplexity.ai/chat/completions"

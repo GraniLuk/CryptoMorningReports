@@ -2,9 +2,26 @@ import feedparser
 from datetime import datetime, timedelta
 from time import mktime
 import requests
+import json
 from bs4 import BeautifulSoup
 
-def fetch_rss_news(feed_url):
+def get_news():
+    feeds = {
+        "decrypt": "https://decrypt.co/feed",
+        "coindesk": "https://www.coindesk.com/arc/outboundfeeds/rss",
+        "newsBTC": "https://www.newsbtc.com/feed",
+        "coinJournal": "https://coinjournal.net/feed",
+        "coinpedia": "https://coinpedia.org/feed",
+        "cryptopotato": "https://cryptopotato.com/feed"
+    }
+    
+    all_news = []
+    for source, url in feeds.items():
+        all_news.extend(fetch_rss_news(url, source))
+    
+    return json.dumps(all_news, indent=2)
+
+def fetch_rss_news(feed_url, source):
     try:
         feed = feedparser.parse(feed_url)
         latest_news = []
@@ -16,6 +33,7 @@ def fetch_rss_news(feed_url):
             if current_time - published_time <= timedelta(days=1):
                 full_content = fetch_full_content(entry.link)
                 latest_news.append({
+                    "source": source,
                     "title": entry.title,
                     "link": entry.link,
                     "published": entry.published,
@@ -35,7 +53,6 @@ def fetch_full_content(url):
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # This is a basic extraction and might need to be adjusted based on the specific structure of each news site
         article = soup.find('article') or soup.find('div', class_='article-content')
         if article:
             return article.get_text()
@@ -46,5 +63,4 @@ def fetch_full_content(url):
         return "Failed to fetch full content"
 
 if __name__ == "__main__":
-    url = "https://www.newsbtc.com/feed"
-    print(fetch_rss_news(url))
+    print(get_news())
