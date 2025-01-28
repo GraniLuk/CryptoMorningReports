@@ -21,3 +21,4 @@ pyodbc
 pycoingecko
 twikit
 feedparser
+beautifulsoup4
