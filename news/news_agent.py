@@ -45,11 +45,11 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
         "messages": [
             {
                 "role": "system",
-                "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics."
+                "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input."
             },
             {
                 "role": "user",
-                "content": f"From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Prioritize articles that:\n1. Offer in-depth technical analysis with clear explanations of resistance/support levels.\n2. Provide comprehensive on-chain analysis with interpretation of key metrics.\n3. Include statistical data, charts, or graphs to support their analysis.\n4. Discuss cryptocurrencies with high growth potential not in this list: {symbol_names}.\n5. Explain complex market dynamics or new technological developments in the crypto space.\nFor each highlighted article, provide a brief explanation of its key insights and include the URL."
+                "content": f"From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Prioritize articles that:\n1. Offer in-depth technical analysis with clear explanations of resistance/support levels.\n2. Provide comprehensive on-chain analysis with interpretation of key metrics.\n3. Include statistical data, charts, or graphs to support their analysis.\n4. Discuss cryptocurrencies with high growth potential not in this list: {symbol_names}.\n5. Explain complex market dynamics or new technological developments in the crypto space.\nFor each highlighted article, provide a brief explanation of its key insights and include the URL. Only consider the articles provided in the input."
             }
         ]
     }
