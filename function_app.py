@@ -216,6 +216,11 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
         logging.info('Telegram notifications are disabled')
         return
     
+     # Truncate message if longer than Telegram's limit
+    MAX_TELEGRAM_LENGTH = 4096
+    if len(message) > MAX_TELEGRAM_LENGTH:
+        message = message[:MAX_TELEGRAM_LENGTH]
+    
     try:
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         data = {
