@@ -1,10 +1,7 @@
 import requests
-from news.rss_parser import get_news
 
-def get_detailed_crypto_analysis(api_key, indicators_message):
+def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
-    
-    news_feeded = get_news()
     
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -16,11 +13,11 @@ def get_detailed_crypto_analysis(api_key, indicators_message):
         "messages": [
             {
                 "role": "system",
-                "content": "You are an advanced crypto analyst specializing in detailed technical and on-chain analysis. Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation."
+                "content": "You are an advanced crypto analyst specializing in detailed technical and on-chain analysis. Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation. Focus only on the news articles provided."
             },
             {
                 "role": "user",
-                "content": f"Analyze the following crypto news and data: {news_feeded}. Focus on:\n1. Detailed technical analysis, explaining why specific resistance/support levels are important.\n2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.\n3. Statistical data and charts that support your analysis.\n4. Market sentiment with specific reasons.\nBase your analysis on these indicators as well: {indicators_message}"
+                "content": f"Analyze the following crypto news and data: {news_feeded}. Focus on:\n1. Detailed technical analysis, explaining why specific resistance/support levels are important.\n2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.\n3. Statistical data and charts that support your analysis.\n4. Market sentiment with specific reasons.\nOnly use the provided news articles for your analysis. Base your analysis on these indicators as well: {indicators_message}"
             }
         ]
     }
@@ -33,7 +30,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message):
         return f"Error: {response.status_code} - {response.text}"
     
     
-def highlight_articles(api_key, news_feeded, user_crypto_list):
+def highlight_articles(api_key, user_crypto_list, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
     
     symbol_names = [symbol.symbol_name for symbol in user_crypto_list]

@@ -15,6 +15,7 @@ from infra.sql_connection import connect_to_sql
 from source_repository import fetch_symbols
 from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import get_detailed_crypto_analysis, highlight_articles
+from news.rss_parser import get_news
 
 # Load environment variables from .env file
 load_dotenv()
@@ -74,12 +75,11 @@ def process_bitcoin_checker():
         message_part1 += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
-
-        news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2)
-
         stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
-        
-        highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], news_report, symbols)
+
+        fetched_news = get_news()
+        news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2, fetched_news)        
+        highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], symbols, fetched_news)
 
         # Run the async function with HTML parse mode for both messages
         asyncio.run(send_telegram_message(
