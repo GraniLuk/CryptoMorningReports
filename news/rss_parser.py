@@ -12,7 +12,9 @@ def get_news():
         "newsBTC": "https://www.newsbtc.com/feed",
         "coinJournal": "https://coinjournal.net/feed",
         "coinpedia": "https://coinpedia.org/feed",
-        "cryptopotato": "https://cryptopotato.com/feed"
+        "cryptopotato": "https://cryptopotato.com/feed",
+        "beincrypto" : "https://beincrypto.com/bitcoin-news/feed/",
+        "ambcrypto" : "https://ambcrypto.com/feed/",
     }
     
     all_news = []
