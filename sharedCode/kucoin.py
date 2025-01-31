@@ -1,4 +1,7 @@
 from datetime import datetime, timedelta
+import time
+
+import pandas as pd
 from infra.configuration import get_kucoin_credentials
 from source_repository import Symbol
 from sharedCode.commonPrice import TickerPrice
@@ -59,6 +62,44 @@ def fetch_daily_ranges(symbol: str, start_date: str, end_date: str, api_key, api
 
     return date_ranges
 
+def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame:
+    try:
+        # Initialize Kucoin client
+        kucoin_credentials = get_kucoin_credentials()
+        api_key = kucoin_credentials['api_key']
+        api_secret = kucoin_credentials['api_secret']
+        api_passphrase = kucoin_credentials['api_passphrase']
+        client = KucoinClient(api_key, api_secret, api_passphrase)
+        
+        # Calculate start time (limit days ago)
+        end_time = int(time.time())
+        start_time = int((datetime.now() - timedelta(days=limit)).timestamp())
+        
+        # Get kline data with start and end time
+        klines = client.get_kline_data(symbol, '1day', start=start_time, end=end_time)
+        
+        # Kucoin returns data in format:
+        # [timestamp, open, close, high, low, volume, turnover]
+        df = pd.DataFrame(klines, columns=['timestamp', 'open', 'close', 'high', 'low', 'volume', 'turnover'])
+        
+        # Convert timestamp strings to numeric first, then to datetime
+        df['timestamp'] = pd.to_datetime(pd.to_numeric(df['timestamp']), unit='s')
+        #df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+        # Convert string values to float
+        df['close'] = pd.to_numeric(df['close'], errors='coerce')
+        
+        # Sort by timestamp ascending first
+        df = df.sort_values('timestamp', ascending=True)
+        
+        # Set timestamp as index after sorting
+        df.set_index('timestamp', inplace=True)
+        
+        return df
+    
+    except Exception as e:
+        app_logger.error(f"Error fetching data from Kucoin: {str(e)}")
+        return pd.DataFrame()
+    
 if __name__ == "__main__":
     symbol = "KCS-USDT"  # Specify the trading pair
     start_date = "2025-01-11"  # Start date (YYYY-MM-DD)
