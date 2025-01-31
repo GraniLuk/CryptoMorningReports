@@ -13,6 +13,10 @@ class TelegramHandler(logging.Handler):
         self.send_telegram_message(log_entry)
 
     def send_telegram_message(self, message):
+        if message is None or len(message) == 0:
+            return
+        if message.length > 4096:
+            message = message[:4096]
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
         payload = {
             'chat_id': self.chat_id,
