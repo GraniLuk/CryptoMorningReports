@@ -116,21 +116,27 @@ def process_bitcoin_checker():
                 parse_mode="HTML"
             ))
 
-        asyncio.run(send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            news_report,
-            parse_mode="HTML"
-        ))
+        if (news_report.startswith("Failed")):
+            app_logger.error('Failed to get news analysis: %s', news_report)
+        else:
+            asyncio.run(send_telegram_message(
+                telegram_enabled,
+                telegram_token,
+                telegram_chat_id,
+                news_report,
+                parse_mode="HTML"
+            ))
         
-        asyncio.run(send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            highlight_articles_message,
-            parse_mode="HTML"
-        ))
+        if (highlight_articles_message.startswith("Failed")):
+            app_logger.error('Failed to get news analysis: %s', highlight_articles_message)
+        else:
+            asyncio.run(send_telegram_message(
+                telegram_enabled,
+                telegram_token,
+                telegram_chat_id,
+                highlight_articles_message,
+                parse_mode="HTML"
+            ))
     except Exception as e:
         logger.error('Function failed with error: %s', str(e))
         raise

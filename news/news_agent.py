@@ -36,12 +36,12 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
             logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
             return content
         else:
-            error_msg = f"API error: {response.status_code} - {response.text}"
+            error_msg = f"Failed: API error: {response.status_code} - {response.text}"
             logging.error(error_msg)
             return error_msg
 
     except Exception as e:
-        error_msg = f"Failed to get crypto analysis: {str(e)}"
+        error_msg = f"Failed: to get crypto analysis: {str(e)}"
         logging.error(error_msg)
         return error_msg
 
@@ -97,7 +97,7 @@ For each highlighted article, provide a brief explanation of its key insights an
         logging.debug(f"Response content length: {len(response_content)}")
         return response_content
     else:
-        error_msg = f"Error: {response.status_code} - {response.text}"
+        error_msg = f"Failed: {response.status_code} - {response.text}"
         logging.error(error_msg)
         return error_msg
     
