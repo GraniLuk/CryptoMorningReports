@@ -14,7 +14,7 @@ def get_news():
         "coinpedia": "https://coinpedia.org/feed",
         "cryptopotato": "https://cryptopotato.com/feed",
         "beincrypto" : "https://beincrypto.com/bitcoin-news/feed/",
-        # "ambcrypto" : "https://ambcrypto.com/feed/",
+        "ambcrypto" : "https://ambcrypto.com/feed/",
     }
     
     all_news = []
