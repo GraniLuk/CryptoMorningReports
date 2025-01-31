@@ -31,5 +31,5 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
         return True
         
     except Exception as e:
-        logging.error(f"Failed to send telegram message: {str(e)}")
+        logging.error(f"Failed to send telegram message: {str(e)} with message {message}")
         return False
