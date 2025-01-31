@@ -60,7 +60,7 @@ def create_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
     
     for symbol in symbols:
         try:
-            df = fetch_close_prices(symbol.kucoin_name)
+            df = fetch_close_prices(symbol, 14)
             if not df.empty:
                 df['RSI'] = calculate_rsi_using_EMA(df['close'])
                 df['symbol'] = symbol.symbol_name
