@@ -57,7 +57,9 @@ def fetch_full_content(url):
         
         article = soup.find('div', class_='post-content') or soup.find('article') or soup.find('div', class_='article-content-wrapper')
         if article:
-            return article.get_text()
+            article_text = article.get_text()
+            cleaned_text = "\n".join(line.strip() for line in article_text.splitlines() if line.strip())
+            return cleaned_text
         else:
             return "Failed to extract full content"
     except Exception as e:
