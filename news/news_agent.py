@@ -41,18 +41,32 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
     }
     
     data = {
-        "model": "sonar-pro",
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input."
-            },
-            {
-                "role": "user",
-                "content": f"From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Prioritize articles that:\n1. Offer in-depth technical analysis with clear explanations of resistance/support levels.\n2. Provide comprehensive on-chain analysis with interpretation of key metrics.\n3. Include statistical data, charts, or graphs to support their analysis.\n4. Discuss cryptocurrencies with high growth potential not in this list: {symbol_names}.\n5. Explain complex market dynamics or new technological developments in the crypto space.\nFor each highlighted article, provide a brief explanation of its key insights and include the URL. Only consider the articles provided in the input."
-            }
-        ]
-    }
+    "model": "sonar-pro",
+    "messages": [
+        {
+            "role": "system",
+            "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input. Categorize your analysis into Bitcoin, Ethereum, other cryptocurrencies from a provided list, and other cryptocurrencies not from the list."
+        },
+        {
+            "role": "user",
+            "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
+
+1. Bitcoin
+2. Ethereum
+3. Other cryptocurrencies from this list: {symbol_names}
+4. Other cryptocurrencies not from this list: {symbol_names}
+
+For each category, prioritize articles that:
+1. Offer in-depth technical analysis with clear explanations of resistance/support levels.
+2. Provide comprehensive on-chain analysis with interpretation of key metrics.
+3. Include statistical data, charts, or graphs to support their analysis.
+4. Discuss cryptocurrencies with high growth potential (especially for categories 3 and 4).
+5. Explain complex market dynamics or new technological developments in the crypto space.
+
+For each highlighted article, provide a brief explanation of its key insights. If there are no significant articles for a category, state that there's no noteworthy information to report. Only consider the articles provided in the input."""
+        }
+    ]
+}
     
     response = requests.post(url, json=data, headers=headers)
     
