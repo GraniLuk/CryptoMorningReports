@@ -42,7 +42,7 @@ def fetch_rss_news(feed_url, source):
                     "content": full_content
                 })
                 
-                if len(latest_news) >= 2:
+                if len(latest_news) >= 1:
                     break
                     
         return latest_news
