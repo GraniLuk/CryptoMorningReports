@@ -9,6 +9,10 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
         logging.info('Telegram notifications are disabled')
         return
     
+    if message is None or len(message) == 0:
+        logging.error('Empty message, skipping telegram notification')
+        return
+    
     try:
         # Split message into chunks
         chunks = [message[i:i + MAX_TELEGRAM_LENGTH] 
