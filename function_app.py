@@ -15,7 +15,7 @@ from source_repository import fetch_symbols
 from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import get_detailed_crypto_analysis, highlight_articles
 from news.rss_parser import get_news
-from telegram import send_telegram_message
+from sharedCode.telegram import send_telegram_message
 
 # Load environment variables from .env file
 load_dotenv()
