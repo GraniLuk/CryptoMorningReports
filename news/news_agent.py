@@ -1,7 +1,6 @@
 import requests
 import logging
 import time
-from infra.telegram_logging_handler import app_logger
 
 def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     start_time = time.time()
@@ -38,12 +37,12 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
             return content
         else:
             error_msg = f"API error: {response.status_code} - {response.text}"
-            app_logger.error(error_msg)
+            logging.error(error_msg)
             return error_msg
 
     except Exception as e:
         error_msg = f"Failed to get crypto analysis: {str(e)}"
-        app_logger.error(error_msg)
+        logging.error(error_msg)
         return error_msg
 
 def highlight_articles(api_key, user_crypto_list, news_feeded):
@@ -99,5 +98,5 @@ For each highlighted article, provide a brief explanation of its key insights an
         return response_content
     else:
         error_msg = f"Error: {response.status_code} - {response.text}"
-        app_logger.error(error_msg)
+        logging.error(error_msg)
         return error_msg
