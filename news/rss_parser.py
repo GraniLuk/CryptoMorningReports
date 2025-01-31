@@ -8,13 +8,13 @@ from bs4 import BeautifulSoup
 def get_news():
     feeds = {
         "decrypt": "https://decrypt.co/feed",
-        "coindesk": "https://www.coindesk.com/arc/outboundfeeds/rss",
-        "newsBTC": "https://www.newsbtc.com/feed",
-        "coinJournal": "https://coinjournal.net/feed",
-        "coinpedia": "https://coinpedia.org/feed",
-        "cryptopotato": "https://cryptopotato.com/feed",
-        "beincrypto" : "https://beincrypto.com/bitcoin-news/feed/",
-        "ambcrypto" : "https://ambcrypto.com/feed/",
+        # "coindesk": "https://www.coindesk.com/arc/outboundfeeds/rss",
+        # "newsBTC": "https://www.newsbtc.com/feed",
+        # "coinJournal": "https://coinjournal.net/feed",
+        # "coinpedia": "https://coinpedia.org/feed",
+        # "cryptopotato": "https://cryptopotato.com/feed",
+        # "beincrypto" : "https://beincrypto.com/bitcoin-news/feed/",
+        # "ambcrypto" : "https://ambcrypto.com/feed/",
     }
     
     all_news = []
@@ -42,7 +42,7 @@ def fetch_rss_news(feed_url, source):
                     "content": full_content
                 })
                 
-                if len(latest_news) >= 1:
+                if len(latest_news) >= 15:
                     break
                     
         return latest_news
@@ -55,7 +55,7 @@ def fetch_full_content(url):
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        article = soup.find('article') or soup.find('div', class_='article-content')
+        article = soup.find('div', class_='post-content') or soup.find('article') or soup.find('div', class_='article-content-wrapper')
         if article:
             return article.get_text()
         else:
