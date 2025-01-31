@@ -9,7 +9,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     }
     
     data = {
-        "model": "sonar-pro",
+        "model": "sonar-reasoning",
         "messages": [
             {
                 "role": "system",
@@ -41,7 +41,7 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
     }
     
     data = {
-    "model": "sonar-pro",
+    "model": "sonar-reasoning",
     "messages": [
         {
             "role": "system",
