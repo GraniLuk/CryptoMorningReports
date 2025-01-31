@@ -1,13 +1,19 @@
 import requests
+import logging
+import time
+from infra.telegram_logging_handler import app_logger
 
 def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
+    start_time = time.time()
+    logging.info(f"Starting detailed crypto analysis")
+    logging.debug(f"Input news articles count: {len(news_feeded)}")
+
     url = "https://api.perplexity.ai/chat/completions"
-    
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
-    
+
     data = {
         "model": "sonar-reasoning",
         "messages": [
@@ -21,15 +27,25 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
             }
         ]
     }
-    
-    response = requests.post(url, json=data, headers=headers)
-    
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
-    else:
-        return f"Error: {response.status_code} - {response.text}"
-    
-    
+    try:
+        response = requests.post(url, json=data, headers=headers)
+        logging.info(f"API Response Status: {response.status_code}")
+
+        if response.status_code == 200:
+            content = response.json()["choices"][0]["message"]["content"]
+            logging.info(f"Successfully processed analysis. Length: {len(content)} chars")
+            logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+            return content
+        else:
+            error_msg = f"API error: {response.status_code} - {response.text}"
+            app_logger.error(error_msg)
+            return error_msg
+
+    except Exception as e:
+        error_msg = f"Failed to get crypto analysis: {str(e)}"
+        app_logger.error(error_msg)
+        return error_msg
+
 def highlight_articles(api_key, user_crypto_list, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
     
@@ -67,10 +83,21 @@ For each highlighted article, provide a brief explanation of its key insights an
         }
     ]
 }
-    
+
+    logging.info(f"Making API request with {len(news_feeded)} articles")
+    logging.debug(f"Symbol names provided: {symbol_names}")
+
     response = requests.post(url, json=data, headers=headers)
-    
+
+    logging.info(f"API Response Status Code: {response.status_code}")
+    logging.debug(f"Response Headers: {response.headers}")
+
     if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
+        response_content = response.json()["choices"][0]["message"]["content"]
+        logging.info("Successfully received API response")
+        logging.debug(f"Response content length: {len(response_content)}")
+        return response_content
     else:
-        return f"Error: {response.status_code} - {response.text}"
+        error_msg = f"Error: {response.status_code} - {response.text}"
+        app_logger.error(error_msg)
+        return error_msg
