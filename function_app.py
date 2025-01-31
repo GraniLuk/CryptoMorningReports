@@ -193,7 +193,7 @@ def process_past_reports(target_date: date = None):
             telegram_token, 
             telegram_chat_id, 
             message_part1,
-            parse_mode="HTML"
+            parse_mode=None
         ))
         
         asyncio.run(send_telegram_message(
