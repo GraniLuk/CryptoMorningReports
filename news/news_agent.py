@@ -100,3 +100,31 @@ For each highlighted article, provide a brief explanation of its key insights an
         error_msg = f"Error: {response.status_code} - {response.text}"
         logging.error(error_msg)
         return error_msg
+    
+if __name__ == "__main__":
+    # Example usage
+    api_key = "your_api_key_here"
+
+    class Symbol:
+        def __init__(self, symbol_id, symbol_name, full_name):
+            self.symbol_id = symbol_id
+            self.symbol_name = symbol_name
+            self.full_name = full_name
+    user_crypto_list = [
+        # Example list of user crypto symbols
+        # Replace with actual symbol objects
+    Symbol(symbol_id=1, symbol_name='BTC', full_name='Bitcoin'),
+    Symbol(symbol_id=2, symbol_name='ETH', full_name='Etherum')
+    ]
+    
+    news_feeded = [
+        # Example list of news articles
+        # Replace with actual news articles
+        {"title": "Bitcoin hits new high", "url": "http://example.com/bitcoin-high"},
+        {"title": "Ethereum 2.0 launch", "url": "http://example.com/ethereum-launch"}
+    ]
+    
+    highlighted_news = highlight_articles(api_key, user_crypto_list, news_feeded)
+    
+    # Print results
+    print(highlighted_news)
