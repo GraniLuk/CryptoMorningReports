@@ -13,37 +13,52 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
         "Content-Type": "application/json"
     }
 
-    data = {
-        "model": "sonar-reasoning",
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are an advanced crypto analyst specializing in detailed technical and on-chain analysis. Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation. Focus only on the news articles provided."
-            },
-            {
-                "role": "user",
-                "content": f"Analyze the following crypto news and data: {news_feeded}. Focus on:\n1. Detailed technical analysis, explaining why specific resistance/support levels are important.\n2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.\n3. Statistical data and charts that support your analysis.\n4. Market sentiment with specific reasons.\nOnly use the provided news articles for your analysis. Base your analysis on these indicators as well: {indicators_message}"
-            }
-        ]
-    }
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        logging.info(f"API Response Status: {response.status_code}")
+    models = ["sonar-reasoning", "sonar-pro"]  # Models to try in order
+    max_retries = len(models)
+    current_try = 0
 
-        if response.status_code == 200:
-            content = response.json()["choices"][0]["message"]["content"]
-            logging.info(f"Successfully processed analysis. Length: {len(content)} chars")
-            logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
-            return content
-        else:
-            error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+    while current_try < max_retries:
+        current_model = models[current_try]
+        logging.info(f"Attempting with model: {current_model}")
+
+        data = {
+            "model": current_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are an advanced crypto analyst specializing in detailed technical and on-chain analysis. Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation. Focus only on the news articles provided."
+                },
+                {
+                    "role": "user",
+                    "content": f"Analyze the following crypto news and data: {news_feeded}. Focus on:\n1. Detailed technical analysis, explaining why specific resistance/support levels are important.\n2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.\n3. Statistical data and charts that support your analysis.\n4. Market sentiment with specific reasons.\nOnly use the provided news articles for your analysis. Base your analysis on these indicators as well: {indicators_message}"
+                }
+            ]
+        }
+
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            logging.info(f"API Response Status: {response.status_code}")
+
+            if response.status_code == 200:
+                content = response.json()["choices"][0]["message"]["content"]
+                logging.info(f"Successfully processed analysis. Length: {len(content)} chars")
+                logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+                return content
+            elif response.status_code == 504 and current_try < max_retries - 1:
+                logging.warning(f"Received 504 error with {current_model}, retrying with next model")
+                current_try += 1
+                continue
+            else:
+                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+                logging.error(error_msg)
+                return error_msg
+
+        except Exception as e:
+            error_msg = f"Failed to get crypto analysis: {str(e)}"
             logging.error(error_msg)
             return error_msg
 
-    except Exception as e:
-        error_msg = f"Failed: to get crypto analysis: {str(e)}"
-        logging.error(error_msg)
-        return error_msg
+    return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
 
 def highlight_articles(api_key, user_crypto_list, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
