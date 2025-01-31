@@ -69,17 +69,25 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
+
+    models = ["sonar-reasoning", "sonar-pro"]  # Models to try in order
+    max_retries = len(models)
+    current_try = 0
+
+    while current_try < max_retries:
+        current_model = models[current_try]
+        logging.info(f"Attempting with model: {current_model}")
     
-    data = {
-    "model": "sonar-reasoning",
-    "messages": [
-        {
-            "role": "system",
-            "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input. Categorize your analysis into Bitcoin, Ethereum, other cryptocurrencies from a provided list, and other cryptocurrencies not from the list."
-        },
-        {
-            "role": "user",
-            "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
+        data = {
+            "model": current_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input. Categorize your analysis into Bitcoin, Ethereum, other cryptocurrencies from a provided list, and other cryptocurrencies not from the list."
+                },
+                {
+                    "role": "user",
+                    "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
 
 1. Bitcoin
 2. Ethereum
@@ -94,27 +102,44 @@ For each category, prioritize articles that:
 5. Explain complex market dynamics or new technological developments in the crypto space.
 
 For each highlighted article, provide a brief explanation of its key insights and include the URL. If there are no significant articles for a category, state that there's no noteworthy information to report. Only consider the articles provided in the input."""
+                }
+            ]
         }
-    ]
-}
 
-    logging.info(f"Making API request with {len(news_feeded)} articles")
-    logging.debug(f"Symbol names provided: {symbol_names}")
+        logging.info(f"Making API request with {len(news_feeded)} articles using {current_model}")
+        logging.debug(f"Symbol names provided: {symbol_names}")
 
-    response = requests.post(url, json=data, headers=headers)
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            logging.info(f"API Response Status Code: {response.status_code}")
+            logging.debug(f"Response Headers: {response.headers}")
 
-    logging.info(f"API Response Status Code: {response.status_code}")
-    logging.debug(f"Response Headers: {response.headers}")
+            if response.status_code == 200:
+                response_content = response.json()["choices"][0]["message"]["content"]
+                logging.info("Successfully received API response")
+                logging.debug(f"Response content length: {len(response_content)}")
+                return response_content
+            elif response.status_code == 504 and current_try < max_retries - 1:
+                logging.warning(f"Received 504 error with {current_model}, retrying with next model")
+                current_try += 1
+                continue
+            else:
+                error_msg = f"Failed: {response.status_code} - {response.text}"
+                logging.error(error_msg)
+                if current_try < max_retries - 1:
+                    current_try += 1
+                    continue
+                return error_msg
 
-    if response.status_code == 200:
-        response_content = response.json()["choices"][0]["message"]["content"]
-        logging.info("Successfully received API response")
-        logging.debug(f"Response content length: {len(response_content)}")
-        return response_content
-    else:
-        error_msg = f"Failed: {response.status_code} - {response.text}"
-        logging.error(error_msg)
-        return error_msg
+        except Exception as e:
+            error_msg = f"Failed to highlight articles: {str(e)}"
+            logging.error(error_msg)
+            if current_try < max_retries - 1:
+                current_try += 1
+                continue
+            return error_msg
+
+    return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
     
 if __name__ == "__main__":
     # Example usage
