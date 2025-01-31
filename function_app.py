@@ -2,7 +2,6 @@ import logging
 import asyncio
 from datetime import date, datetime
 import azure.functions as func
-import aiohttp
 import os
 from dotenv import load_dotenv
 from technical_analysis.priceRangeReport import fetch_range_price
@@ -16,6 +15,7 @@ from source_repository import fetch_symbols
 from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import get_detailed_crypto_analysis, highlight_articles
 from news.rss_parser import get_news
+from telegram import send_telegram_message
 
 # Load environment variables from .env file
 load_dotenv()
@@ -208,32 +208,6 @@ def process_past_reports(target_date: date = None):
         raise
     finally:
         conn.close()
-
-
-# Update send_telegram_message function definition:
-async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HTML"):
-    if not enabled:
-        logging.info('Telegram notifications are disabled')
-        return
-    
-     # Truncate message if longer than Telegram's limit
-    MAX_TELEGRAM_LENGTH = 4096
-    if len(message) > MAX_TELEGRAM_LENGTH:
-        message = message[:MAX_TELEGRAM_LENGTH]
-    
-    try:
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
-        data = {
-            "chat_id": chat_id,
-            "text": message,
-            "parse_mode": parse_mode
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=data) as response:
-                result = await response.text()
-                logging.info('Telegram API response: %s', result)
-    except Exception as e:
-        logging.error('Failed to send Telegram message: %s', str(e))
 
 @app.timer_trigger(
     schedule="0 5 * * *", 
