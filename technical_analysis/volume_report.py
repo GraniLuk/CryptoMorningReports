@@ -1,7 +1,6 @@
 from typing import List
 from prettytable import PrettyTable
 import requests
-
 from source_repository import Symbol
 
 def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
@@ -51,23 +50,49 @@ def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
     # Sort results by total volume descending
     sorted_results = sorted(results, key=lambda x: x['total'], reverse=True)
     
-    return sorted_results, missing_symbols
-
-def print_combined_volumes(results, missing):
-    print("Combined 24h Trading Volume (USD)")
-    print("----------------------------------")
-    print(f"{'Symbol':<8} {'Name':<15} {'Binance':<15} {'KuCoin':<15} {'Total':<15}")
-    for item in results:
-        print(f"{item['symbol']:<8} {item['name']:<15} "
-              f"${item['binance']:>12,.2f}  "
-              f"${item['kucoin']:>12,.2f}  "
-              f"${item['total']:>12,.2f}")
+    # Create and format PrettyTable
+    table = PrettyTable()
+    table.field_names = ["Symbol", "Volume (USD)"]
+    table.align["Symbol"] = "l"  # Left align
+    table.align["Volume (USD)"] = "r"  # Right align
     
-    if missing:
-        print("\nSymbols not found on either exchange:")
-        print(", ".join(missing))
+    for result in sorted_results:
+        volume = f"${result['total']:,.2f}"
+        table.add_row([result['symbol'], volume])
+    
+    # Save results to database
+    if conn:
+        try:
+            cursor = conn.cursor()
+            # Insert new records
+            for result in sorted_results:
+                cursor.execute('''
+                    INSERT INTO volume_history (symbol, volume)
+                    VALUES (?, ?)
+                ''', (result['symbol'], result['total']))
+            
+            conn.commit()
+        except Exception as e:
+            print(f"Database error: {e}")
+            conn.rollback()
+    
+    return table        
         
-        
+if __name__ == "__main__":
+    
+    # Example usage
+    class Symbol:
+        def __init__(self, symbol_id, symbol_name, full_name, kucoin_name, binance_name):
+            self.symbol_id = symbol_id
+            self.symbol_name = symbol_name
+            self.full_name = full_name
+            self.kucoin_name = kucoin_name
+            self.binance_name = binance_name
 
-results, missing = get_volumes(user_crypto_list)
-print_combined_volumes(results, missing)
+    symbols = [
+        Symbol(symbol_id=1, symbol_name="BTC-USDT", full_name="Bitcoin", kucoin_name="BTC-USDT", binance_name="BTCUSDT"),
+        Symbol(symbol_id=2, symbol_name="ETH-USDT", full_name="Ethereum", kucoin_name="ETH-USDT", binance_name="ETHUSDT")
+    ]
+
+    table = get_volumes(symbols, None)
+    print(table)
