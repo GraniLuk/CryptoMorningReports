@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 from prettytable import PrettyTable
 import requests
@@ -39,6 +40,7 @@ def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
         if total_volume > 0:
             results.append({
                 'symbol': crypto.symbol_name,
+                'symbol_id': crypto.symbol_id,
                 'name': crypto.full_name,
                 'binance': binance_volume,
                 'kucoin': kucoin_volume,
@@ -67,9 +69,9 @@ def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
             # Insert new records
             for result in sorted_results:
                 cursor.execute('''
-                    INSERT INTO volume_history (symbol, volume)
-                    VALUES (?, ?)
-                ''', (result['symbol'], result['total']))
+                    INSERT INTO VolumeHistory (SymbolID, Volume, IndicatorDate)
+                    VALUES (?, ?, ?)
+                ''', (result['symbol_id'], result['total'], date.today()))
             
             conn.commit()
         except Exception as e:
@@ -79,19 +81,11 @@ def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
     return table        
         
 if __name__ == "__main__":
+    from source_repository import Symbol, SourceID
     
-    # Example usage
-    class Symbol:
-        def __init__(self, symbol_id, symbol_name, full_name, kucoin_name, binance_name):
-            self.symbol_id = symbol_id
-            self.symbol_name = symbol_name
-            self.full_name = full_name
-            self.kucoin_name = kucoin_name
-            self.binance_name = binance_name
-
     symbols = [
-        Symbol(symbol_id=1, symbol_name="BTC-USDT", full_name="Bitcoin", kucoin_name="BTC-USDT", binance_name="BTCUSDT"),
-        Symbol(symbol_id=2, symbol_name="ETH-USDT", full_name="Ethereum", kucoin_name="ETH-USDT", binance_name="ETHUSDT")
+        Symbol(symbol_id=1, symbol_name="BTC", full_name="Bitcoin", source_id=SourceID.BINANCE),
+        Symbol(symbol_id=2, symbol_name="ETH", full_name="Ethereum", source_id=SourceID.BINANCE)
     ]
 
     table = get_volumes(symbols, None)
