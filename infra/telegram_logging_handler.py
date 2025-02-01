@@ -41,6 +41,10 @@ def setup_logger():
     # Telegram Handler (ERROR level)
     telegram_token = os.environ.get("TELEGRAM_TOKEN")
     telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    telegram_enabled = os.environ.get("TELEGRAM_ENABLED", "false").lower() in ("true", "1", "yes")
+    if not telegram_enabled:
+        return logger
+    
     if telegram_token and telegram_chat_id:
         telegram_handler = TelegramHandler(telegram_token, telegram_chat_id)
         telegram_handler.setLevel(logging.ERROR)
