@@ -16,6 +16,7 @@ from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import get_detailed_crypto_analysis, highlight_articles
 from news.rss_parser import get_news
 from sharedCode.telegram import send_telegram_message
+from technical_analysis.volume_report import fetch_volume_report
 
 # Load environment variables from .env file
 load_dotenv()
@@ -55,6 +56,9 @@ def process_bitcoin_checker():
 
         # Check if there is new launchpool
         launchpool_report = check_gempool_articles()
+        
+        # Fetch volume report
+        volume_table = fetch_volume_report(symbols, conn)
 
         # Print tables
         logger.info(rsi_table)
@@ -76,6 +80,7 @@ def process_bitcoin_checker():
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
         message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
         stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
+        volume_report = f"Volume Report: <pre>{volume_table}</pre>"
 
         fetched_news = get_news()
         news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2, fetched_news)        
@@ -103,6 +108,14 @@ def process_bitcoin_checker():
             telegram_token, 
             telegram_chat_id, 
             stepn_report,
+            parse_mode="HTML"
+        ))
+        
+        asyncio.run(send_telegram_message(
+            telegram_enabled,
+            telegram_token,
+            telegram_chat_id,
+            volume_report,
             parse_mode="HTML"
         ))
 
