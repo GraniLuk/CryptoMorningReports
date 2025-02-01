@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 import requests
 from source_repository import Symbol
 
-def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
+def fetch_volume_report(symbols: List[Symbol], conn) -> PrettyTable:
     results = []
     missing_symbols = []
 
@@ -91,5 +91,5 @@ if __name__ == "__main__":
         Symbol(symbol_id=2, symbol_name="ETH", full_name="Ethereum", source_id=SourceID.BINANCE)
     ]
 
-    table = get_volumes(symbols, conn)
+    table = fetch_volume_report(symbols, conn)
     print(table)
