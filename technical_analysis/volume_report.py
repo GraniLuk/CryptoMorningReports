@@ -82,11 +82,14 @@ def get_volumes(symbols: List[Symbol], conn) -> PrettyTable:
         
 if __name__ == "__main__":
     from source_repository import Symbol, SourceID
-    
+    from infra.sql_connection import connect_to_sql
+    from dotenv import load_dotenv
+    load_dotenv()
+    conn = connect_to_sql()
     symbols = [
         Symbol(symbol_id=1, symbol_name="BTC", full_name="Bitcoin", source_id=SourceID.BINANCE),
         Symbol(symbol_id=2, symbol_name="ETH", full_name="Ethereum", source_id=SourceID.BINANCE)
     ]
 
-    table = get_volumes(symbols, None)
+    table = get_volumes(symbols, conn)
     print(table)
