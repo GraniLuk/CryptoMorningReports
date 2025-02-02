@@ -1,4 +1,3 @@
-from datetime import date
 import pyodbc
 from infra.telegram_logging_handler import app_logger
 
