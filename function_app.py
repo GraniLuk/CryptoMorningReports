@@ -74,13 +74,15 @@ def process_bitcoin_checker():
 
         # Format message with pre tags
         message_part1 = f"Crypto Report: {today_date}\n"
-        message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
+        message_part1 += f"24h Range Report:\n<pre>{range_table}</pre>"
         message_part1 += f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
         message_part1 += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
+        message_part2 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
         message_part2 = f"MACD Report: <pre>{macd_table}</pre>\n\n"
-        message_part2 += f"24h Range Report:\n<pre>{range_table}</pre>"
-        stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
+        
         volume_report = f"Volume Report: <pre>{volume_table}</pre>"
+        stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
+
 
         fetched_news = get_news()
         news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2, fetched_news)        

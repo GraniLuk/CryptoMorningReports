@@ -151,6 +151,9 @@ For each highlighted article, provide a brief explanation of its key insights an
     return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
     
 if __name__ == "__main__":
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
     # Example usage
     api_key = "your_api_key_here"
 
