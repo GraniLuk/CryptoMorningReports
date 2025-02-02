@@ -1,4 +1,4 @@
-from datetime import date
+from volume_repository import save_volume_results
 from typing import List
 from prettytable import PrettyTable
 import requests
@@ -62,21 +62,7 @@ def fetch_volume_report(symbols: List[Symbol], conn) -> PrettyTable:
         volume = f"${result['total']:,.2f}"
         table.add_row([result['symbol'], volume])
     
-    # Save results to database
-    if conn:
-        try:
-            cursor = conn.cursor()
-            # Insert new records
-            for result in sorted_results:
-                cursor.execute('''
-                    INSERT INTO VolumeHistory (SymbolID, Volume, IndicatorDate)
-                    VALUES (?, ?, ?)
-                ''', (result['symbol_id'], result['total'], date.today()))
-            
-            conn.commit()
-        except Exception as e:
-            print(f"Database error: {e}")
-            conn.rollback()
+    save_volume_results(conn, sorted_results)
     
     return table        
         
