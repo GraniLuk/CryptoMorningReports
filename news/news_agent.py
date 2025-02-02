@@ -26,7 +26,21 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an advanced crypto analyst specializing in detailed technical and on-chain analysis. Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation. Focus only on the news articles provided."
+                    "content": f"""\
+                        You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
+                        Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
+                        Focus only on the news articles provided.
+                        Format all responses using Telegram's HTML syntax:
+    - Bold: <b>text</b>
+    - Italic: <i>text</i>
+    - Underline: <u>text</u>
+    - Strikethrough: <s>text</s>
+    - Links: <a href="https://example.com">text</a>
+    - Code: <code>inline code</code> or <pre>multi-line code</pre>
+    - No need to escape special characters like . ! ? = 
+
+Ensure responses are cleanly formatted with proper HTML tags.
+"""
                 },
                 {
                     "role": "user",
@@ -39,7 +53,9 @@ Focus on:
 Only use the provided news articles for your analysis. 
 Base your analysis on these indicators as well: {indicators_message}.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
-If there is no significant information to report, state that there is no noteworthy information."""
+If there is no significant information to report, state that there is no noteworthy information.
+For reply message follow the MarkdownV2 format.
+"""
                 }
             ]
         }
@@ -88,20 +104,39 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
         logging.info(f"Attempting with model: {current_model}")
     
         data = {
-            "model": current_model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an advanced crypto article curator. Highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input. Categorize your analysis into Bitcoin, Ethereum, other cryptocurrencies from a provided list, and other cryptocurrencies not from the list."
-                },
-                {
-                    "role": "user",
-                    "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
+    "model": current_model,
+    "messages": [
+        {
+            "role": "system",
+            "content": f"""\
+You are an advanced crypto article curator. Your task is to highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input.
+
+Categorize your analysis into:
+    1. Bitcoin
+    2. Ethereum
+    3. Other cryptocurrencies from a provided list
+    4. Other cryptocurrencies not from the list
+
+Format all responses using Telegram's HTML syntax:
+    - Bold: <b>text</b>
+    - Italic: <i>text</i>
+    - Underline: <u>text</u>
+    - Strikethrough: <s>text</s>
+    - Links: <a href="https://example.com">text</a>
+    - Code: <code>inline code</code> or <pre>multi-line code</pre>
+    - No need to escape special characters like . ! ? = 
+
+Ensure responses are cleanly formatted with proper HTML tags.
+"""
+        },
+        {
+            "role": "user",
+            "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
 
 1. Bitcoin
 2. Ethereum
 3. Other cryptocurrencies from this list: {symbol_names}
-4. Other cryptocurrencies not from this list: {symbol_names}
+4. Other cryptocurrencies not from the list: {symbol_names}
 
 For each category, prioritize articles that:
 1. Offer in-depth technical analysis with clear explanations of resistance/support levels.
@@ -110,10 +145,12 @@ For each category, prioritize articles that:
 4. Discuss cryptocurrencies with high growth potential (especially for categories 3 and 4).
 5. Explain complex market dynamics or new technological developments in the crypto space.
 
-For each highlighted article, provide a brief explanation of its key insights and include the URL. If there are no significant articles for a category, state that there's no noteworthy information to report. Only consider the articles provided in the input."""
-                }
-            ]
+For each highlighted article, provide a brief explanation of its key insights and include the URL. If there are no significant articles for a category, state that there's no noteworthy information to report. 
+Only consider the articles provided in the input."""
         }
+    ]
+}
+
 
         logging.info(f"Making API request with {len(news_feeded)} articles using {current_model}")
         logging.debug(f"Symbol names provided: {symbol_names}")
@@ -155,7 +192,7 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
     # Example usage
-    api_key = "your_api_key_here"
+    api_key = os.environ["PERPLEXITY_API_KEY"]
 
     class Symbol:
         def __init__(self, symbol_id, symbol_name, full_name):
