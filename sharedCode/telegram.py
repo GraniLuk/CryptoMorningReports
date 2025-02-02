@@ -16,6 +16,9 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
     
     if parse_mode == "MarkdownV2":
         message = enforce_markdown_v2(message)
+        
+    if parse_mode == "HTML":
+        message = sanitize_html(message)
     
     try:
         # Split message into chunks
@@ -45,6 +48,30 @@ def enforce_markdown_v2(text):
         r'\\\1', 
         text
     )
+    
+def sanitize_html(message):
+    """
+    Escapes any HTML-like substrings that are not valid Telegram allowed tags.
+    Allowed tags: b, i, u, s, code, pre, a (opening/closing, with optional attributes for <a>).
+    """
+    # List the allowed tag names. For the <a> tag, we allow attributes.
+    allowed_tags = ['b', 'i', 'u', 's', 'code', 'pre', 'a']
+
+    # Regex to match any HTML tag
+    tag_regex = re.compile(r'</?([a-zA-Z]+)([^>]*)>')
+
+    def replace_tag(match):
+        tag_name = match.group(1).lower()
+        full_tag = match.group(0)
+        # Check if tag_name is one of the allowed tags.
+        if tag_name in allowed_tags:
+            # For safety, you can choose to do extra validation on attributes if needed.
+            return full_tag
+        # Escape the entire tag if not allowed.
+        return html.escape(full_tag)
+
+    # Replace any found HTML tag with our conditional replacement.
+    return tag_regex.sub(replace_tag, message)
 
 if __name__ == "__main__":
     import asyncio
