@@ -137,7 +137,7 @@ def process_bitcoin_checker():
                 telegram_token,
                 telegram_chat_id,
                 news_report,
-                parse_mode="HTML"
+                parse_mode="MarkdownV2"
             ))
         
         if (highlight_articles_message.startswith("Failed")):
@@ -148,7 +148,7 @@ def process_bitcoin_checker():
                 telegram_token,
                 telegram_chat_id,
                 highlight_articles_message,
-                parse_mode="HTML"
+                parse_mode="MarkdownV2"
             ))
     except Exception as e:
         logger.error('Function failed with error: %s', str(e))
