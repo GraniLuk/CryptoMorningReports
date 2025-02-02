@@ -30,14 +30,16 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
                 },
                 {
                     "role": "user",
-                    "content": f"Analyze the following crypto news and data: {news_feeded}.
-                    Focus on:\n1. Detailed technical analysis, explaining why specific resistance/support levels are important.
-                    \n2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.
-                    \n3. Statistical data and charts that support your analysis.\n4. Market sentiment with specific reasons.
-                    \nOnly use the provided news articles for your analysis. 
-                    Base your analysis on these indicators as well: {indicators_message}.
-                     You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
-                     If there is no significant information to report, state that there is no noteworthy information."
+                    "content": f"""Analyze the following crypto news and data: {news_feeded}.
+Focus on:
+1. Detailed technical analysis, explaining why specific resistance/support levels are important.
+2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.
+3. Statistical data and charts that support your analysis.
+4. Market sentiment with specific reasons.
+Only use the provided news articles for your analysis. 
+Base your analysis on these indicators as well: {indicators_message}.
+You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
+If there is no significant information to report, state that there is no noteworthy information."""
                 }
             ]
         }
