@@ -1,4 +1,4 @@
-from volume_repository import save_volume_results
+from technical_analysis.volume_repository import save_volume_results
 from typing import List
 from prettytable import PrettyTable
 import requests
