@@ -95,7 +95,7 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
         "Content-Type": "application/json"
     }
 
-    models = ["sonar-reasoning", "sonar-pro"]  # Models to try in order
+    models = ["sonar-pro"]  # Models to try in order
     max_retries = len(models)
     current_try = 0
 
