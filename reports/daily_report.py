@@ -46,7 +46,7 @@ async def process_daily_report(conn, telegram_enabled, telegram_token, telegram_
 
     # Process and send news reports
     fetched_news = get_news()
-    news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2, fetched_news)
+    news_report = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2 + volume_report, fetched_news)
     highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], symbols, fetched_news)
 
     # Send all messages
