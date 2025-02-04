@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.priceRangeReport import fetch_range_price
 from technical_analysis.RSIReport import create_rsi_table
 from technical_analysis.movingAveragesReport import calculate_indicators
@@ -26,6 +27,7 @@ async def process_daily_report(conn, telegram_enabled, telegram_token, telegram_
     macd_table = calculate_macd(symbols, conn)
     launchpool_report = check_gempool_articles()
     volume_table = fetch_volume_report(symbols, conn)
+    marketcap_table = fetch_marketcap_report(symbols, conn)
 
     # Format messages
     today_date = datetime.now().strftime("%Y-%m-%d")
@@ -39,6 +41,7 @@ async def process_daily_report(conn, telegram_enabled, telegram_token, telegram_
     message_part2 += f"MACD Report: <pre>{macd_table}</pre>\n\n"
     
     volume_report = f"Volume Report: <pre>{volume_table}</pre>"
+    volume_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
 
     # Process and send news reports
