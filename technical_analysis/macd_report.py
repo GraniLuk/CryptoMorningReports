@@ -1,7 +1,7 @@
 from collections import namedtuple
 import yfinance as yf
 from prettytable import PrettyTable
-from technical_analysis.macd_repository import save_macd_results, fetch_yesterday_macd
+from technical_analysis.repositories.macd_repository import save_macd_results, fetch_yesterday_macd
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from typing import List

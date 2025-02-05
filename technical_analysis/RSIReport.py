@@ -1,6 +1,6 @@
 from typing import List
 from sharedCode.priceChecker import fetch_close_prices
-from technical_analysis.rsi_repository import save_rsi_results
+from technical_analysis.repositories.rsi_repository import save_rsi_results
 import pandas as pd
 from prettytable import PrettyTable
 from infra.telegram_logging_handler import app_logger

@@ -2,7 +2,7 @@ from typing import List
 from prettytable import PrettyTable
 import requests
 from source_repository import Symbol
-from technical_analysis.marketcap_repository import save_marketcap_results
+from technical_analysis.repositories.marketcap_repository import save_marketcap_results
 
 def fetch_marketcap_report(symbols: List[Symbol], conn) -> PrettyTable:
     results = []
