@@ -82,6 +82,87 @@ If there is no significant information to report, state that there is no notewor
 
     return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
 
+def get_detailed_crypto_analysis_with_news(api_key, indicators_message, news_feeded):
+    start_time = time.time()
+    logging.info(f"Starting detailed crypto analysis")
+    logging.debug(f"Input news articles count: {len(news_feeded)}")
+
+    url = "https://api.perplexity.ai/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    models = ["sonar-pro"]  # Models to try in order
+    max_retries = len(models)
+    current_try = 0
+
+    while current_try < max_retries:
+        current_model = models[current_try]
+        logging.info(f"Attempting with model: {current_model}")
+
+        data = {
+            "model": current_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": f"""\
+                        You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
+                        Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
+                        Focus only on the news articles provided.
+                        Format all responses using Telegram's HTML syntax:
+    - Bold: <b>text</b>
+    - Italic: <i>text</i>
+    - Underline: <u>text</u>
+    - Strikethrough: <s>text</s>
+    - Links: <a href="https://example.com">text</a>
+    - Code: <code>inline code</code> or <pre>multi-line code</pre>
+    - No need to escape special characters like . ! ? = 
+Ensure responses are cleanly formatted with proper HTML tags.
+"""
+                },
+                {
+                    "role": "user",
+                    "content": f"""Analyze the following crypto news and data: {news_feeded}.
+Focus on:
+1. Detailed technical analysis, explaining why specific resistance/support levels are important.
+2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.
+3. Statistical data and charts that support your analysis.
+4. Market sentiment with specific reasons.
+Only use the provided news articles for your analysis. 
+Base your analysis on these indicators as well: {indicators_message}.
+You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
+If there is no significant information to report, state that there is no noteworthy information.
+"""
+                }
+            ]
+        }
+
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            logging.info(f"API Response Status: {response.status_code}")
+
+            if response.status_code == 200:
+                content = response.json()["choices"][0]["message"]["content"]
+                logging.info(f"Successfully processed analysis. Length: {len(content)} chars")
+                logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+                return content
+            elif response.status_code == 504 and current_try < max_retries - 1:
+                logging.warning(f"Received 504 error with {current_model}, retrying with next model")
+                current_try += 1
+                continue
+            else:
+                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+                logging.error(error_msg)
+                return error_msg
+
+        except Exception as e:
+            error_msg = f"Failed to get crypto analysis: {str(e)}"
+            logging.error(error_msg)
+            return error_msg
+
+    return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
+
 def highlight_articles(api_key, user_crypto_list, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
     
