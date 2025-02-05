@@ -17,6 +17,7 @@ class Symbol:
     symbol_name: str
     full_name: str
     source_id: SourceID  # Use enum for SourceID
+    coingecko_name: str = None
 
     @property
     def kucoin_name(self) -> str:
@@ -51,7 +52,7 @@ def fetch_symbols(conn) -> List[Symbol]:
         if conn:
             try:
                 cursor = conn.cursor()
-                query = "SELECT SymbolID, SymbolName, FullName, SourceID FROM Symbols WHERE IsActive = 1"
+                query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE IsActive = 1"
                 
                 symbols = []
                 for row in cursor.execute(query):
@@ -59,7 +60,8 @@ def fetch_symbols(conn) -> List[Symbol]:
                         symbol_id=row[0],
                         symbol_name=row[1],
                         full_name=row[2],
-                        source_id=SourceID(row[3])  # Convert to SourceID enum
+                        source_id=SourceID(row[3]),  # Convert to SourceID enum
+                        coingecko_name=row[4]
                     )
                     symbols.append(symbol)
                     
