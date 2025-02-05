@@ -1,4 +1,4 @@
-from technical_analysis.priceRangeRepository import save_price_range_results
+from technical_analysis.repositories.priceRangeRepository import save_price_range_results
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from infra.configuration import get_kucoin_credentials

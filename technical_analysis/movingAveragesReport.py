@@ -1,7 +1,7 @@
 from collections import namedtuple
 import yfinance as yf
 from prettytable import PrettyTable
-from technical_analysis.moving_averages_repository import save_moving_averages_results, fetch_yesterday_moving_averages
+from technical_analysis.repositories.moving_averages_repository import save_moving_averages_results, fetch_yesterday_moving_averages
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from typing import List
