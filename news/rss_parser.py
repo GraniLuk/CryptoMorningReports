@@ -4,6 +4,7 @@ from time import mktime
 import requests
 import json
 from bs4 import BeautifulSoup
+from infra.telegram_logging_handler import applogger
 
 def get_news():
     feeds = {
@@ -67,7 +68,7 @@ def fetch_rss_news(feed_url, source, class_name):
 
         return latest_news
     except Exception as e:
-        print(f"Error fetching news from {feed_url}: {str(e)}")
+        applogger.error(f"Error fetching news from {feed_url}: {str(e)}")
         return []
 
 def fetch_full_content(url, class_name):
@@ -83,7 +84,7 @@ def fetch_full_content(url, class_name):
         else:
             return "Failed to extract full content"
     except Exception as e:
-        print(f"Error fetching full content from {url}: {str(e)}")
+        applogger.error(f"Error fetching full content from {url}: {str(e)}")
         return "Failed to fetch full content"
 
 if __name__ == "__main__":
