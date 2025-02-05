@@ -81,4 +81,46 @@ def fetch_yesterday_macd(conn, target_date: date = None) -> pd.DataFrame:
         raise
     except Exception as e:
         app_logger.error(f"Error fetching yesterday's MACD: {str(e)}")
-        raise 
+        raise
+
+def get_macd_with_crossover_data(self):
+    """
+    Fetch data from MACDWithCrossoverView
+    Returns: List of dictionaries containing MACD data with crossover signals
+    """
+    try:
+        with pyodbc.connect(self.connection_string) as conn:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT TOP (1000) [ID]
+                    ,[SymbolName]
+                    ,[IndicatorDate]
+                    ,[CurrentPrice]
+                    ,[MACD]
+                    ,[Signal]
+                    ,[Histogram]
+                    ,[HistogramCrossover]
+                FROM [dbo].[MACDWithCrossoverView]
+            """
+            
+            cursor.execute(query)
+            
+            # Convert rows to list of dictionaries
+            columns = [column[0] for column in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                results.append(dict(zip(columns, row)))
+                
+            cursor.close()
+            app_logger.info("Successfully fetched MACD with crossover data")
+            
+            return results
+            
+    except pyodbc.Error as e:
+        app_logger.error(f"ODBC Error while fetching MACD data: {e}")
+        raise
+    except Exception as e:
+        app_logger.error(f"Error fetching MACD data: {str(e)}")
+        raise
