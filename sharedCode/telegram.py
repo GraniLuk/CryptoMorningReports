@@ -74,6 +74,28 @@ def sanitize_html(message):
     # Replace any found HTML tag with our conditional replacement.
     return tag_regex.sub(replace_tag, message)
 
+async def try_send_report_with_HTML_or_Markdown(message, telegram_enabled, telegram_token, telegram_chat_id):
+    # Try HTML first
+    success = await send_telegram_message(
+        telegram_enabled, 
+        telegram_token,
+        telegram_chat_id,
+        message,
+        parse_mode="HTML"
+    )
+    
+    # If HTML failed, try MarkdownV2
+    if not success:
+        success = await send_telegram_message(
+            telegram_enabled,
+            telegram_token,
+            telegram_chat_id,
+            message,
+            parse_mode="MarkdownV2"
+        )
+    
+    return success
+
 if __name__ == "__main__":
     import asyncio
     from dotenv import load_dotenv
