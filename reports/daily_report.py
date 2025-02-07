@@ -63,9 +63,9 @@ async def process_daily_report(conn, telegram_enabled, telegram_token, telegram_
         await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, message_part3, parse_mode="HTML")
 
     if not analysis_reported_without_news.startswith("Failed"):
-        await try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_without_news, parse_mode="HTML")
+        await try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_without_news)
 
     if not analysis_reported_with_news.startswith("Failed"):
-        await try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_with_news, parse_mode="HTML")
+        await try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_with_news)
     # if not highlight_articles_message.startswith("Failed"):
     #     await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, highlight_articles_message, parse_mode="HTML")
