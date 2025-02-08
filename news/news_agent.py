@@ -13,7 +13,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
         "Content-Type": "application/json"
     }
 
-    models = ["sonar-reasoning", "sonar-pro"]  # Models to try in order
+    models = ["sonar-pro"]  # Models to try in order
     max_retries = len(models)
     current_try = 0
 
