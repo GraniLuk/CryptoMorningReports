@@ -20,7 +20,7 @@ def fetch_volume_report(symbols: List[Symbol], conn) -> PrettyTable:
             if binance_response.status_code == 200:
                 binance_data = binance_response.json()
                 binance_volume = float(binance_data.get("quoteVolume", 0))
-        except Exception as e:
+        except Exception:
             pass
 
         # Get KuCoin volume
@@ -33,7 +33,7 @@ def fetch_volume_report(symbols: List[Symbol], conn) -> PrettyTable:
             if kucoin_response.status_code == 200:
                 kucoin_data = kucoin_response.json()
                 kucoin_volume = float(kucoin_data.get("data", {}).get("volValue", 0))
-        except Exception as e:
+        except Exception:
             pass
 
         total_volume = binance_volume + kucoin_volume

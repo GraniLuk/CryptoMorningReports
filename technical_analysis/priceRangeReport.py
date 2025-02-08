@@ -61,7 +61,6 @@ def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
 
 if __name__ == "__main__":
     from source_repository import Symbol, SourceID
-    from infra.sql_connection import connect_to_sql
     from dotenv import load_dotenv
 
     load_dotenv()

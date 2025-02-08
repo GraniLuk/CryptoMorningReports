@@ -5,7 +5,7 @@ import time
 
 def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     start_time = time.time()
-    logging.info(f"Starting detailed crypto analysis")
+    logging.info("Starting detailed crypto analysis")
     # logging.debug(f"Input news articles count: {len(news_feeded)}")
 
     url = "https://api.perplexity.ai/chat/completions"
@@ -24,7 +24,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
             "messages": [
                 {
                     "role": "system",
-                    "content": f"""\
+                    "content": """\
                         You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
                         Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
                         Format all responses using Telegram's HTML syntax:
@@ -93,7 +93,7 @@ If there is no significant information to report, state that there is no notewor
 
 def get_detailed_crypto_analysis_with_news(api_key, indicators_message, news_feeded):
     start_time = time.time()
-    logging.info(f"Starting detailed crypto analysis")
+    logging.info("Starting detailed crypto analysis")
     logging.debug(f"Input news articles count: {len(news_feeded)}")
 
     url = "https://api.perplexity.ai/chat/completions"
@@ -112,7 +112,7 @@ def get_detailed_crypto_analysis_with_news(api_key, indicators_message, news_fee
             "messages": [
                 {
                     "role": "system",
-                    "content": f"""\
+                    "content": """\
                         You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
                         Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
                         Focus only on the news articles provided.
@@ -200,7 +200,7 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
             "messages": [
                 {
                     "role": "system",
-                    "content": f"""\
+                    "content": """\
 You are an advanced crypto article curator. Your task is to highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input.
 
 Categorize your analysis into:

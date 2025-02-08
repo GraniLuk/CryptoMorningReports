@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta
 from technical_analysis.movingAveragesReport import calculate_indicators
 from technical_analysis.macd_report import calculate_macd
