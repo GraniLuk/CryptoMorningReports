@@ -1,34 +1,25 @@
-from sharedCode.binance import fetch_binance_price
+from sharedCode.priceChecker import fetch_current_price
 from prettytable import PrettyTable
 from stepn.stepn_repository import save_stepn_results, fetch_stepn_results_last_14_days
 import pandas as pd
-from sharedCode.coingecko import fetch_coingecko_price
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 from infra.telegram_logging_handler import app_logger
 from stepn.stepn_ratio_fetch import fetch_gstgmt_ratio_range
 
 def fetch_stepn_report(conn) -> PrettyTable:
     symbols = [
-    Symbol(symbol_id=1, symbol_name='GMT', full_name='STEPN Token', source_id=3),
-    Symbol(symbol_id=2, symbol_name='GST', full_name='green-satoshi-token-bsc', source_id=3)
+    Symbol(symbol_id=1, symbol_name='GMT', full_name='STEPN Token', source_id=SourceID.BINANCE),
+    Symbol(symbol_id=2, symbol_name='GST', full_name='green-satoshi-token-bsc' , source_id=SourceID.COINGECKO, coingecko_name='green-satoshi-token-bsc')
     ]
     results = []
     
-    try:
-        ticker = fetch_binance_price(symbols[0])
-        gmt_price = (ticker.symbol, ticker.last)
-        results.append(gmt_price)
-    except Exception as e:
-        app_logger.error(f"Unexpected error for GMT: {str(e)}")
-        raise
-    
-    try: 
-        ticker = fetch_coingecko_price(symbols[1])
-        gst_price = (ticker.symbol, ticker.last)
-        results.append(gst_price)
-    except Exception as e:
-        app_logger.error(f"Unexpected error for GST: {str(e)}")
-        raise
+    for symbol in symbols:
+        try:
+            ticker = fetch_current_price(symbol)
+            results.append((ticker.symbol, ticker.last))
+        except Exception as e:
+            app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+            raise
              
     # Calculate ratio
     gmt_gst_ratio = results[0][1]/results[1][1]
