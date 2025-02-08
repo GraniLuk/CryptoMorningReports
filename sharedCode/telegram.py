@@ -74,7 +74,7 @@ def sanitize_html(message):
     # Replace any found HTML tag with our conditional replacement.
     return tag_regex.sub(replace_tag, message)
 
-async def try_send_report_with_HTML_or_Markdown(message, telegram_enabled, telegram_token, telegram_chat_id):
+async def try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, message):
     # Try HTML first
     success = await send_telegram_message(
         telegram_enabled, 
