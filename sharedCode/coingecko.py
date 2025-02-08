@@ -1,5 +1,5 @@
 from infra.telegram_logging_handler import app_logger
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 from pycoingecko import CoinGeckoAPI
 from sharedCode.commonPrice import TickerPrice
 
@@ -10,10 +10,13 @@ def fetch_coingecko_price(symbol: Symbol) -> TickerPrice:
         cg = CoinGeckoAPI()
         price_data = cg.get_price(ids=symbol.full_name, vs_currencies='usd')
         return TickerPrice(
+            source=SourceID.COINGECKO,
             symbol=symbol.symbol_name,
             low=price_data[symbol.full_name]['usd'],
             high=price_data[symbol.full_name]['usd'],
-            last=price_data[symbol.full_name]['usd']
+            last=price_data[symbol.full_name]['usd'],
+            volume=0,
+            volume_quote=0
         )
     except Exception as e:
         app_logger.error(f"Error fetching price from CoinGecko: {e}")

@@ -1,4 +1,3 @@
-from sharedCode.commonPrice import TickerPrice
 from sharedCode.binance import fetch_binance_price
 from prettytable import PrettyTable
 from stepn.stepn_repository import save_stepn_results, fetch_stepn_results_last_14_days
@@ -16,68 +15,68 @@ def fetch_stepn_report(conn) -> PrettyTable:
     results = []
     
     try:
-        gmt_price = fetch_binance_price(symbols[0])
+        ticker = fetch_binance_price(symbols[0])
+        gmt_price = (ticker.symbol, ticker.last)
         results.append(gmt_price)
     except Exception as e:
         app_logger.error(f"Unexpected error for GMT: {str(e)}")
         raise
     
     try: 
-        gst_price = fetch_coingecko_price(symbols[1])
+        ticker = fetch_coingecko_price(symbols[1])
+        gst_price = (ticker.symbol, ticker.last)
         results.append(gst_price)
     except Exception as e:
         app_logger.error(f"Unexpected error for GST: {str(e)}")
         raise
              
     # Calculate ratio
-    gmt_gst_ratio = results[0].last/results[1].last
-
-    last_14_days_results = fetch_stepn_results_last_14_days(conn)
-    ratios = [record[2] for record in last_14_days_results]  # Extracting ratios separately
-    ratios.append(gmt_gst_ratio)
-
-    ema14_results = calculate_ema14(ratios)
+    gmt_gst_ratio = results[0][1]/results[1][1]
     
     # Fetch and calculate 24h range
-    min_24h, max_24h, range_percent = fetch_gstgmt_ratio_range()
+    gst_ratio_result = fetch_gstgmt_ratio_range()
+    min_24h, max_24h, range_percent = None, None, None
+    if gst_ratio_result:
+        min_24h, max_24h, range_percent = fetch_gstgmt_ratio_range()
+
+    if conn is not None:
+        last_14_days_results = fetch_stepn_results_last_14_days(conn)
+        ratios = [record[2] for record in last_14_days_results]  # Extracting ratios separately
+        ratios.append(gmt_gst_ratio)
+        ema14_results = calculate_ema14(ratios)
+        results.append(('EMA14', ema14_results[-1]))
     
-    # Save results to database
-    try:
-        save_stepn_results(
-            conn=conn, 
-            gmt_price=results[0].last, 
-            gst_price=results[1].last, 
-            ratio=gmt_gst_ratio, 
-            ema=ema14_results[-1],
-            min_24h=min_24h,
-            max_24h=max_24h,
-            range_24h=range_percent
-        )
-    except Exception as e:
-        app_logger.error(f"Error saving STEPN results to database: {str(e)}")
+        # Save results to database
+        try:
+            save_stepn_results(
+                conn=conn, 
+                gmt_price=results[0][1], 
+                gst_price=results[1][1], 
+                ratio=gmt_gst_ratio, 
+                ema=ema14_results[-1],
+                min_24h=min_24h,
+                max_24h=max_24h,
+                range_24h=range_percent
+            )
+        except Exception as e:
+            app_logger.error(f"Error saving STEPN results to database: {str(e)}")
     
     # Create table for display
     stepn_table = PrettyTable()
     stepn_table.field_names = ["Symbol", "Current Price"]
 
-    results.append(TickerPrice(symbol='GMT/GST', low=0, high=0, last=gmt_gst_ratio))
-    results.append(TickerPrice(symbol='EMA14', low=0, high=0, last=ema14_results[-1]))
-
     # Store rows with range calculation
-    range_rows = []
-    for result in results:
-        symbol = result.symbol
-        last = result.last
-        range_rows.append((symbol, last))
+    results.append(('GMT/GST', gmt_gst_ratio))
+
 
     # Add 24h statistics
     if min_24h and max_24h and range_percent:
-        range_rows.append(('24h Min', round(min_24h, 4)))
-        range_rows.append(('24h Max', round(max_24h, 4)))
+        results.append(('24h Min', round(min_24h, 4)))
+        results.append(('24h Max', round(max_24h, 4)))
         range_percent_formatted = f"{range_percent:.2f}%"
-        range_rows.append(('24h Range %', range_percent_formatted))
+        results.append(('24h Range %', range_percent_formatted))
 
-    for row in range_rows:
+    for row in results:
         stepn_table.add_row(row)
     return stepn_table
 
@@ -100,4 +99,5 @@ def calculate_ema14(ratios):
         return df["EMA14"].tolist()
 
 if __name__ == "__main__":
-    fetch_stepn_report()
+    report = fetch_stepn_report(None)
+    print(report)

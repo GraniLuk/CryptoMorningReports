@@ -1,3 +1,3 @@
 from collections import namedtuple
 
-TickerPrice = namedtuple('TickerPrice', ['symbol', 'low', 'high', 'last'])
+TickerPrice = namedtuple('TickerPrice', ['source','symbol', 'low', 'high', 'last', 'volume', 'volume_quote'])
