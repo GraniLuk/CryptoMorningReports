@@ -5,7 +5,7 @@ from sharedCode.commonPrice import TickerPrice
 
 
 def fetch_coingecko_price(symbol: Symbol) -> TickerPrice:
-    """Fetch current price from CoinGecko API and return as BinancePrice object"""
+    """Fetch current price from CoinGecko API and return as TickerPrice object"""
     try:
         cg = CoinGeckoAPI()
         price_data = cg.get_price(ids=symbol.full_name, vs_currencies='usd')
