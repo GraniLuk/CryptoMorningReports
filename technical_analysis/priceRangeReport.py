@@ -10,7 +10,6 @@ def fetch_range_price(symbols : List[Symbol], conn) -> PrettyTable:
     results = []
     for symbol in symbols:
         try:
-            # Check if symbol should be fetched from Kucoin
             price_data = fetch_current_price(symbol)
             if price_data:
                     results.append(price_data)
