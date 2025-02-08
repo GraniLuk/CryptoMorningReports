@@ -1,10 +1,13 @@
 import pyodbc
 from infra.telegram_logging_handler import app_logger
 
-def save_price_range_results(conn, symbol_id: int, low_price: float, high_price: float, range_percent: float) -> None:
+
+def save_price_range_results(
+    conn, symbol_id: int, low_price: float, high_price: float, range_percent: float
+) -> None:
     """
     Saves price range results to the database
-    
+
     Args:
         conn: Database connection
         symbol_id (int): Symbol ID from Symbols table
@@ -33,7 +36,9 @@ def save_price_range_results(conn, symbol_id: int, low_price: float, high_price:
             cursor.execute(query, (symbol_id, low_price, high_price, range_percent))
             conn.commit()
             cursor.close()
-            app_logger.info(f"Successfully saved price range results to database for symbol_id {symbol_id}")
+            app_logger.info(
+                f"Successfully saved price range results to database for symbol_id {symbol_id}"
+            )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving price range results: {e}")
         raise

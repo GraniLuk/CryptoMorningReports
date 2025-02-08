@@ -10,73 +10,76 @@ from typing import Dict, Tuple
 _price_cache: Dict[Tuple[str, SourceID], TickerPrice] = {}
 _close_prices_cache: Dict[Tuple[str, SourceID, int], pd.DataFrame] = {}
 
+
 def fetch_close_prices(symbol: Symbol, limit: int = 14) -> pd.DataFrame:
     # Find the maximum cached limit for this symbol and source
     max_cached_limit = 0
     cached_df = None
-    
-    for (sym, src, lmt) in _close_prices_cache.keys():
+
+    for sym, src, lmt in _close_prices_cache.keys():
         if sym == symbol.symbol_name and src == symbol.source_id:
             if lmt > max_cached_limit:
                 max_cached_limit = lmt
                 cached_df = _close_prices_cache[(sym, src, lmt)]
-    
+
     # If we found cached data with higher or equal limit, return subset
     if cached_df is not None and max_cached_limit >= limit:
         return cached_df.iloc[-limit:]
-    
+
     # Fetch new data
-    if (symbol.source_id == SourceID.KUCOIN):
+    if symbol.source_id == SourceID.KUCOIN:
         df = fetch_close_prices_from_Kucoin(symbol.kucoin_name, limit)
-    if (symbol.source_id == SourceID.BINANCE):
+    if symbol.source_id == SourceID.BINANCE:
         df = fetch_close_prices_from_Binance(symbol.binance_name, limit)
-    if (symbol.source_id == SourceID.COINGECKO):
+    if symbol.source_id == SourceID.COINGECKO:
         df = fetch_coingecko_price(symbol.symbol_name)
-    
+
     # Update cache
     _close_prices_cache[(symbol.symbol_name, symbol.source_id, limit)] = df
     return df
+
 
 def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
     # Use provided source_id if available, otherwise use symbol's source_id
     used_source_id = source_id if source_id is not None else symbol.source_id
     cache_key = (symbol.symbol_name, used_source_id)
-    
+
     # Check cache
     if cache_key in _price_cache:
         return _price_cache[cache_key]
 
     # Fetch new price
     price = None
-    if (used_source_id == SourceID.KUCOIN):
+    if used_source_id == SourceID.KUCOIN:
         price = fetch_kucoin_price(symbol)
-    if (used_source_id == SourceID.BINANCE):
+    if used_source_id == SourceID.BINANCE:
         price = fetch_binance_price(symbol)
-    if (used_source_id == SourceID.COINGECKO):
+    if used_source_id == SourceID.COINGECKO:
         price = fetch_coingecko_price(symbol)
-    
+
     # Update cache
     _price_cache[cache_key] = price
     return price
+
 
 if __name__ == "__main__":
     symbol = Symbol(
         symbol_id=1,  # Added required field
         symbol_name="KCS",
         full_name="Bitcoin",  # Added required field
-        source_id=SourceID.KUCOIN
+        source_id=SourceID.KUCOIN,
     )
-    
+
     current_price = fetch_current_price(symbol)
     print(f"Current price for {symbol.symbol_name}: {current_price}")
-    
+
     symbol = Symbol(
         symbol_id=1,  # Added required field
         symbol_name="BTC",
         full_name="Bitcoin",  # Added required field
-        source_id=SourceID.BINANCE
+        source_id=SourceID.BINANCE,
     )
-    
+
     current_price = fetch_current_price(symbol)
     print(f"Current price for {symbol.symbol_name}: {current_price}")
 

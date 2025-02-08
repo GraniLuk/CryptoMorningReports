@@ -8,9 +8,9 @@ def get_aggregated_data(conn):
     Returns: List of dictionaries containing aggregated symbol data
     """
     try:
-            cursor = conn.cursor()
-            
-            query = """
+        cursor = conn.cursor()
+
+        query = """
                 SELECT TOP (1000) [SymbolName]
                     ,[RSIIndicatorDate]
                     ,[RSIClosePrice]
@@ -25,20 +25,20 @@ def get_aggregated_data(conn):
                     ,[RangePercent]
                 FROM [dbo].[SymbolDataView]
             """
-            
-            cursor.execute(query)
-            
-            columns = [column[0] for column in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                results.append(dict(zip(columns, row)))
-                
-            cursor.close()
-            app_logger.info("Successfully fetched symbol data")
-            
-            return results
-            
+
+        cursor.execute(query)
+
+        columns = [column[0] for column in cursor.description]
+        results = []
+
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+
+        cursor.close()
+        app_logger.info("Successfully fetched symbol data")
+
+        return results
+
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbol data: {e}")
         raise

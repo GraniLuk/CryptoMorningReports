@@ -2,16 +2,14 @@ import requests
 import logging
 import time
 
+
 def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     start_time = time.time()
     logging.info(f"Starting detailed crypto analysis")
     # logging.debug(f"Input news articles count: {len(news_feeded)}")
 
     url = "https://api.perplexity.ai/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     models = ["sonar-pro"]  # Models to try in order
     max_retries = len(models)
@@ -39,7 +37,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     - No need to escape special characters like . ! ? = 
 
 Ensure responses are cleanly formatted with proper HTML tags.
-"""
+""",
                 },
                 {
                     "role": "user",
@@ -52,9 +50,9 @@ Focus on:
 Base your analysis on these indicators as well: {indicators_message}.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
-"""
-                }
-            ]
+""",
+                },
+            ],
         }
 
         try:
@@ -63,15 +61,23 @@ If there is no significant information to report, state that there is no notewor
 
             if response.status_code == 200:
                 content = response.json()["choices"][0]["message"]["content"]
-                logging.info(f"Successfully processed analysis. Length: {len(content)} chars")
-                logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+                logging.info(
+                    f"Successfully processed analysis. Length: {len(content)} chars"
+                )
+                logging.debug(
+                    f"Processing time: {time.time() - start_time:.2f} seconds"
+                )
                 return content
             elif response.status_code == 504 and current_try < max_retries - 1:
-                logging.warning(f"Received 504 error with {current_model}, retrying with next model")
+                logging.warning(
+                    f"Received 504 error with {current_model}, retrying with next model"
+                )
                 current_try += 1
                 continue
             else:
-                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+                error_msg = (
+                    f"Failed: API error: {response.status_code} - {response.text}"
+                )
                 logging.error(error_msg)
                 return error_msg
 
@@ -80,7 +86,10 @@ If there is no significant information to report, state that there is no notewor
             logging.error(error_msg)
             return error_msg
 
-    return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
+    return (
+        f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
+    )
+
 
 def get_detailed_crypto_analysis_with_news(api_key, indicators_message, news_feeded):
     start_time = time.time()
@@ -88,10 +97,7 @@ def get_detailed_crypto_analysis_with_news(api_key, indicators_message, news_fee
     logging.debug(f"Input news articles count: {len(news_feeded)}")
 
     url = "https://api.perplexity.ai/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     models = ["sonar-pro"]  # Models to try in order
     max_retries = len(models)
@@ -119,7 +125,7 @@ def get_detailed_crypto_analysis_with_news(api_key, indicators_message, news_fee
     - Code: <code>inline code</code> or <pre>multi-line code</pre>
     - No need to escape special characters like . ! ? = 
 Ensure responses are cleanly formatted with proper HTML tags.
-"""
+""",
                 },
                 {
                     "role": "user",
@@ -133,9 +139,9 @@ Only use the provided news articles for your analysis.
 Base your analysis on these indicators as well: {indicators_message}.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
-"""
-                }
-            ]
+""",
+                },
+            ],
         }
 
         try:
@@ -144,15 +150,23 @@ If there is no significant information to report, state that there is no notewor
 
             if response.status_code == 200:
                 content = response.json()["choices"][0]["message"]["content"]
-                logging.info(f"Successfully processed analysis. Length: {len(content)} chars")
-                logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+                logging.info(
+                    f"Successfully processed analysis. Length: {len(content)} chars"
+                )
+                logging.debug(
+                    f"Processing time: {time.time() - start_time:.2f} seconds"
+                )
                 return content
             elif response.status_code == 504 and current_try < max_retries - 1:
-                logging.warning(f"Received 504 error with {current_model}, retrying with next model")
+                logging.warning(
+                    f"Received 504 error with {current_model}, retrying with next model"
+                )
                 current_try += 1
                 continue
             else:
-                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+                error_msg = (
+                    f"Failed: API error: {response.status_code} - {response.text}"
+                )
                 logging.error(error_msg)
                 return error_msg
 
@@ -161,17 +175,17 @@ If there is no significant information to report, state that there is no notewor
             logging.error(error_msg)
             return error_msg
 
-    return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
+    return (
+        f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
+    )
+
 
 def highlight_articles(api_key, user_crypto_list, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
-    
+
     symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
-    
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     models = ["sonar-pro"]  # Models to try in order
     max_retries = len(models)
@@ -180,13 +194,13 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
     while current_try < max_retries:
         current_model = models[current_try]
         logging.info(f"Attempting with model: {current_model}")
-    
+
         data = {
-    "model": current_model,
-    "messages": [
-        {
-            "role": "system",
-            "content": f"""\
+            "model": current_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": f"""\
 You are an advanced crypto article curator. Your task is to highlight articles that provide deep insights, detailed explanations, and comprehensive analysis of market trends, technical indicators, and on-chain metrics. Only consider the articles provided in the input.
 
 Categorize your analysis into:
@@ -205,11 +219,11 @@ Format all responses using Telegram's HTML syntax:
     - No need to escape special characters like . ! ? = 
 
 Ensure responses are cleanly formatted with proper HTML tags.
-"""
-        },
-        {
-            "role": "user",
-            "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
+""",
+                },
+                {
+                    "role": "user",
+                    "content": f"""From the following news articles {news_feeded}, highlight the most insightful and detailed ones. Categorize your analysis as follows:
 
 1. Bitcoin
 2. Ethereum
@@ -224,13 +238,14 @@ For each category, prioritize articles that:
 5. Explain complex market dynamics or new technological developments in the crypto space.
 
 For each highlighted article, provide a brief explanation of its key insights and include the URL. If there are no significant articles for a category, state that there's no noteworthy information to report. 
-Only consider the articles provided in the input."""
+Only consider the articles provided in the input.""",
+                },
+            ],
         }
-    ]
-}
 
-
-        logging.info(f"Making API request with {len(news_feeded)} articles using {current_model}")
+        logging.info(
+            f"Making API request with {len(news_feeded)} articles using {current_model}"
+        )
         logging.debug(f"Symbol names provided: {symbol_names}")
 
         try:
@@ -244,7 +259,9 @@ Only consider the articles provided in the input."""
                 logging.debug(f"Response content length: {len(response_content)}")
                 return response_content
             elif response.status_code == 504 and current_try < max_retries - 1:
-                logging.warning(f"Received 504 error with {current_model}, retrying with next model")
+                logging.warning(
+                    f"Received 504 error with {current_model}, retrying with next model"
+                )
                 current_try += 1
                 continue
             else:
@@ -263,11 +280,15 @@ Only consider the articles provided in the input."""
                 continue
             return error_msg
 
-    return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
-    
+    return (
+        f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
+    )
+
+
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
+
     load_dotenv()
     # Example usage
     api_key = os.environ["PERPLEXITY_API_KEY"]
@@ -277,21 +298,22 @@ if __name__ == "__main__":
             self.symbol_id = symbol_id
             self.symbol_name = symbol_name
             self.full_name = full_name
+
     user_crypto_list = [
         # Example list of user crypto symbols
         # Replace with actual symbol objects
-    Symbol(symbol_id=1, symbol_name='BTC', full_name='Bitcoin'),
-    Symbol(symbol_id=2, symbol_name='ETH', full_name='Etherum')
+        Symbol(symbol_id=1, symbol_name="BTC", full_name="Bitcoin"),
+        Symbol(symbol_id=2, symbol_name="ETH", full_name="Etherum"),
     ]
-    
+
     news_feeded = [
         # Example list of news articles
         # Replace with actual news articles
         {"title": "Bitcoin hits new high", "url": "http://example.com/bitcoin-high"},
-        {"title": "Ethereum 2.0 launch", "url": "http://example.com/ethereum-launch"}
+        {"title": "Ethereum 2.0 launch", "url": "http://example.com/ethereum-launch"},
     ]
-    
+
     highlighted_news = highlight_articles(api_key, user_crypto_list, news_feeded)
-    
+
     # Print results
     print(highlighted_news)

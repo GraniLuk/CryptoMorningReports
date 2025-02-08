@@ -6,60 +6,61 @@ import time
 
 MAX_TELEGRAM_LENGTH = 4096
 
+
 async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HTML"):
     if not enabled:
-        logging.info('Telegram notifications are disabled')
+        logging.info("Telegram notifications are disabled")
         return
-    
+
     if message is None or len(message) == 0:
-        logging.error('Empty message, skipping telegram notification')
+        logging.error("Empty message, skipping telegram notification")
         return
-    
+
     if parse_mode == "MarkdownV2":
         message = enforce_markdown_v2(message)
-        
+
     if parse_mode == "HTML":
         message = sanitize_html(message)
-    
+
     try:
         # Split message into chunks
-        chunks = [message[i:i + MAX_TELEGRAM_LENGTH] 
-                 for i in range(0, len(message), MAX_TELEGRAM_LENGTH)]
-        
+        chunks = [
+            message[i : i + MAX_TELEGRAM_LENGTH]
+            for i in range(0, len(message), MAX_TELEGRAM_LENGTH)
+        ]
+
         for chunk in chunks:
             url = f"https://api.telegram.org/bot{token}/sendMessage"
-            response = requests.post(url, json={
-                'chat_id': chat_id,
-                'text': chunk,
-                'parse_mode': parse_mode
-            })
+            response = requests.post(
+                url, json={"chat_id": chat_id, "text": chunk, "parse_mode": parse_mode}
+            )
             response.raise_for_status()
-            time.sleep(0.5) 
-            
+            time.sleep(0.5)
+
         return True
-        
+
     except Exception as e:
-        logging.error(f"Failed to send telegram message: {str(e)} with message {message}")
+        logging.error(
+            f"Failed to send telegram message: {str(e)} with message {message}"
+        )
         return False
-    
+
+
 def enforce_markdown_v2(text):
     # Escape unescaped special chars not in formatting blocks
-    return re.sub(
-        r'(?<!\\)([_*\[\]()~`>#+=|{}.!-])', 
-        r'\\\1', 
-        text
-    )
-    
+    return re.sub(r"(?<!\\)([_*\[\]()~`>#+=|{}.!-])", r"\\\1", text)
+
+
 def sanitize_html(message):
     """
     Escapes any HTML-like substrings that are not valid Telegram allowed tags.
     Allowed tags: b, i, u, s, code, pre, a (opening/closing, with optional attributes for <a>).
     """
     # List the allowed tag names. For the <a> tag, we allow attributes.
-    allowed_tags = ['b', 'i', 'u', 's', 'code', 'pre', 'a']
+    allowed_tags = ["b", "i", "u", "s", "code", "pre", "a"]
 
     # Regex to match any HTML tag
-    tag_regex = re.compile(r'</?([a-zA-Z]+)([^>]*)>')
+    tag_regex = re.compile(r"</?([a-zA-Z]+)([^>]*)>")
 
     def replace_tag(match):
         tag_name = match.group(1).lower()
@@ -74,16 +75,15 @@ def sanitize_html(message):
     # Replace any found HTML tag with our conditional replacement.
     return tag_regex.sub(replace_tag, message)
 
-async def try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, message):
+
+async def try_send_report_with_HTML_or_Markdown(
+    telegram_enabled, telegram_token, telegram_chat_id, message
+):
     # Try HTML first
     success = await send_telegram_message(
-        telegram_enabled, 
-        telegram_token,
-        telegram_chat_id,
-        message,
-        parse_mode="HTML"
+        telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode="HTML"
     )
-    
+
     # If HTML failed, try MarkdownV2
     if not success:
         success = await send_telegram_message(
@@ -91,15 +91,17 @@ async def try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token
             telegram_token,
             telegram_chat_id,
             message,
-            parse_mode="MarkdownV2"
+            parse_mode="MarkdownV2",
         )
-    
+
     return success
+
 
 if __name__ == "__main__":
     import asyncio
     from dotenv import load_dotenv
     import os
+
     load_dotenv()
     # Example usage
     telegram_enabled = True
@@ -150,4 +152,8 @@ Key insights:
 This article provides a brief overview of other cryptocurrencies' performance, showing significant gains across various altcoins in correlation with Bitcoin's rise.
 """
     parse_mode = "HTML"
-    asyncio.run(send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode))
+    asyncio.run(
+        send_telegram_message(
+            telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode
+        )
+    )

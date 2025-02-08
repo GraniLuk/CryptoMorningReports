@@ -6,8 +6,8 @@ from datetime import datetime
 # Endpoint to fetch articles
 URL = "https://www.kucoin.com/_api/seo-content-eco-service/web/article/searchRec?keyword=gempool+burningdrop&lang=en_US"
 
-def check_gempool_articles():
 
+def check_gempool_articles():
     seen_articles = set()
 
     # Fetch articles from the API
@@ -21,7 +21,9 @@ def check_gempool_articles():
             for item in data["items"]:
                 article_id = item["id"]
                 article_code = item["articleCode"]
-                title = item["title"].replace("<em>", "").replace("</em>", "")  # Clean up formatting tags
+                title = (
+                    item["title"].replace("<em>", "").replace("</em>", "")
+                )  # Clean up formatting tags
                 article_url = f"https://www.kucoin.com/news/flash/{article_code}"
 
                 # Check if the article is new

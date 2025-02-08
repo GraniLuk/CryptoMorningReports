@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from typing import List
-import pyodbc
 from enum import Enum
+from typing import List
+
+import pyodbc
+
 from infra.telegram_logging_handler import app_logger
+
 
 class SourceID(Enum):
     BINANCE = 1
@@ -10,6 +13,7 @@ class SourceID(Enum):
     COINGECKO = 3
     COINMARKETCAP = 4
     BYBIT = 5
+
 
 @dataclass
 class Symbol:
@@ -22,29 +26,30 @@ class Symbol:
     @property
     def kucoin_name(self) -> str:
         return f"{self.symbol_name}-USDT"
-    
+
     @property
     def binance_name(self) -> str:
         return f"{self.symbol_name}USDT"
-    
+
     @property
     def yf_name(self) -> str:
         return f"{self.symbol_name}-USD"
 
     @staticmethod
-    def get_symbol_names(symbols: List['Symbol']) -> List[str]:
+    def get_symbol_names(symbols: List["Symbol"]) -> List[str]:
         """Convert List of Symbols to List of symbol names"""
         return [symbol.symbol_name for symbol in symbols]
 
     @staticmethod
-    def get_symbol_names_usd(symbols: List['Symbol']) -> List[str]:
+    def get_symbol_names_usd(symbols: List["Symbol"]) -> List[str]:
         """Convert List of Symbols to List of symbol names with USD suffix"""
         return [f"{symbol.symbol_name}-USD" for symbol in symbols]
-    
+
+
 def fetch_symbols(conn) -> List[Symbol]:
     """
     Fetches all symbols from the database and returns them as a list of Symbol objects
-    
+
     Returns:
         List[Symbol]: List of cryptocurrency symbols
     """
@@ -53,7 +58,7 @@ def fetch_symbols(conn) -> List[Symbol]:
             try:
                 cursor = conn.cursor()
                 query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE IsActive = 1"
-                
+
                 symbols = []
                 for row in cursor.execute(query):
                     symbol = Symbol(
@@ -61,10 +66,10 @@ def fetch_symbols(conn) -> List[Symbol]:
                         symbol_name=row[1],
                         full_name=row[2],
                         source_id=SourceID(row[3]),  # Convert to SourceID enum
-                        coingecko_name=row[4]
+                        coingecko_name=row[4],
                     )
                     symbols.append(symbol)
-                    
+
                 cursor.close()
                 return symbols
             except pyodbc.Error as e:

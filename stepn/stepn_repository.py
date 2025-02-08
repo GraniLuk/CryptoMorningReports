@@ -1,11 +1,20 @@
 import pyodbc
 from infra.telegram_logging_handler import app_logger
 
-def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, ema: float, 
-                      min_24h: float = None, max_24h: float = None, range_24h: float = None) -> None:
+
+def save_stepn_results(
+    conn,
+    gmt_price: float,
+    gst_price: float,
+    ratio: float,
+    ema: float,
+    min_24h: float = None,
+    max_24h: float = None,
+    range_24h: float = None,
+) -> None:
     """
     Saves STEPN results to the database
-    
+
     Args:
         conn: Database connection
         gmt_price (float): Current GMT price
@@ -32,7 +41,9 @@ def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, e
                     VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, 
                            source.EMA14, source.Min24Value, source.Max24Value, source.Range24);
             """
-            cursor.execute(query, (gmt_price, gst_price, ratio, ema, min_24h, max_24h, range_24h))
+            cursor.execute(
+                query, (gmt_price, gst_price, ratio, ema, min_24h, max_24h, range_24h)
+            )
             conn.commit()
             cursor.close()
             app_logger.info("Successfully saved STEPN results to database")
@@ -42,6 +53,7 @@ def save_stepn_results(conn, gmt_price: float, gst_price: float, ratio: float, e
     except Exception as e:
         app_logger.error(f"Error saving STEPN results: {str(e)}")
         raise
+
 
 def fetch_stepn_results_last_14_days(conn):
     """
