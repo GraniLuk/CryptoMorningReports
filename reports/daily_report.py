@@ -10,7 +10,7 @@ from stepn.stepn_report import fetch_stepn_report
 from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import get_detailed_crypto_analysis, highlight_articles, get_detailed_crypto_analysis_with_news
 from news.rss_parser import get_news
-from sharedCode.telegram import send_telegram_message, try_send_report_with_HTML_or_Markdown
+from sharedCode.telegram import send_telegram_message
 from source_repository import fetch_symbols
 from infra.telegram_logging_handler import app_logger
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
@@ -47,9 +47,9 @@ async def process_daily_report(conn, telegram_enabled, telegram_token, telegram_
 
     # Process and send news reports
     fetched_news = get_news()
-    # aggregated_data = get_aggregated_data(conn)
+    aggregated_data = get_aggregated_data(conn)
     analysis_reported_without_news = get_detailed_crypto_analysis(os.environ["PERPLEXITY_API_KEY"], message_part1 + message_part2 + volume_report, fetched_news)
-    # analysis_reported_with_news = get_detailed_crypto_analysis_with_news(os.environ["PERPLEXITY_API_KEY"], aggregated_data , fetched_news)
+    analysis_reported_with_news = get_detailed_crypto_analysis_with_news(os.environ["PERPLEXITY_API_KEY"], aggregated_data , fetched_news)
     # highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], symbols, fetched_news)
 
     # Send all messages
@@ -63,9 +63,9 @@ async def process_daily_report(conn, telegram_enabled, telegram_token, telegram_
         await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, message_part3, parse_mode="HTML")
 
     if not analysis_reported_without_news.startswith("Failed"):
-        await try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_without_news)
+        await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_without_news, parse_mode="HTML")
 
-    # if not analysis_reported_with_news.startswith("Failed"):
-    #     await try_send_report_with_HTML_or_Markdown(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_with_news)
+    if not analysis_reported_with_news.startswith("Failed"):
+        await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_with_news, parse_mode="HTML")
     # if not highlight_articles_message.startswith("Failed"):
     #     await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, highlight_articles_message, parse_mode="HTML")
