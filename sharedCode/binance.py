@@ -7,7 +7,7 @@ from infra.telegram_logging_handler import app_logger
 from sharedCode.commonPrice import TickerPrice
 
 
-def fetch_binance_price(symbol : Symbol) -> TickerPrice:
+def fetch_binance_price(symbol: Symbol) -> TickerPrice:
     """Fetch price data from Binance exchange."""
     # Initialize the client
     client = BinanceClient()
@@ -17,11 +17,11 @@ def fetch_binance_price(symbol : Symbol) -> TickerPrice:
         return TickerPrice(
             source=SourceID.BINANCE,
             symbol=symbol.symbol_name,
-            low=float(ticker['lowPrice']),
-            high=float(ticker['highPrice']),
-            last=float(ticker['lastPrice']),
-            volume=float(ticker['volume']),
-            volume_quote=float(ticker.get('quoteVolume', 0))
+            low=float(ticker["lowPrice"]),
+            high=float(ticker["highPrice"]),
+            last=float(ticker["lastPrice"]),
+            volume=float(ticker["volume"]),
+            volume_quote=float(ticker.get("quoteVolume", 0)),
         )
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching {symbol}: {e.message}")
@@ -29,34 +29,49 @@ def fetch_binance_price(symbol : Symbol) -> TickerPrice:
     except Exception as e:
         app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
         return None
-    
-def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.DataFrame:
+
+
+def fetch_close_prices_from_Binance(
+    symbol: str, lookback_days: int = 14
+) -> pd.DataFrame:
     client = BinanceClient()
-    
+
     try:
         start_time = datetime.now() - timedelta(days=lookback_days)
-        
+
         klines = client.get_historical_klines(
             symbol=symbol,
             interval=BinanceClient.KLINE_INTERVAL_1DAY,
-            start_str=start_time.strftime('%d %b %Y'),
-            limit=lookback_days
+            start_str=start_time.strftime("%d %b %Y"),
+            limit=lookback_days,
         )
-        
+
         # Create DataFrame with numeric types
-        df = pd.DataFrame(klines, columns=[
-            'timestamp', 'open', 'high', 'low', 'close', 
-            'volume', 'close_time', 'quote_volume', 
-            'trades', 'taker_buy_base', 'taker_buy_quote', 'ignore'
-        ])
-        
+        df = pd.DataFrame(
+            klines,
+            columns=[
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "close_time",
+                "quote_volume",
+                "trades",
+                "taker_buy_base",
+                "taker_buy_quote",
+                "ignore",
+            ],
+        )
+
         # Convert price columns to float
-        df['close'] = pd.to_numeric(df['close'], errors='coerce')
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-        df.set_index('timestamp', inplace=True)
-        
+        df["close"] = pd.to_numeric(df["close"], errors="coerce")
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        df.set_index("timestamp", inplace=True)
+
         return df
-        
+
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching data for {symbol}: {e.message}")
         return pd.DataFrame()

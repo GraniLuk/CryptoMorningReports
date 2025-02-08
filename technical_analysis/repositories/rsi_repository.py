@@ -1,10 +1,11 @@
 import pyodbc
 from infra.telegram_logging_handler import app_logger
 
+
 def save_rsi_results(conn, symbol_id: int, closed_price: float, rsi: float) -> None:
     """
     Saves RSI results to the database
-    
+
     Args:
         conn: Database connection
         symbol_id (int): Symbol ID from Symbols table
@@ -28,10 +29,12 @@ def save_rsi_results(conn, symbol_id: int, closed_price: float, rsi: float) -> N
             cursor.execute(query, (symbol_id, closed_price, rsi))
             conn.commit()
             cursor.close()
-            app_logger.info(f"Successfully saved RSI results to database for symbol_id {symbol_id}")
+            app_logger.info(
+                f"Successfully saved RSI results to database for symbol_id {symbol_id}"
+            )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving RSI results: {e}")
         raise
     except Exception as e:
         app_logger.error(f"Error saving RSI results: {str(e)}")
-        raise 
+        raise

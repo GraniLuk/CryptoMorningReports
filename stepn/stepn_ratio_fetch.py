@@ -4,6 +4,7 @@ from infra.telegram_logging_handler import app_logger
 import os
 from datetime import timedelta
 
+
 def fetch_gstgmt_ratio_range():
     try:
         # Initialize credentials and Logs Query Client
@@ -15,7 +16,7 @@ def fetch_gstgmt_ratio_range():
         if not workspace_id:
             app_logger.error("Workspace ID environment variable not set")
             return None
-            
+
         app_logger.info(f"Using workspace ID: {workspace_id}")
 
         # Query to fetch last 24h min and max
@@ -38,6 +39,7 @@ def fetch_gstgmt_ratio_range():
     except Exception as e:
         app_logger.error(f"Error fetching ratio range: {str(e)}")
         return None, None, None
-    
+
+
 if __name__ == "__main__":
-   print(fetch_gstgmt_ratio_range())
+    print(fetch_gstgmt_ratio_range())
