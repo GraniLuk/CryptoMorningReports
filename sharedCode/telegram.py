@@ -107,7 +107,7 @@ if __name__ == "__main__":
     telegram_enabled = True
     telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
     telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    message = f"""
+    message = """
     Based on the provided search results, here's an analysis of the most insightful and detailed articles for each category:                                                                                                                                                   
 1. Bitcoin:                                                                              
 <b>Article: Bitcoin hits new all-time high above $109000 ahead of Trump's inauguration</b>                                                                                        
