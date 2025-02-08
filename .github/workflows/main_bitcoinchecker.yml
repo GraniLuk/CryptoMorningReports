@@ -17,6 +17,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write      # Required for test results
+      contents: read     # Required for actions/checkout
+      pull-requests: write  # Required for PR comments
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
