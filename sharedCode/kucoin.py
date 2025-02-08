@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import time
 import pandas as pd
 from infra.configuration import get_kucoin_credentials
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 from sharedCode.commonPrice import TickerPrice
 from kucoin import Client as KucoinClient
 from infra.telegram_logging_handler import app_logger
@@ -21,10 +21,13 @@ def fetch_kucoin_price(symbol : Symbol) -> TickerPrice:
         ticker = client.get_24hr_stats(symbol.kucoin_name)
         
         return TickerPrice(
+            source=SourceID.KUCOIN,
             symbol=symbol.symbol_name,
             low=float(ticker['low']),
             high=float(ticker['high']),
-            last=float(ticker['last'])
+            last=float(ticker['last']),
+            volume=float(ticker['vol']),
+            volume_quote=float(ticker['volValue'])
         )
     except Exception as e:
         app_logger.error(f"Kucoin error for {symbol}: {str(e)}")

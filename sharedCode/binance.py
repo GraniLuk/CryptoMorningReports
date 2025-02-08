@@ -1,9 +1,8 @@
-# Define namedtuple for price data
 from datetime import datetime, timedelta
 from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 import pandas as pd
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 from infra.telegram_logging_handler import app_logger
 from sharedCode.commonPrice import TickerPrice
 
@@ -15,12 +14,14 @@ def fetch_binance_price(symbol : Symbol) -> TickerPrice:
     try:
         # Get 24hr stats
         ticker = client.get_ticker(symbol=symbol.binance_name)
-        
         return TickerPrice(
+            source=SourceID.BINANCE,
             symbol=symbol.symbol_name,
             low=float(ticker['lowPrice']),
             high=float(ticker['highPrice']),
-            last=float(ticker['lastPrice'])
+            last=float(ticker['lastPrice']),
+            volume=float(ticker['volume']),
+            volume_quote=float(ticker.get('quoteVolume', 0))
         )
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching {symbol}: {e.message}")

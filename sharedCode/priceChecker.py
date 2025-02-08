@@ -29,8 +29,10 @@ def fetch_close_prices(symbol: Symbol, limit: int = 14) -> pd.DataFrame:
     _close_prices_cache[cache_key] = df
     return df
 
-def fetch_current_price(symbol: Symbol) -> TickerPrice:
-    cache_key = (symbol.symbol_name, symbol.source_id)
+def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
+    # Use provided source_id if available, otherwise use symbol's source_id
+    used_source_id = source_id if source_id is not None else symbol.source_id
+    cache_key = (symbol.symbol_name, used_source_id)
     
     # Check cache
     if cache_key in _price_cache:
@@ -38,11 +40,11 @@ def fetch_current_price(symbol: Symbol) -> TickerPrice:
 
     # Fetch new price
     price = None
-    if (symbol.source_id == SourceID.KUCOIN):
+    if (used_source_id == SourceID.KUCOIN):
         price = fetch_kucoin_price(symbol)
-    if (symbol.source_id == SourceID.BINANCE):
+    if (used_source_id == SourceID.BINANCE):
         price = fetch_binance_price(symbol)
-    if (symbol.source_id == SourceID.COINGECKO):
+    if (used_source_id == SourceID.COINGECKO):
         price = fetch_coingecko_price(symbol)
     
     # Update cache
