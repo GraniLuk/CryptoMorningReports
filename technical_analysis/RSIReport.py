@@ -6,55 +6,6 @@ from prettytable import PrettyTable
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 
-def calculate_rsi(series, window=14):
-    delta = series.diff()
-
-    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-
-    rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
-
-def calculate_rsi_using_EMA(series, period=14):
-    # Calculate price changes
-    delta = series.diff()
-    
-    # Separate gains and losses
-    gain = delta.where(delta > 0, 0)
-    loss = -delta.where(delta < 0, 0)
-    
-    # Calculate EMA of gains and losses
-    avg_gain = calculate_ema(gain, period)
-    avg_loss = calculate_ema(loss, period)
-    
-    # Calculate RS
-    rs = avg_gain / avg_loss
-    
-    # Calculate RSI
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
-
-def calculate_rsi_using_RMA(series, periods=14):
-    delta = series.diff()
-    
-    # Separate gains and losses
-    gain = delta.where(delta > 0, 0)
-    loss = -delta.where(delta < 0, 0)
-    
-    alpha = 1.0 / periods
-    
-    avg_gain = gain.ewm(alpha=alpha, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=alpha, adjust=False).mean()
-    
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
-    
-    return rsi
-
-def calculate_ema(series, period):
-    return series.ewm(span=period, adjust=False).mean()
-
 def create_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
     all_values = pd.DataFrame()
     
@@ -103,6 +54,55 @@ def create_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
         ])
     
     return rsi_table
+
+def calculate_rsi(series, window=14):
+    delta = series.diff()
+
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+def calculate_rsi_using_EMA(series, period=14):
+    # Calculate price changes
+    delta = series.diff()
+    
+    # Separate gains and losses
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    # Calculate EMA of gains and losses
+    avg_gain = calculate_ema(gain, period)
+    avg_loss = calculate_ema(loss, period)
+    
+    # Calculate RS
+    rs = avg_gain / avg_loss
+    
+    # Calculate RSI
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+def calculate_rsi_using_RMA(series, periods=14):
+    delta = series.diff()
+    
+    # Separate gains and losses
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    alpha = 1.0 / periods
+    
+    avg_gain = gain.ewm(alpha=alpha, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=alpha, adjust=False).mean()
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    return rsi
+
+def calculate_ema(series, period):
+    return series.ewm(span=period, adjust=False).mean()
 
 if __name__ == "__main__":
     create_rsi_table()
