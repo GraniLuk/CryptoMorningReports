@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import time
-
 import pandas as pd
 from infra.configuration import get_kucoin_credentials
 from source_repository import Symbol
@@ -9,9 +8,13 @@ from kucoin import Client as KucoinClient
 from infra.telegram_logging_handler import app_logger
 
 
-def fetch_kucoin_price(symbol : Symbol, api_key, api_secret, api_passphrase):
+def fetch_kucoin_price(symbol : Symbol) -> TickerPrice:
     """Fetch price data from Kucoin exchange."""
     # Initialize the client
+    kucoin_credentials = get_kucoin_credentials()
+    api_key = kucoin_credentials['api_key']
+    api_secret = kucoin_credentials['api_secret']
+    api_passphrase = kucoin_credentials['api_passphrase']
     client = KucoinClient(api_key, api_secret, api_passphrase)
     try:           
         # Get 24hr stats
