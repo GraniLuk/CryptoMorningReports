@@ -11,12 +11,20 @@ _price_cache: Dict[Tuple[str, SourceID], TickerPrice] = {}
 _close_prices_cache: Dict[Tuple[str, SourceID, int], pd.DataFrame] = {}
 
 def fetch_close_prices(symbol: Symbol, limit: int = 14) -> pd.DataFrame:
-    cache_key = (symbol.symbol_name, symbol.source_id, limit)
+    # Find the maximum cached limit for this symbol and source
+    max_cached_limit = 0
+    cached_df = None
     
-    # Check cache
-    if cache_key in _close_prices_cache:
-        return _close_prices_cache[cache_key]
-
+    for (sym, src, lmt) in _close_prices_cache.keys():
+        if sym == symbol.symbol_name and src == symbol.source_id:
+            if lmt > max_cached_limit:
+                max_cached_limit = lmt
+                cached_df = _close_prices_cache[(sym, src, lmt)]
+    
+    # If we found cached data with higher or equal limit, return subset
+    if cached_df is not None and max_cached_limit >= limit:
+        return cached_df.iloc[-limit:]
+    
     # Fetch new data
     if (symbol.source_id == SourceID.KUCOIN):
         df = fetch_close_prices_from_Kucoin(symbol.kucoin_name, limit)
@@ -26,7 +34,7 @@ def fetch_close_prices(symbol: Symbol, limit: int = 14) -> pd.DataFrame:
         df = fetch_coingecko_price(symbol.symbol_name)
     
     # Update cache
-    _close_prices_cache[cache_key] = df
+    _close_prices_cache[(symbol.symbol_name, symbol.source_id, limit)] = df
     return df
 
 def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
