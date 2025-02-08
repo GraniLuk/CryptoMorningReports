@@ -6,7 +6,6 @@ from sharedCode.commonPrice import TickerPrice
 class TestStepnReport(unittest.TestCase):
     @patch('stepn.stepn_report.fetch_current_price')
     @patch('stepn.stepn_report.fetch_gstgmt_ratio_range')
-    # @patch('sharedCode.commonPrice.TickerPrice')
     def test_fetch_stepn_report_basic_functionality(self, mock_ratio_range, mock_fetch_price):
         # Arrange
         # Mock the price fetching to return predetermined values
