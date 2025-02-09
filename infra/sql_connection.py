@@ -1,11 +1,13 @@
-from dotenv import load_dotenv
-import os
-from azure import identity
 import logging
-import time
-from infra.telegram_logging_handler import app_logger
+import os
 import struct
+import time
+
 import pyodbc
+from azure import identity
+from dotenv import load_dotenv
+
+from infra.telegram_logging_handler import app_logger
 
 load_dotenv()  # Load environment variables from .env file
 
