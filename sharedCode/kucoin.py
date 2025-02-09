@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta, timezone
+
 import pandas as pd
-from infra.configuration import get_kucoin_credentials
-from source_repository import SourceID, Symbol
-from sharedCode.commonPrice import TickerPrice
 from kucoin import Client as KucoinClient
+
+from infra.configuration import get_kucoin_credentials
 from infra.telegram_logging_handler import app_logger
+from sharedCode.commonPrice import TickerPrice
+from source_repository import SourceID, Symbol
 
 
 def fetch_kucoin_price(symbol: Symbol) -> TickerPrice:
@@ -74,6 +76,55 @@ def fetch_daily_ranges(
         current_date += timedelta(days=1)
 
     return date_ranges
+
+
+def fetch_kucoin_daily_kline(symbol: str, day: datetime = datetime.now(timezone.utc)):
+    """Fetch open, close, high, low prices and volume from KuCoin for the last full day."""
+    client = KucoinClient()
+
+    # Get yesterday's date
+    end_time = int(day.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+    start_time = int(
+        (day - timedelta(days=1))
+        .replace(hour=0, minute=0, second=0, microsecond=0)
+        .timestamp()
+    )
+
+    try:
+        # Fetch 1-day Kline (candlestick) data
+        klines = client.get_kline_data(
+            symbol,
+            kline_type="1day",  # 1-day interval
+            start=start_time,
+            end=end_time,
+        )
+
+        if not klines:
+            app_logger.error(f"No Kline data found for {symbol}")
+            return None
+
+        # KuCoin Kline format: [time, open, close, high, low, volume, turnover]
+        open_price = float(klines[0][1])
+        close_price = float(klines[0][2])
+        high_price = float(klines[0][3])
+        low_price = float(klines[0][4])
+        volume = float(klines[0][5])
+        quote_asset_volume = float(klines[0][6])  # Turnover in quote asset
+
+        return (
+            open_price,
+            close_price,
+            high_price,
+            low_price,
+            volume,
+            quote_asset_volume,
+        )
+
+    except Exception as e:
+        app_logger.error(
+            f"Unexpected error when fetching Kucoin daily kline for {symbol}: {str(e)}"
+        )
+        return None
 
 
 def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame:
