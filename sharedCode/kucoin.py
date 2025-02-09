@@ -78,14 +78,13 @@ def fetch_daily_ranges(
     return date_ranges
 
 
-def fetch_kucoin_daily_kline(symbol: Symbol, day: date = date.today()) -> Candle:
+def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Candle:
     """Fetch open, close, high, low prices and volume from KuCoin for the last full day."""
     client = KucoinClient()
 
-    end_time = day
-    start_time = end_time - timedelta(days=1)
+    start_time = end_date - timedelta(days=1)
     # Get yesterday's date
-    end_time_as_int = int(datetime.combine(end_time, datetime.min.time()).timestamp())
+    end_time_as_int = int(datetime.combine(end_date, datetime.min.time()).timestamp())
     start_time_as_int = int(
         datetime.combine(start_time, datetime.min.time()).timestamp()
     )
@@ -104,7 +103,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, day: date = date.today()) -> Candle
             return None
 
         return Candle(
-            date=start_time,
+            end_date=end_date,
             source=SourceID.KUCOIN,
             open=float(klines[0][1]),
             close=float(klines[0][2]),
