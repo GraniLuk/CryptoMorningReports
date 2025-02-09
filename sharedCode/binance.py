@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.commonPrice import TickerPrice
+from sharedCode.commonPrice import Candle, TickerPrice
 from source_repository import SourceID, Symbol
 
 
@@ -82,42 +82,42 @@ def fetch_close_prices_from_Binance(
         return pd.DataFrame()
 
 
-def fetch_daily_kline(symbol: Symbol, day: datetime = datetime.now(timezone.utc)):
+def fetch_binance_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Candle:
     """Fetch open and close prices from Binance for the last full day."""
     client = BinanceClient()
 
     # Get yesterday's date
-    end_time = day.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_time = end_time - timedelta(days=1)
+    end_date_timestamp = datetime.combine(end_date, datetime.min.time()).timestamp()
+    start_date_timestamp = datetime.combine(
+        end_date - timedelta(days=1), datetime.min.time()
+    ).timestamp()
 
     try:
         # Fetch 1-day Kline (candlestick) data
         klines = client.get_klines(
             symbol=symbol.binance_name,
             interval=client.KLINE_INTERVAL_1DAY,
-            startTime=int(start_time.timestamp() * 1000),
-            endTime=int(end_time.timestamp() * 1000),
+            startTime=int(start_date_timestamp * 1000),
+            endTime=int(end_date_timestamp * 1000),
         )
 
         if not klines:
             app_logger.error(f"No Kline data found for {symbol}")
             return None
 
-        open_price = float(klines[0][1])  # Open price
-        high_price = float(klines[0][2])  # High price
-        low_price = float(klines[0][3])  # Low price
-        close_price = float(klines[0][4])  # Close price
-        volume = float(klines[0][5])  # Volume
-        quoute_asset_volume = float(klines[0][7])  # Quote asset volume
-
-        return (
-            open_price,
-            close_price,
-            high_price,
-            low_price,
-            volume,
-            quoute_asset_volume,
+        return Candle(
+            end_date=end_date,
+            source=SourceID.BINANCE,
+            open=float(klines[0][1]),
+            close=float(klines[0][4]),
+            symbol=symbol.symbol_name,
+            low=float(klines[0][3]),
+            high=float(klines[0][2]),
+            last=float(klines[0][4]),
+            volume=float(klines[0][5]),
+            volume_quote=float(klines[0][7]),
         )
+
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching {symbol}: {e.message}")
         return None
@@ -147,7 +147,9 @@ if __name__ == "__main__":
     #     print("No data found")
 
     # Fetch open and close prices for the last full day
-    response = fetch_daily_kline(symbol, datetime.now(timezone.utc) - timedelta(days=1))
+    response = fetch_binance_daily_kline(
+        symbol, datetime.now(timezone.utc) - timedelta(days=1)
+    )
     if response is not None:
         print(f"Yesterday price: {response}")
     else:

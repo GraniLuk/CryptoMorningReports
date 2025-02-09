@@ -1,12 +1,12 @@
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 from kucoin import Client as KucoinClient
 
 from infra.configuration import get_kucoin_credentials
 from infra.telegram_logging_handler import app_logger
-from sharedCode.commonPrice import TickerPrice
+from sharedCode.commonPrice import Candle, TickerPrice
 from source_repository import SourceID, Symbol
 
 
@@ -78,46 +78,42 @@ def fetch_daily_ranges(
     return date_ranges
 
 
-def fetch_kucoin_daily_kline(symbol: str, day: datetime = datetime.now(timezone.utc)):
+def fetch_kucoin_daily_kline(symbol: Symbol, day: date = date.today()) -> Candle:
     """Fetch open, close, high, low prices and volume from KuCoin for the last full day."""
     client = KucoinClient()
 
+    end_time = day
+    start_time = end_time - timedelta(days=1)
     # Get yesterday's date
-    end_time = int(day.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
-    start_time = int(
-        (day - timedelta(days=1))
-        .replace(hour=0, minute=0, second=0, microsecond=0)
-        .timestamp()
+    end_time_as_int = int(datetime.combine(end_time, datetime.min.time()).timestamp())
+    start_time_as_int = int(
+        datetime.combine(start_time, datetime.min.time()).timestamp()
     )
 
     try:
         # Fetch 1-day Kline (candlestick) data
         klines = client.get_kline_data(
-            symbol,
+            symbol.kucoin_name,
             kline_type="1day",  # 1-day interval
-            start=start_time,
-            end=end_time,
+            start=start_time_as_int,
+            end=end_time_as_int,
         )
 
         if not klines:
             app_logger.error(f"No Kline data found for {symbol}")
             return None
 
-        # KuCoin Kline format: [time, open, close, high, low, volume, turnover]
-        open_price = float(klines[0][1])
-        close_price = float(klines[0][2])
-        high_price = float(klines[0][3])
-        low_price = float(klines[0][4])
-        volume = float(klines[0][5])
-        quote_asset_volume = float(klines[0][6])  # Turnover in quote asset
-
-        return (
-            open_price,
-            close_price,
-            high_price,
-            low_price,
-            volume,
-            quote_asset_volume,
+        return Candle(
+            date=start_time,
+            source=SourceID.KUCOIN,
+            open=float(klines[0][1]),
+            close=float(klines[0][2]),
+            symbol=symbol,
+            low=float(klines[0][4]),
+            high=float(klines[0][3]),
+            last=float(klines[0][2]),
+            volume=float(klines[0][5]),
+            volume_quote=float(klines[0][6]),
         )
 
     except Exception as e:
