@@ -8,6 +8,7 @@ from news.rss_parser import get_news
 from sharedCode.telegram import send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
+from technical_analysis.daily_candle import fetch_daily_candles
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.movingAveragesReport import calculate_indicators
@@ -25,6 +26,7 @@ async def process_daily_report(
     logger.info("Processing %d symbols for daily report...", len(symbols))
 
     # Generate all reports
+    fetch_daily_candles(symbols, conn)
     rsi_table = create_rsi_table(symbols, conn)
     ma_average_table, ema_average_table = calculate_indicators(symbols, conn)
     range_table = fetch_range_price(symbols, conn)
