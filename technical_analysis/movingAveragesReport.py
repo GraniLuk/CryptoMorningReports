@@ -22,11 +22,11 @@ def calculate_indicators(
     ema_values = []
     MAData = namedtuple(
         "MAData",
-        ["symbol", "current_price", "ma50", "ma200", "ma50_status", "ma200_status"],
+        ["symbol", "current_price", "ma50", "ma200", "ma50_status", "ma200_status", "cross_status"],
     )
     EMAData = namedtuple(
         "EMAData",
-        ["symbol", "current_price", "ema50", "ema200", "ema50_status", "ema200_status"],
+        ["symbol", "current_price", "ema50", "ema200", "ema50_status", "ema200_status", "cross_status"],
     )
 
     # Fetch previous day's values (relative to target_date)
@@ -91,6 +91,10 @@ def calculate_indicators(
             ema50_status = "🟢" if target_price > target_EMA50 else "🔴"
             ema200_status = "🟢" if target_price > target_EMA200 else "🔴"
 
+            # Initialize cross status
+            ma_cross_status = ""
+            ema_cross_status = ""
+
             # Check for crossovers if we have previous day's data
             if not yesterdayValues.empty:
                 yesterday_data = yesterdayValues[
@@ -153,6 +157,34 @@ def calculate_indicators(
                         ema200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below EMA200")
 
+                    # Add Golden/Death Cross detection for MA
+                    if (
+                        yesterday_ma50 < yesterday_ma200
+                        and target_MA50 > target_MA200
+                    ):
+                        ma_cross_status = "⚡️🟡"  # Golden Cross
+                        app_logger.info(f"{symbol.symbol_name} MA Golden Cross detected")
+                    elif (
+                        yesterday_ma50 > yesterday_ma200
+                        and target_MA50 < target_MA200
+                    ):
+                        ma_cross_status = "💀"  # Death Cross
+                        app_logger.info(f"{symbol.symbol_name} MA Death Cross detected")
+
+                    # Add Golden/Death Cross detection for EMA
+                    if (
+                        yesterday_ema50 < yesterday_ema200
+                        and target_EMA50 > target_EMA200
+                    ):
+                        ema_cross_status = "⚡️🟡"  # Golden Cross
+                        app_logger.info(f"{symbol.symbol_name} EMA Golden Cross detected")
+                    elif (
+                        yesterday_ema50 > yesterday_ema200
+                        and target_EMA50 < target_EMA200
+                    ):
+                        ema_cross_status = "💀"  # Death Cross
+                        app_logger.info(f"{symbol.symbol_name} EMA Death Cross detected")
+
             # Store the results
             ma_values.append(
                 MAData(
@@ -162,6 +194,7 @@ def calculate_indicators(
                     ma200=target_MA200,
                     ma50_status=ma50_status,
                     ma200_status=ma200_status,
+                    cross_status=ma_cross_status
                 )
             )
 
@@ -173,6 +206,7 @@ def calculate_indicators(
                     ema200=target_EMA200,
                     ema50_status=ema50_status,
                     ema200_status=ema200_status,
+                    cross_status=ema_cross_status
                 )
             )
 
@@ -203,11 +237,11 @@ def calculate_indicators(
 
     # Create MA table
     ma_table = PrettyTable()
-    ma_table.field_names = ["Symbol", "Current", "MA50", "MA200"]
+    ma_table.field_names = ["Symbol", "Current", "MA50", "MA200", "Cross"]
 
     # Create EMA table
     ema_table = PrettyTable()
-    ema_table.field_names = ["Symbol", "Current", "EMA50", "EMA200"]
+    ema_table.field_names = ["Symbol", "Current", "EMA50", "EMA200", "Cross"]
 
     # Format numbers just before displaying in table
     def format_price(price):
@@ -237,6 +271,7 @@ def calculate_indicators(
                 format_price(ma_row.current_price),
                 f"{format_price(ma_row.ma50)} {ma_row.ma50_status}",
                 f"{format_price(ma_row.ma200)} {ma_row.ma200_status}",
+                ma_row.cross_status,
             ]
         )
 
@@ -246,6 +281,7 @@ def calculate_indicators(
                 format_price(ema_row.current_price),
                 f"{format_price(ema_row.ema50)} {ema_row.ema50_status}",
                 f"{format_price(ema_row.ema200)} {ema_row.ema200_status}",
+                ema_row.cross_status,
             ]
         )
 
