@@ -141,4 +141,19 @@ def calculate_ema(series, period):
 
 
 if __name__ == "__main__":
-    create_rsi_table()
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import SourceID, Symbol
+
+    load_dotenv()
+    conn = connect_to_sql()
+    symbol = Symbol(
+        symbol_id=1,  # Added required field
+        symbol_name="BTC",
+        full_name="Bitcoin",  # Added required field
+        source_id=SourceID.BINANCE,
+    )
+
+    symbols = [symbol]
+    create_rsi_table(symbols, conn)
