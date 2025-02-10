@@ -7,7 +7,7 @@ from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
 from sharedCode.priceChecker import fetch_daily_candles
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 from technical_analysis.repositories.macd_repository import (
     fetch_yesterday_macd,
     save_macd_results,
@@ -147,3 +147,22 @@ def calculate_macd(
         )
 
     return macd_table
+
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import Symbol
+
+    load_dotenv()
+    conn = connect_to_sql()
+    symbol = Symbol(
+        symbol_id=1,  # Added required field
+        symbol_name="BTC",
+        full_name="Bitcoin",  # Added required field
+        source_id=SourceID.BINANCE,
+    )
+
+    macd_report = calculate_macd(symbol, conn=conn)
+    print(macd_report)
