@@ -1,18 +1,20 @@
+from typing import List
+
+from prettytable import PrettyTable
+
+from infra.telegram_logging_handler import app_logger
+from sharedCode.priceChecker import fetch_daily_candle
+from source_repository import Symbol
 from technical_analysis.repositories.priceRangeRepository import (
     save_price_range_results,
 )
-from prettytable import PrettyTable
-from infra.telegram_logging_handler import app_logger
-from typing import List
-from source_repository import Symbol
-from sharedCode.priceChecker import fetch_current_price
 
 
 def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
     results = []
     for symbol in symbols:
         try:
-            price_data = fetch_current_price(symbol)
+            price_data = fetch_daily_candle(symbol, conn=conn)
             if price_data:
                 results.append(price_data)
 
@@ -60,8 +62,9 @@ def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
 
 
 if __name__ == "__main__":
-    from source_repository import Symbol, SourceID
     from dotenv import load_dotenv
+
+    from source_repository import SourceID, Symbol
 
     load_dotenv()
     conn = None
