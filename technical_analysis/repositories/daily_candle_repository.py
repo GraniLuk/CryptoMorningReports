@@ -70,3 +70,42 @@ class DailyCandleRepository:
                 volume_quote=row[9],
             )
         return None
+
+    def get_candles(
+        self, symbol: Symbol, start_date: datetime, end_date: datetime
+    ) -> list[Candle]:
+        sql = """
+        SELECT [SymbolID]
+          ,[SourceID]
+          ,[EndDate]
+          ,[Open]
+          ,[Close]
+          ,[High]
+          ,[Low]
+          ,[Last]
+          ,[Volume]
+          ,[VolumeQuote]
+        FROM DailyCandles
+        WHERE SymbolID = ? 
+        AND EndDate >= ? 
+        AND EndDate <= ?
+        ORDER BY EndDate
+        """
+        rows = self.conn.execute(
+            sql, (symbol.symbol_id, start_date, end_date)
+        ).fetchall()
+        return [
+            Candle(
+                symbol=symbol.symbol_name,
+                source=row[1],
+                end_date=row[2],
+                open=row[3],
+                close=row[4],
+                high=row[5],
+                low=row[6],
+                last=row[7],
+                volume=row[8],
+                volume_quote=row[9],
+            )
+            for row in rows
+        ]

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, timedelta
 from typing import Dict, Tuple
 
 import pandas as pd
@@ -75,6 +75,32 @@ def fetch_daily_candle(
         repo.save_candle(symbol, candle, source=symbol.source_id.value)
 
     return candle
+
+
+def fetch_daily_candles(
+    symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
+) -> list[Candle]:
+    """
+    Fetch multiple daily candles for a given symbol between start_date and end_date.
+    If a database connection is provided, attempts to fetch from database first.
+    """
+    # If connection provided, try to get from database first
+    if conn:
+        repo = DailyCandleRepository(conn)
+        cached_candles = repo.get_candles(symbol, start_date, end_date)
+        if cached_candles:
+            return cached_candles
+
+    # If not in database or no connection, fetch each day individually
+    candles = []
+    current_date = start_date
+    while current_date <= end_date:
+        candle = fetch_daily_candle(symbol, current_date, conn)
+        if candle:
+            candles.append(candle)
+        current_date += timedelta(days=1)
+
+    return candles
 
 
 def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
