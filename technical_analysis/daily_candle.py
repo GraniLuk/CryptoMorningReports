@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import List
 
 from sharedCode.commonPrice import Candle
@@ -24,6 +24,8 @@ def fetch_daily_candles(
 
 
 if __name__ == "__main__":
+    import time  # Add this import at the top
+
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
@@ -32,5 +34,17 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    candles = fetch_daily_candles(symbols, conn, date(2025, 2, 8))
-    print(candles)
+    # Define start and end dates for January 2025
+    start_date = date(2024, 12, 4)
+    end_date = date(2024, 12, 31)
+
+    # Loop through each day
+    current_date = start_date
+    while current_date <= end_date:
+        print(f"Fetching data for {current_date}")
+        candles = fetch_daily_candles(symbols, conn, current_date)
+        # Process your candles here
+
+        print("Waitin 60 seconds before next execution...")
+        time.sleep(30)  # Wait for 60 seconds (1 minute)
+        current_date += timedelta(days=1)
