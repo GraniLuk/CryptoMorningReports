@@ -3,10 +3,10 @@ from datetime import date, timedelta
 from typing import List
 
 import pandas as pd
-import yfinance as yf
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
+from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol
 from technical_analysis.repositories.macd_repository import (
     fetch_yesterday_macd,
@@ -37,24 +37,30 @@ def calculate_macd(
                 symbol.symbol_name,
                 target_date,
             )
-            ticker = yf.Ticker(symbol.yf_name)
 
-            # Get historical data
-            start_date = target_date - timedelta(
-                days=60
-            )  # Enough data for MACD calculation
-            end_date = target_date + timedelta(days=1)
+            # Get historical data - 60 days for MACD calculation
+            start_date = target_date - timedelta(days=60)
+            candles = fetch_daily_candles([symbol], conn, start_date, target_date)
 
-            df = ticker.history(start=start_date, end=end_date, interval="1d")
-            if df.empty:
+            if not candles:
                 continue
 
-            # Convert DataFrame index to timezone-naive
-            df.index = df.index.tz_localize(None)
-
-            # Use timezone-naive timestamp for comparison
-            target_timestamp = pd.Timestamp(target_date)
-            df = df[df.index <= target_timestamp]
+            # Create DataFrame from candles
+            df = pd.DataFrame(
+                [
+                    {
+                        "Date": candle.end_date,
+                        "Close": candle.close,
+                        "Open": candle.open,
+                        "High": candle.high,
+                        "Low": candle.low,
+                        "Volume": candle.volume,
+                    }
+                    for candle in candles
+                ]
+            )
+            df.set_index("Date", inplace=True)
+            df.sort_index(inplace=True)
 
             if df.empty:
                 continue
