@@ -1,21 +1,49 @@
+from datetime import date, timedelta
 from typing import List
-from sharedCode.priceChecker import fetch_close_prices
-from technical_analysis.repositories.rsi_repository import save_rsi_results
+
 import pandas as pd
 from prettytable import PrettyTable
+
 from infra.telegram_logging_handler import app_logger
+from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol
+from technical_analysis.repositories.rsi_repository import save_rsi_results
 
 
-def create_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
+def create_rsi_table(
+    symbols: List[Symbol], conn, target_date: date = None
+) -> PrettyTable:
+    """
+    Creates RSI table for given symbols using daily candles data
+    """
+    target_date = target_date or date.today()
     all_values = pd.DataFrame()
 
     for symbol in symbols:
         try:
-            df = fetch_close_prices(symbol, 14)
+            # Get 15 days of data for 14-period RSI calculation
+            start_date = target_date - timedelta(days=15)
+            candles = fetch_daily_candles(symbol, start_date, target_date, conn)
+
+            if not candles:
+                continue
+
+            # Create DataFrame from candles
+            df = pd.DataFrame(
+                [
+                    {
+                        "Date": candle.end_date,
+                        "close": candle.close,
+                        "symbol": symbol.symbol_name,
+                    }
+                    for candle in candles
+                ]
+            )
+            df.set_index("Date", inplace=True)
+            df.sort_index(inplace=True)
+
             if not df.empty:
                 df["RSI"] = calculate_rsi_using_EMA(df["close"])
-                df["symbol"] = symbol.symbol_name
                 # Take only latest row
                 latest_row = df.iloc[-1:]
                 all_values = pd.concat([all_values, latest_row])
