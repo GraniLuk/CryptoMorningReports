@@ -40,7 +40,7 @@ def calculate_macd(
 
             # Get historical data - 60 days for MACD calculation
             start_date = target_date - timedelta(days=60)
-            candles = fetch_daily_candles([symbol], conn, start_date, target_date)
+            candles = fetch_daily_candles(symbol, start_date, target_date, conn)
 
             if not candles:
                 continue
@@ -79,7 +79,6 @@ def calculate_macd(
 
             # Determine status
             status = "🟢" if histogram > 0 else "🔴"
-
             # Check for crossovers
             if not yesterdayValues.empty:
                 yesterday_data = yesterdayValues[
@@ -164,5 +163,7 @@ if __name__ == "__main__":
         source_id=SourceID.BINANCE,
     )
 
-    macd_report = calculate_macd(symbol, conn=conn)
+    symbols = [symbol]
+
+    macd_report = calculate_macd(symbols, conn=conn)
     print(macd_report)
