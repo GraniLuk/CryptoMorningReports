@@ -35,8 +35,8 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
     # Define start and end dates for January 2025
-    start_date = date(2024, 12, 4)
-    end_date = date(2024, 12, 31)
+    start_date = date(2024, 10, 1)
+    end_date = date(2024, 10, 31)
 
     # Loop through each day
     current_date = start_date
