@@ -1,13 +1,19 @@
+from datetime import date, timedelta
 from typing import List
 
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.priceChecker import fetch_close_prices
+from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol
 
 
-def fetch_price_change_report(symbols: List[Symbol]) -> PrettyTable:
+def fetch_price_change_report(
+    symbols: List[Symbol], conn, target_date: date = None
+) -> PrettyTable:
+    target_date = target_date or date.today()
+    start_date = target_date - timedelta(days=7)  # Get 7 days of data
+
     table = PrettyTable()
     table.field_names = ["Symbol", "24h Change %", "7d Change %"]
     table.align = "r"  # Right align all columns
@@ -18,11 +24,14 @@ def fetch_price_change_report(symbols: List[Symbol]) -> PrettyTable:
 
     for symbol in symbols:
         try:
-            df = fetch_close_prices(symbol, 7)
-            if len(df) >= 7:  # Ensure we have enough data
-                current_price = df["close"].iloc[-1]
-                day_ago_price = df["close"].iloc[-2]
-                week_ago_price = df["close"].iloc[0]
+            candles = fetch_daily_candles(symbol, start_date, target_date, conn)
+            if len(candles) >= 7:  # Ensure we have enough data
+                # Convert candles to list of closing prices
+                closes = [candle.close for candle in candles]
+
+                current_price = closes[-1]
+                day_ago_price = closes[-2]
+                week_ago_price = closes[0]
 
                 # Calculate percentage changes
                 day_change = ((current_price - day_ago_price) / day_ago_price) * 100
@@ -55,8 +64,13 @@ def fetch_price_change_report(symbols: List[Symbol]) -> PrettyTable:
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
     from source_repository import SourceID, Symbol
 
+    load_dotenv()
+    conn = connect_to_sql()
     symbols = [
         Symbol(
             symbol_id=1,
@@ -72,5 +86,5 @@ if __name__ == "__main__":
         ),
     ]
 
-    table = fetch_price_change_report(symbols)
+    table = fetch_price_change_report(symbols, conn)
     print(table)
