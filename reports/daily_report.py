@@ -35,7 +35,7 @@ async def process_daily_report(
     launchpool_report = check_gempool_articles()
     volume_table = fetch_volume_report(symbols, conn)
     marketcap_table = fetch_marketcap_report(symbols, conn)
-    pricechange_table = fetch_price_change_report(symbols)
+    pricechange_table = fetch_price_change_report(symbols, conn)
 
     # Format messages
     today_date = datetime.now().strftime("%Y-%m-%d")
