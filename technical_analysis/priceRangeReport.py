@@ -8,6 +8,7 @@ from source_repository import Symbol
 from technical_analysis.repositories.priceRangeRepository import (
     save_price_range_results,
 )
+from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 
 
 def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
@@ -50,8 +51,8 @@ def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
     range_rows = []
     for result in sorted_results:
         symbol = result.symbol
-        high = result.high
-        low = result.low
+        high = format_to_6digits_withoutTrailingZeros(result.high)
+        low = format_to_6digits_withoutTrailingZeros(result.low)
         price_range = ((high - low) / low) * 100
         price_range_percent = f"{price_range:.2f}%"
         range_rows.append((symbol, low, high, price_range_percent))
