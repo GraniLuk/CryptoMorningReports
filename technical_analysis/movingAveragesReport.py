@@ -1,10 +1,10 @@
 from collections import namedtuple
-import yfinance as yf
 from prettytable import PrettyTable
 from technical_analysis.repositories.moving_averages_repository import (
     save_moving_averages_results,
     fetch_yesterday_moving_averages,
 )
+from sharedCode.priceChecker import fetch_daily_candles
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from typing import List
@@ -37,31 +37,26 @@ def calculate_indicators(
             app_logger.info(
                 "Processing symbol: %s for date %s", symbol.symbol_name, target_date
             )
-            ticker = yf.Ticker(symbol.yf_name)
 
-            # Get enough historical data to calculate 200-day moving average
-            # Add extra days to ensure we have enough data before target_date
-            start_date = target_date - timedelta(
-                days=400
-            )  # Extra days for sufficient history
-            end_date = target_date + timedelta(
-                days=1
-            )  # Add one day to include target_date
-
-            df = ticker.history(start=start_date, end=end_date, interval="1d")
-            if df.empty:
+            # Get historical data from database
+            start_date = target_date - timedelta(days=200) 
+            candles = fetch_daily_candles(symbol, start_date, target_date, conn)
+            
+            if not candles:
                 app_logger.warning(
                     f"No data available for {symbol.symbol_name} on {target_date}"
                 )
                 continue
 
-            # Convert DataFrame index to timezone-naive
-            df.index = df.index.tz_localize(None)
-            # Find the target date's data
-            # Convert target_date to timestamp for comparison
-            target_timestamp = pd.Timestamp(target_date)
-            df = df[df.index <= target_timestamp]
-
+            # Create DataFrame from candles
+            df = pd.DataFrame([
+                {
+                    'Close': candle.close,
+                    'Date': candle.end_date
+                } for candle in candles
+            ])
+            df.set_index('Date', inplace=True)
+            
             if df.empty:
                 app_logger.warning(
                     f"No data available for {symbol.symbol_name} up to {target_date}"
@@ -72,11 +67,16 @@ def calculate_indicators(
                 "Retrieved %d data points for %s", len(df), symbol.symbol_name
             )
 
-            # Calculate all indicators at once
-            df["MA50"] = df["Close"].rolling(window=50).mean()
-            df["MA200"] = df["Close"].rolling(window=200).mean()
-            df["EMA50"] = df["Close"].ewm(span=50, adjust=False).mean()
-            df["EMA200"] = df["Close"].ewm(span=200, adjust=False).mean()
+            # For new symbols (VIRTUAL, TON), adjust the MA/EMA periods based on available data
+            available_periods = len(df)
+            ma50_period = min(50, available_periods)
+            ma200_period = min(200, available_periods)
+
+            # Calculate indicators with adjusted periods
+            df["MA50"] = df["Close"].rolling(window=ma50_period).mean()
+            df["MA200"] = df["Close"].rolling(window=ma200_period).mean()
+            df["EMA50"] = df["Close"].ewm(span=ma50_period, adjust=False).mean()
+            df["EMA200"] = df["Close"].ewm(span=ma200_period, adjust=False).mean()
 
             # Get values for target date (last row of filtered DataFrame)
             target_price = df["Close"].iloc[-1]
@@ -85,11 +85,19 @@ def calculate_indicators(
             target_EMA50 = df["EMA50"].iloc[-1]
             target_EMA200 = df["EMA200"].iloc[-1]
 
+            # Add warning indicator if using shorter periods
+            period_warning = ""
+            if available_periods < 200:
+                period_warning = "⚠️"  # Add warning emoji for shortened periods
+                app_logger.warning(
+                    f"{symbol.symbol_name} using shortened periods due to limited history: {available_periods} days"
+                )
+
             # Initialize status indicators
-            ma50_status = "🟢" if target_price > target_MA50 else "🔴"
-            ma200_status = "🟢" if target_price > target_MA200 else "🔴"
-            ema50_status = "🟢" if target_price > target_EMA50 else "🔴"
-            ema200_status = "🟢" if target_price > target_EMA200 else "🔴"
+            ma50_status = f"🟢{period_warning}" if target_price > target_MA50 else f"🔴{period_warning}"
+            ma200_status = f"🟢{period_warning}" if target_price > target_MA200 else f"🔴{period_warning}"
+            ema50_status = f"🟢{period_warning}" if target_price > target_EMA50 else f"🔴{period_warning}"
+            ema200_status = f"🟢{period_warning}" if target_price > target_EMA200 else f"🔴{period_warning}"
 
             # Initialize cross status
             ma_cross_status = ""
@@ -286,3 +294,21 @@ def calculate_indicators(
         )
 
     return ma_table, ema_table
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import SourceID, Symbol
+
+    load_dotenv()
+    conn = connect_to_sql()
+    symbol = Symbol(
+        symbol_id=1,  # Added required field
+        symbol_name="BTC",
+        full_name="Bitcoin",  # Added required field
+        source_id=SourceID.BINANCE,
+    )
+
+    symbols = [symbol]
+    calculate_indicators(symbols, conn)

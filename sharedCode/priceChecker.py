@@ -5,13 +5,11 @@ import pandas as pd
 
 from sharedCode.binance import (
     fetch_binance_daily_kline,
-    fetch_binance_price,
-    fetch_close_prices_from_Binance,
+    fetch_binance_price
 )
 from sharedCode.coingecko import fetch_coingecko_price
 from sharedCode.commonPrice import Candle, TickerPrice
 from sharedCode.kucoin import (
-    fetch_close_prices_from_Kucoin,
     fetch_kucoin_daily_kline,
     fetch_kucoin_price,
 )
@@ -22,36 +20,6 @@ from technical_analysis.repositories.daily_candle_repository import (
 
 # Simple cache stores
 _price_cache: Dict[Tuple[str, SourceID], TickerPrice] = {}
-_close_prices_cache: Dict[Tuple[str, SourceID, int], pd.DataFrame] = {}
-
-
-def fetch_close_prices(symbol: Symbol, limit: int = 14) -> pd.DataFrame:
-    # Find the maximum cached limit for this symbol and source
-    max_cached_limit = 0
-    cached_df = None
-
-    for sym, src, lmt in _close_prices_cache.keys():
-        if sym == symbol.symbol_name and src == symbol.source_id:
-            if lmt > max_cached_limit:
-                max_cached_limit = lmt
-                cached_df = _close_prices_cache[(sym, src, lmt)]
-
-    # If we found cached data with higher or equal limit, return subset
-    if cached_df is not None and max_cached_limit >= limit:
-        return cached_df.iloc[-limit:]
-
-    # Fetch new data
-    if symbol.source_id == SourceID.KUCOIN:
-        df = fetch_close_prices_from_Kucoin(symbol.kucoin_name, limit)
-    if symbol.source_id == SourceID.BINANCE:
-        df = fetch_close_prices_from_Binance(symbol.binance_name, limit)
-    if symbol.source_id == SourceID.COINGECKO:
-        df = fetch_coingecko_price(symbol.symbol_name)
-
-    # Update cache
-    _close_prices_cache[(symbol.symbol_name, symbol.source_id, limit)] = df
-    return df
-
 
 def fetch_daily_candle(
     symbol: Symbol, end_date: date = date.today(), conn=None
