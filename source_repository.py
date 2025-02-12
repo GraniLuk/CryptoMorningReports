@@ -31,10 +31,6 @@ class Symbol:
     def binance_name(self) -> str:
         return f"{self.symbol_name}USDT"
 
-    @property
-    def yf_name(self) -> str:
-        return f"{self.symbol_name}-USD"
-
     @staticmethod
     def get_symbol_names(symbols: List["Symbol"]) -> List[str]:
         """Convert List of Symbols to List of symbol names"""
