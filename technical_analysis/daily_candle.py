@@ -4,6 +4,9 @@ from typing import List
 from sharedCode.commonPrice import Candle
 from sharedCode.priceChecker import fetch_daily_candle
 from source_repository import Symbol
+from technical_analysis.repositories.daily_candle_repository import (
+    DailyCandleRepository,
+)
 
 
 def fetch_daily_candles(
@@ -23,6 +26,20 @@ def fetch_daily_candles(
     return candles
 
 
+def fetch_old_daily_candles(symbols, conn):
+    repo = DailyCandleRepository(conn)
+    oldest_date = repo.get_min_candle_date()
+    if oldest_date:
+        print(f"Oldest candle date: {oldest_date}")
+    current_date = oldest_date - timedelta(days=1)
+    end_date = current_date - timedelta(days=31)
+    while current_date >= end_date:
+        print(f"Fetching data for {current_date}")
+        fetch_daily_candles(symbols, conn, current_date)
+        # Process your candles here
+        current_date -= timedelta(days=1)
+
+
 if __name__ == "__main__":
     import time  # Add this import at the top
 
@@ -40,11 +57,4 @@ if __name__ == "__main__":
 
     # Loop through each day
     current_date = start_date
-    while current_date <= end_date:
-        print(f"Fetching data for {current_date}")
-        candles = fetch_daily_candles(symbols, conn, current_date)
-        # Process your candles here
-
-        print("Waitin 60 seconds before next execution...")
-        time.sleep(30)  # Wait for 60 seconds (1 minute)
-        current_date += timedelta(days=1)
+    fetch_old_daily_candles(symbols, conn)

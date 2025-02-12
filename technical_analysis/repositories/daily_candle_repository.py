@@ -109,3 +109,15 @@ class DailyCandleRepository:
             )
             for row in rows
         ]
+
+    def get_min_candle_date(self) -> Optional[datetime]:
+        """
+        Fetches the earliest date from DailyCandles table
+        Returns None if table is empty
+        """
+        sql = """
+        SELECT MIN(EndDate)
+        FROM DailyCandles
+        """
+        row = self.conn.execute(sql).fetchone()
+        return row[0] if row and row[0] else None
