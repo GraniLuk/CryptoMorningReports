@@ -12,6 +12,7 @@ from technical_analysis.repositories.macd_repository import (
     fetch_yesterday_macd,
     save_macd_results,
 )
+from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 
 
 def calculate_macd(
@@ -131,17 +132,14 @@ def calculate_macd(
     macd_table = PrettyTable()
     macd_table.field_names = ["Symbol", "Price", "MACD", "Hist"]
 
-    def format_number(num):
-        return f"{num:.6f}".rstrip("0").rstrip(".")
-
     # Fill table
     for row in macd_values:
         macd_table.add_row(
             [
                 row.symbol,
-                format_number(row.current_price),
-                format_number(row.macd),
-                f"{format_number(row.histogram)} {row.status}",
+                format_to_6digits_withoutTrailingZeros(row.current_price),
+                format_to_6digits_withoutTrailingZeros(row.macd),
+                f"{format_to_6digits_withoutTrailingZeros(row.histogram)} {row.status}",
             ]
         )
 
