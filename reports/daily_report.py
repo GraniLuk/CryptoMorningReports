@@ -16,6 +16,7 @@ from technical_analysis.price_change_report import fetch_price_change_report
 from technical_analysis.priceRangeReport import fetch_range_price
 from technical_analysis.rsi_report import create_rsi_table
 from technical_analysis.volume_report import fetch_volume_report
+from technical_analysis.sopr import fetch_sopr_metrics
 
 
 async def process_daily_report(
@@ -36,6 +37,7 @@ async def process_daily_report(
     volume_table = fetch_volume_report(symbols, conn)
     marketcap_table = fetch_marketcap_report(symbols, conn)
     pricechange_table = fetch_price_change_report(symbols, conn)
+    sopr_table = fetch_sopr_metrics(conn)
 
     # Format messages
     today_date = datetime.now().strftime("%Y-%m-%d")
@@ -54,13 +56,14 @@ async def process_daily_report(
     volume_report = f"Volume Report: <pre>{volume_table}</pre>"
     volume_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
+    sopr_report = f"SOPR bitcoin report: <pre>{sopr_report}</pre>"
 
     # Process and send news reports
     fetched_news = get_news()
     # aggregated_data = get_aggregated_data(conn)
     analysis_reported_without_news = get_detailed_crypto_analysis(
         os.environ["PERPLEXITY_API_KEY"],
-        message_part1 + message_part2 + volume_report,
+        message_part1 + message_part2 + volume_report + sopr_report,
         fetched_news,
     )
     # analysis_reported_with_news = get_detailed_crypto_analysis_with_news(os.environ["PERPLEXITY_API_KEY"], aggregated_data , fetched_news)
@@ -93,6 +96,14 @@ async def process_daily_report(
         telegram_token,
         telegram_chat_id,
         volume_report,
+        parse_mode="HTML",
+    )
+    
+    await send_telegram_message(
+        telegram_enabled,
+        telegram_token,
+        telegram_chat_id,
+        sopr_report,
         parse_mode="HTML",
     )
 
