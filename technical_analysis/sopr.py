@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from prettytable import PrettyTable
 from infra.telegram_logging_handler import app_logger
 from technical_analysis.repositories.sopr_repository import save_sopr_results
@@ -55,7 +55,13 @@ def fetch_sopr_metrics(conn) -> tuple:
         return None
 
 if __name__ == "__main__":
-    table = fetch_sopr_metrics()
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+
+    load_dotenv()
+    conn = connect_to_sql()
+    table = fetch_sopr_metrics(conn)
     if table:
         print("\nCurrent SOPR Metrics:")
         print(table)
