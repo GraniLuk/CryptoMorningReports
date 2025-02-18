@@ -51,10 +51,13 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
+    filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name not in ["TON", "VIRTUAL","DYM","OSMO","AKT","NEXO"]]
+    for symbols in filtered_symbols:
+        print(symbols.symbol_name)
     # Define start and end dates for January 2025
     start_date = date(2024, 10, 1)
     end_date = date(2024, 10, 31)
 
     # Loop through each day
     current_date = start_date
-    fetch_old_daily_candles(symbols, conn)
+    fetch_old_daily_candles(filtered_symbols, conn)
