@@ -32,7 +32,7 @@ def fetch_old_daily_candles(symbols, conn):
     if oldest_date:
         print(f"Oldest candle date: {oldest_date}")
     current_date = oldest_date - timedelta(days=1)
-    end_date = current_date - timedelta(days=31)
+    end_date = current_date - timedelta(days=51)
     while current_date >= end_date:
         print(f"Fetching data for {current_date}")
         fetch_daily_candles(symbols, conn, current_date)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name not in ["TON", "VIRTUAL","DYM","OSMO","AKT","NEXO"]]
+    filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name not in ["TON", "VIRTUAL","DYM","OSMO","AKT","NEXO","FLOW"]]
     for symbols in filtered_symbols:
         print(symbols.symbol_name)
     # Define start and end dates for January 2025
