@@ -14,7 +14,7 @@ def get_news(api_key, symbol):
     try:
         params = {
             'auth_token': api_key,
-            'currencies': ','.join(symbol), 
+            'currencies': symbol, 
             'kind': 'news',
             'panic_score': 'true',
             'public': 'true'  # Ensure we're using the public API
