@@ -16,7 +16,6 @@ def get_news(api_key, symbol):
             'auth_token': api_key,
             'currencies': symbol, 
             'kind': 'news',
-            'panic_score': 'true',
             'public': 'true'  # Ensure we're using the public API
         }
         
@@ -78,7 +77,7 @@ if __name__ == "__main__":
         for symbol in symbols:
             news = get_news(cryptopanic_key, symbol.symbol_name)
             if isinstance(news, list):
-                print(f"📰 Latest Regulatory News for {symbol.symbol_name}:")
+                print(f"📰 Latest News for {symbol.symbol_name}:")
                 for item in news[:3]:  # Show top 3
                     print(f"• {item['title']}")
                     print(f"  Related to: {', '.join(item['currencies'])}")
