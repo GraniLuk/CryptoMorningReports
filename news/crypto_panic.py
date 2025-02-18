@@ -15,6 +15,7 @@ def get_news(api_key, symbol):
         params = {
             'auth_token': api_key,
             'currencies': symbol, 
+            'filter': 'rising',
             'kind': 'news',
             'public': 'true'  # Ensure we're using the public API
         }
