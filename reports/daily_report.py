@@ -17,6 +17,7 @@ from technical_analysis.priceRangeReport import fetch_range_price
 from technical_analysis.rsi_report import create_rsi_table
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
+from news.crypto_panic import get_news
 
 
 async def process_daily_report(
@@ -38,6 +39,8 @@ async def process_daily_report(
     marketcap_table = fetch_marketcap_report(symbols, conn)
     pricechange_table = fetch_price_change_report(symbols, conn)
     sopr_table = fetch_sopr_metrics(conn)
+    symbols_list = [symbol.symbol_name for symbol in symbols]
+    news = get_news(symbols_list)
 
     # Format messages
     today_date = datetime.now().strftime("%Y-%m-%d")
@@ -125,6 +128,14 @@ async def process_daily_report(
             analysis_reported_without_news,
             parse_mode="HTML",
         )
+        
+    await send_telegram_message(
+        telegram_enabled,
+        telegram_token,
+        telegram_chat_id,
+        news,
+        parse_mode="HTML"
+    )
 
     # if not analysis_reported_with_news.startswith("Failed"):
     #     await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_with_news, parse_mode="HTML")

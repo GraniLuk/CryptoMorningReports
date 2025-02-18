@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 CRYPTOPANIC_API = "https://cryptopanic.com/api/v1/posts/"
 
-def get_news(api_key, symbols):
+def get_news(symbols):
     """Fetch regulatory news from CryptoPanic for multiple symbols
     
     Args:
@@ -18,6 +18,7 @@ def get_news(api_key, symbols):
         all_news = []
         # Calculate cutoff time for last 24 hours
         now = datetime.now()
+        api_key = os.getenv('CRYPTOPANIC_API_KEY') 
         
         # Fetch news for each symbol separately
         for symbol in symbols:
@@ -68,14 +69,9 @@ def get_news(api_key, symbols):
 
 if __name__ == "__main__":
         # Get API keys from environment
-    cryptopanic_key = os.getenv('CRYPTOPANIC_API_KEY')
-    
+  
     print("🔄 Fetching news from cryptopanic...\n")
     symbols = ["BTC","ETH","VIRTUAL"]
     
-        # Regulatory News
-    if cryptopanic_key:
-        news_message = get_news(cryptopanic_key, symbols)
-        print(news_message)
-    else:
-        print("⚠️ CryptoPanic API key missing (news skipped)")
+    # News
+    news_message = get_news(symbols)
