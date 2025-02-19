@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 CRYPTOPANIC_API = "https://cryptopanic.com/api/v1/posts/"
 
-def get_news(symbols):
+def get_panic_news(symbols):
     """Fetch regulatory news from CryptoPanic for multiple symbols
     
     Args:
@@ -74,4 +74,4 @@ if __name__ == "__main__":
     symbols = ["BTC","ETH","VIRTUAL"]
     
     # News
-    news_message = get_news(symbols)
+    news_message = get_panic_news(symbols)

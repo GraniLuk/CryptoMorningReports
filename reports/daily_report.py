@@ -17,7 +17,7 @@ from technical_analysis.priceRangeReport import fetch_range_price
 from technical_analysis.rsi_report import create_rsi_table
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
-from news.crypto_panic import get_news
+from news.crypto_panic import get_panic_news
 
 
 async def process_daily_report(
@@ -40,7 +40,7 @@ async def process_daily_report(
     pricechange_table = fetch_price_change_report(symbols, conn)
     sopr_table = fetch_sopr_metrics(conn)
     symbols_list = [symbol.symbol_name for symbol in symbols]
-    news = get_news(symbols_list)
+    news = get_panic_news(symbols_list)
 
     # Format messages
     today_date = datetime.now().strftime("%Y-%m-%d")
