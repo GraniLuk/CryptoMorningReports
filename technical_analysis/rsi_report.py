@@ -47,6 +47,8 @@ def create_rsi_table(
                 df["RSI"] = calculate_rsi_using_EMA(df["close"])
                 # Take only latest row
                 latest_row = df.iloc[-1:]
+                # Get the date from the index
+                latest_date = latest_row.index[-1]
                 all_values = pd.concat([all_values, latest_row])
 
                 # Save to database if connection is available
@@ -55,6 +57,7 @@ def create_rsi_table(
                         save_rsi_results(
                             conn=conn,
                             symbol_id=symbol.symbol_id,
+                            indicator_date=latest_date,
                             closed_price=float(latest_row["close"].iloc[-1]),
                             rsi=float(latest_row["RSI"].iloc[-1]),
                         )
@@ -184,6 +187,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
             save_rsi_results(
                 conn=conn,
                 symbol_id=symbol.symbol_id,
+                indicator_date=day,
                 closed_price=float(close_val),
                 rsi=float(rsi_val),
             )
