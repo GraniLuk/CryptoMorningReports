@@ -2,13 +2,14 @@ import pyodbc
 from infra.telegram_logging_handler import app_logger
 
 
-def save_rsi_results(conn, symbol_id: int, closed_price: float, rsi: float) -> None:
+def save_rsi_results(conn, symbol_id: int, indicator_date, closed_price: float, rsi: float) -> None:
     """
     Saves RSI results to the database
 
     Args:
         conn: Database connection
         symbol_id (int): Symbol ID from Symbols table
+        indicator_date: The date for the RSI indicator
         closed_price (float): Current closing price
         rsi (float): Calculated RSI value
     """
@@ -17,7 +18,7 @@ def save_rsi_results(conn, symbol_id: int, closed_price: float, rsi: float) -> N
             cursor = conn.cursor()
             query = """
                 MERGE INTO RSI AS target
-                USING (SELECT ? AS SymbolID, CAST(GETDATE() AS DATE) AS IndicatorDate, ? AS ClosedPrice, ? AS RSI) 
+                USING (SELECT ? AS SymbolID, ? AS IndicatorDate, ? AS ClosedPrice, ? AS RSI) 
                     AS source (SymbolID, IndicatorDate, ClosedPrice, RSI)
                 ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
                 WHEN MATCHED THEN
@@ -26,7 +27,7 @@ def save_rsi_results(conn, symbol_id: int, closed_price: float, rsi: float) -> N
                     INSERT (SymbolID, IndicatorDate, ClosedPrice, RSI)
                     VALUES (source.SymbolID, source.IndicatorDate, source.ClosedPrice, source.RSI);
             """
-            cursor.execute(query, (symbol_id, closed_price, rsi))
+            cursor.execute(query, (symbol_id, indicator_date, closed_price, rsi))
             conn.commit()
             cursor.close()
             app_logger.info(
