@@ -145,6 +145,9 @@ if __name__ == "__main__":
 
     from infra.sql_connection import connect_to_sql
     from source_repository import SourceID, Symbol
+    from technical_analysis.repositories.daily_candle_repository import (
+    DailyCandleRepository,
+)
 
     load_dotenv()
     conn = connect_to_sql()
@@ -154,6 +157,7 @@ if __name__ == "__main__":
         full_name="Bitcoin",  # Added required field
         source_id=SourceID.BINANCE,
     )
+    dailyCandleRepository = DailyCandleRepository(conn)
+    all_daily_candles = dailyCandleRepository.get_all_candles(symbol)
 
-    symbols = [symbol]
-    create_rsi_table(symbols, conn)
+    
