@@ -26,38 +26,33 @@ def fetch_daily_candles(
     return candles
 
 
-def fetch_old_daily_candles(symbols, conn):
+def check_if_all_candles(symbol, conn):
     repo = DailyCandleRepository(conn)
-    oldest_date = repo.get_min_candle_date()
+    all_candles = repo.get_all_candles(symbol)
+    oldest_date = all_candles[0].end_date
     if oldest_date:
         print(f"Oldest candle date: {oldest_date}")
-    current_date = oldest_date - timedelta(days=1)
-    end_date = current_date - timedelta(days=51)
-    while current_date >= end_date:
+    end_date = date.today()
+    current_date = oldest_date
+    while current_date <= end_date:
         print(f"Fetching data for {current_date}")
-        fetch_daily_candles(symbols, conn, current_date)
+        from_db = next((item for item in all_candles if item.end_date == current_date), None)   
+        if from_db is None:
+            fetch_daily_candle(symbol, current_date, conn)
+            print("Fetched from API")
         # Process your candles here
-        current_date -= timedelta(days=1)
+        current_date += timedelta(days=1)
 
 
 if __name__ == "__main__":
-    import time  # Add this import at the top
-
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import Symbol, fetch_symbols
+    from source_repository import Symbol, SourceID, fetch_symbols
 
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name not in ["TON", "VIRTUAL","DYM","OSMO","AKT","NEXO","FLOW"]]
-    for symbols in filtered_symbols:
-        print(symbols.symbol_name)
     # Define start and end dates for January 2025
-    start_date = date(2024, 10, 1)
-    end_date = date(2024, 10, 31)
-
-    # Loop through each day
-    current_date = start_date
-    fetch_old_daily_candles(filtered_symbols, conn)
+    for symbol in symbols:
+        check_if_all_candles(symbol, conn)
