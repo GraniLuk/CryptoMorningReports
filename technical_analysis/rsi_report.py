@@ -158,27 +158,37 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     # Create DataFrame from candles: assumes each candle has attributes 'end_date' and 'close'
     df = pd.DataFrame(
         [
-            {"Date": candle.end_date, "close": candle.close}
+            {"Date": candle.end_date, "close": candle.close} 
             for candle in all_daily_candles
         ]
     )
     df.set_index("Date", inplace=True)
     df.sort_index(inplace=True)
 
-    # Calculate RSI for entire series using your EMA based method
+# Calculate RSI for entire series using your EMA based method
     df["RSI"] = calculate_rsi_using_EMA(df["close"])
 
     # Save RSI results for each day in the current year
     for day, row in df.iterrows():
+        close_val = row["close"]
+        rsi_val = row["RSI"]
+
+        # Skip if RSI or close price is NaN
+        if pd.isna(close_val) or pd.isna(rsi_val):
+            app_logger.error(
+                f"Invalid values for {symbol.symbol_name} on {day}: close={close_val}, RSI={rsi_val}"
+            )
+            continue
+
         try:
             save_rsi_results(
                 conn=conn,
                 symbol_id=symbol.symbol_id,
-                closed_price=float(row["close"]),
-                rsi=float(row["RSI"]),
+                closed_price=float(close_val),
+                rsi=float(rsi_val),
             )
             app_logger.info(
-                f"Saved RSI for {symbol.symbol_name} on {day}: Price=${row['close']:.2f}, RSI={row['RSI']:.2f}"
+                f"Saved RSI for {symbol.symbol_name} on {day}: Price=${close_val:.2f}, RSI={rsi_val:.2f}"
             )
         except Exception as e:
             app_logger.error(
@@ -190,11 +200,19 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import Symbol, fetch_symbols
+    from source_repository import Symbol, fetch_symbols, SourceID
 
     load_dotenv()
     conn = connect_to_sql()
-    symbols = fetch_symbols(conn)
+    # symbols = fetch_symbols(conn)
+    symbols = [
+        Symbol(
+            symbol_id=14,
+            symbol_name="VIRTUAL",
+            full_name="Bitcoin",
+            source_id=SourceID.KUCOIN,
+        )
+    ]
     # Define start and end dates for January 2025
     for symbol in symbols:
         calculate_all_rsi_for_symbol(conn, symbol=symbol)
