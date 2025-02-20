@@ -8,6 +8,7 @@ from infra.telegram_logging_handler import app_logger
 from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import save_rsi_results
+from technical_analysis.repositories.daily_candle_repository import DailyCandleRepository
 
 
 def create_rsi_table(
@@ -137,27 +138,65 @@ def calculate_rsi_using_RMA(series, periods=14):
 
 
 def calculate_ema(series, period):
-    return series.ewm(span=period, adjust=False).mean()
+    # 'com' stands for center of mass; with com = period - 1, alpha becomes 1/period
+    return series.ewm(com=period-1, adjust=False).mean()
+
+
+def calculate_all_rsi_for_symbol(conn, symbol):
+    """
+    Calculate RSI using calculate_rsi_using_EMA for all days in the current year
+    for the given symbol and save the results using save_rsi_results.
+    """
+    # Fetch all daily candles for the symbol
+    dailyCandleRepository = DailyCandleRepository(conn)
+    all_daily_candles = dailyCandleRepository.get_all_candles(symbol)
+
+    if not all_daily_candles:
+        app_logger.error(f"No daily candles found for {symbol.symbol_name}")
+        return
+
+    # Create DataFrame from candles: assumes each candle has attributes 'end_date' and 'close'
+    df = pd.DataFrame(
+        [
+            {"Date": candle.end_date, "close": candle.close}
+            for candle in all_daily_candles
+        ]
+    )
+    df.set_index("Date", inplace=True)
+    df.sort_index(inplace=True)
+
+    # Calculate RSI for entire series using your EMA based method
+    df["RSI"] = calculate_rsi_using_EMA(df["close"])
+
+    # Save RSI results for each day in the current year
+    for day, row in df.iterrows():
+        try:
+            save_rsi_results(
+                conn=conn,
+                symbol_id=symbol.symbol_id,
+                closed_price=float(row["close"]),
+                rsi=float(row["RSI"]),
+            )
+            app_logger.info(
+                f"Saved RSI for {symbol.symbol_name} on {day}: Price=${row['close']:.2f}, RSI={row['RSI']:.2f}"
+            )
+        except Exception as e:
+            app_logger.error(
+                f"Failed to save RSI results for {symbol.symbol_name} on {day}: {str(e)}"
+            )
 
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import SourceID, Symbol
-    from technical_analysis.repositories.daily_candle_repository import (
-    DailyCandleRepository,
-)
+    from source_repository import Symbol, fetch_symbols
 
     load_dotenv()
     conn = connect_to_sql()
-    symbol = Symbol(
-        symbol_id=1,  # Added required field
-        symbol_name="BTC",
-        full_name="Bitcoin",  # Added required field
-        source_id=SourceID.BINANCE,
-    )
-    dailyCandleRepository = DailyCandleRepository(conn)
-    all_daily_candles = dailyCandleRepository.get_all_candles(symbol)
+    symbols = fetch_symbols(conn)
+    # Define start and end dates for January 2025
+    for symbol in symbols:
+        calculate_all_rsi_for_symbol(conn, symbol=symbol)
 
-    
+
