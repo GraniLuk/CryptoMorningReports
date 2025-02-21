@@ -5,6 +5,7 @@ import pandas as pd
 from source_repository import SourceID, Symbol
 from infra.telegram_logging_handler import app_logger
 from stepn.stepn_ratio_fetch import fetch_gstgmt_ratio_range
+from technical_analysis.rsi_report import calculate_rsi_using_EMA
 
 
 def fetch_stepn_report(conn) -> PrettyTable:
@@ -50,6 +51,8 @@ def fetch_stepn_report(conn) -> PrettyTable:
         ratios.append(gmt_gst_ratio)
         ema14_results = calculate_ema14(ratios)
         results.append(("EMA14", ema14_results[-1]))
+        rsi_results = calculate_rsi_using_EMA(ratios)
+        results.append(("RSI", rsi_results[-1]))
 
         # Save results to database
         try:
@@ -62,6 +65,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
                 min_24h=min_24h,
                 max_24h=max_24h,
                 range_24h=range_percent,
+                rsi=rsi_results[-1]
             )
         except Exception as e:
             app_logger.error(f"Error saving STEPN results to database: {str(e)}")

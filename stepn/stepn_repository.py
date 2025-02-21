@@ -11,6 +11,7 @@ def save_stepn_results(
     min_24h: float = None,
     max_24h: float = None,
     range_24h: float = None,
+    rsi: float = None
 ) -> None:
     """
     Saves STEPN results to the database
@@ -24,6 +25,7 @@ def save_stepn_results(
         min_24h (float, optional): Minimum value in the last 24 hours
         max_24h (float, optional): Maximum value in the last 24 hours
         range_24h (float, optional): Range in the last 24 hours
+        rsi (float, optional): RSI calculated based on EMA
     """
     try:
         if conn:
@@ -33,16 +35,17 @@ def save_stepn_results(
                 USING (
                     SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, 
                            CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
-                           ? AS Min24Value, ? AS Max24Value, ? AS Range24
-                ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24)
+                           ? AS Min24Value, ? AS Max24Value, ? AS Range24,
+                           ? AS RSI
+                ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI)
                 ON target.Date = source.Date
                 WHEN NOT MATCHED THEN
-                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24)
+                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI)
                     VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, 
-                           source.EMA14, source.Min24Value, source.Max24Value, source.Range24);
+                           source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI);
             """
             cursor.execute(
-                query, (gmt_price, gst_price, ratio, ema, min_24h, max_24h, range_24h)
+                query, (gmt_price, gst_price, ratio, ema, min_24h, max_24h, range_24h, rsi)
             )
             conn.commit()
             cursor.close()
