@@ -5,33 +5,41 @@ import pandas as pd
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
-def run_backtest(conn, symbol_id: int):
+def run_backtest(
+    candles_data,
+    rsi_value: int,
+    tp_value: Decimal,
+    sl_value: Decimal,
+    daysAfterToBuy: int,
+):
     # Fetch data from database
-    candles_data = get_candles_with_rsi(conn, symbol_id)
+
     df = pd.DataFrame(candles_data)
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
 
     # Generate trading signals
-    df["signal"] = (df["RSI"] <= 30) & (df["RSI"].shift(1) > 30)
+    df["signal"] = (df["RSI"] <= rsi_value) & (
+        df["RSI"].shift(daysAfterToBuy) > rsi_value
+    )
 
     trades = []
     active_trade = False
 
     for i in range(len(df)):
-        if not active_trade and df.loc[i, "signal"] and (i + 1 < len(df)):
+        if not active_trade and df.loc[i, "signal"] and (i + daysAfterToBuy < len(df)):
             active_trade = True
-            entry_date = df.loc[i + 1, "date"]
-            entry_price = df.loc[i + 1, "Open"]
+            entry_date = df.loc[i + daysAfterToBuy, "date"]
+            entry_price = df.loc[i + daysAfterToBuy, "Open"]
             print(
                 f"Started position on date {entry_date} with entry price {entry_price}"
             )
-            tp_price = entry_price * Decimal("1.1")
-            sl_price = entry_price * Decimal("0.9")
+            tp_price = entry_price * tp_value
+            sl_price = entry_price * sl_value
             outcome = None
             days_taken = 0
 
-            for j in range(i + 1, len(df)):
+            for j in range(i + daysAfterToBuy, len(df)):
                 current_high = df.loc[j, "High"]
                 current_low = df.loc[j, "Low"]
                 current_date = df.loc[j, "date"]
@@ -99,5 +107,7 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbol_id = 1  # The symbol ID you want to backtest
-    results = run_backtest(conn, symbol_id)
+    candles_data = get_candles_with_rsi(conn, symbol_id)
+
+    results = run_backtest(candles_data, 30, Decimal("1.1"), Decimal("0.9"))
     print(results)
