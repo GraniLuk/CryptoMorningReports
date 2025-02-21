@@ -109,5 +109,5 @@ if __name__ == "__main__":
     symbol_id = 1  # The symbol ID you want to backtest
     candles_data = get_candles_with_rsi(conn, symbol_id)
 
-    results = run_backtest(candles_data, 30, Decimal("1.1"), Decimal("0.9"))
+    results = run_backtest(candles_data, 30, Decimal("1.1"), Decimal("0.9"), 1)
     print(results)
