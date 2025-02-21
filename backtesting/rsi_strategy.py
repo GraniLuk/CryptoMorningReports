@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import pandas as pd
 
+from source_repository import fetch_symbols
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
@@ -32,7 +33,7 @@ def run_backtest(
             entry_date = df.loc[i + daysAfterToBuy, "date"]
             entry_price = df.loc[i + daysAfterToBuy, "Open"]
             print(
-                f"Started position on date {entry_date} with entry price {entry_price}"
+                f"Started position for symbol {symbol_id} on date {entry_date} with entry price {entry_price}"
             )
             tp_price = entry_price * tp_value
             sl_price = entry_price * sl_value
@@ -53,7 +54,7 @@ def run_backtest(
                     close_price = current_high
                     days_taken = (current_date - entry_date).days
                     print(
-                        f"Closed position ❤️ at date {current_date} with price {current_high}"
+                        f"Closed position ❤️ for symbol {symbol_id} at date {current_date} with price {current_high}"
                     )
                     break
                 elif current_low <= sl_price:
@@ -62,7 +63,7 @@ def run_backtest(
                     close_price = current_low
                     days_taken = (current_date - entry_date).days
                     print(
-                        f"Closed position 💀 at date {current_date} with price {current_low}"
+                        f"Closed position 💀 for symbol {symbol_id} at date {current_date} with price {current_low}"
                     )
                     break
 
@@ -88,7 +89,7 @@ def run_backtest(
             count=("trade_outcome", "size"), avg_days=("days", "mean")
         )
 
-        print("\nBacktest Results:")
+        print(f"\nBacktest Results for symbol {symbol_id}:")
         print(f"Total trades: {len(results_df)}")
         print(
             f"Take Profit hits: {summary.loc['TP', 'count']}"
@@ -111,12 +112,14 @@ def run_backtest(
             else ""
         )
     else:
-        print("\nNo trades were executed during the backtest period.")
+        print(
+            f"\nNo trades were executed for symbol {symbol_id} during the backtest period."
+        )
 
     # Save trades results to Excel for further analysis
-    excel_filename = "trades_results.xlsx"
+    excel_filename = f"trades_results_symbol_{symbol_id}.xlsx"
     results_df.to_excel(excel_filename, index=False)
-    print(f"\nTrades results saved to '{excel_filename}'.")
+    print(f"\nTrades results for symbol {symbol_id} saved to '{excel_filename}'.")
 
     return results_df
 
@@ -128,10 +131,30 @@ if __name__ == "__main__":
 
     load_dotenv()
     conn = connect_to_sql()
-    symbol_id = 1  # The symbol ID you want to backtest
-    candles_data = get_candles_with_rsi(conn, symbol_id)
 
-    results = run_backtest(
-        symbol_id, candles_data, 30, Decimal("1.1"), Decimal("0.9"), 1
+    symbol_ratios = {}
+    symbols = fetch_symbols(conn)
+    # Loop over symbols 1 to 16
+    for symbol_id in [symbol.symbol_id for symbol in symbols]:
+        candles_data = get_candles_with_rsi(conn, symbol_id)
+        results_df = run_backtest(
+            symbol_id, candles_data, 30, Decimal("1.1"), Decimal("0.9"), 1
+        )
+        if results_df.empty:
+            ratio = 0.0
+        else:
+            total_trades = len(results_df)
+            tp_trades = len(results_df[results_df["trade_outcome"] == "TP"])
+            ratio = tp_trades / total_trades
+        symbol_ratios[symbol_id] = ratio
+        print(f"Symbol {symbol_id}: TP Ratio = {ratio:.2f}\n")
+
+    # Compare results across symbols
+    best_symbol = max(symbol_ratios, key=symbol_ratios.get)
+    print("Summary of TP Ratios:")
+    for symbol, ratio in symbol_ratios.items():
+        print(f"Symbol {symbol}: {ratio:.2f}")
+
+    print(
+        f"\nBest performing symbol: {best_symbol} with a TP ratio of {symbol_ratios[best_symbol]:.2f}"
     )
-    print(results)
