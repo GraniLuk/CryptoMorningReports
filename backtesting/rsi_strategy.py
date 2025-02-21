@@ -6,6 +6,7 @@ from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def run_backtest(
+    symbol_id: int,
     candles_data,
     rsi_value: int,
     tp_value: Decimal,
@@ -13,7 +14,6 @@ def run_backtest(
     daysAfterToBuy: int,
 ):
     # Fetch data from database
-
     df = pd.DataFrame(candles_data)
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
@@ -36,8 +36,11 @@ def run_backtest(
             )
             tp_price = entry_price * tp_value
             sl_price = entry_price * sl_value
+
             outcome = None
             days_taken = 0
+            close_date = None
+            close_price = None
 
             for j in range(i + daysAfterToBuy, len(df)):
                 current_high = df.loc[j, "High"]
@@ -46,6 +49,8 @@ def run_backtest(
 
                 if current_high >= tp_price:
                     outcome = "TP"
+                    close_date = current_date
+                    close_price = current_high
                     days_taken = (current_date - entry_date).days
                     print(
                         f"Closed position ❤️ at date {current_date} with price {current_high}"
@@ -53,6 +58,8 @@ def run_backtest(
                     break
                 elif current_low <= sl_price:
                     outcome = "SL"
+                    close_date = current_date
+                    close_price = current_low
                     days_taken = (current_date - entry_date).days
                     print(
                         f"Closed position 💀 at date {current_date} with price {current_low}"
@@ -60,15 +67,25 @@ def run_backtest(
                     break
 
             if outcome:
-                trades.append({"outcome": outcome, "days": days_taken})
+                trades.append(
+                    {
+                        "symbolId": symbol_id,
+                        "open_date": entry_date,
+                        "open_price": entry_price,
+                        "close_date": close_date,
+                        "close_price": close_price,
+                        "trade_outcome": outcome,
+                        "days": days_taken,
+                    }
+                )
 
             active_trade = False
 
     # Analyze results
     results_df = pd.DataFrame(trades)
     if not results_df.empty:
-        summary = results_df.groupby("outcome").agg(
-            count=("outcome", "size"), avg_days=("days", "mean")
+        summary = results_df.groupby("trade_outcome").agg(
+            count=("trade_outcome", "size"), avg_days=("days", "mean")
         )
 
         print("\nBacktest Results:")
@@ -96,6 +113,11 @@ def run_backtest(
     else:
         print("\nNo trades were executed during the backtest period.")
 
+    # Save trades results to Excel for further analysis
+    excel_filename = "trades_results.xlsx"
+    results_df.to_excel(excel_filename, index=False)
+    print(f"\nTrades results saved to '{excel_filename}'.")
+
     return results_df
 
 
@@ -109,5 +131,7 @@ if __name__ == "__main__":
     symbol_id = 1  # The symbol ID you want to backtest
     candles_data = get_candles_with_rsi(conn, symbol_id)
 
-    results = run_backtest(candles_data, 30, Decimal("1.1"), Decimal("0.9"), 1)
+    results = run_backtest(
+        symbol_id, candles_data, 30, Decimal("1.1"), Decimal("0.9"), 1
+    )
     print(results)
