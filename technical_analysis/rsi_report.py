@@ -121,6 +121,9 @@ def calculate_rsi_using_EMA(series, period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
+def calculate_ema(series, period):
+    # 'com' stands for center of mass; with com = period - 1, alpha becomes 1/period
+    return series.ewm(com=period-1, adjust=False).mean()
 
 def calculate_rsi_using_RMA(series, periods=14):
     delta = series.diff()
@@ -138,11 +141,6 @@ def calculate_rsi_using_RMA(series, periods=14):
     rsi = 100 - (100 / (1 + rs))
 
     return rsi
-
-
-def calculate_ema(series, period):
-    # 'com' stands for center of mass; with com = period - 1, alpha becomes 1/period
-    return series.ewm(com=period-1, adjust=False).mean()
 
 
 def calculate_all_rsi_for_symbol(conn, symbol):
@@ -208,15 +206,7 @@ if __name__ == "__main__":
 
     load_dotenv()
     conn = connect_to_sql()
-    # symbols = fetch_symbols(conn)
-    symbols = [
-        Symbol(
-            symbol_id=14,
-            symbol_name="VIRTUAL",
-            full_name="Bitcoin",
-            source_id=SourceID.KUCOIN,
-        )
-    ]
+    symbols = fetch_symbols(conn)
     # Define start and end dates for January 2025
     for symbol in symbols:
         calculate_all_rsi_for_symbol(conn, symbol=symbol)
