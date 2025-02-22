@@ -44,13 +44,15 @@ def save_rsi_results(
         raise
 
 
-def get_candles_with_rsi(conn, symbol_id: int) -> list:
+def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
     """
-    Fetches candle data with RSI for a specific symbol from the CandleWithRsiView
+    Fetches candle data with RSI for a specific symbol from the CandleWithRsiView,
+    only returning records on or after the specified date.
 
     Args:
         conn: Database connection
         symbol_id (int): Symbol ID to filter the data
+        from_date: The start date to filter the candles (inclusive)
 
     Returns:
         list: List of dictionaries containing the candle and RSI data
@@ -68,10 +70,10 @@ def get_candles_with_rsi(conn, symbol_id: int) -> list:
                     High,
                     Low
                 FROM CandleWithRsiView
-                WHERE SymbolId = ?
+                WHERE SymbolId = ? AND date >= ?
                 ORDER BY date DESC
             """
-            cursor.execute(query, symbol_id)
+            cursor.execute(query, symbol_id, from_date)
 
             # Fetch column names
             columns = [column[0] for column in cursor.description]
@@ -81,7 +83,7 @@ def get_candles_with_rsi(conn, symbol_id: int) -> list:
 
             cursor.close()
             app_logger.info(
-                f"Successfully fetched candle data with RSI for symbol_id {symbol_id}"
+                f"Successfully fetched candle data with RSI for symbol_id {symbol_id} starting from {from_date}"
             )
             return results
 

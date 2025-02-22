@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
@@ -16,6 +17,7 @@ def run_backtest(
 ):
     symbol_id = symbol.symbol_id  # use only for data retrieval
     symbol_name = symbol.symbol_name
+    investment_value = 1000
 
     # Fetch data from database
     df = pd.DataFrame(candles_data)
@@ -73,9 +75,11 @@ def run_backtest(
             if outcome:
                 # Calculate profit for this trade based on a 1000$ investment.
                 if outcome == "TP":
-                    profit = 1000 * (tp_value - 1)
+                    profit = investment_value * (tp_value - 1)
                 elif outcome == "SL":
-                    profit = 1000 * (sl_value - 1)  # will be negative if sl_value < 1
+                    profit = investment_value * (
+                        sl_value - 1
+                    )  # will be negative if sl_value < 1
                 trades.append(
                     {
                         "symbolId": symbol_id,
@@ -147,7 +151,11 @@ def run_strategy_for_symbol(
     Executes the strategy for a single symbol.
     Returns the results DataFrame and the TP ratio.
     """
-    candles_data = get_candles_with_rsi(conn, symbol.symbol_id)
+    # Calculate the date 4 years before today
+    five_years_ago = datetime.now() - timedelta(days=5 * 365)
+
+    # Assuming you have a valid connection and symbol_id
+    candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
     results_df = run_backtest(
         symbol, candles_data, rsi_value, tp_value, sl_value, daysAfterToBuy
     )
