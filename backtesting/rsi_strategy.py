@@ -183,20 +183,20 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
 
-    # Option 1: Execute for all symbols
-    symbol_ratios = run_strategy_for_all_symbols(conn)
-    print("Summary of TP Ratios:")
-    for name, ratio in symbol_ratios.items():
-        print(f"{name}: {ratio:.2f}")
+    # # Option 1: Execute for all symbols
+    # symbol_ratios = run_strategy_for_all_symbols(conn)
+    # print("Summary of TP Ratios:")
+    # for name, ratio in symbol_ratios.items():
+    #     print(f"{name}: {ratio:.2f}")
 
-    best_symbol = max(symbol_ratios, key=symbol_ratios.get)
-    print(
-        f"\nBest performing symbol: {best_symbol} with a TP ratio of {symbol_ratios[best_symbol]:.2f}"
-    )
+    # best_symbol = max(symbol_ratios, key=symbol_ratios.get)
+    # print(
+    #     f"\nBest performing symbol: {best_symbol} with a TP ratio of {symbol_ratios[best_symbol]:.2f}"
+    # )
 
     # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
-    # symbols = fetch_symbols(conn)
-    # if symbols:
-    #     symbol = symbols[0]  # or choose any symbol
-    #     _, ratio = run_strategy_for_symbol(conn, symbol)
-    #     print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}")
+    symbols = fetch_symbols(conn)
+    if symbols:
+        filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
+        _, ratio = run_strategy_for_symbol(conn, filtered_symbols[0])
+        print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
