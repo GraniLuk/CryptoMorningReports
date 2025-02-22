@@ -46,20 +46,26 @@ def fetch_stepn_report(conn) -> PrettyTable:
 
     if conn is not None:
         last_14_days_results = fetch_stepn_results_last_14_days(conn)
-        ratios = [
-            record[2] for record in last_14_days_results
-        ]  # Extracting ratios separately
+        ratios = [record[2] for record in last_14_days_results]
         ratios.append(gmt_gst_ratio)
+
+        # Ensure all ratio values are floats.
+        try:
+            ratios = [float(r) for r in ratios]
+        except Exception as e:
+            app_logger.error("Error converting ratios to float: %s", str(e))
+            raise
+
         ema14_results = calculate_ema14(ratios)
         results.append(("EMA14", ema14_results[-1]))
 
-        # Convert list of ratios to DataFrame with a column name
+        # Convert list of ratios to DataFrame with a column name and convert to float
         df_ratios = pd.DataFrame(ratios, columns=["Ratio"])
-        df_ratios["Ratio"] = df_ratios["Ratio"].astype(float)  # Ensure values are float
+        df_ratios["Ratio"] = df_ratios["Ratio"].astype(float)
 
         # Then pass the Series to your RSI calculation function
         rsi_results = calculate_rsi_using_EMA(df_ratios["Ratio"])
-        results.append(("RSI", rsi_results[-1]))
+        results.append(("RSI", rsi_results.iloc[-1] if not rsi_results.empty else None))
 
         # Save results to database
         try:
