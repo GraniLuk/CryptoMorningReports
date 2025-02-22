@@ -127,6 +127,54 @@ def run_backtest(
     return results_df
 
 
+def run_strategy_for_symbol(
+    conn,
+    symbol,
+    rsi_value: int = 30,
+    tp_value: Decimal = Decimal("1.1"),
+    sl_value: Decimal = Decimal("0.9"),
+    daysAfterToBuy: int = 1,
+):
+    """
+    Executes the strategy for a single symbol.
+    Returns the results DataFrame and the TP ratio.
+    """
+    candles_data = get_candles_with_rsi(conn, symbol.symbol_id)
+    results_df = run_backtest(
+        symbol, candles_data, rsi_value, tp_value, sl_value, daysAfterToBuy
+    )
+    if results_df.empty:
+        ratio = 0.0
+    else:
+        total_trades = len(results_df)
+        tp_trades = len(results_df[results_df["trade_outcome"] == "TP"])
+        ratio = tp_trades / total_trades
+    return results_df, ratio
+
+
+def run_strategy_for_all_symbols(
+    conn,
+    rsi_value: int = 30,
+    tp_value: Decimal = Decimal("1.1"),
+    sl_value: Decimal = Decimal("0.9"),
+    daysAfterToBuy: int = 1,
+):
+    """
+    Executes the strategy for all symbols.
+    Returns a dictionary with each symbol name and its TP ratio.
+    """
+    symbol_ratios = {}
+    symbols = fetch_symbols(conn)
+    # Loop over fetched symbols
+    for symbol in symbols:
+        _, ratio = run_strategy_for_symbol(
+            conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
+        )
+        symbol_ratios[symbol.symbol_name] = ratio
+        print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")
+    return symbol_ratios
+
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
@@ -135,29 +183,20 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
 
-    symbol_ratios = {}
-    symbols = fetch_symbols(conn)
-    # Loop over fetched symbols
-    for symbol in symbols:
-        candles_data = get_candles_with_rsi(conn, symbol.symbol_id)
-        results_df = run_backtest(
-            symbol, candles_data, 30, Decimal("1.1"), Decimal("0.9"), 1
-        )
-        if results_df.empty:
-            ratio = 0.0
-        else:
-            total_trades = len(results_df)
-            tp_trades = len(results_df[results_df["trade_outcome"] == "TP"])
-            ratio = tp_trades / total_trades
-        symbol_ratios[symbol.symbol_name] = ratio
-        print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")
-
-    # Compare results across symbols
-    best_symbol = max(symbol_ratios, key=symbol_ratios.get)
+    # Option 1: Execute for all symbols
+    symbol_ratios = run_strategy_for_all_symbols(conn)
     print("Summary of TP Ratios:")
     for name, ratio in symbol_ratios.items():
         print(f"{name}: {ratio:.2f}")
 
+    best_symbol = max(symbol_ratios, key=symbol_ratios.get)
     print(
         f"\nBest performing symbol: {best_symbol} with a TP ratio of {symbol_ratios[best_symbol]:.2f}"
     )
+
+    # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
+    # symbols = fetch_symbols(conn)
+    # if symbols:
+    #     symbol = symbols[0]  # or choose any symbol
+    #     _, ratio = run_strategy_for_symbol(conn, symbol)
+    #     print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}")
