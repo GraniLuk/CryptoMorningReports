@@ -71,6 +71,11 @@ def run_backtest(
                     break
 
             if outcome:
+                # Calculate profit for this trade based on a 1000$ investment.
+                if outcome == "TP":
+                    profit = 1000 * (tp_value - 1)
+                elif outcome == "SL":
+                    profit = 1000 * (sl_value - 1)  # will be negative if sl_value < 1
                 trades.append(
                     {
                         "symbolId": symbol_id,
@@ -80,6 +85,7 @@ def run_backtest(
                         "close_price": close_price,
                         "trade_outcome": outcome,
                         "days": days_taken,
+                        "profit": profit,
                     }
                 )
 
@@ -88,6 +94,7 @@ def run_backtest(
     # Analyze results
     results_df = pd.DataFrame(trades)
     if not results_df.empty:
+        total_profit = results_df["profit"].sum()
         summary = results_df.groupby("trade_outcome").agg(
             count=("trade_outcome", "size"), avg_days=("days", "mean")
         )
@@ -114,6 +121,7 @@ def run_backtest(
             if "SL" in summary.index
             else ""
         )
+        print(f"Total profit for {symbol_name}: ${total_profit:.2f}")
     else:
         print(
             f"\nNo trades were executed for {symbol_name} during the backtest period."
