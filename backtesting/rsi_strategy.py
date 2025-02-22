@@ -99,6 +99,9 @@ def run_backtest(
     # Analyze results
     results_df = pd.DataFrame(trades)
     if not results_df.empty:
+        # Add symbol name column to results
+        results_df["symbol_name"] = symbol_name
+
         total_profit = results_df["profit"].sum()
         summary = results_df.groupby("trade_outcome").agg(
             count=("trade_outcome", "size"), avg_days=("days", "mean")
@@ -132,12 +135,52 @@ def run_backtest(
             f"\nNo trades were executed for {symbol_name} during the backtest period."
         )
 
-    # Save trades results to Excel for further analysis
-    excel_filename = f"trades_results_{symbol_name}.xlsx"
-    results_df.to_excel(excel_filename, index=False)
-    print(f"\nTrades results for {symbol_name} saved to '{excel_filename}'.")
-
     return results_df
+
+
+def save_to_excel(df, prefix, symbol_name=None):
+    """Helper function to save DataFrame to Excel with consistent naming"""
+    current_date = datetime.now().strftime("%Y%m%d")
+    if symbol_name:
+        filename = f"{prefix}_{symbol_name}_{current_date}.xlsx"
+    else:
+        filename = f"{prefix}_{current_date}.xlsx"
+    df.to_excel(filename, index=False)
+    print(f"\nResults saved to '{filename}'")
+
+
+def run_strategy_for_symbol_internal(
+    conn,
+    symbol,
+    rsi_value: int = 30,
+    tp_value: Decimal = Decimal("1.1"),
+    sl_value: Decimal = Decimal("0.9"),
+    daysAfterToBuy: int = 1,
+):
+    """
+    Internal function that executes the strategy for a single symbol.
+    Returns the results DataFrame and the TP ratio.
+    """
+    # Calculate the date 4 years before today
+    five_years_ago = datetime.now() - timedelta(days=5 * 365)
+
+    # Assuming you have a valid connection and symbol_id
+    candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
+
+    # Run backtest
+    results_df = run_backtest(
+        symbol, candles_data, rsi_value, tp_value, sl_value, daysAfterToBuy
+    )
+
+    # Calculate TP ratio if there are trades
+    if not results_df.empty:
+        tp_count = len(results_df[results_df["trade_outcome"] == "TP"])
+        total_trades = len(results_df)
+        ratio = tp_count / total_trades if total_trades > 0 else 0
+    else:
+        ratio = 0
+
+    return results_df, ratio
 
 
 def run_strategy_for_symbol(
@@ -152,20 +195,13 @@ def run_strategy_for_symbol(
     Executes the strategy for a single symbol.
     Returns the results DataFrame and the TP ratio.
     """
-    # Calculate the date 4 years before today
-    five_years_ago = datetime.now() - timedelta(days=5 * 365)
-
-    # Assuming you have a valid connection and symbol_id
-    candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
-    results_df = run_backtest(
-        symbol, candles_data, rsi_value, tp_value, sl_value, daysAfterToBuy
+    results_df, ratio = run_strategy_for_symbol_internal(
+        conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
     )
-    if results_df.empty:
-        ratio = 0.0
-    else:
-        total_trades = len(results_df)
-        tp_trades = len(results_df[results_df["trade_outcome"] == "TP"])
-        ratio = tp_trades / total_trades
+
+    # if not results_df.empty:
+    #     save_to_excel(results_df, "strategy_results", symbol.symbol_name)
+
     return results_df, ratio
 
 
@@ -178,18 +214,28 @@ def run_strategy_for_all_symbols(
 ):
     """
     Executes the strategy for all symbols.
-    Returns a dictionary with each symbol name and its TP ratio.
+    Returns a dictionary with each symbol name and its TP ratio, and a combined DataFrame of all trades.
     """
     symbol_ratios = {}
+    all_trades_df = pd.DataFrame()  # Create empty DataFrame to store all results
     symbols = fetch_symbols(conn)
+
     # Loop over fetched symbols
     for symbol in symbols:
-        _, ratio = run_strategy_for_symbol(
+        results_df, ratio = run_strategy_for_symbol(
             conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
         )
         symbol_ratios[symbol.symbol_name] = ratio
         print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")
-    return symbol_ratios
+
+        # Append results to combined DataFrame
+        if not results_df.empty:
+            all_trades_df = pd.concat([all_trades_df, results_df], ignore_index=True)
+
+    if not all_trades_df.empty:
+        save_to_excel(all_trades_df, "all_symbols_strategy_results")
+
+    return symbol_ratios, all_trades_df
 
 
 def run_grid_search_for_symbol(conn, symbol):
@@ -228,6 +274,11 @@ def run_grid_search_for_symbol(conn, symbol):
                 "total_profit": total_profit,
             }
         )
+
+    grid_df = pd.DataFrame(results)
+    if not grid_df.empty:
+        save_to_excel(grid_df, "grid_search_results", symbol.symbol_name)
+
     return results
 
 
@@ -248,6 +299,11 @@ def run_grid_search_for_all_symbols(conn):
         for res in grid_results:
             res["symbol_name"] = symbol.symbol_name
         all_results.extend(grid_results)
+
+    if all_results:
+        grid_df = pd.DataFrame(all_results)
+        save_to_excel(grid_df, "all_symbols_grid_search_results")
+
     return all_results
 
 
@@ -260,7 +316,7 @@ if __name__ == "__main__":
     conn = connect_to_sql()
 
     # # Option 1: Execute for all symbols
-    # symbol_ratios = run_strategy_for_all_symbols(conn)
+    # symbol_ratios, all_trades_df = run_strategy_for_all_symbols(conn)  # Note the changed return values
     # print("Summary of TP Ratios:")
     # for name, ratio in symbol_ratios.items():
     #     print(f"{name}: {ratio:.2f}")
