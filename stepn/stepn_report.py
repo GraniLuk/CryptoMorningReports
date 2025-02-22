@@ -55,9 +55,10 @@ def fetch_stepn_report(conn) -> PrettyTable:
 
         # Convert list of ratios to DataFrame with a column name
         df_ratios = pd.DataFrame(ratios, columns=["Ratio"])
+        df_ratios["Ratio"] = df_ratios["Ratio"].astype(float)  # Ensure values are float
 
-        # Then pass this DataFrame to your RSI calculation function
-        rsi_results = calculate_rsi_using_EMA(df_ratios)
+        # Then pass the Series to your RSI calculation function
+        rsi_results = calculate_rsi_using_EMA(df_ratios["Ratio"])
         results.append(("RSI", rsi_results[-1]))
 
         # Save results to database
