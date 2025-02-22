@@ -231,6 +231,26 @@ def run_grid_search_for_symbol(conn, symbol):
     return results
 
 
+def run_grid_search_for_all_symbols(conn):
+    """
+    Execute the grid search for all symbols.
+    Returns a combined list of dictionaries containing symbol name, parameters, and total profit.
+    """
+    all_results = []
+    symbols = fetch_symbols(conn)
+    if not symbols:
+        print("No symbols found for grid search.")
+        return all_results
+
+    for symbol in symbols:
+        print(f"\nRunning grid search for symbol {symbol.symbol_name}...")
+        grid_results = run_grid_search_for_symbol(conn, symbol)
+        for res in grid_results:
+            res["symbol_name"] = symbol.symbol_name
+        all_results.extend(grid_results)
+    return all_results
+
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
@@ -258,26 +278,47 @@ if __name__ == "__main__":
     #     print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
 
     # # Option 3: Run grid search for a single symbol
-    # For grid search, choose a symbol. For example, filter by symbol name "SOL"
-    symbols = fetch_symbols(conn)
-    if symbols:
-        filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
-        symbol_to_test = filtered_symbols[0] if filtered_symbols else symbols[0]
+    # # For grid search, choose a symbol. For example, filter by symbol name "SOL"
+    # symbols = fetch_symbols(conn)
+    # if symbols:
+    #     filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
+    #     symbol_to_test = filtered_symbols[0] if filtered_symbols else symbols[0]
 
-        # Run grid search for the selected symbol
-        grid_results = run_grid_search_for_symbol(conn, symbol_to_test)
+    #     # Run grid search for the selected symbol
+    #     grid_results = run_grid_search_for_symbol(conn, symbol_to_test)
 
-        # Convert grid results into a DataFrame to ease the analysis and print the best parameter set based on total profit.
-        grid_df = pd.DataFrame(grid_results)
-        print("\nGrid Search Summary (sorted by total profit):")
+    #     # Convert grid results into a DataFrame to ease the analysis and print the best parameter set based on total profit.
+    #     grid_df = pd.DataFrame(grid_results)
+    #     print("\nGrid Search Summary (sorted by total profit):")
+    #     print(grid_df.sort_values("total_profit", ascending=False))
+
+    #     # Best performing parameter combination (if any trades took place)
+    #     best = grid_df.loc[grid_df["total_profit"].idxmax()]
+    #     print(
+    #         f"\nBest performing parameters for {symbol_to_test.symbol_name}:\n"
+    #         f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}, "
+    #         f"Total Profit: {best['total_profit']}"
+    #     )
+    # else:
+    #     print("No symbols found for grid search.")
+
+    # # Option 4: Run grid search for all symbols
+    # Run grid search for all symbols
+    combined_results = run_grid_search_for_all_symbols(conn)
+
+    if combined_results:
+        # Create a DataFrame for easier analysis
+        grid_df = pd.DataFrame(combined_results)
+        print("\nCombined Grid Search Summary (sorted by total profit):")
         print(grid_df.sort_values("total_profit", ascending=False))
 
-        # Best performing parameter combination (if any trades took place)
+        # Find the best overall strategy across all symbols
         best = grid_df.loc[grid_df["total_profit"].idxmax()]
         print(
-            f"\nBest performing parameters for {symbol_to_test.symbol_name}:\n"
-            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}, "
+            f"\nBest overall strategy:\n"
+            f"Symbol: {best['symbol_name']}\n"
+            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}\n"
             f"Total Profit: {best['total_profit']}"
         )
     else:
-        print("No symbols found for grid search.")
+        print("No grid search results found.")
