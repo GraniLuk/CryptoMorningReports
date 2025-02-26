@@ -11,7 +11,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-    models = ["sonar-pro"]  # Models to try in order
+    models = ["sonar-deep-research","sonar-pro"]  # Models to try in order
     max_retries = len(models)
     current_try = 0
 
@@ -187,7 +187,7 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-    models = ["sonar-pro"]  # Models to try in order
+    models = ["sonar-deep-research","sonar-pro"]  # Models to try in order
     max_retries = len(models)
     current_try = 0
 
