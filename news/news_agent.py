@@ -1,6 +1,9 @@
-import requests
 import logging
 import time
+
+import requests
+
+from news.rss_parser import get_news
 
 
 def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
@@ -11,7 +14,7 @@ def get_detailed_crypto_analysis(api_key, indicators_message, news_feeded):
     url = "https://api.perplexity.ai/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-    models = ["sonar-deep-research","sonar-pro"]  # Models to try in order
+    models = ["sonar-pro"]  # Models to try in order
     max_retries = len(models)
     current_try = 0
 
@@ -187,7 +190,7 @@ def highlight_articles(api_key, user_crypto_list, news_feeded):
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-    models = ["sonar-deep-research","sonar-pro"]  # Models to try in order
+    models = ["sonar-deep-research", "sonar-pro"]  # Models to try in order
     max_retries = len(models)
     current_try = 0
 
@@ -287,6 +290,7 @@ Only consider the articles provided in the input.""",
 
 if __name__ == "__main__":
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -306,12 +310,7 @@ if __name__ == "__main__":
         Symbol(symbol_id=2, symbol_name="ETH", full_name="Etherum"),
     ]
 
-    news_feeded = [
-        # Example list of news articles
-        # Replace with actual news articles
-        {"title": "Bitcoin hits new high", "url": "http://example.com/bitcoin-high"},
-        {"title": "Ethereum 2.0 launch", "url": "http://example.com/ethereum-launch"},
-    ]
+    news_feeded = get_news()
 
     highlighted_news = highlight_articles(api_key, user_crypto_list, news_feeded)
 
