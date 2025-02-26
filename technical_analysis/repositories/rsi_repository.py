@@ -1,8 +1,11 @@
 import pyodbc
+
 from infra.telegram_logging_handler import app_logger
 
 
-def save_rsi_results(conn, symbol_id: int, indicator_date, closed_price: float, rsi: float) -> None:
+def save_rsi_results(
+    conn, symbol_id: int, indicator_date, closed_price: float, rsi: float
+) -> None:
     """
     Saves RSI results to the database
 
@@ -38,4 +41,55 @@ def save_rsi_results(conn, symbol_id: int, indicator_date, closed_price: float, 
         raise
     except Exception as e:
         app_logger.error(f"Error saving RSI results: {str(e)}")
+        raise
+
+
+def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
+    """
+    Fetches candle data with RSI for a specific symbol from the CandleWithRsiView,
+    only returning records on or after the specified date.
+
+    Args:
+        conn: Database connection
+        symbol_id (int): Symbol ID to filter the data
+        from_date: The start date to filter the candles (inclusive)
+
+    Returns:
+        list: List of dictionaries containing the candle and RSI data
+    """
+    try:
+        if conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT 
+                    SymbolId,
+                    date,
+                    RSI,
+                    [Close],
+                    [Open],
+                    High,
+                    Low
+                FROM CandleWithRsiView
+                WHERE SymbolId = ? AND date >= ?
+                ORDER BY date DESC
+            """
+            cursor.execute(query, symbol_id, from_date)
+
+            # Fetch column names
+            columns = [column[0] for column in cursor.description]
+
+            # Fetch all rows and convert to list of dictionaries
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+            cursor.close()
+            app_logger.info(
+                f"Successfully fetched candle data with RSI for symbol_id {symbol_id} starting from {from_date}"
+            )
+            return results
+
+    except pyodbc.Error as e:
+        app_logger.error(f"ODBC Error while fetching candle data with RSI: {e}")
+        raise
+    except Exception as e:
+        app_logger.error(f"Error fetching candle data with RSI: {str(e)}")
         raise
