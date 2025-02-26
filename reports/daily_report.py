@@ -3,7 +3,7 @@ from datetime import datetime
 
 from infra.telegram_logging_handler import app_logger
 from launchpool.launchpool_report import check_gempool_articles
-from news.news_agent import get_detailed_crypto_analysis
+from news.news_agent import get_detailed_crypto_analysis, highlight_articles
 from news.rss_parser import get_news
 from sharedCode.telegram import send_telegram_message
 from source_repository import fetch_symbols
@@ -70,7 +70,7 @@ async def process_daily_report(
         fetched_news,
     )
     # analysis_reported_with_news = get_detailed_crypto_analysis_with_news(os.environ["PERPLEXITY_API_KEY"], aggregated_data , fetched_news)
-    # highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], symbols, fetched_news)
+    highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], symbols, fetched_news)
 
     # Send all messages
     await send_telegram_message(
@@ -139,5 +139,5 @@ async def process_daily_report(
 
     # if not analysis_reported_with_news.startswith("Failed"):
     #     await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, analysis_reported_with_news, parse_mode="HTML")
-    # if not highlight_articles_message.startswith("Failed"):
-    #     await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, highlight_articles_message, parse_mode="HTML")
+    if not highlight_articles_message.startswith("Failed"):
+        await send_telegram_message(telegram_enabled, telegram_token, telegram_chat_id, highlight_articles_message, parse_mode="HTML")
