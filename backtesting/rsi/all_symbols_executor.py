@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
@@ -5,6 +6,7 @@ import pandas as pd
 from backtesting.rsi.excel import save_to_excel
 from backtesting.rsi.strategy import run_strategy_for_symbol_internal
 from source_repository import fetch_symbols
+from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def run_strategy_for_all_symbols(
@@ -24,8 +26,13 @@ def run_strategy_for_all_symbols(
 
     # Loop over fetched symbols
     for symbol in symbols:
+        # Calculate the date 4 years before today
+        five_years_ago = datetime.now() - timedelta(days=5 * 365)
+
+        # Assuming you have a valid connection and symbol_id
+        candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
         results_df, ratio = run_strategy_for_symbol_internal(
-            conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
+            candles_data, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
         )
         symbol_ratios[symbol.symbol_name] = ratio
         print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")

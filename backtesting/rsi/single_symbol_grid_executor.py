@@ -1,4 +1,5 @@
 import itertools
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
@@ -6,6 +7,7 @@ import pandas as pd
 from backtesting.rsi.excel import save_to_excel
 from backtesting.rsi.strategy import run_strategy_for_symbol_internal
 from source_repository import fetch_symbols
+from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def run_grid_search_for_symbol(conn, symbol):
@@ -20,6 +22,12 @@ def run_grid_search_for_symbol(conn, symbol):
     sl_values = [Decimal(val) for val in ["1.05", "1.1", "1.15", "1.2"]]
     days_options = [0, 1]
 
+    # Calculate the date 4 years before today
+    five_years_ago = datetime.now() - timedelta(days=5 * 365)
+
+    # Assuming you have a valid connection and symbol_id
+    candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
+
     for rsi_value, tp_value, sl_value, daysAfterToBuy in itertools.product(
         rsi_range, tp_values, sl_values, days_options
     ):
@@ -27,7 +35,7 @@ def run_grid_search_for_symbol(conn, symbol):
             f"\nRunning strategy for {symbol.symbol_name} with parameters: RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, daysAfterToBuy = {daysAfterToBuy}"
         )
         results_df, ratio = run_strategy_for_symbol_internal(
-            conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
+            candles_data, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
         )
 
         if not results_df.empty:

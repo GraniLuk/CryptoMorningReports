@@ -1,10 +1,8 @@
-from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
 
 from source_repository import Symbol
-from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def run_backtest(
@@ -130,7 +128,7 @@ def run_backtest(
 
 
 def run_strategy_for_symbol_internal(
-    conn,
+    candles_data,
     symbol,
     rsi_value: int = 30,
     tp_value: Decimal = Decimal("1.1"),
@@ -141,11 +139,6 @@ def run_strategy_for_symbol_internal(
     Internal function that executes the strategy for a single symbol.
     Returns the results DataFrame and the TP ratio.
     """
-    # Calculate the date 4 years before today
-    five_years_ago = datetime.now() - timedelta(days=5 * 365)
-
-    # Assuming you have a valid connection and symbol_id
-    candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
 
     # Run backtest
     results_df = run_backtest(
