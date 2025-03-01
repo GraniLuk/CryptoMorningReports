@@ -26,14 +26,18 @@ def run_grid_search_for_symbol(conn, symbol):
         print(
             f"\nRunning strategy for {symbol.symbol_name} with parameters: RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, daysAfterToBuy = {daysAfterToBuy}"
         )
-        results_df, _ = run_strategy_for_symbol_internal(
+        results_df, ratio = run_strategy_for_symbol_internal(
             conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
         )
 
         if not results_df.empty:
             total_profit = results_df["profit"].sum()
+            tp_hits = len(results_df[results_df["trade_outcome"] == "TP"])
+            sl_hits = len(results_df[results_df["trade_outcome"] == "SL"])
         else:
             total_profit = 0.0
+            tp_hits = 0
+            sl_hits = 0
 
         results.append(
             {
@@ -43,6 +47,9 @@ def run_grid_search_for_symbol(conn, symbol):
                 "daysAfterToBuy": daysAfterToBuy,
                 "total_profit": total_profit,
                 "trades": len(results_df),
+                "TP_ratio": ratio,
+                "TP_hits": tp_hits,
+                "SL_hits": sl_hits,
             }
         )
 
