@@ -15,7 +15,7 @@ if __name__ == "__main__":
     if symbols:
         filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
         result_df, ratio = run_strategy_for_symbol_internal(
-            conn, filtered_symbols[0], 40, Decimal(1.1), Decimal(1.2), 0
+            conn, filtered_symbols[0], 24, Decimal(1.1), Decimal(1.05), 1
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
         if not result_df.empty:
