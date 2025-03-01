@@ -58,7 +58,7 @@ def run_backtest(
                     days_taken = (current_date - entry_date).days
                     profit = investment_value * tp_value - investment_value
                     print(
-                        f"Closed position ❤️ for {symbol_name} at date {current_date} with price {current_high} and profit of {profit:.2f}"
+                        f"Closed position ❤️ for {symbol_name} at date {current_date} with price {close_price} and profit of {profit:.2f}"
                     )
                     break
                 elif current_low <= sl_price:
@@ -67,7 +67,7 @@ def run_backtest(
                     days_taken = (current_date - entry_date).days
                     profit = -(investment_value * sl_value - investment_value)
                     print(
-                        f"Closed position 💀 for {symbol_name} at date {current_date} with price {current_low} and loss of {profit:.2f}"
+                        f"Closed position 💀 for {symbol_name} at date {current_date} with price {close_price} and loss of {profit:.2f}"
                     )
                     break
 

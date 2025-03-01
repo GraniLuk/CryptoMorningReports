@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # For grid search, choose a symbol. For example, filter by symbol name "SOL"
     symbols = fetch_symbols(conn)
     if symbols:
-        filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
+        filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "XRP"]
         symbol_to_test = filtered_symbols[0] if filtered_symbols else symbols[0]
 
         # Run grid search for the selected symbol
