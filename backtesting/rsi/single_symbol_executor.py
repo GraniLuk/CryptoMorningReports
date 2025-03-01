@@ -12,10 +12,10 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbol_to_execute = "XRP"
-    rsi = 22
+    rsi = 24
     TP = 1.2
     SL = 1.05
-    daysAfterToBuy = 1
+    daysAfterToBuy = 2
     # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
     symbols = fetch_symbols(conn)
     if symbols:
