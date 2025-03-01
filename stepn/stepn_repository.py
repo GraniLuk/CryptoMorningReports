@@ -1,4 +1,5 @@
 import pyodbc
+
 from infra.telegram_logging_handler import app_logger
 
 
@@ -11,7 +12,8 @@ def save_stepn_results(
     min_24h: float = None,
     max_24h: float = None,
     range_24h: float = None,
-    rsi: float = None
+    rsi: float = None,
+    transactions_count: int = None,
 ) -> None:
     """
     Saves STEPN results to the database
@@ -26,6 +28,7 @@ def save_stepn_results(
         max_24h (float, optional): Maximum value in the last 24 hours
         range_24h (float, optional): Range in the last 24 hours
         rsi (float, optional): RSI calculated based on EMA
+        transactions_count (int, optional): Number of transactions from previous day
     """
     try:
         if conn:
@@ -36,16 +39,27 @@ def save_stepn_results(
                     SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, 
                            CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
                            ? AS Min24Value, ? AS Max24Value, ? AS Range24,
-                           ? AS RSI
-                ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI)
+                           ? AS RSI, ? AS TransactionsCount
+                ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
                 ON target.Date = source.Date
                 WHEN NOT MATCHED THEN
-                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI)
+                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
                     VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, 
-                           source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI);
+                           source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI, source.TransactionsCount);
             """
             cursor.execute(
-                query, (gmt_price, gst_price, ratio, ema, min_24h, max_24h, range_24h, rsi)
+                query,
+                (
+                    gmt_price,
+                    gst_price,
+                    ratio,
+                    ema,
+                    min_24h,
+                    max_24h,
+                    range_24h,
+                    rsi,
+                    transactions_count,
+                ),
             )
             conn.commit()
             cursor.close()
