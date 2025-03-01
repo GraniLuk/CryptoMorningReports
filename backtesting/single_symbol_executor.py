@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     load_dotenv()
     conn = connect_to_sql()
-    symbol_to_execute = "SOL"
+    symbol_to_execute = "XRP"
     rsi = 22
     TP = 1.2
     SL = 1.05
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
     if symbols:
         filtered_symbols = [
-            symbol for symbol in symbols if symbol.symbol_name == "symbol_to_execute"
+            symbol for symbol in symbols if symbol.symbol_name == symbol_to_execute
         ]
         result_df, ratio = run_strategy_for_symbol_internal(
             conn, filtered_symbols[0], rsi, Decimal(TP), Decimal(SL), daysAfterToBuy
