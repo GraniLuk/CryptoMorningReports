@@ -10,12 +10,19 @@ if __name__ == "__main__":
 
     load_dotenv()
     conn = connect_to_sql()
+    symbol_to_execute = "SOL"
+    rsi = 22
+    TP = 1.2
+    SL = 1.05
+    daysAfterToBuy = 1
     # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
     symbols = fetch_symbols(conn)
     if symbols:
-        filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
+        filtered_symbols = [
+            symbol for symbol in symbols if symbol.symbol_name == "symbol_to_execute"
+        ]
         result_df, ratio = run_strategy_for_symbol_internal(
-            conn, filtered_symbols[0], 24, Decimal(1.1), Decimal(1.05), 1
+            conn, filtered_symbols[0], rsi, Decimal(TP), Decimal(SL), daysAfterToBuy
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
         if not result_df.empty:
