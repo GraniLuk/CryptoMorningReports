@@ -1,9 +1,12 @@
+import os
+
 import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
 from sharedCode.priceChecker import fetch_current_price
 from source_repository import SourceID, Symbol
+from stepn.bsc_activity import get_yesterday_transaction_count
 from stepn.stepn_ratio_fetch import fetch_gstgmt_ratio_range
 from stepn.stepn_repository import fetch_stepn_results_last_14_days, save_stepn_results
 from technical_analysis.rsi_report import calculate_rsi_using_EMA
@@ -44,6 +47,19 @@ def fetch_stepn_report(conn) -> PrettyTable:
     if gst_ratio_result:
         min_24h, max_24h, range_percent = fetch_gstgmt_ratio_range()
 
+    # Get transaction count
+    transactions_count = None
+    try:
+        api_key = os.environ.get("BSC_SCAN_API_KEY")
+        if api_key:
+            stepn_contract_address = "0x3019BF2a2eF8040C242C9a4c5c4BD4C81678b2A1"
+            transactions_count = get_yesterday_transaction_count(
+                stepn_contract_address, api_key
+            )
+            results.append(("24h Transactions", transactions_count))
+    except Exception as e:
+        app_logger.error(f"Error fetching transaction count: {str(e)}")
+
     if conn is not None:
         last_14_days_results = fetch_stepn_results_last_14_days(conn)
         ratios = [record[2] for record in last_14_days_results]
@@ -79,6 +95,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
                 max_24h=max_24h,
                 range_24h=range_percent,
                 rsi=rsi_results[-1],
+                transactions_count=transactions_count,
             )
         except Exception as e:
             app_logger.error(f"Error saving STEPN results to database: {str(e)}")
