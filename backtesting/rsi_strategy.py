@@ -26,9 +26,7 @@ def run_backtest(
     df = df.sort_values("date").reset_index(drop=True)
 
     # Generate trading signals
-    df["signal"] = (df["RSI"] <= rsi_value) & (
-        df["RSI"].shift(daysAfterToBuy) > rsi_value
-    )
+    df["signal"] = (df["RSI"] <= rsi_value) & (df["RSI"].shift(1) > rsi_value)
 
     trades = []
     active_trade = False
