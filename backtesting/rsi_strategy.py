@@ -51,34 +51,28 @@ def run_backtest(
                 current_high = df.loc[j, "High"]
                 current_low = df.loc[j, "Low"]
                 current_date = df.loc[j, "date"]
+                close_date = current_date
 
                 if current_high >= tp_price:
                     outcome = "TP"
-                    close_date = current_date
-                    close_price = current_high
+                    close_price = entry_price * tp_value
                     days_taken = (current_date - entry_date).days
+                    profit = investment_value * tp_value - investment_value
                     print(
-                        f"Closed position ❤️ for {symbol_name} at date {current_date} with price {current_high}"
+                        f"Closed position ❤️ for {symbol_name} at date {current_date} with price {current_high} and profit of {profit:.2f}"
                     )
                     break
                 elif current_low <= sl_price:
                     outcome = "SL"
-                    close_date = current_date
-                    close_price = current_low
+                    close_price = entry_price * sl_value
                     days_taken = (current_date - entry_date).days
+                    profit = -(investment_value * sl_value - investment_value)
                     print(
-                        f"Closed position 💀 for {symbol_name} at date {current_date} with price {current_low}"
+                        f"Closed position 💀 for {symbol_name} at date {current_date} with price {current_low} and loss of {profit:.2f}"
                     )
                     break
 
             if outcome:
-                # Calculate profit for this trade based on a 1000$ investment.
-                if outcome == "TP":
-                    profit = investment_value * (tp_value - 1)
-                elif outcome == "SL":
-                    profit = investment_value * (
-                        sl_value - 1
-                    )  # will be negative if sl_value < 1
                 trades.append(
                     {
                         "symbolId": symbol_id,
