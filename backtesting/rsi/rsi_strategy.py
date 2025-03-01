@@ -1,10 +1,9 @@
-import itertools
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
 
-from source_repository import Symbol, fetch_symbols
+from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
@@ -130,17 +129,6 @@ def run_backtest(
     return results_df
 
 
-def save_to_excel(df, prefix, symbol_name=None):
-    """Helper function to save DataFrame to Excel with consistent naming"""
-    current_date = datetime.now().strftime("%Y%m%d")
-    if symbol_name:
-        filename = f"{prefix}_{symbol_name}_{current_date}.xlsx"
-    else:
-        filename = f"{prefix}_{current_date}.xlsx"
-    df.to_excel(filename, index=False)
-    print(f"\nResults saved to '{filename}'")
-
-
 def run_strategy_for_symbol_internal(
     conn,
     symbol,
@@ -173,157 +161,3 @@ def run_strategy_for_symbol_internal(
         ratio = 0
 
     return results_df, ratio
-
-
-def run_strategy_for_symbol(
-    conn,
-    symbol,
-    rsi_value: int = 30,
-    tp_value: Decimal = Decimal("1.1"),
-    sl_value: Decimal = Decimal("0.9"),
-    daysAfterToBuy: int = 1,
-):
-    """
-    Executes the strategy for a single symbol.
-    Returns the results DataFrame and the TP ratio.
-    """
-    results_df, ratio = run_strategy_for_symbol_internal(
-        conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
-    )
-
-    # if not results_df.empty:
-    #     save_to_excel(results_df, "strategy_results", symbol.symbol_name)
-
-    return results_df, ratio
-
-
-def run_strategy_for_all_symbols(
-    conn,
-    rsi_value: int = 30,
-    tp_value: Decimal = Decimal("1.1"),
-    sl_value: Decimal = Decimal("0.9"),
-    daysAfterToBuy: int = 1,
-):
-    """
-    Executes the strategy for all symbols.
-    Returns a dictionary with each symbol name and its TP ratio, and a combined DataFrame of all trades.
-    """
-    symbol_ratios = {}
-    all_trades_df = pd.DataFrame()  # Create empty DataFrame to store all results
-    symbols = fetch_symbols(conn)
-
-    # Loop over fetched symbols
-    for symbol in symbols:
-        results_df, ratio = run_strategy_for_symbol(
-            conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
-        )
-        symbol_ratios[symbol.symbol_name] = ratio
-        print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")
-
-        # Append results to combined DataFrame
-        if not results_df.empty:
-            all_trades_df = pd.concat([all_trades_df, results_df], ignore_index=True)
-
-    if not all_trades_df.empty:
-        save_to_excel(all_trades_df, "all_symbols_strategy_results")
-
-    return symbol_ratios, all_trades_df
-
-
-def run_grid_search_for_symbol(conn, symbol):
-    """
-    Execute the strategy for a single symbol over a range of parameter combinations.
-    Returns a list of dictionaries containing the parameters and the corresponding total profit.
-    """
-    results = []
-
-    rsi_range = range(20, 41)  # 20 to 40 inclusive
-    tp_values = [Decimal(val) for val in ["1.05", "1.1", "1.15", "1.2"]]
-    sl_values = [Decimal(val) for val in ["1.05", "1.1", "1.15", "1.2"]]
-    days_options = [0, 1]
-
-    for rsi_value, tp_value, sl_value, daysAfterToBuy in itertools.product(
-        rsi_range, tp_values, sl_values, days_options
-    ):
-        print(
-            f"\nRunning strategy for {symbol.symbol_name} with parameters: RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, daysAfterToBuy = {daysAfterToBuy}"
-        )
-        results_df, _ = run_strategy_for_symbol(
-            conn, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
-        )
-
-        if not results_df.empty:
-            total_profit = results_df["profit"].sum()
-        else:
-            total_profit = 0.0
-
-        results.append(
-            {
-                "rsi_value": rsi_value,
-                "tp_value": tp_value,
-                "sl_value": sl_value,
-                "daysAfterToBuy": daysAfterToBuy,
-                "total_profit": total_profit,
-                "total_trades": len(results_df),
-            }
-        )
-
-    grid_df = pd.DataFrame(results)
-    if not grid_df.empty:
-        save_to_excel(grid_df, "grid_search_results", symbol.symbol_name)
-
-    return results
-
-
-def run_grid_search_for_all_symbols(conn):
-    """
-    Execute the grid search for all symbols.
-    Returns a combined list of dictionaries containing symbol name, parameters, and total profit.
-    """
-    all_results = []
-    symbols = fetch_symbols(conn)
-    if not symbols:
-        print("No symbols found for grid search.")
-        return all_results
-
-    for symbol in symbols:
-        print(f"\nRunning grid search for symbol {symbol.symbol_name}...")
-        grid_results = run_grid_search_for_symbol(conn, symbol)
-        for res in grid_results:
-            res["symbol_name"] = symbol.symbol_name
-        all_results.extend(grid_results)
-
-    if all_results:
-        grid_df = pd.DataFrame(all_results)
-        save_to_excel(grid_df, "all_symbols_grid_search_results")
-
-    return all_results
-
-
-if __name__ == "__main__":
-    from dotenv import load_dotenv
-
-    from infra.sql_connection import connect_to_sql
-
-    load_dotenv()
-    conn = connect_to_sql()
-
-    # Run grid search for all symbols
-    combined_results = run_grid_search_for_all_symbols(conn)
-
-    if combined_results:
-        # Create a DataFrame for easier analysis
-        grid_df = pd.DataFrame(combined_results)
-        print("\nCombined Grid Search Summary (sorted by total profit):")
-        print(grid_df.sort_values("total_profit", ascending=False))
-
-        # Find the best overall strategy across all symbols
-        best = grid_df.loc[grid_df["total_profit"].idxmax()]
-        print(
-            f"\nBest overall strategy:\n"
-            f"Symbol: {best['symbol_name']}\n"
-            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}\n"
-            f"Total Profit: {best['total_profit']}"
-        )
-    else:
-        print("No grid search results found.")

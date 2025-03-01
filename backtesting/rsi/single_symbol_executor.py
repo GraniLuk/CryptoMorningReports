@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from backtesting.rsi_strategy import run_strategy_for_symbol_internal
+from backtesting.rsi.excel import save_to_excel
+from backtesting.rsi.rsi_strategy import run_strategy_for_symbol_internal
 from source_repository import fetch_symbols
 
 if __name__ == "__main__":
@@ -29,3 +30,8 @@ if __name__ == "__main__":
             total_profit = result_df["profit"].sum()
         else:
             total_profit = 0.0
+
+        if not result_df.empty:
+            save_to_excel(
+                result_df, "strategy_results", filtered_symbols[0].symbol_name
+            )
