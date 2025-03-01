@@ -4,7 +4,7 @@ from decimal import Decimal
 import pandas as pd
 
 from backtesting.rsi.excel import save_to_excel
-from backtesting.rsi.rsi_strategy import run_strategy_for_symbol_internal
+from backtesting.rsi.strategy import run_strategy_for_symbol_internal
 from source_repository import fetch_symbols
 
 
