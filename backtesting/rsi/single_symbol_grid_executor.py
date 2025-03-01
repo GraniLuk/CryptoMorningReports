@@ -42,6 +42,7 @@ def run_grid_search_for_symbol(conn, symbol):
                 "sl_value": sl_value,
                 "daysAfterToBuy": daysAfterToBuy,
                 "total_profit": total_profit,
+                "trades": len(results_df),
             }
         )
 
