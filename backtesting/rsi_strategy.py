@@ -307,50 +307,6 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
 
-    # # Option 1: Execute for all symbols
-    # symbol_ratios, all_trades_df = run_strategy_for_all_symbols(conn)  # Note the changed return values
-    # print("Summary of TP Ratios:")
-    # for name, ratio in symbol_ratios.items():
-    #     print(f"{name}: {ratio:.2f}")
-
-    # best_symbol = max(symbol_ratios, key=symbol_ratios.get)
-    # print(
-    #     f"\nBest performing symbol: {best_symbol} with a TP ratio of {symbol_ratios[best_symbol]:.2f}"
-    # )
-
-    # # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
-    # symbols = fetch_symbols(conn)
-    # if symbols:
-    #     filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
-    #     _, ratio = run_strategy_for_symbol(conn, filtered_symbols[0])
-    #     print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
-
-    # # Option 3: Run grid search for a single symbol
-    # # For grid search, choose a symbol. For example, filter by symbol name "SOL"
-    # symbols = fetch_symbols(conn)
-    # if symbols:
-    #     filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == "SOL"]
-    #     symbol_to_test = filtered_symbols[0] if filtered_symbols else symbols[0]
-
-    #     # Run grid search for the selected symbol
-    #     grid_results = run_grid_search_for_symbol(conn, symbol_to_test)
-
-    #     # Convert grid results into a DataFrame to ease the analysis and print the best parameter set based on total profit.
-    #     grid_df = pd.DataFrame(grid_results)
-    #     print("\nGrid Search Summary (sorted by total profit):")
-    #     print(grid_df.sort_values("total_profit", ascending=False))
-
-    #     # Best performing parameter combination (if any trades took place)
-    #     best = grid_df.loc[grid_df["total_profit"].idxmax()]
-    #     print(
-    #         f"\nBest performing parameters for {symbol_to_test.symbol_name}:\n"
-    #         f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}, "
-    #         f"Total Profit: {best['total_profit']}"
-    #     )
-    # else:
-    #     print("No symbols found for grid search.")
-
-    # # Option 4: Run grid search for all symbols
     # Run grid search for all symbols
     combined_results = run_grid_search_for_all_symbols(conn)
 
