@@ -40,6 +40,7 @@ if __name__ == "__main__":
             Decimal(TP),
             Decimal(SL),
             daysAfterToBuy,
+            "SHORT",
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
         if not result_df.empty:
