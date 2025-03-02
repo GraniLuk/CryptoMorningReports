@@ -6,14 +6,18 @@ from source_repository import Symbol
 
 
 def run_backtest(
-    symbol: Symbol,  # Expecting a Symbol instance with attributes symbol_id and symbol_name
+    symbol: Symbol,
     candles_data,
     rsi_value: int,
     tp_value: Decimal,
     sl_value: Decimal,
     daysAfterToBuy: int,
+    position_type: str = "LONG",  # New parameter
 ):
-    symbol_id = symbol.symbol_id  # use only for data retrieval
+    if position_type not in ["LONG", "SHORT"]:
+        raise ValueError("position_type must be either 'LONG' or 'SHORT'")
+
+    symbol_id = symbol.symbol_id
     symbol_name = symbol.symbol_name
     investment_value = 1000
 
@@ -22,8 +26,13 @@ def run_backtest(
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
 
-    # Generate trading signals
-    df["signal"] = (df["RSI"] <= rsi_value) & (df["RSI"].shift(1) > rsi_value)
+    # Generate trading signals based on position type
+    if position_type == "LONG":
+        # Signal for long: RSI crosses below threshold
+        df["signal"] = (df["RSI"] <= rsi_value) & (df["RSI"].shift(1) > rsi_value)
+    else:
+        # Signal for short: RSI crosses above threshold
+        df["signal"] = (df["RSI"] >= rsi_value) & (df["RSI"].shift(1) < rsi_value)
 
     trades = []
     active_trade = False
@@ -34,8 +43,9 @@ def run_backtest(
             entry_date = df.loc[i + daysAfterToBuy, "date"]
             entry_price = df.loc[i + daysAfterToBuy, "Open"]
             print(
-                f"Started position for {symbol_name} on date {entry_date} with entry price {entry_price}"
+                f"Started {position_type} position for {symbol_name} on date {entry_date} with entry price {entry_price}"
             )
+
             tp_price = entry_price * tp_value
             sl_price = entry_price * sl_value
 
@@ -50,22 +60,36 @@ def run_backtest(
                 current_date = df.loc[j, "date"]
                 close_date = current_date
 
-                if current_high >= tp_price:
-                    outcome = "TP"
-                    close_price = entry_price * tp_value
+                if position_type == "LONG":
+                    if current_high >= tp_price:
+                        outcome = "TP"
+                        close_price = tp_price
+                        profit = investment_value * (tp_value - Decimal("1"))
+                    elif current_low <= sl_price:
+                        outcome = "SL"
+                        close_price = sl_price
+                        profit = -investment_value * (Decimal("1") - sl_value)
+                else:  # SHORT position
+                    if current_low <= tp_price:
+                        outcome = "TP"
+                        close_price = tp_price
+                        profit = investment_value * (
+                            Decimal("1") - (Decimal("2") - tp_value)
+                        )
+                    elif current_high >= sl_price:
+                        outcome = "SL"
+                        close_price = sl_price
+                        profit = -investment_value * (
+                            (Decimal("2") - sl_value) - Decimal("1")
+                        )
+
+                if outcome:
                     days_taken = (current_date - entry_date).days
-                    profit = investment_value * tp_value - investment_value
+                    emoji = "❤️" if outcome == "TP" else "💀"
+                    profit_str = "profit" if profit > 0 else "loss"
                     print(
-                        f"Closed position ❤️ for {symbol_name} at date {current_date} with price {close_price} and profit of {profit:.2f}"
-                    )
-                    break
-                elif current_low <= sl_price:
-                    outcome = "SL"
-                    close_price = entry_price * sl_value
-                    days_taken = (current_date - entry_date).days
-                    profit = -(investment_value * sl_value - investment_value)
-                    print(
-                        f"Closed position 💀 for {symbol_name} at date {current_date} with price {close_price} and loss of {profit:.2f}"
+                        f"Closed {position_type} position {emoji} for {symbol_name} at date {current_date} "
+                        f"with price {close_price} and {profit_str} of {abs(profit):.2f}"
                     )
                     break
 
@@ -73,6 +97,7 @@ def run_backtest(
                 trades.append(
                     {
                         "symbolId": symbol_id,
+                        "position_type": position_type,
                         "open_date": entry_date,
                         "open_price": entry_price,
                         "close_date": close_date,
@@ -134,15 +159,21 @@ def run_strategy_for_symbol_internal(
     tp_value: Decimal = Decimal("1.1"),
     sl_value: Decimal = Decimal("0.9"),
     daysAfterToBuy: int = 1,
+    position_type: str = "LONG",
 ):
     """
     Internal function that executes the strategy for a single symbol.
     Returns the results DataFrame and the TP ratio.
     """
-
     # Run backtest
     results_df = run_backtest(
-        symbol, candles_data, rsi_value, tp_value, sl_value, daysAfterToBuy
+        symbol,
+        candles_data,
+        rsi_value,
+        tp_value,
+        sl_value,
+        daysAfterToBuy,
+        position_type,
     )
 
     # Calculate TP ratio if there are trades
