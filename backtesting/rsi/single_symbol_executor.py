@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+import pandas as pd
+
 from backtesting.rsi.excel import save_to_excel
 from backtesting.rsi.strategy import run_strategy_for_symbol_internal
 from source_repository import fetch_symbols
@@ -32,7 +34,12 @@ if __name__ == "__main__":
             conn, filtered_symbols[0].symbol_id, five_years_ago
         )
         result_df, ratio = run_strategy_for_symbol_internal(
-            conn, filtered_symbols[0], rsi, Decimal(TP), Decimal(SL), daysAfterToBuy
+            candles_data,
+            filtered_symbols[0],
+            rsi,
+            Decimal(TP),
+            Decimal(SL),
+            daysAfterToBuy,
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
         if not result_df.empty:
@@ -44,3 +51,16 @@ if __name__ == "__main__":
             save_to_excel(
                 result_df, "strategy_results", filtered_symbols[0].symbol_name
             )
+
+            # Create and save visualization
+            from backtesting.rsi.visualization import create_trading_visualization
+
+            fig = create_trading_visualization(
+                candles_data=pd.DataFrame(candles_data),
+                results_df=result_df,
+                symbol_name=filtered_symbols[0].symbol_name,
+                rsi_value=rsi,
+            )
+
+            # Save the figure as HTML file
+            fig.write_html(f"strategy_results_{filtered_symbols[0].symbol_name}.html")

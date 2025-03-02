@@ -24,3 +24,4 @@ beautifulsoup4
 pytest
 pytest-cov
 cryptography==43.0.3
+plotly

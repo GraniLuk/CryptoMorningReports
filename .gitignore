@@ -50,3 +50,4 @@ __queuestorage__
 __azurite_db*__.json
 
 *.xlsx
+strategy_results_*.html
