@@ -1,4 +1,5 @@
 import pyodbc
+
 from infra.telegram_logging_handler import app_logger
 
 
@@ -11,7 +12,7 @@ def get_aggregated_data(conn):
         cursor = conn.cursor()
 
         query = """
-                SELECT TOP (1000) [SymbolName]
+                SELECT TOP (100) [SymbolName]
                     ,[RSIIndicatorDate]
                     ,[RSIClosePrice]
                     ,[RSI]
