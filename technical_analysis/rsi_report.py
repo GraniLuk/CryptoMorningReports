@@ -7,8 +7,13 @@ from prettytable import PrettyTable
 from infra.telegram_logging_handler import app_logger
 from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol
-from technical_analysis.repositories.rsi_repository import save_rsi_results
-from technical_analysis.repositories.daily_candle_repository import DailyCandleRepository
+from technical_analysis.repositories.daily_candle_repository import (
+    DailyCandleRepository,
+)
+from technical_analysis.repositories.rsi_repository import (
+    get_historical_rsi,
+    save_rsi_results,
+)
 
 
 def create_rsi_table(
@@ -49,6 +54,22 @@ def create_rsi_table(
                 latest_row = df.iloc[-1:]
                 # Get the date from the index
                 latest_date = latest_row.index[-1]
+
+                # Fetch historical RSI values
+                historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date)
+
+                # Calculate RSI changes
+                rsi_value = float(latest_row["RSI"].iloc[-1])
+                rsi_daily_change = rsi_value - historical_rsi.get(
+                    "yesterday", rsi_value
+                )
+                rsi_weekly_change = rsi_value - historical_rsi.get(
+                    "week_ago", rsi_value
+                )
+
+                latest_row["rsi_daily_change"] = rsi_daily_change
+                latest_row["rsi_weekly_change"] = rsi_weekly_change
+
                 all_values = pd.concat([all_values, latest_row])
 
                 # Save to database if connection is available
@@ -78,15 +99,32 @@ def create_rsi_table(
     # Sort by RSI descending
     all_values = all_values.sort_values("RSI", ascending=False)
 
-    # Create table
+    # Create table with new columns
     rsi_table = PrettyTable()
-    rsi_table.field_names = ["Symbol", "Current Price", "RSI"]
+    rsi_table.field_names = [
+        "Symbol",
+        "Current Price",
+        "RSI",
+        "24h Change",
+        "7d Change",
+    ]
 
     for _, row in all_values.iterrows():
         symbol = row["symbol"]
         price = float(row["close"])
         rsi = float(row["RSI"])
-        rsi_table.add_row([symbol, f"${price:,.2f}", f"{rsi:.2f}"])
+        daily_change = float(row["rsi_daily_change"])
+        weekly_change = float(row["rsi_weekly_change"])
+
+        rsi_table.add_row(
+            [
+                symbol,
+                f"${price:,.2f}",
+                f"{rsi:.2f}",
+                f"{daily_change:+.2f}",
+                f"{weekly_change:+.2f}",
+            ]
+        )
 
     return rsi_table
 
@@ -121,9 +159,11 @@ def calculate_rsi_using_EMA(series, period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
+
 def calculate_ema(series, period):
     # 'com' stands for center of mass; with com = period - 1, alpha becomes 1/period
-    return series.ewm(com=period-1, adjust=False).mean()
+    return series.ewm(com=period - 1, adjust=False).mean()
+
 
 def calculate_rsi_using_RMA(series, periods=14):
     delta = series.diff()
@@ -159,14 +199,14 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     # Create DataFrame from candles: assumes each candle has attributes 'end_date' and 'close'
     df = pd.DataFrame(
         [
-            {"Date": candle.end_date, "close": candle.close} 
+            {"Date": candle.end_date, "close": candle.close}
             for candle in all_daily_candles
         ]
     )
     df.set_index("Date", inplace=True)
     df.sort_index(inplace=True)
 
-# Calculate RSI for entire series using your EMA based method
+    # Calculate RSI for entire series using your EMA based method
     df["RSI"] = calculate_rsi_using_EMA(df["close"])
 
     # Save RSI results for each day in the current year
@@ -202,7 +242,7 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import Symbol, fetch_symbols, SourceID
+    from source_repository import SourceID, Symbol, fetch_symbols
 
     load_dotenv()
     conn = connect_to_sql()
@@ -210,5 +250,3 @@ if __name__ == "__main__":
     # Define start and end dates for January 2025
     for symbol in symbols:
         calculate_all_rsi_for_symbol(conn, symbol=symbol)
-
-

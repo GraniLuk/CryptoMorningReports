@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
@@ -92,4 +94,54 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
         raise
     except Exception as e:
         app_logger.error(f"Error fetching candle data with RSI: {str(e)}")
+        raise
+
+
+def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
+    """
+    Fetches RSI values for current date, yesterday, and week ago for a symbol
+
+    Args:
+        conn: Database connection
+        symbol_id (int): Symbol ID to fetch RSI for
+        date: The current date to compare from
+
+    Returns:
+        dict: Dictionary containing current, yesterday and week ago RSI values
+    """
+    try:
+        if conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT 
+                    IndicatorDate,
+                    RSI
+                FROM RSI
+                WHERE SymbolID = ? 
+                AND IndicatorDate IN (
+                    ?,              -- Current date
+                    DATEADD(day, -1, ?),  -- Yesterday
+                    DATEADD(day, -7, ?)   -- Week ago
+                )
+                ORDER BY IndicatorDate DESC
+            """
+            cursor.execute(query, (symbol_id, date, date, date))
+
+            results = {}
+            for row in cursor.fetchall():
+                if row[0] == date:
+                    results["current"] = row[1]
+                elif row[0] == date - timedelta(days=1):
+                    results["yesterday"] = row[1]
+                elif row[0] == date - timedelta(days=7):
+                    results["week_ago"] = row[1]
+
+            cursor.close()
+            return results
+
+    except pyodbc.Error as e:
+        app_logger.error(f"ODBC Error while fetching historical RSI: {e}")
+        raise
+    except Exception as e:
+        app_logger.error(f"Error fetching historical RSI: {str(e)}")
         raise
