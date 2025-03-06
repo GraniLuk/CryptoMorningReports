@@ -130,11 +130,11 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
             results = {}
             for row in cursor.fetchall():
                 if row[0] == date:
-                    results["current"] = row[1]
+                    results["current"] = float(row[1]) 
                 elif row[0] == date - timedelta(days=1):
-                    results["yesterday"] = row[1]
+                    results["yesterday"] = float(row[1]) 
                 elif row[0] == date - timedelta(days=7):
-                    results["week_ago"] = row[1]
+                    results["week_ago"] = float(row[1])
 
             cursor.close()
             return results
