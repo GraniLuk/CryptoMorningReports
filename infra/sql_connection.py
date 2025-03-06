@@ -89,7 +89,7 @@ def connect_to_sql(max_retries=3):
             app_logger.warning(f"Attempt {attempt + 1} failed:")
             app_logger.warning(f"Error state: {e.args[0] if e.args else 'No state'}")
             if attempt < max_retries - 1:
-                time.sleep(45**attempt)  # Exponential backoff
+                time.sleep(55**attempt)  # Exponential backoff
                 continue
             else:
                 app_logger.error(f"Error message: {str(e)}")
