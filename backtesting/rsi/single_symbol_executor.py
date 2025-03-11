@@ -16,9 +16,9 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbol_to_execute = "XRP"
-    rsi = 24
+    rsi = 38
     TP = 1.2
-    SL = 1.05
+    SL = 0.8
     daysAfterToBuy = 2
     # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
     symbols = fetch_symbols(conn)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
             Decimal(TP),
             Decimal(SL),
             daysAfterToBuy,
-            "SHORT",
+            "LONG",
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
         if not result_df.empty:
