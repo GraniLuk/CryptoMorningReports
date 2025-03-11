@@ -28,11 +28,11 @@ def run_backtest(
 
     # Generate trading signals based on position type
     if position_type == "LONG":
-        # Signal for long: RSI crosses below threshold
-        df["signal"] = (df["RSI"] <= rsi_value) & (df["RSI"].shift(1) > rsi_value)
-    else:
-        # Signal for short: RSI crosses above threshold
+        # Signal for long: RSI crosses above threshold
         df["signal"] = (df["RSI"] >= rsi_value) & (df["RSI"].shift(1) < rsi_value)
+    else:
+        # Signal for short: RSI crosses below threshold
+        df["signal"] = (df["RSI"] <= rsi_value) & (df["RSI"].shift(1) > rsi_value)
 
     trades = []
     active_trade = False
