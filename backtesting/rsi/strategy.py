@@ -91,6 +91,7 @@ def run_backtest(
                         f"Closed {position_type} position {emoji} for {symbol_name} at date {current_date} "
                         f"with price {close_price} and {profit_str} of {abs(profit):.2f}"
                     )
+                    active_trade = False  # Reset flag when trade is closed
                     break
 
             if outcome:
@@ -107,8 +108,6 @@ def run_backtest(
                         "profit": profit,
                     }
                 )
-
-            active_trade = False
 
     # Analyze results
     results_df = pd.DataFrame(trades)
