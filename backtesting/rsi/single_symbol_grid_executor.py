@@ -19,8 +19,8 @@ def run_grid_search_for_symbol(conn, symbol):
 
     rsi_range = range(20, 41)  # 20 to 40 inclusive
     tp_values = [Decimal(val) for val in ["1.05", "1.1", "1.15", "1.2"]]
-    sl_values = [Decimal(val) for val in ["1.05", "1.1", "1.15", "1.2"]]
-    days_options = [0, 1]
+    sl_values = [Decimal(val) for val in ["0.8", "0.85", "0.9", "0.95"]]
+    days_options = [1, 2]
 
     # Calculate the date 4 years before today
     five_years_ago = datetime.now() - timedelta(days=5 * 365)
