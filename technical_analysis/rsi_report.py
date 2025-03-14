@@ -178,7 +178,13 @@ def calculate_rsi_using_RMA(series, periods=14):
     avg_loss = loss.ewm(alpha=alpha, adjust=False).mean()
 
     rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
+    rsi = (
+        100
+        if avg_loss.iloc[-1] == 0
+        else 0
+        if avg_gain.iloc[-1] == 0
+        else 100 - (100 / (1 + rs))
+    )
 
     return rsi
 
@@ -207,7 +213,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     df.sort_index(inplace=True)
 
     # Calculate RSI for entire series using your EMA based method
-    df["RSI"] = calculate_rsi_using_EMA(df["close"])
+    df["RSI"] = calculate_rsi_using_RMA(df["close"])
 
     # Save RSI results for each day in the current year
     for day, row in df.iterrows():
