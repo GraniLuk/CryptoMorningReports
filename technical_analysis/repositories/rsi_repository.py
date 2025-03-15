@@ -5,17 +5,13 @@ import pyodbc
 from infra.telegram_logging_handler import app_logger
 
 
-def save_rsi_results(
-    conn, symbol_id: int, indicator_date, closed_price: float, rsi: float
-) -> None:
+def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
     """
     Saves RSI results to the database
 
     Args:
         conn: Database connection
-        symbol_id (int): Symbol ID from Symbols table
-        indicator_date: The date for the RSI indicator
-        closed_price (float): Current closing price
+        daily_candle_id (int): DailyCandle ID from DailyCandles table
         rsi (float): Calculated RSI value
     """
     try:
@@ -23,20 +19,20 @@ def save_rsi_results(
             cursor = conn.cursor()
             query = """
                 MERGE INTO RSI AS target
-                USING (SELECT ? AS SymbolID, ? AS IndicatorDate, ? AS ClosedPrice, ? AS RSI) 
-                    AS source (SymbolID, IndicatorDate, ClosedPrice, RSI)
-                ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                USING (SELECT ? AS DailyCandleID, ? AS RSI) 
+                    AS source (DailyCandleID, RSI)
+                ON target.DailyCandleID = source.DailyCandleID
                 WHEN MATCHED THEN
-                    UPDATE SET ClosedPrice = source.ClosedPrice, RSI = source.RSI
+                    UPDATE SET RSI = source.RSI
                 WHEN NOT MATCHED THEN
-                    INSERT (SymbolID, IndicatorDate, ClosedPrice, RSI)
-                    VALUES (source.SymbolID, source.IndicatorDate, source.ClosedPrice, source.RSI);
+                    INSERT (DailyCandleID, RSI)
+                    VALUES (source.DailyCandleID, source.RSI);
             """
-            cursor.execute(query, (symbol_id, indicator_date, closed_price, rsi))
+            cursor.execute(query, (daily_candle_id, rsi))
             conn.commit()
             cursor.close()
             app_logger.info(
-                f"Successfully saved RSI results to database for symbol_id {symbol_id}"
+                f"Successfully saved RSI results to database for daily_candle_id {daily_candle_id}"
             )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving RSI results: {e}")
@@ -48,7 +44,7 @@ def save_rsi_results(
 
 def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
     """
-    Fetches candle data with RSI for a specific symbol from the CandleWithRsiView,
+    Fetches candle data with RSI for a specific symbol,
     only returning records on or after the specified date.
 
     Args:
@@ -64,16 +60,17 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
             cursor = conn.cursor()
             query = """
                 SELECT 
-                    SymbolId,
-                    date,
-                    RSI,
-                    [Close],
-                    [Open],
-                    High,
-                    Low
-                FROM CandleWithRsiView
-                WHERE SymbolId = ? AND date >= ?
-                ORDER BY date DESC
+                    dc.SymbolId,
+                    dc.Date as date,
+                    r.RSI,
+                    dc.[Close],
+                    dc.[Open],
+                    dc.High,
+                    dc.Low
+                FROM DailyCandles dc
+                LEFT JOIN RSI r ON dc.ID = r.DailyCandleID
+                WHERE dc.SymbolId = ? AND dc.Date >= ?
+                ORDER BY dc.Date DESC
             """
             cursor.execute(query, symbol_id, from_date)
 
@@ -114,25 +111,26 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
             cursor = conn.cursor()
             query = """
                 SELECT 
-                    IndicatorDate,
-                    RSI
-                FROM RSI
-                WHERE SymbolID = ? 
-                AND IndicatorDate IN (
+                    dc.Date as IndicatorDate,
+                    r.RSI
+                FROM DailyCandles dc
+                LEFT JOIN RSI r ON dc.ID = r.DailyCandleID
+                WHERE dc.SymbolID = ? 
+                AND dc.Date IN (
                     ?,              -- Current date
                     DATEADD(day, -1, ?),  -- Yesterday
                     DATEADD(day, -7, ?)   -- Week ago
                 )
-                ORDER BY IndicatorDate DESC
+                ORDER BY dc.Date DESC
             """
             cursor.execute(query, (symbol_id, date, date, date))
 
             results = {}
             for row in cursor.fetchall():
                 if row[0] == date:
-                    results["current"] = float(row[1]) 
+                    results["current"] = float(row[1])
                 elif row[0] == date - timedelta(days=1):
-                    results["yesterday"] = float(row[1]) 
+                    results["yesterday"] = float(row[1])
                 elif row[0] == date - timedelta(days=7):
                     results["week_ago"] = float(row[1])
 
