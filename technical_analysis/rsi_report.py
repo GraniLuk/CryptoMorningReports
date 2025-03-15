@@ -71,7 +71,6 @@ def create_rsi_table(
                 latest_row["rsi_weekly_change"] = rsi_weekly_change
 
                 all_values = pd.concat([all_values, latest_row])
-
                 # Save to database if connection is available
                 if conn:
                     try:
@@ -263,4 +262,4 @@ if __name__ == "__main__":
     # Define start and end dates for January 2025
     # for symbol in symbols:
     #     calculate_all_rsi_for_symbol(conn, symbol=symbol)
-    create_rsi_table(symbols, conn, date(2025, 1, 1))
+    create_rsi_table(symbols, conn, date(2025, 3, 14))
