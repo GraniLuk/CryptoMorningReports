@@ -189,6 +189,16 @@ def calculate_rsi_using_RMA(series, periods=14):
     return rsi
 
 
+def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
+    """Helper function to save RSI value for a specific daily candle"""
+    try:
+        save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=rsi)
+    except Exception as e:
+        app_logger.error(
+            f"Failed to save RSI results for candle {daily_candle_id}: {str(e)}"
+        )
+
+
 def calculate_all_rsi_for_symbol(conn, symbol):
     """
     Calculate RSI using calculate_rsi_using_EMA for all days in the current year
@@ -205,7 +215,11 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     # Create DataFrame from candles: assumes each candle has attributes 'end_date' and 'close'
     df = pd.DataFrame(
         [
-            {"Date": candle.end_date, "close": candle.close}
+            {
+                "Date": candle.end_date,
+                "close": candle.close,
+                "daily_candle_id": candle.id,  # Make sure Candle object includes ID
+            }
             for candle in all_daily_candles
         ]
     )
@@ -216,31 +230,25 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     df["RSI"] = calculate_rsi_using_RMA(df["close"])
 
     # Save RSI results for each day in the current year
-    for day, row in df.iterrows():
-        close_val = row["close"]
+    for _, row in df.iterrows():
         rsi_val = row["RSI"]
+        daily_candle_id = row["daily_candle_id"]
 
-        # Skip if RSI or close price is NaN
-        if pd.isna(close_val) or pd.isna(rsi_val):
-            app_logger.error(
-                f"Invalid values for {symbol.symbol_name} on {day}: close={close_val}, RSI={rsi_val}"
-            )
+        # Skip if RSI is NaN
+        if pd.isna(rsi_val):
+            app_logger.error(f"Invalid RSI value for candle_id {daily_candle_id}")
             continue
 
         try:
-            save_rsi_results(
-                conn=conn,
-                symbol_id=symbol.symbol_id,
-                indicator_date=day,
-                closed_price=float(close_val),
-                rsi=float(rsi_val),
+            save_rsi_for_candle(
+                conn=conn, daily_candle_id=daily_candle_id, rsi=float(rsi_val)
             )
             app_logger.info(
-                f"Saved RSI for {symbol.symbol_name} on {day}: Price=${close_val:.2f}, RSI={rsi_val:.2f}"
+                f"Saved RSI for {symbol.symbol_name} candle {daily_candle_id}: RSI={rsi_val:.2f}"
             )
         except Exception as e:
             app_logger.error(
-                f"Failed to save RSI results for {symbol.symbol_name} on {day}: {str(e)}"
+                f"Failed to save RSI results for candle {daily_candle_id}: {str(e)}"
             )
 
 
