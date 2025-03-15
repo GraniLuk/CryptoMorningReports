@@ -77,9 +77,7 @@ def create_rsi_table(
                     try:
                         save_rsi_results(
                             conn=conn,
-                            symbol_id=symbol.symbol_id,
-                            indicator_date=latest_date,
-                            closed_price=float(latest_row["close"].iloc[-1]),
+                            daily_candle_id=candles[-1].id,
                             rsi=float(latest_row["RSI"].iloc[-1]),
                         )
                     except Exception as e:
@@ -261,6 +259,8 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
+    symbols = [symbol for symbol in symbols if symbol.symbol_name == "BTC"]
     # Define start and end dates for January 2025
-    for symbol in symbols:
-        calculate_all_rsi_for_symbol(conn, symbol=symbol)
+    # for symbol in symbols:
+    #     calculate_all_rsi_for_symbol(conn, symbol=symbol)
+    create_rsi_table(symbols, conn, date(2025, 1, 1))
