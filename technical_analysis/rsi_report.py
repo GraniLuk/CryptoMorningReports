@@ -50,8 +50,8 @@ def create_rsi_table(
 
             if not df.empty:
                 df["RSI"] = calculate_rsi_using_EMA(df["close"])
-                # Take only latest row
-                latest_row = df.iloc[-1:]
+                # Create a proper copy of the latest row
+                latest_row = df.iloc[[-1]].copy()
                 # Get the date from the index
                 latest_date = latest_row.index[-1]
 
@@ -60,15 +60,13 @@ def create_rsi_table(
 
                 # Calculate RSI changes
                 rsi_value = float(latest_row["RSI"].iloc[-1])
-                rsi_daily_change = rsi_value - historical_rsi.get(
+                # Use .loc for assignments
+                latest_row.loc[:, "rsi_daily_change"] = rsi_value - historical_rsi.get(
                     "yesterday", rsi_value
                 )
-                rsi_weekly_change = rsi_value - historical_rsi.get(
+                latest_row.loc[:, "rsi_weekly_change"] = rsi_value - historical_rsi.get(
                     "week_ago", rsi_value
                 )
-
-                latest_row["rsi_daily_change"] = rsi_daily_change
-                latest_row["rsi_weekly_change"] = rsi_weekly_change
 
                 all_values = pd.concat([all_values, latest_row])
                 # Save to database if connection is available
