@@ -75,7 +75,9 @@ class DailyCandleRepository:
         self, symbol: Symbol, start_date: datetime, end_date: datetime
     ) -> list[Candle]:
         sql = """
-        SELECT [SymbolID]
+        SELECT
+        [Id] 
+        ,[SymbolID]
           ,[SourceID]
           ,[EndDate]
           ,[Open]
@@ -96,16 +98,17 @@ class DailyCandleRepository:
         ).fetchall()
         return [
             Candle(
+                id=row[0],
                 symbol=symbol.symbol_name,
-                source=row[1],
-                end_date=row[2],
-                open=row[3],
-                close=row[4],
-                high=row[5],
-                low=row[6],
-                last=row[7],
-                volume=row[8],
-                volume_quote=row[9],
+                source=row[2],
+                end_date=row[3],
+                open=row[4],
+                close=row[5],
+                high=row[6],
+                low=row[7],
+                last=row[8],
+                volume=row[9],
+                volume_quote=row[10],
             )
             for row in rows
         ]
