@@ -61,7 +61,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
             query = """
                 SELECT 
                     dc.SymbolId,
-                    dc.Date as date,
+                    dc.EndDate as date,
                     r.RSI,
                     dc.[Close],
                     dc.[Open],
@@ -69,8 +69,8 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date) -> list:
                     dc.Low
                 FROM DailyCandles dc
                 LEFT JOIN RSI r ON dc.ID = r.DailyCandleID
-                WHERE dc.SymbolId = ? AND dc.Date >= ?
-                ORDER BY dc.Date DESC
+                WHERE dc.SymbolId = ? AND dc.EndDate >= ?
+                ORDER BY dc.EndDate DESC
             """
             cursor.execute(query, symbol_id, from_date)
 
@@ -111,17 +111,17 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
             cursor = conn.cursor()
             query = """
                 SELECT 
-                    dc.Date as IndicatorDate,
+                    dc.EndDate as IndicatorDate,
                     r.RSI
                 FROM DailyCandles dc
                 LEFT JOIN RSI r ON dc.ID = r.DailyCandleID
                 WHERE dc.SymbolID = ? 
-                AND dc.Date IN (
+                AND dc.EndDate IN (
                     ?,              -- Current date
                     DATEADD(day, -1, ?),  -- Yesterday
                     DATEADD(day, -7, ?)   -- Week ago
                 )
-                ORDER BY dc.Date DESC
+                ORDER BY dc.EndDate DESC
             """
             cursor.execute(query, (symbol_id, date, date, date))
 
