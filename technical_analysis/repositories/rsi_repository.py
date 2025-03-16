@@ -122,7 +122,7 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
                 )
                 ORDER BY dc.EndDate DESC
             """
-            cursor.execute(query, (symbol_id, date, date, date))
+            cursor.execute(query, (symbol_id, date, date))
 
             results = {}
             for row in cursor.fetchall():
