@@ -3,12 +3,12 @@ from typing import List
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
+from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 from sharedCode.priceChecker import fetch_daily_candle
 from source_repository import Symbol
 from technical_analysis.repositories.priceRangeRepository import (
     save_price_range_results,
 )
-from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 
 
 def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:

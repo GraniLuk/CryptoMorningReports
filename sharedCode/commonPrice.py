@@ -20,7 +20,7 @@ class Candle:
         volume_quote: float,
         id: int = None,
     ):
-        self.symbol_name = symbol
+        self.symbol = symbol
         self.source = source
         self.end_date = end_date
         self.open = open
