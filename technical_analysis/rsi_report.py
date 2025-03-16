@@ -49,7 +49,7 @@ def create_rsi_table(
             df.sort_index(inplace=True)
 
             if not df.empty:
-                df["RSI"] = calculate_rsi_using_EMA(df["close"])
+                df["RSI"] = calculate_rsi_using_RMA(df["close"])
                 # Create a proper copy of the latest row
                 latest_row = df.iloc[[-1]].copy()
                 # Get the date from the index
@@ -256,8 +256,8 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    symbols = [symbol for symbol in symbols if symbol.symbol_name == "BTC"]
+    symbols = [symbol for symbol in symbols if symbol.symbol_name == "XRP"]
     # Define start and end dates for January 2025
-    # for symbol in symbols:
-    #     calculate_all_rsi_for_symbol(conn, symbol=symbol)
-    create_rsi_table(symbols, conn)
+    for symbol in symbols:
+        calculate_all_rsi_for_symbol(conn, symbol=symbol)
+    # create_rsi_table(symbols, conn)
