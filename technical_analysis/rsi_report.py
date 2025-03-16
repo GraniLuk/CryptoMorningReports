@@ -260,4 +260,4 @@ if __name__ == "__main__":
     # Define start and end dates for January 2025
     # for symbol in symbols:
     #     calculate_all_rsi_for_symbol(conn, symbol=symbol)
-    create_rsi_table(symbols, conn, date(2025, 3, 14))
+    create_rsi_table(symbols, conn)

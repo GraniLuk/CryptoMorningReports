@@ -117,7 +117,6 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
                 LEFT JOIN RSI r ON dc.ID = r.DailyCandleID
                 WHERE dc.SymbolID = ? 
                 AND dc.EndDate IN (
-                    ?,              -- Current date
                     DATEADD(day, -1, ?),  -- Yesterday
                     DATEADD(day, -7, ?)   -- Week ago
                 )
@@ -127,9 +126,7 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
 
             results = {}
             for row in cursor.fetchall():
-                if row[0] == date:
-                    results["current"] = float(row[1])
-                elif row[0] == date - timedelta(days=1):
+                if row[0] == date - timedelta(days=1):
                     results["yesterday"] = float(row[1])
                 elif row[0] == date - timedelta(days=7):
                     results["week_ago"] = float(row[1])
