@@ -95,41 +95,63 @@ def create_rsi_table_for_symbol(
 def detect_bullish_divergence(df):
     """
     Detects bullish divergence: RSI forms higher lows while price forms lower lows.
+    Looks for pattern over a 5-day window.
     """
+    window = 5
     bullish_divergence_flags = []
-    for i in range(1, len(df) - 1):
-        # Compare current and previous RSI values (higher lows)
+
+    for i in range(window, len(df)):
+        # Get the window of data to analyze
+        price_window = df["Close"].iloc[i - window : i + 1]
+        rsi_window = df["RSI"].iloc[i - window : i + 1]
+
+        # Find local minima
+        price_min_idx = price_window.idxmin()
+        rsi_min_idx = rsi_window.idxmin()
+
+        # Check if price made lower low but RSI made higher low
         if (
-            df["RSI"].iloc[i] > df["RSI"].iloc[i - 1]
-            and df["Close"].iloc[i] < df["Close"].iloc[i - 1]
-        ):
+            price_window.iloc[-1] < price_window.min()
+            and rsi_window.iloc[-1] > rsi_window.min()
+            and price_min_idx < rsi_min_idx
+        ):  # Ensure price bottom came before RSI bottom
             bullish_divergence_flags.append(True)
         else:
             bullish_divergence_flags.append(False)
 
-    return (
-        [False] + bullish_divergence_flags + [False]
-    )  # Add False for first and last rows
+    # Add False for the initial window periods where we couldn't calculate divergence
+    return [False] * window + bullish_divergence_flags
 
 
 def detect_bearish_divergence(df):
     """
     Detects bearish divergence: RSI forms lower highs while price forms higher highs.
+    Looks for pattern over a 5-day window.
     """
+    window = 5
     bearish_divergence_flags = []
-    for i in range(1, len(df) - 1):
-        # Compare current and previous RSI values (lower highs)
+
+    for i in range(window, len(df)):
+        # Get the window of data to analyze
+        price_window = df["Close"].iloc[i - window : i + 1]
+        rsi_window = df["RSI"].iloc[i - window : i + 1]
+
+        # Find local maxima
+        price_max_idx = price_window.idxmax()
+        rsi_max_idx = rsi_window.idxmax()
+
+        # Check if price made higher high but RSI made lower high
         if (
-            df["RSI"].iloc[i] < df["RSI"].iloc[i - 1]
-            and df["Close"].iloc[i] > df["Close"].iloc[i - 1]
-        ):
+            price_window.iloc[-1] > price_window.max()
+            and rsi_window.iloc[-1] < rsi_window.max()
+            and price_max_idx < rsi_max_idx
+        ):  # Ensure price peak came before RSI peak
             bearish_divergence_flags.append(True)
         else:
             bearish_divergence_flags.append(False)
 
-    return (
-        [False] + bearish_divergence_flags + [False]
-    )  # Add False for first and last rows
+    # Add False for the initial window periods where we couldn't calculate divergence
+    return [False] * window + bearish_divergence_flags
 
 
 def detect_rsi_breakout(df):
@@ -168,5 +190,7 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    symbol = [symbol for symbol in symbols if symbol.symbol_name == "BTC"][0]
-    print(create_rsi_table_for_symbol(symbol, conn))
+    # symbol = [symbol for symbol in symbols if symbol.symbol_name == "BTC"][0]
+    # print(create_rsi_table_for_symbol(symbol, conn))
+    for symbol in symbols:
+        print(create_rsi_table_for_symbol(symbol, conn))
