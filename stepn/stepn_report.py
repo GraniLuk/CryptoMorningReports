@@ -9,7 +9,7 @@ from source_repository import SourceID, Symbol
 from stepn.bsc_activity import get_yesterday_transaction_count
 from stepn.stepn_ratio_fetch import fetch_gstgmt_ratio_range
 from stepn.stepn_repository import fetch_stepn_results_last_14_days, save_stepn_results
-from technical_analysis.rsi_report import calculate_rsi_using_EMA
+from technical_analysis.rsi import calculate_rsi_using_EMA
 
 
 def fetch_stepn_report(conn) -> PrettyTable:

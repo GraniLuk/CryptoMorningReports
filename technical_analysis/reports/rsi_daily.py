@@ -11,7 +11,7 @@ from technical_analysis.repositories.rsi_repository import (
     get_historical_rsi,
     save_rsi_results,
 )
-from technical_analysis.rsi_report import calculate_rsi_using_RMA
+from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
 def create_rsi_table_for_symbol(
