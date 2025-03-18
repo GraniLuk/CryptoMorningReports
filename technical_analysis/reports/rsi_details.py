@@ -4,48 +4,36 @@ import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol
-from technical_analysis.repositories.rsi_repository import get_historical_rsi
-from technical_analysis.rsi import calculate_rsi_using_RMA
+from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def create_rsi_table_for_symbol(
     symbol: Symbol, conn, target_date: date = None
 ) -> PrettyTable:
     """
-    Creates RSI table for a given symbol using daily candles data,
+    Creates RSI table for a symbol using daily candles data for the last 30 days,
     identifies divergences, and checks for RSI trendline breakouts.
     """
     target_date = target_date or date.today()
     all_values = pd.DataFrame()
 
     try:
-        # Get 30 days of data for divergence analysis
+        # Get 30 days of data with RSI values
         start_date = target_date - timedelta(days=30)
-        candles = fetch_daily_candles(symbol, start_date, target_date, conn)
+        candles_with_rsi = get_candles_with_rsi(conn, symbol.symbol_id, start_date)
+        print(candles_with_rsi[0])
 
-        if not candles:
+        if not candles_with_rsi:
             return None
 
         # Create DataFrame from candles
-        df = pd.DataFrame(
-            [
-                {
-                    "Date": candle.end_date,
-                    "close": candle.close,
-                    "symbol": symbol.symbol_name,
-                }
-                for candle in candles
-            ]
-        )
-        df.set_index("Date", inplace=True)
+        df = pd.DataFrame(candles_with_rsi)
+        df.set_index("date", inplace=True)
         df.sort_index(inplace=True)
+        df["symbol"] = symbol.symbol_name
 
         if not df.empty:
-            # Calculate RSI
-            df["RSI"] = calculate_rsi_using_RMA(df["close"])
-
             # Identify Divergences
             df["bullish_divergence"] = detect_bullish_divergence(df)
             df["bearish_divergence"] = detect_bearish_divergence(df)
@@ -53,29 +41,17 @@ def create_rsi_table_for_symbol(
             # Check RSI Trendline Breakouts
             df["rsi_breakout"] = detect_rsi_breakout(df)
 
-            # Create a proper copy of the latest row
-            latest_row = df.iloc[[-1]].copy()
-            latest_date = latest_row.index[-1]
+            # Calculate daily and weekly RSI changes
+            df["rsi_daily_change"] = df["RSI"].diff()
+            df["rsi_weekly_change"] = df["RSI"] - df["RSI"].shift(7)
 
-            # Fetch historical RSI values
-            historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date)
-
-            # Calculate RSI changes
-            rsi_value = float(latest_row["RSI"].iloc[-1])
-            latest_row.loc[:, "rsi_daily_change"] = rsi_value - historical_rsi.get(
-                "yesterday", rsi_value
-            )
-            latest_row.loc[:, "rsi_weekly_change"] = rsi_value - historical_rsi.get(
-                "week_ago", rsi_value
-            )
-
-            all_values = pd.concat([all_values, latest_row])
+            all_values = df
 
             app_logger.info(
-                "%s: Price=%f, RSI=%f",
+                "%s: Last Price=%f, RSI=%f",
                 symbol.symbol_name,
-                latest_row["close"].iloc[-1],
-                latest_row["RSI"].iloc[-1],
+                df["Close"].iloc[-1],
+                df["RSI"].iloc[-1],
             )
     except Exception as e:
         app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
@@ -83,36 +59,33 @@ def create_rsi_table_for_symbol(
     # Create PrettyTable output
     rsi_table = PrettyTable()
     rsi_table.field_names = [
+        "Date",
         "Symbol",
-        "Current Price",
+        "Price",
         "RSI",
         "24h Change",
         "7d Change",
-        "Bullish Divergence",
-        "Bearish Divergence",
+        "Bullish Div",
+        "Bearish Div",
         "RSI Breakout",
     ]
 
-    for _, row in all_values.iterrows():
-        symbol = row["symbol"]
-        price = float(row["close"])
-        rsi = float(row["RSI"])
-        daily_change = float(row["rsi_daily_change"])
-        weekly_change = float(row["rsi_weekly_change"])
-        bullish_divergence = bool(row["bullish_divergence"])
-        bearish_divergence = bool(row["bearish_divergence"])
-        rsi_breakout = bool(row["rsi_breakout"])
-
+    for date_idx, row in all_values.iterrows():
         rsi_table.add_row(
             [
-                symbol,
-                f"${price:,.2f}",
-                f"{rsi:.2f}",
-                f"{daily_change:+.2f}",
-                f"{weekly_change:+.2f}",
-                bullish_divergence,
-                bearish_divergence,
-                rsi_breakout,
+                date_idx.strftime("%Y-%m-%d"),
+                row["symbol"],
+                f"${float(row['Close']):,.2f}",
+                f"{float(row['RSI']):.2f}",
+                f"{row['rsi_daily_change']:+.2f}"
+                if pd.notna(row["rsi_daily_change"])
+                else "N/A",
+                f"{row['rsi_weekly_change']:+.2f}"
+                if pd.notna(row["rsi_weekly_change"])
+                else "N/A",
+                bool(row["bullish_divergence"]),
+                bool(row["bearish_divergence"]),
+                bool(row["rsi_breakout"]),
             ]
         )
 
@@ -128,7 +101,7 @@ def detect_bullish_divergence(df):
         # Compare current and previous RSI values (higher lows)
         if (
             df["RSI"].iloc[i] > df["RSI"].iloc[i - 1]
-            and df["close"].iloc[i] < df["close"].iloc[i - 1]
+            and df["Close"].iloc[i] < df["Close"].iloc[i - 1]
         ):
             bullish_divergence_flags.append(True)
         else:
@@ -148,7 +121,7 @@ def detect_bearish_divergence(df):
         # Compare current and previous RSI values (lower highs)
         if (
             df["RSI"].iloc[i] < df["RSI"].iloc[i - 1]
-            and df["close"].iloc[i] > df["close"].iloc[i - 1]
+            and df["Close"].iloc[i] > df["Close"].iloc[i - 1]
         ):
             bearish_divergence_flags.append(True)
         else:
