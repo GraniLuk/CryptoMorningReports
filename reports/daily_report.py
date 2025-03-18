@@ -19,8 +19,8 @@ from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.movingAveragesReport import calculate_indicators
 from technical_analysis.price_change_report import fetch_price_change_report
 from technical_analysis.priceRangeReport import fetch_range_price
+from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
-from technical_analysis.rsi_report import create_rsi_table
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
 
