@@ -66,18 +66,40 @@ async def process_daily_report(
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
     sopr_report = f"SOPR bitcoin report: <pre>{sopr_table}</pre>"
 
-    # Process and send news reports
-    fetched_news = get_news()
-    # aggregated_data = get_aggregated_data(conn)
-    analysis_reported_without_news = get_detailed_crypto_analysis(
-        os.environ["PERPLEXITY_API_KEY"],
-        message_part1 + message_part2 + volume_report + sopr_report,
-        fetched_news,
-    )
-    # analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
-    #     os.environ["PERPLEXITY_API_KEY"], aggregated_data, fetched_news
-    # )
-    # highlight_articles_message = highlight_articles(os.environ["PERPLEXITY_API_KEY"], symbols, fetched_news)
+    # Determine which API to use (Perplexity or Gemini)
+    ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
+    ai_api_key = ""
+
+    if ai_api_type == "perplexity":
+        ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
+        logger.info("Using Perplexity API for analysis")
+    elif ai_api_type == "gemini":
+        ai_api_key = os.environ.get("GEMINI_API_KEY", "")
+        logger.info("Using Gemini API for analysis")
+    else:
+        logger.warning(f"Unknown AI API type: {ai_api_type}, defaulting to Perplexity")
+        ai_api_type = "perplexity"
+        ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
+
+    if not ai_api_key:
+        logger.error(f"No API key found for {ai_api_type}")
+        analysis_reported_without_news = (
+            f"Failed: No {ai_api_type.title()} API key found"
+        )
+    else:
+        # Process and send news reports
+        fetched_news = get_news()
+        # aggregated_data = get_aggregated_data(conn)
+        analysis_reported_without_news = get_detailed_crypto_analysis(
+            ai_api_key,
+            message_part1 + message_part2 + volume_report + sopr_report,
+            fetched_news,
+            ai_api_type,
+        )
+        # analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
+        #     ai_api_key, aggregated_data, fetched_news, ai_api_type
+        # )
+        # highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
 
     # Send all messages
     await send_telegram_message(

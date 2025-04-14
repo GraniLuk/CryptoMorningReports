@@ -25,3 +25,4 @@ pytest
 pytest-cov
 cryptography==43.0.3
 plotly
+google-generativeai
