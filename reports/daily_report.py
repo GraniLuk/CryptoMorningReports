@@ -23,6 +23,7 @@ from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
+from integrations.onedrive_uploader import upload_to_onedrive # Added import
 
 
 async def process_daily_report(
@@ -86,6 +87,7 @@ async def process_daily_report(
         analysis_reported_without_news = (
             f"Failed: No {ai_api_type.title()} API key found"
         )
+        analysis_saved_to_onedrive = False # Flag to track upload status
     else:
         # Process and send news reports
         fetched_news = get_news()
@@ -100,6 +102,17 @@ async def process_daily_report(
         #     ai_api_key, aggregated_data, fetched_news, ai_api_type
         # )
         # highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
+
+        # --- Added OneDrive Upload ---
+        if not analysis_reported_without_news.startswith("Failed"):
+            onedrive_filename = f"CryptoAnalysis_{today_date}.md"
+            analysis_saved_to_onedrive = await upload_to_onedrive(
+                filename=onedrive_filename,
+                content=analysis_reported_without_news,
+            )
+        else:
+             analysis_saved_to_onedrive = False
+        # --- End Added OneDrive Upload ---
 
     # Send all messages
     await send_telegram_message(
@@ -157,6 +170,12 @@ async def process_daily_report(
             analysis_reported_without_news,
             parse_mode="HTML",
         )
+        # Optionally notify about OneDrive save status
+        if analysis_saved_to_onedrive:
+             logger.info(f"Analysis report for {today_date} saved to OneDrive.")
+        else:
+             logger.warning(f"Failed to save analysis report for {today_date} to OneDrive.")
+
 
     await send_telegram_message(
         telegram_enabled, telegram_token, telegram_chat_id, news, parse_mode="HTML"
