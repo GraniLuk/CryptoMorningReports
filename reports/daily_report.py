@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 from infra.telegram_logging_handler import app_logger
+from integrations.onedrive_uploader import upload_to_onedrive  # Added import
 from launchpool.launchpool_report import check_gempool_articles
 from news.crypto_panic import get_panic_news
 from news.news_agent import (
@@ -23,7 +24,6 @@ from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
-from integrations.onedrive_uploader import upload_to_onedrive # Added import
 
 
 async def process_daily_report(
@@ -63,7 +63,7 @@ async def process_daily_report(
     message_part2 += f"MACD Report: <pre>{macd_table}</pre>\n\n"
 
     volume_report = f"Volume Report: <pre>{volume_table}</pre>"
-    volume_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
+    marketcap_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
     sopr_report = f"SOPR bitcoin report: <pre>{sopr_table}</pre>"
 
@@ -87,20 +87,20 @@ async def process_daily_report(
         analysis_reported_without_news = (
             f"Failed: No {ai_api_type.title()} API key found"
         )
-        analysis_saved_to_onedrive = False # Flag to track upload status
+        analysis_saved_to_onedrive = False  # Flag to track upload status
     else:
         # Process and send news reports
         fetched_news = get_news()
-        # aggregated_data = get_aggregated_data(conn)
+        aggregated_data = get_aggregated_data(conn)
         analysis_reported_without_news = get_detailed_crypto_analysis(
             ai_api_key,
             message_part1 + message_part2 + volume_report + sopr_report,
             fetched_news,
             ai_api_type,
         )
-        # analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
-        #     ai_api_key, aggregated_data, fetched_news, ai_api_type
-        # )
+        analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
+            ai_api_key, aggregated_data, fetched_news, ai_api_type
+        )
         # highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
 
         # --- Added OneDrive Upload ---
@@ -110,8 +110,15 @@ async def process_daily_report(
                 filename=onedrive_filename,
                 content=analysis_reported_without_news,
             )
+            onedrive_filename_analysis_with_news = (
+                f"CryptoAnalysisWithNews_{today_date}.md"
+            )
+            await upload_to_onedrive(
+                filename=onedrive_filename_analysis_with_news,
+                content=analysis_reported_with_news,
+            )
         else:
-             analysis_saved_to_onedrive = False
+            analysis_saved_to_onedrive = False
         # --- End Added OneDrive Upload ---
 
     # Send all messages
@@ -149,6 +156,7 @@ async def process_daily_report(
         telegram_token,
         telegram_chat_id,
         sopr_report,
+        marketcap_report,
         parse_mode="HTML",
     )
 
@@ -172,10 +180,11 @@ async def process_daily_report(
         )
         # Optionally notify about OneDrive save status
         if analysis_saved_to_onedrive:
-             logger.info(f"Analysis report for {today_date} saved to OneDrive.")
+            logger.info(f"Analysis report for {today_date} saved to OneDrive.")
         else:
-             logger.warning(f"Failed to save analysis report for {today_date} to OneDrive.")
-
+            logger.warning(
+                f"Failed to save analysis report for {today_date} to OneDrive."
+            )
 
     await send_telegram_message(
         telegram_enabled, telegram_token, telegram_chat_id, news, parse_mode="HTML"
