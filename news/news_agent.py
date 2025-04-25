@@ -11,16 +11,7 @@ from news.rss_parser import get_news
 SYSTEM_PROMPT_ANALYSIS = """\
 You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
 Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
-Format all responses using Telegram's HTML syntax:
-- Bold: <b>text</b>
-- Italic: <i>text</i>
-- Underline: <u>text</u>
-- Strikethrough: <s>text</s>
-- Links: <a href="https://example.com">text</a>
-- Code: <code>inline code</code> or <pre>multi-line code</pre>
-- No need to escape special characters like . ! ? = 
-
-Ensure responses are cleanly formatted with proper HTML tags.
+Ensure responses are cleanly formatted with proper Markdown syntax.
 """
 
 USER_PROMPT_ANALYSIS = """\
@@ -39,15 +30,7 @@ SYSTEM_PROMPT_ANALYSIS_NEWS = """\
 You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
 Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
 Focus only on the news articles provided.
-Format all responses using Telegram's HTML syntax:
-- Bold: <b>text</b>
-- Italic: <i>text</i>
-- Underline: <u>text</u>
-- Strikethrough: <s>text</s>
-- Links: <a href="https://example.com">text</a>
-- Code: <code>inline code</code> or <pre>multi-line code</pre>
-- No need to escape special characters like . ! ? = 
-Ensure responses are cleanly formatted with proper HTML tags.
+Ensure responses are cleanly formatted with proper Markdown syntax.
 """
 
 USER_PROMPT_ANALYSIS_NEWS = """\
@@ -72,16 +55,7 @@ Categorize your analysis into:
     3. Other cryptocurrencies from a provided list
     4. Other cryptocurrencies not from the list
 
-Format all responses using Telegram's HTML syntax:
-    - Bold: <b>text</b>
-    - Italic: <i>text</i>
-    - Underline: <u>text</u>
-    - Strikethrough: <s>text</s>
-    - Links: <a href="https://example.com">text</a>
-    - Code: <code>inline code</code> or <pre>multi-line code</pre>
-    - No need to escape special characters like . ! ? = 
-
-Ensure responses are cleanly formatted with proper HTML tags.
+Format all responses using Markdown syntax.
 """
 
 USER_PROMPT_HIGHLIGHT = """\
