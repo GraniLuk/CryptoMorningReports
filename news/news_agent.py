@@ -24,6 +24,7 @@ Focus on:
 Base your analysis on these indicators as well: {indicators_message}.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
+At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
 """
 
 SYSTEM_PROMPT_ANALYSIS_NEWS = """\
@@ -44,6 +45,7 @@ Only use the provided news articles for your analysis.
 Base your analysis on these indicators as well: {indicators_message}.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
+At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
 """
 
 SYSTEM_PROMPT_HIGHLIGHT = """\
