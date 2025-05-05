@@ -85,9 +85,9 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     symbols = [symbol]
     # Initialize repositories
-    daily_repo = fetch_daily_candles(conn, symbols)
-    hourly_repo = fetch_hourly_candles(conn, symbols)
-    fifteen_min_repo = fetch_fifteen_min_candles(conn, symbols)
+    daily_repo = fetch_daily_candles(symbols, conn)
+    hourly_repo = fetch_hourly_candles(symbols, conn)
+    fifteen_min_repo = fetch_fifteen_min_candles(symbols, conn)
 
     # Calculate date ranges
     now = datetime.now()
