@@ -4,15 +4,9 @@ from datetime import datetime, timedelta
 from infra.telegram_logging_handler import app_logger
 from news.news_agent import create_ai_client
 from source_repository import fetch_symbol_by_name
-from technical_analysis.repositories.daily_candle_repository import (
-    DailyCandleRepository,
-)
-from technical_analysis.repositories.fifteen_min_candle_repository import (
-    FifteenMinCandleRepository,
-)
-from technical_analysis.repositories.hourly_candle_repository import (
-    HourlyCandleRepository,
-)
+from technical_analysis.daily_candle import fetch_daily_candles
+from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
+from technical_analysis.hourly_candle import fetch_hourly_candles
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
@@ -90,9 +84,9 @@ async def generate_crypto_situation_report(conn, symbol_name):
         return error_msg
 
     # Initialize repositories
-    daily_repo = DailyCandleRepository(conn)
-    hourly_repo = HourlyCandleRepository(conn)
-    fifteen_min_repo = FifteenMinCandleRepository(conn)
+    daily_repo = fetch_daily_candles(conn)
+    hourly_repo = fetch_hourly_candles(conn)
+    fifteen_min_repo = fetch_fifteen_min_candles(conn)
 
     # Calculate date ranges
     now = datetime.now()

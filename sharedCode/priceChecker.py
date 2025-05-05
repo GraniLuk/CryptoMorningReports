@@ -1,5 +1,5 @@
-from datetime import date, timedelta
-from typing import Dict, Tuple
+from datetime import date, datetime, timedelta
+from typing import Dict, Tuple, Optional, List
 
 import pandas as pd
 
@@ -16,6 +16,12 @@ from sharedCode.kucoin import (
 from source_repository import SourceID, Symbol
 from technical_analysis.repositories.daily_candle_repository import (
     DailyCandleRepository,
+)
+from technical_analysis.repositories.hourly_candle_repository import (
+    HourlyCandleRepository,
+)
+from technical_analysis.repositories.fifteen_min_candle_repository import (
+    FifteenMinCandleRepository,
 )
 
 # Simple cache stores
@@ -44,6 +50,88 @@ def fetch_daily_candle(
 
     return candle
 
+def fetch_hourly_candle(
+    symbol: Symbol, end_time: datetime = None, conn=None
+) -> Optional[Candle]:
+    """
+    Fetch hourly candle data for a symbol at the specified end time
+    
+    Args:
+        symbol: Symbol object
+        end_time: End time for the candle period (defaults to current time)
+        conn: Optional database connection
+        
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    end_time = end_time or datetime.now()
+    # Round to the nearest hour
+    end_time = end_time.replace(minute=0, second=0, microsecond=0)
+    
+    # If connection provided, try to get from database first
+    if conn:
+        repo = HourlyCandleRepository(conn)
+        cached_candle = repo.get_candle(symbol, end_time)
+        if cached_candle:
+            return cached_candle
+    
+    # Fetch from source if not in database
+    candle = None
+    if symbol.source_id == SourceID.KUCOIN:
+        from sharedCode.kucoin import fetch_kucoin_hourly_kline
+        candle = fetch_kucoin_hourly_kline(symbol, end_time)
+    if symbol.source_id == SourceID.BINANCE:
+        from sharedCode.binance import fetch_binance_hourly_kline
+        candle = fetch_binance_hourly_kline(symbol, end_time)
+    
+    # Save to database if connection provided and candle fetched
+    if conn and candle:
+        repo = HourlyCandleRepository(conn)
+        repo.save_candle(symbol, candle, source=symbol.source_id.value)
+    
+    return candle
+
+def fetch_fifteen_min_candle(
+    symbol: Symbol, end_time: datetime = None, conn=None
+) -> Optional[Candle]:
+    """
+    Fetch 15-minute candle data for a symbol at the specified end time
+    
+    Args:
+        symbol: Symbol object
+        end_time: End time for the candle period (defaults to current time)
+        conn: Optional database connection
+        
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    end_time = end_time or datetime.now()
+    # Round to nearest 15 minutes
+    minutes = (end_time.minute // 15) * 15
+    end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
+    
+    # If connection provided, try to get from database first
+    if conn:
+        repo = FifteenMinCandleRepository(conn)
+        cached_candle = repo.get_candle(symbol, end_time)
+        if cached_candle:
+            return cached_candle
+    
+    # Fetch from source if not in database
+    candle = None
+    if symbol.source_id == SourceID.KUCOIN:
+        from sharedCode.kucoin import fetch_kucoin_fifteen_min_kline
+        candle = fetch_kucoin_fifteen_min_kline(symbol, end_time)
+    if symbol.source_id == SourceID.BINANCE:
+        from sharedCode.binance import fetch_binance_fifteen_min_kline
+        candle = fetch_binance_fifteen_min_kline(symbol, end_time)
+    
+    # Save to database if connection provided and candle fetched
+    if conn and candle:
+        repo = FifteenMinCandleRepository(conn)
+        repo.save_candle(symbol, candle, source=symbol.source_id.value)
+    
+    return candle
 
 def fetch_daily_candles(
     symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
@@ -69,7 +157,6 @@ def fetch_daily_candles(
         current_date += timedelta(days=1)
 
     return candles
-
 
 def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
     # Use provided source_id if available, otherwise use symbol's source_id
