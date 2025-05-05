@@ -91,7 +91,9 @@ async def generate_crypto_situation_report(conn, symbol_name):
     one_day_ago = now - timedelta(days=1)
 
     # Fetch candles for different timeframes
-    daily_candles = fetch_daily_candles(symbols, conn, seven_days_ago, now)
+    daily_candles = fetch_daily_candles(
+        symbols, conn, start_date=seven_days_ago.date(), end_date=now.date()
+    )
     hourly_candles = fetch_hourly_candles(
         symbols, conn, end_time=now, start_time=one_day_ago
     )
