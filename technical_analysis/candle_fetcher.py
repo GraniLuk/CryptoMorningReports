@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from infra.telegram_logging_handler import app_logger
@@ -37,7 +37,7 @@ class CandleFetcher:
         Returns:
             List of Candle objects
         """
-        end_time = end_time or datetime.now()
+        end_time = end_time or datetime.now(timezone.utc)
         self.logger.info(
             f"Fetching {self.timeframe} candles for {len(symbols)} symbols"
         )
@@ -71,7 +71,7 @@ class CandleFetcher:
             days_back: Number of days to look back (default: 30)
         """
         repo = self.repository_class(conn)
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=days_back)
 
         self.logger.info(

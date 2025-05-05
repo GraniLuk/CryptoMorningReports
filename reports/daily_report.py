@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from infra.telegram_logging_handler import app_logger
 from integrations.onedrive_uploader import upload_to_onedrive  # Added import
@@ -52,7 +52,7 @@ async def process_daily_report(
     news = get_panic_news(symbols_list)
 
     # Format messages
-    today_date = datetime.now().strftime("%Y-%m-%d")
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     message_part1 = f"Crypto Report: {today_date}\n"
     message_part1 += f"24h Range Report:\n<pre>{range_table}</pre>"
