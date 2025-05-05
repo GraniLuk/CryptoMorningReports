@@ -10,6 +10,7 @@ from infra.sql_connection import connect_to_sql
 from infra.telegram_logging_handler import app_logger
 from reports.daily_report import process_daily_report
 from reports.weekly_report import process_weekly_report
+from technical_analysis.crypto_situation import generate_crypto_situation_report
 
 load_dotenv()
 
@@ -74,3 +75,93 @@ def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             f"Function execution failed: {str(e)}", status_code=500
         )
+
+
+@app.route(route="crypto-situation")
+async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    HTTP trigger function to generate a situation report for a specific cryptocurrency.
+
+    Query parameters:
+    - symbol: Cryptocurrency symbol (e.g., "BTC", "ETH") [required]
+    - save_to_onedrive: Set to "true" to save the report to OneDrive [optional]
+    - send_to_telegram: Set to "true" to send the report to Telegram [optional]
+
+    Returns:
+    - HTTP 200 with report content if successful
+    - HTTP 400 if symbol parameter is missing
+    - HTTP 404 if symbol is not found in the database
+    - HTTP 500 if an error occurs during report generation
+    """
+    try:
+        # Get required parameters
+        symbol = req.params.get("symbol")
+
+        if not symbol:
+            return func.HttpResponse(
+                "Please provide a cryptocurrency symbol using the 'symbol' query parameter.",
+                status_code=400,
+            )
+
+        # Get optional parameters
+        save_to_onedrive = req.params.get("save_to_onedrive", "").lower() == "true"
+        send_to_telegram = req.params.get("send_to_telegram", "").lower() == "true"
+
+        # Connect to database
+        conn = connect_to_sql()
+        try:
+            # Generate the report
+            report = await generate_crypto_situation_report(conn, symbol.upper())
+
+            if not report:
+                return func.HttpResponse(
+                    f"Failed to generate report for {symbol}.", status_code=500
+                )
+
+            if report.startswith(f"Symbol {symbol} not found"):
+                return func.HttpResponse(
+                    f"Symbol '{symbol}' not found in the database.", status_code=404
+                )
+
+            if report.startswith("Failed") or report.startswith("Error"):
+                return func.HttpResponse(
+                    f"Error generating report: {report}", status_code=500
+                )
+
+            # Save to OneDrive if requested
+            if save_to_onedrive:
+                from integrations.onedrive_uploader import upload_to_onedrive
+
+                today_date = datetime.now().strftime("%Y-%m-%d")
+                onedrive_filename = f"{symbol.upper()}_Situation_{today_date}.md"
+
+                await upload_to_onedrive(filename=onedrive_filename, content=report)
+
+            # Send to Telegram if requested
+            if send_to_telegram:
+                from sharedCode.telegram import send_telegram_message
+
+                telegram_enabled = (
+                    os.environ.get("TELEGRAM_ENABLED", "False").lower() == "true"
+                )
+                telegram_token = os.environ.get("TELEGRAM_TOKEN", "")
+                telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+
+                if telegram_enabled and telegram_token and telegram_chat_id:
+                    await send_telegram_message(
+                        telegram_enabled,
+                        telegram_token,
+                        telegram_chat_id,
+                        report,
+                        parse_mode="HTML",
+                    )
+
+            # Return the report content
+            return func.HttpResponse(report, mimetype="text/markdown")
+
+        finally:
+            conn.close()
+
+    except Exception as e:
+        app_logger.error(f"Error in crypto_situation function: {str(e)}")
+        return func.HttpResponse(f"An error occurred: {str(e)}", status_code=500)
