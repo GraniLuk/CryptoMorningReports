@@ -2,10 +2,14 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from sharedCode.commonPrice import Candle
-from sharedCode.priceChecker import fetch_fifteen_min_candle  # We'll need to implement this
+from sharedCode.priceChecker import (
+    fetch_fifteen_min_candle,  # We'll need to implement this
+)
 from source_repository import Symbol
 from technical_analysis.candle_fetcher import CandleFetcher
-from technical_analysis.repositories.fifteen_min_candle_repository import FifteenMinCandleRepository
+from technical_analysis.repositories.fifteen_min_candle_repository import (
+    FifteenMinCandleRepository,
+)
 
 
 def fetch_fifteen_min_candles(
@@ -13,12 +17,12 @@ def fetch_fifteen_min_candles(
 ) -> List[Candle]:
     """
     Fetches 15-minute candles for given symbols and returns a list of Candle objects
-    
+
     Args:
         symbols: List of Symbol objects
         conn: Database connection
         end_time: End time for fetching candles (defaults to current time)
-        
+
     Returns:
         List of Candle objects
     """
@@ -30,7 +34,7 @@ def check_if_all_fifteen_min_candles(symbol, conn, days_back: int = 3):
     """
     Checks if all 15-minute candles for the symbol are available in the database for the past days,
     fetches missing ones from API
-    
+
     Args:
         symbol: Symbol object
         conn: Database connection
@@ -42,7 +46,7 @@ def check_if_all_fifteen_min_candles(symbol, conn, days_back: int = 3):
 
 class FifteenMinCandles(CandleFetcher):
     """Class for handling 15-minute candles"""
-    
+
     def __init__(self):
         super().__init__("15min", fetch_fifteen_min_candle, FifteenMinCandleRepository)
 
@@ -57,7 +61,7 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
     only_btc = [symbol for symbol in symbols if symbol.symbol_name == "BTC"]
-    
+
     # Check and fetch 15-minute candles for BTC for the last 2 days
     for symbol in only_btc:
         check_if_all_fifteen_min_candles(symbol, conn, days_back=2)
