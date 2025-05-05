@@ -76,7 +76,7 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    only_btc = [symbol for symbol in symbols if symbol.symbol_name == "BTC"]
+    only_btc = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
 
     # Check and fetch 15-minute candles for BTC for the last 2 days
     for symbol in only_btc:
