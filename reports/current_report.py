@@ -202,15 +202,6 @@ async def generate_crypto_situation_report(conn, symbol_name):
                 )
                 logger.error(error_msg)
                 return error_msg
-        else:
-            # Directly use the client interface
-            analysis = await analyze_situation_with_client(
-                ai_client,
-                symbol_name,
-                daily_formatted,
-                hourly_formatted,
-                fifteen_min_formatted,
-            )
 
         # Add header to the report
         report_title = f"# {symbol_name} Situation Report\n\n"
@@ -225,41 +216,3 @@ async def generate_crypto_situation_report(conn, symbol_name):
         error_msg = f"Error generating situation report for {symbol_name}: {str(e)}"
         logger.error(error_msg)
         return error_msg
-
-
-async def analyze_situation_with_client(
-    ai_client, symbol_name, daily_formatted, hourly_formatted, fifteen_min_formatted
-):
-    """Analyze situation using AI client interface"""
-    try:
-        # Prepare prompt for client
-        formatted_prompt = USER_PROMPT_SITUATION.format(
-            symbol_name=symbol_name,
-            daily_candles=daily_formatted,
-            hourly_candles=hourly_formatted,
-            fifteen_min_candles=fifteen_min_formatted,
-        )
-
-        # Create a custom method for situation analysis
-        class SituationAnalysisAdapter:
-            def __init__(self, client):
-                self.client = client
-
-            def analyze_situation(self, formatted_prompt):
-                # This method adapts to both client types
-                if hasattr(self.client, "get_detailed_crypto_analysis"):
-                    return self.client.get_detailed_crypto_analysis(
-                        formatted_prompt, ""
-                    )
-                else:
-                    # Generic approach if client doesn't have expected methods
-                    raise NotImplementedError(
-                        "Client doesn't support situation analysis"
-                    )
-
-        adapter = SituationAnalysisAdapter(ai_client)
-        return adapter.analyze_situation(formatted_prompt)
-
-    except Exception as e:
-        app_logger.error(f"Error in analyze_situation_with_client: {str(e)}")
-        return f"Failed to analyze situation: {str(e)}"
