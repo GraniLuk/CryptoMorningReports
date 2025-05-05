@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -63,7 +63,7 @@ def fetch_hourly_candle(
     Returns:
         Candle object if successful, None otherwise
     """
-    end_time = end_time or datetime.now()
+    end_time = end_time or datetime.now(timezone.utc)  # noqa: F821
     # Round to the nearest hour
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
 
@@ -107,7 +107,7 @@ def fetch_fifteen_min_candle(
     Returns:
         Candle object if successful, None otherwise
     """
-    end_time = end_time or datetime.now()
+    end_time = end_time or datetime.now(timezone.utc)  # noqa: F821
     # Round to nearest 15 minutes
     minutes = (end_time.minute // 15) * 15
     end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
@@ -180,7 +180,7 @@ def fetch_hourly_candles(
     Returns:
         List of Candle objects
     """
-    end_time = end_time or datetime.now()
+    end_time = end_time or datetime.now(timezone.utc)
     # Round to the nearest hour
     start_time = start_time.replace(minute=0, second=0, microsecond=0)
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
@@ -220,7 +220,7 @@ def fetch_fifteen_min_candles(
     Returns:
         List of Candle objects
     """
-    end_time = end_time or datetime.now()
+    end_time = end_time or datetime.now(timezone.utc)
 
     # Round to nearest 15 minutes
     start_minutes = (start_time.minute // 15) * 15

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import azure.functions as func
 from dotenv import load_dotenv
@@ -19,7 +19,7 @@ app = func.FunctionApp()
 
 async def run_report(report_type="daily"):
     logging.info(
-        f"{report_type.capitalize()} report function started at {datetime.now().isoformat()}"
+        f"{report_type.capitalize()} report function started at {datetime.now(timezone.utc).isoformat()}"
     )
 
     try:
@@ -132,7 +132,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if save_to_onedrive:
                 from integrations.onedrive_uploader import upload_to_onedrive
 
-                today_date = datetime.now().strftime("%Y-%m-%d")
+                today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 onedrive_filename = f"{symbol.upper()}_Situation_{today_date}.md"
 
                 await upload_to_onedrive(filename=onedrive_filename, content=report)

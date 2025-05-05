@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from sharedCode.commonPrice import Candle
@@ -31,7 +31,7 @@ def fetch_hourly_candles(
     Returns:
         List of Candle objects
     """
-    end_time = end_time or datetime.now()
+    end_time = end_time or datetime.now(timezone.utc)
     start_time = start_time or (end_time - timedelta(hours=24))
 
     all_candles = []

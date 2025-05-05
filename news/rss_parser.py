@@ -1,9 +1,11 @@
-import feedparser
-from datetime import datetime, timedelta
-from time import mktime
-import requests
 import json
+from datetime import datetime, timedelta, timezone
+from time import mktime
+
+import feedparser
+import requests
 from bs4 import BeautifulSoup
+
 from infra.telegram_logging_handler import app_logger
 
 
@@ -47,7 +49,7 @@ def fetch_rss_news(feed_url, source, class_name):
     try:
         feed = feedparser.parse(feed_url)
         latest_news = []
-        current_time = datetime.now()
+        current_time = datetime.now(timezone.utc)
 
         for entry in feed.entries:
             published_time = datetime.fromtimestamp(mktime(entry.published_parsed))

@@ -39,7 +39,7 @@ def fetch_close_prices_from_Binance(
     client = BinanceClient()
 
     try:
-        start_time = datetime.now() - timedelta(days=lookback_days)
+        start_time = datetime.now(timezone.utc) - timedelta(days=lookback_days)
 
         klines = client.get_historical_klines(
             symbol=symbol,
@@ -141,7 +141,9 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Can
         Candle object if successful, None otherwise
     """
     client = BinanceClient()
-    end_time = end_time or datetime.now().replace(minute=0, second=0, microsecond=0)
+    end_time = end_time or datetime.now(timezone.utc).replace(
+        minute=0, second=0, microsecond=0
+    )
 
     # Start time is 1 hour before end time
     start_time = end_time - timedelta(hours=1)
@@ -205,7 +207,7 @@ def fetch_binance_fifteen_min_kline(
     client = BinanceClient()
 
     if end_time is None:
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         # Round to nearest 15 minutes
         minutes = (end_time.minute // 15) * 15
         end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
