@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from infra.telegram_logging_handler import app_logger
 from news.news_agent import create_ai_client
@@ -85,8 +85,8 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     symbols = [symbol]
 
-    # Calculate date ranges
-    now = datetime.now()
+    # Calculate date ranges using UTC time
+    now = datetime.now(timezone.utc)
     seven_days_ago = now - timedelta(days=7)
     one_day_ago = now - timedelta(days=1)
 
@@ -214,7 +214,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
         # Add header to the report
         report_title = f"# {symbol_name} Situation Report\n\n"
-        report_date = f"*Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n\n"
+        report_date = f"*Generated on: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}*\n\n"
 
         full_report = report_title + report_date + analysis
         logger.info(f"Successfully generated situation report for {symbol_name}")
