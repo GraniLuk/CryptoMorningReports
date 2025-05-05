@@ -2,7 +2,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from sharedCode.commonPrice import Candle
-from sharedCode.priceChecker import fetch_hourly_candle  # We'll need to implement this
+from sharedCode.priceChecker import fetch_hourly_candle
+from sharedCode.priceChecker import (
+    fetch_hourly_candles as fetch_hourly_candles_for_symbol,
+)
 from source_repository import Symbol
 from technical_analysis.candle_fetcher import CandleFetcher
 from technical_analysis.repositories.hourly_candle_repository import (
@@ -11,7 +14,10 @@ from technical_analysis.repositories.hourly_candle_repository import (
 
 
 def fetch_hourly_candles(
-    symbols: List[Symbol], conn, end_time: Optional[datetime] = None
+    symbols: List[Symbol],
+    conn,
+    end_time: Optional[datetime] = None,
+    start_time: Optional[datetime] = None,
 ) -> List[Candle]:
     """
     Fetches hourly candles for given symbols and returns a list of Candle objects
@@ -20,12 +26,22 @@ def fetch_hourly_candles(
         symbols: List of Symbol objects
         conn: Database connection
         end_time: End time for fetching candles (defaults to current time)
+        start_time: Start time for fetching candles (defaults to 24 hours before end_time)
 
     Returns:
         List of Candle objects
     """
-    fetcher = HourlyCandles()
-    return fetcher.fetch_candles(symbols, conn, end_time)
+    end_time = end_time or datetime.now()
+    start_time = start_time or (end_time - timedelta(hours=24))
+
+    all_candles = []
+    for symbol in symbols:
+        symbol_candles = fetch_hourly_candles_for_symbol(
+            symbol, start_time, end_time, conn
+        )
+        all_candles.extend(symbol_candles)
+
+    return all_candles
 
 
 def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
