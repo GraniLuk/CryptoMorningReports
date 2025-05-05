@@ -105,7 +105,7 @@ class CandleFetcher:
             self.logger.info(
                 f"Found {len(all_candles)} {self.timeframe} candles in DB for {symbol.symbol_name}"
             )
-            
+
             # Define the expected time difference based on timeframe
             expected_diff = None
             if self.timeframe == "daily":
@@ -119,7 +119,7 @@ class CandleFetcher:
 
             # Sort candles by end_date
             all_candles.sort(key=lambda x: x.end_date)
-            
+
             # Check for missing candles at the beginning of the range
             if all_candles and all_candles[0].end_date > start_time:
                 self.logger.info(
@@ -154,7 +154,7 @@ class CandleFetcher:
                             )
                             self.fetch_function(symbol, current_time, conn)
                             current_time += expected_diff
-            
+
             # Check for missing candles at the end of the range
             if all_candles and all_candles[-1].end_date < end_time:
                 self.logger.info(
