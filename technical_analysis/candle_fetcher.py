@@ -101,32 +101,44 @@ class CandleFetcher:
                     current_time += timedelta(minutes=15)
                 else:
                     current_time += timedelta(hours=1)  # Default increment
-
         else:
             self.logger.info(
                 f"Found {len(all_candles)} {self.timeframe} candles in DB for {symbol.symbol_name}"
             )
-            # Check for gaps in the data
-            # This is a simple implementation, you might want to improve it based on your needs
-            if len(all_candles) > 1:
-                # Sort candles by end_date
-                all_candles.sort(key=lambda x: x.end_date)
+            
+            # Define the expected time difference based on timeframe
+            expected_diff = None
+            if self.timeframe == "daily":
+                expected_diff = timedelta(days=1)
+            elif self.timeframe == "hourly":
+                expected_diff = timedelta(hours=1)
+            elif self.timeframe == "15min":
+                expected_diff = timedelta(minutes=15)
+            else:
+                expected_diff = timedelta(hours=1)  # Default
 
-                # Check for missing candles
+            # Sort candles by end_date
+            all_candles.sort(key=lambda x: x.end_date)
+            
+            # Check for missing candles at the beginning of the range
+            if all_candles and all_candles[0].end_date > start_time:
+                self.logger.info(
+                    f"Found gap at beginning: {self.timeframe} candles for {symbol.symbol_name} missing from {start_time} to {all_candles[0].end_date}"
+                )
+                current_time = start_time
+                while current_time < all_candles[0].end_date:
+                    self.logger.debug(
+                        f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
+                    )
+                    self.fetch_function(symbol, current_time, conn)
+                    current_time += expected_diff
+
+            # Check for gaps in the data
+            if len(all_candles) > 1:
+                # Check for missing candles between existing ones
                 for i in range(len(all_candles) - 1):
                     current_candle = all_candles[i]
                     next_candle = all_candles[i + 1]
-
-                    # Calculate expected time difference
-                    expected_diff = None
-                    if self.timeframe == "daily":
-                        expected_diff = timedelta(days=1)
-                    elif self.timeframe == "hourly":
-                        expected_diff = timedelta(hours=1)
-                    elif self.timeframe == "15min":
-                        expected_diff = timedelta(minutes=15)
-                    else:
-                        expected_diff = timedelta(hours=1)  # Default
 
                     # Check if there's a gap
                     actual_diff = next_candle.end_date - current_candle.end_date
@@ -142,3 +154,16 @@ class CandleFetcher:
                             )
                             self.fetch_function(symbol, current_time, conn)
                             current_time += expected_diff
+            
+            # Check for missing candles at the end of the range
+            if all_candles and all_candles[-1].end_date < end_time:
+                self.logger.info(
+                    f"Found gap at end: {self.timeframe} candles for {symbol.symbol_name} missing from {all_candles[-1].end_date} to {end_time}"
+                )
+                current_time = all_candles[-1].end_date + expected_diff
+                while current_time <= end_time:
+                    self.logger.debug(
+                        f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
+                    )
+                    self.fetch_function(symbol, current_time, conn)
+                    current_time += expected_diff
