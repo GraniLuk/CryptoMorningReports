@@ -84,10 +84,6 @@ async def generate_crypto_situation_report(conn, symbol_name):
         return error_msg
 
     symbols = [symbol]
-    # Initialize repositories
-    daily_repo = fetch_daily_candles(symbols, conn)
-    hourly_repo = fetch_hourly_candles(symbols, conn)
-    fifteen_min_repo = fetch_fifteen_min_candles(symbols, conn)
 
     # Calculate date ranges
     now = datetime.now()
@@ -95,9 +91,9 @@ async def generate_crypto_situation_report(conn, symbol_name):
     one_day_ago = now - timedelta(days=1)
 
     # Fetch candles for different timeframes
-    daily_candles = daily_repo.get_candles(symbol, seven_days_ago, now)
-    hourly_candles = hourly_repo.get_candles(symbol, one_day_ago, now)
-    fifteen_min_candles = fifteen_min_repo.get_candles(symbol, one_day_ago, now)
+    daily_candles = fetch_daily_candles(symbols, conn, now, seven_days_ago)
+    hourly_candles = fetch_hourly_candles(symbols, conn, now, one_day_ago)
+    fifteen_min_candles = fetch_fifteen_min_candles(symbols, conn, now, one_day_ago)
 
     # Check if we have data
     if not daily_candles or not hourly_candles or not fifteen_min_candles:

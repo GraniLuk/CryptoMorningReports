@@ -37,8 +37,6 @@ async def process_daily_report(
 
     # Generate all reports
     fetch_daily_candles(symbols, conn)  # Fetch daily candles
-    fetch_hourly_candles(symbols, conn)  # Fetch hourly candles (last 24 hours)
-    fetch_fifteen_min_candles(symbols, conn)  # Fetch 15-minute candles (last 24 hours)
 
     rsi_table = create_rsi_table(symbols, conn)
     ma_average_table, ema_average_table = calculate_indicators(symbols, conn)
