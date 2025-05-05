@@ -164,6 +164,90 @@ def fetch_daily_candles(
     return candles
 
 
+def fetch_hourly_candles(
+    symbol: Symbol, start_time: datetime, end_time: datetime = None, conn=None
+) -> List[Candle]:
+    """
+    Fetch multiple hourly candles for a given symbol between start_time and end_time.
+    If a database connection is provided, attempts to fetch from database first.
+
+    Args:
+        symbol: Symbol object
+        start_time: Start time for fetching candles
+        end_time: End time for fetching candles (defaults to current time)
+        conn: Optional database connection
+
+    Returns:
+        List of Candle objects
+    """
+    end_time = end_time or datetime.now()
+    # Round to the nearest hour
+    start_time = start_time.replace(minute=0, second=0, microsecond=0)
+    end_time = end_time.replace(minute=0, second=0, microsecond=0)
+
+    # If connection provided, try to get from database first
+    if conn:
+        repo = HourlyCandleRepository(conn)
+        cached_candles = repo.get_candles(symbol, start_time, end_time)
+        if cached_candles:
+            return cached_candles
+
+    # If not in database or no connection, fetch each hour individually
+    candles = []
+    current_time = start_time
+    while current_time <= end_time:
+        candle = fetch_hourly_candle(symbol, current_time, conn)
+        if candle:
+            candles.append(candle)
+        current_time += timedelta(hours=1)
+
+    return candles
+
+
+def fetch_fifteen_min_candles(
+    symbol: Symbol, start_time: datetime, end_time: datetime = None, conn=None
+) -> List[Candle]:
+    """
+    Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
+    If a database connection is provided, attempts to fetch from database first.
+
+    Args:
+        symbol: Symbol object
+        start_time: Start time for fetching candles
+        end_time: End time for fetching candles (defaults to current time)
+        conn: Optional database connection
+
+    Returns:
+        List of Candle objects
+    """
+    end_time = end_time or datetime.now()
+
+    # Round to nearest 15 minutes
+    start_minutes = (start_time.minute // 15) * 15
+    start_time = start_time.replace(minute=start_minutes, second=0, microsecond=0)
+
+    end_minutes = (end_time.minute // 15) * 15
+    end_time = end_time.replace(minute=end_minutes, second=0, microsecond=0)
+
+    # If connection provided, try to get from database first
+    if conn:
+        repo = FifteenMinCandleRepository(conn)
+        cached_candles = repo.get_candles(symbol, start_time, end_time)
+        if cached_candles:
+            return cached_candles
+
+    # If not in database or no connection, fetch each 15-min period individually
+    candles = []
+    current_time = start_time
+    while current_time <= end_time:
+        candle = fetch_fifteen_min_candle(symbol, current_time, conn)
+        if candle:
+            candles.append(candle)
+        current_time += timedelta(minutes=15)
+
+    return candles
+
+
 def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
     # Use provided source_id if available, otherwise use symbol's source_id
     used_source_id = source_id if source_id is not None else symbol.source_id
