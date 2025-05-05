@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 
 from infra.sql_connection import connect_to_sql
 from infra.telegram_logging_handler import app_logger
+from reports.current_report import generate_crypto_situation_report
 from reports.daily_report import process_daily_report
 from reports.weekly_report import process_weekly_report
-from technical_analysis.crypto_situation import generate_crypto_situation_report
 
 load_dotenv()
 
