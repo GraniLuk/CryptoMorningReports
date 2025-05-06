@@ -211,6 +211,9 @@ def fetch_binance_fifteen_min_kline(
         # Round to nearest 15 minutes
         minutes = (end_time.minute // 15) * 15
         end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
+    elif end_time.tzinfo is None:
+        # Convert naive datetime to timezone-aware
+        end_time = end_time.replace(tzinfo=timezone.utc)
 
     # Start time is 15 minutes before end time
     start_time = end_time - timedelta(minutes=15)
