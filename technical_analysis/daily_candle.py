@@ -67,7 +67,7 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import SourceID, Symbol, fetch_symbols
+    from source_repository import Symbol, fetch_symbols
 
     load_dotenv()
     conn = connect_to_sql()
