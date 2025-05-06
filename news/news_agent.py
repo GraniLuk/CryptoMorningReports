@@ -22,7 +22,6 @@ Focus on:
 3. Statistical data and charts that support your analysis.
 4. Market sentiment with specific reasons.
 Base your analysis on these indicators as well: {indicators_message}.
-Today please focus on VIRTUAL.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
 At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
@@ -44,7 +43,6 @@ Focus on:
 4. Market sentiment with specific reasons.
 Only use the provided news articles for your analysis. 
 Base your analysis on these indicators as well: {indicators_message}.
-Today please focus on VIRTUAL.
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
 At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
