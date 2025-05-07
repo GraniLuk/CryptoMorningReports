@@ -170,6 +170,7 @@ def fetch_hourly_candles(
     """
     Fetch multiple hourly candles for a given symbol between start_time and end_time.
     If a database connection is provided, attempts to fetch from database first.
+    Will check if all expected candles are available and fetch missing ones.
 
     Args:
         symbol: Symbol object
@@ -185,21 +186,48 @@ def fetch_hourly_candles(
     start_time = start_time.replace(minute=0, second=0, microsecond=0)
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
 
+    # Generate all expected timestamps
+    expected_timestamps = []
+    current_time = start_time
+    while current_time <= end_time:
+        expected_timestamps.append(current_time)
+        current_time += timedelta(hours=1)
+
+    # Dictionary to store candles by timestamp
+    candle_dict = {}
+
     # If connection provided, try to get from database first
     if conn:
         repo = HourlyCandleRepository(conn)
         cached_candles = repo.get_candles(symbol, start_time, end_time)
-        if cached_candles:
-            return cached_candles
 
-    # If not in database or no connection, fetch each hour individually
-    candles = []
-    current_time = start_time
-    while current_time <= end_time:
-        candle = fetch_hourly_candle(symbol, current_time, conn)
-        if candle:
-            candles.append(candle)
-        current_time += timedelta(hours=1)
+        # Add cached candles to dictionary
+        for candle in cached_candles:
+            candle_dict[candle.timestamp] = candle
+
+    # Check for missing timestamps and fetch from source
+    for timestamp in expected_timestamps:
+        if timestamp not in candle_dict:
+            candle = None
+            if symbol.source_id == SourceID.KUCOIN:
+                from sharedCode.kucoin import fetch_kucoin_hourly_kline
+
+                candle = fetch_kucoin_hourly_kline(symbol, timestamp)
+            if symbol.source_id == SourceID.BINANCE:
+                from sharedCode.binance import fetch_binance_hourly_kline
+
+                candle = fetch_binance_hourly_kline(symbol, timestamp)
+
+            # Save to database if connection provided and candle fetched
+            if conn and candle:
+                repo = HourlyCandleRepository(conn)
+                repo.save_candle(symbol, candle, source=symbol.source_id.value)
+
+            if candle:
+                candle_dict[timestamp] = candle
+
+    # Convert dictionary to sorted list
+    candles = [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
     return candles
 
@@ -210,6 +238,7 @@ def fetch_fifteen_min_candles(
     """
     Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
     If a database connection is provided, attempts to fetch from database first.
+    Will check if all expected candles are available and fetch missing ones.
 
     Args:
         symbol: Symbol object
@@ -229,21 +258,48 @@ def fetch_fifteen_min_candles(
     end_minutes = (end_time.minute // 15) * 15
     end_time = end_time.replace(minute=end_minutes, second=0, microsecond=0)
 
+    # Generate all expected timestamps
+    expected_timestamps = []
+    current_time = start_time
+    while current_time <= end_time:
+        expected_timestamps.append(current_time)
+        current_time += timedelta(minutes=15)
+
+    # Dictionary to store candles by timestamp
+    candle_dict = {}
+
     # If connection provided, try to get from database first
     if conn:
         repo = FifteenMinCandleRepository(conn)
         cached_candles = repo.get_candles(symbol, start_time, end_time)
-        if cached_candles:
-            return cached_candles
 
-    # If not in database or no connection, fetch each 15-min period individually
-    candles = []
-    current_time = start_time
-    while current_time <= end_time:
-        candle = fetch_fifteen_min_candle(symbol, current_time, conn)
-        if candle:
-            candles.append(candle)
-        current_time += timedelta(minutes=15)
+        # Add cached candles to dictionary
+        for candle in cached_candles:
+            candle_dict[candle.timestamp] = candle
+
+    # Check for missing timestamps and fetch from source
+    for timestamp in expected_timestamps:
+        if timestamp not in candle_dict:
+            candle = None
+            if symbol.source_id == SourceID.KUCOIN:
+                from sharedCode.kucoin import fetch_kucoin_fifteen_min_kline
+
+                candle = fetch_kucoin_fifteen_min_kline(symbol, timestamp)
+            if symbol.source_id == SourceID.BINANCE:
+                from sharedCode.binance import fetch_binance_fifteen_min_kline
+
+                candle = fetch_binance_fifteen_min_kline(symbol, timestamp)
+
+            # Save to database if connection provided and candle fetched
+            if conn and candle:
+                repo = FifteenMinCandleRepository(conn)
+                repo.save_candle(symbol, candle, source=symbol.source_id.value)
+
+            if candle:
+                candle_dict[timestamp] = candle
+
+    # Convert dictionary to sorted list
+    candles = [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
     return candles
 
