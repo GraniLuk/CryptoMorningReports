@@ -135,7 +135,10 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                 today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 onedrive_filename = f"{symbol.upper()}_Situation_{today_date}.md"
 
-                await upload_to_onedrive(filename=onedrive_filename, content=report)
+                await upload_to_onedrive(
+                    filename=onedrive_filename,
+                    content=report,
+                )
 
             # Send to Telegram if requested
             if send_to_telegram:
