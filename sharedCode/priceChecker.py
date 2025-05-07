@@ -63,7 +63,10 @@ def fetch_hourly_candle(
     Returns:
         Candle object if successful, None otherwise
     """
-    end_time = end_time or datetime.now(timezone.utc)  # noqa: F821
+    end_time = end_time or datetime.now(timezone.utc)
+    # Ensure end_time is timezone-aware
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
     # Round to the nearest hour
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
 
@@ -107,7 +110,10 @@ def fetch_fifteen_min_candle(
     Returns:
         Candle object if successful, None otherwise
     """
-    end_time = end_time or datetime.now(timezone.utc)  # noqa: F821
+    end_time = end_time or datetime.now(timezone.utc)
+    # Ensure end_time is timezone-aware
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
     # Round to nearest 15 minutes
     minutes = (end_time.minute // 15) * 15
     end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
@@ -182,6 +188,12 @@ def fetch_hourly_candles(
         List of Candle objects
     """
     end_time = end_time or datetime.now(timezone.utc)
+    # Ensure both start_time and end_time are timezone-aware
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=timezone.utc)
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
+
     # Round to the nearest hour
     start_time = start_time.replace(minute=0, second=0, microsecond=0)
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
@@ -203,7 +215,12 @@ def fetch_hourly_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            candle_dict[candle.end_date] = candle
+            # Ensure candle end_date is timezone-aware for comparison
+            if candle.end_date.tzinfo is None:
+                candle_end_date = candle.end_date.replace(tzinfo=timezone.utc)
+            else:
+                candle_end_date = candle.end_date
+            candle_dict[candle_end_date] = candle
 
     # Check for missing timestamps and fetch from source
     for timestamp in expected_timestamps:
@@ -251,6 +268,12 @@ def fetch_fifteen_min_candles(
     """
     end_time = end_time or datetime.now(timezone.utc)
 
+    # Ensure both start_time and end_time are timezone-aware
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=timezone.utc)
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
+
     # Round to nearest 15 minutes
     start_minutes = (start_time.minute // 15) * 15
     start_time = start_time.replace(minute=start_minutes, second=0, microsecond=0)
@@ -275,7 +298,12 @@ def fetch_fifteen_min_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            candle_dict[candle.end_date] = candle
+            # Ensure candle end_date is timezone-aware for comparison
+            if candle.end_date.tzinfo is None:
+                candle_end_date = candle.end_date.replace(tzinfo=timezone.utc)
+            else:
+                candle_end_date = candle.end_date
+            candle_dict[candle_end_date] = candle
 
     # Check for missing timestamps and fetch from source
     for timestamp in expected_timestamps:
