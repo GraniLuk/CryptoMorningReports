@@ -203,7 +203,7 @@ def fetch_hourly_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            candle_dict[candle.timestamp] = candle
+            candle_dict[candle.end_date] = candle
 
     # Check for missing timestamps and fetch from source
     for timestamp in expected_timestamps:
@@ -275,7 +275,7 @@ def fetch_fifteen_min_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            candle_dict[candle.timestamp] = candle
+            candle_dict[candle.end_date] = candle
 
     # Check for missing timestamps and fetch from source
     for timestamp in expected_timestamps:
