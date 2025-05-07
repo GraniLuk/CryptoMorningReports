@@ -6,6 +6,11 @@ import google.generativeai as genai
 import requests
 
 from news.rss_parser import get_news
+from source_repository import fetch_symbols
+from technical_analysis.utilities.candle_formatter import (
+    format_candle_data_for_prompt,
+    get_candle_data,
+)
 
 # Define common system and user prompts as constants
 SYSTEM_PROMPT_ANALYSIS = """\
@@ -21,7 +26,9 @@ Focus on:
 2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.
 3. Statistical data and charts that support your analysis.
 4. Market sentiment with specific reasons.
-Base your analysis on these indicators as well: {indicators_message}.
+Base your analysis on these indicators: {indicators_message}
+And this recent price data (most recent entries last):
+{price_data}
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
 At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
@@ -42,7 +49,9 @@ Focus on:
 3. Statistical data and charts that support your analysis.
 4. Market sentiment with specific reasons.
 Only use the provided news articles for your analysis. 
-Base your analysis on these indicators as well: {indicators_message}.
+Base your analysis on these indicators: {indicators_message}
+And this recent price data (most recent entries last):
+{price_data}
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
 If there is no significant information to report, state that there is no noteworthy information.
 At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
@@ -82,11 +91,13 @@ Only consider the articles provided in the input.
 
 class AIClient(ABC):
     @abstractmethod
-    def get_detailed_crypto_analysis(self, indicators_message, news_feeded):
+    def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
         pass
 
     @abstractmethod
-    def get_detailed_crypto_analysis_with_news(self, indicators_message, news_feeded):
+    def get_detailed_crypto_analysis_with_news(
+        self, indicators_message, news_feeded, conn=None
+    ):
         pass
 
     @abstractmethod
@@ -103,9 +114,27 @@ class PerplexityClient(AIClient):
         }
         self.url = "https://api.perplexity.ai/chat/completions"
 
-    def get_detailed_crypto_analysis(self, indicators_message, news_feeded):
+    def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with Perplexity")
+
+        # Get candle data if database connection is provided
+        price_data = ""
+        if conn:
+            try:
+                symbols = fetch_symbols(conn)
+                # Filter for BTC and ETH
+                btc_eth = [
+                    symbol for symbol in symbols if symbol.symbol_name in ["BTC", "ETH"]
+                ]
+                candle_data = get_candle_data(btc_eth, conn)
+                price_data = format_candle_data_for_prompt(candle_data)
+                logging.info("Successfully fetched candle data for analysis")
+            except Exception as e:
+                logging.error(f"Failed to fetch candle data: {str(e)}")
+                price_data = "No price data available."
+        else:
+            price_data = "No price data available (database connection not provided)."
 
         models = ["sonar-pro"]  # Models to try in order
         max_retries = len(models)
@@ -125,7 +154,7 @@ class PerplexityClient(AIClient):
                     {
                         "role": "user",
                         "content": USER_PROMPT_ANALYSIS.format(
-                            indicators_message=indicators_message
+                            indicators_message=indicators_message, price_data=price_data
                         ),
                     },
                 ],
@@ -164,10 +193,30 @@ class PerplexityClient(AIClient):
 
         return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
 
-    def get_detailed_crypto_analysis_with_news(self, indicators_message, news_feeded):
+    def get_detailed_crypto_analysis_with_news(
+        self, indicators_message, news_feeded, conn=None
+    ):
         start_time = time.time()
-        logging.info("Starting detailed crypto analysis with Perplexity")
+        logging.info("Starting detailed crypto analysis with news using Perplexity")
         logging.debug(f"Input news articles count: {len(news_feeded)}")
+
+        # Get candle data if database connection is provided
+        price_data = ""
+        if conn:
+            try:
+                symbols = fetch_symbols(conn)
+                # Filter for BTC and ETH
+                btc_eth = [
+                    symbol for symbol in symbols if symbol.symbol_name in ["BTC", "ETH"]
+                ]
+                candle_data = get_candle_data(btc_eth, conn)
+                price_data = format_candle_data_for_prompt(candle_data)
+                logging.info("Successfully fetched candle data for analysis with news")
+            except Exception as e:
+                logging.error(f"Failed to fetch candle data: {str(e)}")
+                price_data = "No price data available."
+        else:
+            price_data = "No price data available (database connection not provided)."
 
         models = ["sonar-deep-research"]  # Models to try in order
         max_retries = len(models)
@@ -189,6 +238,7 @@ class PerplexityClient(AIClient):
                         "content": USER_PROMPT_ANALYSIS_NEWS.format(
                             news_feeded=news_feeded,
                             indicators_message=indicators_message,
+                            price_data=price_data,
                         ),
                     },
                 ],
@@ -303,12 +353,30 @@ class GeminiClient(AIClient):
         # Default to most capable model
         self.model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25")
 
-    def get_detailed_crypto_analysis(self, indicators_message, news_feeded):
+    def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with Gemini")
 
+        # Get candle data if database connection is provided
+        price_data = ""
+        if conn:
+            try:
+                symbols = fetch_symbols(conn)
+                # Filter for BTC and ETH
+                btc_eth = [
+                    symbol for symbol in symbols if symbol.symbol_name in ["BTC", "ETH"]
+                ]
+                candle_data = get_candle_data(btc_eth, conn)
+                price_data = format_candle_data_for_prompt(candle_data)
+                logging.info("Successfully fetched candle data for analysis")
+            except Exception as e:
+                logging.error(f"Failed to fetch candle data: {str(e)}")
+                price_data = "No price data available."
+        else:
+            price_data = "No price data available (database connection not provided)."
+
         try:
-            prompt = f"{SYSTEM_PROMPT_ANALYSIS}\n\n{USER_PROMPT_ANALYSIS.format(indicators_message=indicators_message)}"
+            prompt = f"{SYSTEM_PROMPT_ANALYSIS}\n\n{USER_PROMPT_ANALYSIS.format(indicators_message=indicators_message, price_data=price_data)}"
 
             response = self.model.generate_content(prompt)
 
@@ -331,13 +399,33 @@ class GeminiClient(AIClient):
             logging.error(error_msg)
             return error_msg
 
-    def get_detailed_crypto_analysis_with_news(self, indicators_message, news_feeded):
+    def get_detailed_crypto_analysis_with_news(
+        self, indicators_message, news_feeded, conn=None
+    ):
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with news using Gemini")
         logging.debug(f"Input news articles count: {len(news_feeded)}")
 
+        # Get candle data if database connection is provided
+        price_data = ""
+        if conn:
+            try:
+                symbols = fetch_symbols(conn)
+                # Filter for BTC and ETH
+                btc_eth = [
+                    symbol for symbol in symbols if symbol.symbol_name in ["BTC", "ETH"]
+                ]
+                candle_data = get_candle_data(btc_eth, conn)
+                price_data = format_candle_data_for_prompt(candle_data)
+                logging.info("Successfully fetched candle data for analysis with news")
+            except Exception as e:
+                logging.error(f"Failed to fetch candle data: {str(e)}")
+                price_data = "No price data available."
+        else:
+            price_data = "No price data available (database connection not provided)."
+
         try:
-            prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{USER_PROMPT_ANALYSIS_NEWS.format(news_feeded=news_feeded, indicators_message=indicators_message)}"
+            prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{USER_PROMPT_ANALYSIS_NEWS.format(news_feeded=news_feeded, indicators_message=indicators_message, price_data=price_data)}"
 
             response = self.model.generate_content(prompt)
 
@@ -407,18 +495,18 @@ def create_ai_client(api_type, api_key):
 
 # Legacy functions for backwards compatibility
 def get_detailed_crypto_analysis(
-    api_key, indicators_message, news_feeded, api_type="perplexity"
+    api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
 ):
     client = create_ai_client(api_type, api_key)
-    return client.get_detailed_crypto_analysis(indicators_message, news_feeded)
+    return client.get_detailed_crypto_analysis(indicators_message, news_feeded, conn)
 
 
 def get_detailed_crypto_analysis_with_news(
-    api_key, indicators_message, news_feeded, api_type="perplexity"
+    api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
 ):
     client = create_ai_client(api_type, api_key)
     return client.get_detailed_crypto_analysis_with_news(
-        indicators_message, news_feeded
+        indicators_message, news_feeded, conn
     )
 
 
