@@ -72,7 +72,7 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    only_link = [symbol for symbol in symbols if symbol.symbol_name == "LINK"]
+    only_link = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
     # Define start and end dates for January 2025
     for symbol in only_link:
         check_if_all_candles(symbol, conn)
