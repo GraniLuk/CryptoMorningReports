@@ -5,8 +5,10 @@ from infra.telegram_logging_handler import app_logger
 from news.news_agent import create_ai_client
 from source_repository import fetch_symbol_by_name
 from technical_analysis.daily_candle import fetch_daily_candles
-from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
-from technical_analysis.hourly_candle import fetch_hourly_candles
+from technical_analysis.fifteen_min_candle import (
+    fetch_fifteen_minutes_candles_for_all_symbols,
+)
+from technical_analysis.hourly_candle import fetch_hourly_candles_for_all_symbols
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
@@ -94,10 +96,10 @@ async def generate_crypto_situation_report(conn, symbol_name):
     daily_candles = fetch_daily_candles(
         symbols, conn, start_date=seven_days_ago.date(), end_date=now.date()
     )
-    hourly_candles = fetch_hourly_candles(
+    hourly_candles = fetch_hourly_candles_for_all_symbols(
         symbols, end_time=now, start_time=one_day_ago, conn=conn
     )
-    fifteen_min_candles = fetch_fifteen_min_candles(
+    fifteen_min_candles = fetch_fifteen_minutes_candles_for_all_symbols(
         symbols, end_time=now, start_time=one_day_ago, conn=conn
     )
 
