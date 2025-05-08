@@ -219,13 +219,19 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
 
 if __name__ == "__main__":
+    import asyncio
+
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
 
-    load_dotenv()
-    conn = connect_to_sql()
-    # Example usage
-    symbol_name = "Virtual"  # Replace with desired symbol
-    report = generate_crypto_situation_report(conn, symbol_name)
-    print(report)
+    async def main():
+        load_dotenv()
+        conn = connect_to_sql()
+        # Example usage
+        symbol_name = "Virtual"  # Replace with desired symbol
+        report = await generate_crypto_situation_report(conn, symbol_name)
+        print(report)
+
+    # Run the async main function
+    asyncio.run(main())
