@@ -126,17 +126,19 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
 
             results = {}
             for row in cursor.fetchall():
-                if row[0] == date - timedelta(days=1):
-                    results["yesterday"] = float(row[1])
-                elif row[0] == date - timedelta(days=7):
-                    results["week_ago"] = float(row[1])
+                # Handle case where RSI might be None
+                if row[1] is not None:
+                    if row[0] == date - timedelta(days=1):
+                        results["yesterday"] = float(row[1])
+                    elif row[0] == date - timedelta(days=7):
+                        results["week_ago"] = float(row[1])
 
             cursor.close()
             return results
 
     except pyodbc.Error as e:
-        app_logger.error(f"ODBC Error while fetching historical RSI: {e}")
+        app_logger.error(f"ODBC Error while fetching historical RSI for symbol {symbol_id}: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching historical RSI: {str(e)}")
+        app_logger.error(f"Error fetching historical RSI for symbol {symbol_id}: {str(e)}")
         raise

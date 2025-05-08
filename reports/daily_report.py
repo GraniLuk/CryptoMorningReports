@@ -159,10 +159,17 @@ async def process_daily_report(
         telegram_token,
         telegram_chat_id,
         sopr_report,
-        marketcap_report,
         parse_mode="HTML",
     )
 
+    await send_telegram_message(
+        telegram_enabled,
+        telegram_token,
+        telegram_chat_id,
+        marketcap_report,
+        parse_mode="HTML",
+    )
+    
     if launchpool_report:
         message_part3 = f"New Launchpool Report: <pre>{launchpool_report}</pre>"
         await send_telegram_message(
