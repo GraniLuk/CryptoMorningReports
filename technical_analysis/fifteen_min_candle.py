@@ -1,6 +1,9 @@
-from typing import List
+from datetime import datetime, timedelta, timezone
+from typing import List, Optional
 
 from infra.telegram_logging_handler import app_logger
+from sharedCode.commonPrice import Candle
+from sharedCode.priceChecker import fetch_fifteen_min_candles
 from source_repository import Symbol
 from technical_analysis.candle_fetcher import CandleFetcher
 from technical_analysis.repositories.fifteen_min_candle_repository import (
@@ -9,20 +12,31 @@ from technical_analysis.repositories.fifteen_min_candle_repository import (
 from technical_analysis.rsi_calculator import update_rsi_for_all_candles
 
 
-def fetch_fifteen_min_candles(symbols: List[Symbol], conn):
-    """Fetches fifteen minute candles for all symbols"""
-    fetcher = FifteenMinCandles()
-    all_candles = {}
+def fetch_candles(
+    symbols: List[Symbol],
+    conn,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+) -> List[Candle]:
+    """
+    Fetches daily candles for given symbols and returns a list of Candle objects
 
+    Args:
+        symbols: List of Symbol objects
+        conn: Database connection
+        start_date: Start date for fetching candles (defaults to 7 days before end_date)
+        end_date: End date for fetching candles (defaults to current date)
+
+    Returns:
+        List of Candle objects
+    """
+    end_date = end_date or datetime.now(timezone.utc)
+    start_date = start_date or (end_date - timedelta(days=1))
+
+    all_candles = []
     for symbol in symbols:
-        try:
-            app_logger.info(f"Fetching fifteen minute candles for {symbol.symbol_name}")
-            candles = fetcher.get_candles_for_symbol(symbol, conn)
-            all_candles[symbol.symbol_name] = candles
-        except Exception as e:
-            app_logger.error(
-                f"Error fetching fifteen minute candles for {symbol.symbol_name}: {str(e)}"
-            )
+        symbol_candles = fetch_fifteen_min_candles(symbol, start_date, end_date, conn)
+        all_candles.extend(symbol_candles)
 
     return all_candles
 
@@ -58,8 +72,9 @@ if __name__ == "__main__":
     conn = connect_to_sql()
 
     symbols = fetch_symbols(conn)
-    symbols = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
-    # Test fetching fifteen minute candles
-    fetch_fifteen_min_candles(symbols, conn)
-    # Test calculating fifteen minute RSI
-    calculate_fifteen_min_rsi(symbols, conn)
+    only_btc = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
+
+    # Test fetching hourly candles
+    fetch_fifteen_min_candles(only_btc[0], conn=conn)
+    # Test calculating hourly RSI
+    calculate_fifteen_min_rsi(only_btc, conn=conn)

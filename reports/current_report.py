@@ -216,3 +216,16 @@ async def generate_crypto_situation_report(conn, symbol_name):
         error_msg = f"Error generating situation report for {symbol_name}: {str(e)}"
         logger.error(error_msg)
         return error_msg
+
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+
+    load_dotenv()
+    conn = connect_to_sql()
+    # Example usage
+    symbol_name = "Virtual"  # Replace with desired symbol
+    report = generate_crypto_situation_report(conn, symbol_name)
+    print(report)

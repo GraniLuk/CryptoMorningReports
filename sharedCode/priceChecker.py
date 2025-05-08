@@ -230,34 +230,8 @@ def fetch_fifteen_min_candle(
     return candle
 
 
-def fetch_daily_candles(
-    symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
-) -> list[Candle]:
-    """
-    Fetch multiple daily candles for a given symbol between start_date and end_date.
-    If a database connection is provided, attempts to fetch from database first.
-    """
-    # If connection provided, try to get from database first
-    if conn:
-        repo = DailyCandleRepository(conn)
-        cached_candles = repo.get_candles(symbol, start_date, end_date)
-        if cached_candles:
-            return cached_candles
-
-    # If not in database or no connection, fetch each day individually
-    candles = []
-    current_date = start_date
-    while current_date <= end_date:
-        candle = fetch_daily_candle(symbol, current_date, conn)
-        if candle:
-            candles.append(candle)
-        current_date += timedelta(days=1)
-
-    return candles
-
-
 def fetch_fifteen_min_candles(
-    symbol: Symbol, start_time: datetime, end_time: datetime = None, conn=None
+    symbol: Symbol, start_time: datetime = None, end_time: datetime = None, conn=None
 ) -> List[Candle]:
     """
     Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
@@ -274,6 +248,9 @@ def fetch_fifteen_min_candles(
         List of Candle objects
     """
     end_time = end_time or datetime.now(timezone.utc)
+
+    if not start_time:
+        start_time = end_time - timedelta(hours=8)
 
     # Ensure both start_time and end_time are timezone-aware
     if start_time.tzinfo is None:
@@ -335,6 +312,32 @@ def fetch_fifteen_min_candles(
 
     # Convert dictionary to sorted list
     candles = [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
+
+    return candles
+
+
+def fetch_daily_candles(
+    symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
+) -> list[Candle]:
+    """
+    Fetch multiple daily candles for a given symbol between start_date and end_date.
+    If a database connection is provided, attempts to fetch from database first.
+    """
+    # If connection provided, try to get from database first
+    if conn:
+        repo = DailyCandleRepository(conn)
+        cached_candles = repo.get_candles(symbol, start_date, end_date)
+        if cached_candles:
+            return cached_candles
+
+    # If not in database or no connection, fetch each day individually
+    candles = []
+    current_date = start_date
+    while current_date <= end_date:
+        candle = fetch_daily_candle(symbol, current_date, conn)
+        if candle:
+            candles.append(candle)
+        current_date += timedelta(days=1)
 
     return candles
 
