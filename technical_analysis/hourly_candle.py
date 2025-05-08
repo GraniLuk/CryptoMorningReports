@@ -36,7 +36,7 @@ def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
     fetcher.check_if_all_candles(symbol, conn, days_back)
 
 
-def fetch_candles(
+def fetch_hourly_candles_for_all_symbols(
     symbols: List[Symbol],
     conn,
     start_date: Optional[datetime] = None,

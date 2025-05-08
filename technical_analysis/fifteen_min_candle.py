@@ -12,7 +12,7 @@ from technical_analysis.repositories.fifteen_min_candle_repository import (
 from technical_analysis.rsi_calculator import update_rsi_for_all_candles
 
 
-def fetch_candles(
+def fetch_fifteen_minutes_candles_for_all_symbols(
     symbols: List[Symbol],
     conn,
     start_date: Optional[datetime] = None,
