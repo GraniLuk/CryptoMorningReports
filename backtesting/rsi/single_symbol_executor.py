@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import pandas as pd
@@ -27,7 +27,7 @@ if __name__ == "__main__":
             symbol for symbol in symbols if symbol.symbol_name == symbol_to_execute
         ]
         # Calculate the date 4 years before today
-        five_years_ago = datetime.now() - timedelta(days=5 * 365)
+        five_years_ago = datetime.now(timezone.utc) - timedelta(days=5 * 365)
 
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(

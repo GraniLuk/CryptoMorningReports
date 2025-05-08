@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from infra.telegram_logging_handler import app_logger
 from integrations.onedrive_uploader import upload_to_onedrive  # Added import
@@ -15,6 +15,8 @@ from sharedCode.telegram import send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.daily_candle import fetch_daily_candles
+from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
+from technical_analysis.hourly_candle import fetch_hourly_candles
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.movingAveragesReport import calculate_indicators
@@ -34,7 +36,8 @@ async def process_daily_report(
     logger.info("Processing %d symbols for daily report...", len(symbols))
 
     # Generate all reports
-    fetch_daily_candles(symbols, conn)
+    fetch_daily_candles(symbols, conn)  # Fetch daily candles
+
     rsi_table = create_rsi_table(symbols, conn)
     ma_average_table, ema_average_table = calculate_indicators(symbols, conn)
     range_table = fetch_range_price(symbols, conn)
@@ -49,7 +52,7 @@ async def process_daily_report(
     news = get_panic_news(symbols_list)
 
     # Format messages
-    today_date = datetime.now().strftime("%Y-%m-%d")
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     message_part1 = f"Crypto Report: {today_date}\n"
     message_part1 += f"24h Range Report:\n<pre>{range_table}</pre>"

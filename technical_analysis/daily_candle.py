@@ -1,8 +1,11 @@
 from datetime import date, timedelta
-from typing import List
+from typing import List, Optional
 
 from sharedCode.commonPrice import Candle
 from sharedCode.priceChecker import fetch_daily_candle
+from sharedCode.priceChecker import (
+    fetch_daily_candles as fetch_daily_candles_for_symbol,
+)
 from source_repository import Symbol
 from technical_analysis.repositories.daily_candle_repository import (
     DailyCandleRepository,
@@ -10,20 +13,34 @@ from technical_analysis.repositories.daily_candle_repository import (
 
 
 def fetch_daily_candles(
-    symbols: List[Symbol], conn, end_date: date = None
+    symbols: List[Symbol],
+    conn,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
 ) -> List[Candle]:
     """
     Fetches daily candles for given symbols and returns a list of Candle objects
+
+    Args:
+        symbols: List of Symbol objects
+        conn: Database connection
+        start_date: Start date for fetching candles (defaults to 7 days before end_date)
+        end_date: End date for fetching candles (defaults to current date)
+
+    Returns:
+        List of Candle objects
     """
     end_date = end_date or date.today()
+    start_date = start_date or (end_date - timedelta(days=7))
 
-    candles = []
+    all_candles = []
     for symbol in symbols:
-        candle = fetch_daily_candle(symbol, end_date, conn)
-        if candle is not None:
-            candles.append(candle)
+        symbol_candles = fetch_daily_candles_for_symbol(
+            symbol, start_date, end_date, conn
+        )
+        all_candles.extend(symbol_candles)
 
-    return candles
+    return all_candles
 
 
 def check_if_all_candles(symbol, conn):
@@ -50,12 +67,12 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import SourceID, Symbol, fetch_symbols
+    from source_repository import Symbol, fetch_symbols
 
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    only_link = [symbol for symbol in symbols if symbol.symbol_name == "LINK"]
+    only_link = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
     # Define start and end dates for January 2025
     for symbol in only_link:
         check_if_all_candles(symbol, conn)

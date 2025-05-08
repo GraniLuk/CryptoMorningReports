@@ -133,7 +133,9 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
 
         # Calculate start time (limit days ago)
         end_time = int(time.time())
-        start_time = int((datetime.now() - timedelta(days=limit)).timestamp())
+        start_time = int(
+            (datetime.now(timezone.utc) - timedelta(days=limit)).timestamp()
+        )
 
         # Get kline data with start and end time
         klines = client.get_kline_data(symbol, "1day", start=start_time, end=end_time)
@@ -162,6 +164,127 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
     except Exception as e:
         app_logger.error(f"Error fetching data from Kucoin: {str(e)}")
         return pd.DataFrame()
+
+
+# Adding hourly and fifteen-minute candle fetching functions
+
+
+def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Candle:
+    """
+    Fetch open, close, high, low prices and volume from KuCoin for the specified hour.
+
+    Args:
+        symbol: Symbol object with kucoin_name property
+        end_time: End time for the candle period (defaults to current hour)
+
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    client = KucoinClient()
+    end_time = end_time or datetime.now(timezone.utc).replace(
+        minute=0, second=0, microsecond=0
+    )
+
+    # Start time is 1 hour before end time
+    start_time = end_time - timedelta(hours=1)
+
+    # Convert to Unix timestamps (seconds)
+    end_time_as_int = int(end_time.timestamp())
+    start_time_as_int = int(start_time.timestamp())
+
+    try:
+        # Fetch 1-hour Kline data
+        klines = client.get_kline_data(
+            symbol.kucoin_name,
+            kline_type="1hour",
+            start=start_time_as_int,
+            end=end_time_as_int,
+        )
+
+        if not klines:
+            app_logger.error(f"No hourly Kline data found for {symbol.symbol_name}")
+            return None
+
+        return Candle(
+            end_date=end_time,
+            source=SourceID.KUCOIN,
+            open=float(klines[0][1]),
+            close=float(klines[0][2]),
+            symbol=symbol.symbol_name,
+            high=float(klines[0][3]),
+            low=float(klines[0][4]),
+            last=float(klines[0][2]),  # Using close as last
+            volume=float(klines[0][5]),
+            volume_quote=float(klines[0][6]),
+        )
+
+    except Exception as e:
+        app_logger.error(
+            f"Error fetching hourly data for {symbol.symbol_name}: {str(e)}"
+        )
+        return None
+
+
+def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime = None) -> Candle:
+    """
+    Fetch open, close, high, low prices and volume from KuCoin for the specified 15-minute interval.
+
+    Args:
+        symbol: Symbol object with kucoin_name property
+        end_time: End time for the candle period (defaults to current 15-minute interval)
+
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    client = KucoinClient()
+
+    if end_time is None:
+        end_time = datetime.now(timezone.utc)
+        # Round to nearest 15 minutes
+        minutes = (end_time.minute // 15) * 15
+        end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
+    elif end_time.tzinfo is None:
+        # Convert naive datetime to timezone-aware
+        end_time = end_time.replace(tzinfo=timezone.utc)
+
+    # Start time is 15 minutes before end time
+    start_time = end_time - timedelta(minutes=15)
+
+    # Convert to Unix timestamps (seconds)
+    end_time_as_int = int(end_time.timestamp())
+    start_time_as_int = int(start_time.timestamp())
+
+    try:
+        # Fetch 15-minute Kline data
+        klines = client.get_kline_data(
+            symbol.kucoin_name,
+            kline_type="15min",
+            start=start_time_as_int,
+            end=end_time_as_int,
+        )
+
+        if not klines:
+            app_logger.error(f"No 15-minute Kline data found for {symbol.symbol_name}")
+            return None
+
+        return Candle(
+            end_date=end_time,
+            source=SourceID.KUCOIN,
+            open=float(klines[0][1]),
+            close=float(klines[0][2]),
+            symbol=symbol.symbol_name,
+            high=float(klines[0][3]),
+            low=float(klines[0][4]),
+            last=float(klines[0][2]),  # Using close as last
+            volume=float(klines[0][5]),
+            volume_quote=float(klines[0][6]),
+        )
+
+    except Exception as e:
+        app_logger.error(
+            f"Error fetching 15-minute data for {symbol.symbol_name}: {str(e)}"
+        )
+        return None
 
 
 if __name__ == "__main__":
