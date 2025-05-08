@@ -95,10 +95,10 @@ async def generate_crypto_situation_report(conn, symbol_name):
         symbols, conn, start_date=seven_days_ago.date(), end_date=now.date()
     )
     hourly_candles = fetch_hourly_candles(
-        symbols, conn, end_time=now, start_time=one_day_ago
+        symbols, end_time=now, start_time=one_day_ago, conn=conn
     )
     fifteen_min_candles = fetch_fifteen_min_candles(
-        symbols, conn, end_time=now, start_time=one_day_ago
+        symbols, end_time=now, start_time=one_day_ago, conn=conn
     )
 
     # Check if we have data
