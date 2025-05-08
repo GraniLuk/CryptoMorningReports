@@ -85,6 +85,6 @@ if __name__ == "__main__":
     only_btc = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
 
     # Test fetching hourly candles
-    fetch_candles(only_btc, conn)
+    fetch_hourly_candles(only_btc[0], conn=conn)
     # Test calculating hourly RSI
-    # calculate_hourly_rsi(only_btc, conn)
+    calculate_hourly_rsi(only_btc, conn=conn)

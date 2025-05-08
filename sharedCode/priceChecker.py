@@ -96,80 +96,6 @@ def fetch_hourly_candle(
     return candle
 
 
-def fetch_fifteen_min_candle(
-    symbol: Symbol, end_time: datetime = None, conn=None
-) -> Optional[Candle]:
-    """
-    Fetch 15-minute candle data for a symbol at the specified end time
-
-    Args:
-        symbol: Symbol object
-        end_time: End time for the candle period (defaults to current time)
-        conn: Optional database connection
-
-    Returns:
-        Candle object if successful, None otherwise
-    """
-    end_time = end_time or datetime.now(timezone.utc)
-    # Ensure end_time is timezone-aware
-    if end_time.tzinfo is None:
-        end_time = end_time.replace(tzinfo=timezone.utc)
-    # Round to nearest 15 minutes
-    minutes = (end_time.minute // 15) * 15
-    end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
-
-    # If connection provided, try to get from database first
-    if conn:
-        repo = FifteenMinCandleRepository(conn)
-        cached_candle = repo.get_candle(symbol, end_time)
-        if cached_candle:
-            return cached_candle
-
-    # Fetch from source if not in database
-    candle = None
-    if symbol.source_id == SourceID.KUCOIN:
-        from sharedCode.kucoin import fetch_kucoin_fifteen_min_kline
-
-        candle = fetch_kucoin_fifteen_min_kline(symbol, end_time)
-    if symbol.source_id == SourceID.BINANCE:
-        from sharedCode.binance import fetch_binance_fifteen_min_kline
-
-        candle = fetch_binance_fifteen_min_kline(symbol, end_time)
-
-    # Save to database if connection provided and candle fetched
-    if conn and candle:
-        repo = FifteenMinCandleRepository(conn)
-        repo.save_candle(symbol, candle, source=symbol.source_id.value)
-
-    return candle
-
-
-def fetch_daily_candles(
-    symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
-) -> list[Candle]:
-    """
-    Fetch multiple daily candles for a given symbol between start_date and end_date.
-    If a database connection is provided, attempts to fetch from database first.
-    """
-    # If connection provided, try to get from database first
-    if conn:
-        repo = DailyCandleRepository(conn)
-        cached_candles = repo.get_candles(symbol, start_date, end_date)
-        if cached_candles:
-            return cached_candles
-
-    # If not in database or no connection, fetch each day individually
-    candles = []
-    current_date = start_date
-    while current_date <= end_date:
-        candle = fetch_daily_candle(symbol, current_date, conn)
-        if candle:
-            candles.append(candle)
-        current_date += timedelta(days=1)
-
-    return candles
-
-
 def fetch_hourly_candles(
     symbol: Symbol, start_time: datetime = None, end_time: datetime = None, conn=None
 ) -> List[Candle]:
@@ -252,6 +178,80 @@ def fetch_hourly_candles(
 
     # Convert dictionary to sorted list
     candles = [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
+
+    return candles
+
+
+def fetch_fifteen_min_candle(
+    symbol: Symbol, end_time: datetime = None, conn=None
+) -> Optional[Candle]:
+    """
+    Fetch 15-minute candle data for a symbol at the specified end time
+
+    Args:
+        symbol: Symbol object
+        end_time: End time for the candle period (defaults to current time)
+        conn: Optional database connection
+
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    end_time = end_time or datetime.now(timezone.utc)
+    # Ensure end_time is timezone-aware
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
+    # Round to nearest 15 minutes
+    minutes = (end_time.minute // 15) * 15
+    end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
+
+    # If connection provided, try to get from database first
+    if conn:
+        repo = FifteenMinCandleRepository(conn)
+        cached_candle = repo.get_candle(symbol, end_time)
+        if cached_candle:
+            return cached_candle
+
+    # Fetch from source if not in database
+    candle = None
+    if symbol.source_id == SourceID.KUCOIN:
+        from sharedCode.kucoin import fetch_kucoin_fifteen_min_kline
+
+        candle = fetch_kucoin_fifteen_min_kline(symbol, end_time)
+    if symbol.source_id == SourceID.BINANCE:
+        from sharedCode.binance import fetch_binance_fifteen_min_kline
+
+        candle = fetch_binance_fifteen_min_kline(symbol, end_time)
+
+    # Save to database if connection provided and candle fetched
+    if conn and candle:
+        repo = FifteenMinCandleRepository(conn)
+        repo.save_candle(symbol, candle, source=symbol.source_id.value)
+
+    return candle
+
+
+def fetch_daily_candles(
+    symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
+) -> list[Candle]:
+    """
+    Fetch multiple daily candles for a given symbol between start_date and end_date.
+    If a database connection is provided, attempts to fetch from database first.
+    """
+    # If connection provided, try to get from database first
+    if conn:
+        repo = DailyCandleRepository(conn)
+        cached_candles = repo.get_candles(symbol, start_date, end_date)
+        if cached_candles:
+            return cached_candles
+
+    # If not in database or no connection, fetch each day individually
+    candles = []
+    current_date = start_date
+    while current_date <= end_date:
+        candle = fetch_daily_candle(symbol, current_date, conn)
+        if candle:
+            candles.append(candle)
+        current_date += timedelta(days=1)
 
     return candles
 
