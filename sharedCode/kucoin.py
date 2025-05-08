@@ -181,9 +181,15 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Cand
         Candle object if successful, None otherwise
     """
     client = KucoinClient()
-    end_time = end_time or datetime.now(timezone.utc).replace(
-        minute=0, second=0, microsecond=0
-    )
+    # Handle end_time parameter
+    if end_time is None:
+        # Get the current time in UTC
+        current_time = datetime.now(timezone.utc)
+        # Round down to the previous full hour
+        end_time = current_time.replace(minute=0, second=0, microsecond=0)
+    elif end_time.tzinfo is None:
+        # Convert naive datetime to timezone-aware
+        end_time = end_time.replace(tzinfo=timezone.utc)
 
     # Start time is 1 hour before end time
     start_time = end_time - timedelta(hours=1)
@@ -239,10 +245,11 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime = None) ->
     client = KucoinClient()
 
     if end_time is None:
-        end_time = datetime.now(timezone.utc)
-        # Round to nearest 15 minutes
-        minutes = (end_time.minute // 15) * 15
-        end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
+        # Get the current time in UTC
+        current_time = datetime.now(timezone.utc)
+        # Round to nearest 15 minutes (floor)
+        minutes = (current_time.minute // 15) * 15
+        end_time = current_time.replace(minute=minutes, second=0, microsecond=0)
     elif end_time.tzinfo is None:
         # Convert naive datetime to timezone-aware
         end_time = end_time.replace(tzinfo=timezone.utc)
