@@ -38,9 +38,9 @@ def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
 
 def fetch_hourly_candles_for_all_symbols(
     symbols: List[Symbol],
-    conn,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    conn=None,
 ) -> List[Candle]:
     """
     Fetches daily candles for given symbols and returns a list of Candle objects
