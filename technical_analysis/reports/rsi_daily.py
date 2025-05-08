@@ -57,12 +57,16 @@ def create_rsi_table_for_symbol(
 
             # Calculate RSI changes
             rsi_value = float(latest_row["RSI"].iloc[-1])
-            # Use .loc for assignments
-            latest_row.loc[:, "rsi_daily_change"] = rsi_value - historical_rsi.get(
-                "yesterday", rsi_value
+            # Safely get historical values with defaults
+            yesterday_rsi = historical_rsi.get("yesterday")
+            week_ago_rsi = historical_rsi.get("week_ago")
+            
+            # Use .loc for assignments with safe defaults
+            latest_row.loc[:, "rsi_daily_change"] = (
+                rsi_value - yesterday_rsi if yesterday_rsi is not None else 0.0
             )
-            latest_row.loc[:, "rsi_weekly_change"] = rsi_value - historical_rsi.get(
-                "week_ago", rsi_value
+            latest_row.loc[:, "rsi_weekly_change"] = (
+                rsi_value - week_ago_rsi if week_ago_rsi is not None else 0.0
             )
 
             all_values = pd.concat([all_values, latest_row])
@@ -149,12 +153,16 @@ def create_rsi_table(
 
                 # Calculate RSI changes
                 rsi_value = float(latest_row["RSI"].iloc[-1])
-                # Use .loc for assignments
-                latest_row.loc[:, "rsi_daily_change"] = rsi_value - historical_rsi.get(
-                    "yesterday", rsi_value
+                # Safely get historical values with defaults
+                yesterday_rsi = historical_rsi.get("yesterday")
+                week_ago_rsi = historical_rsi.get("week_ago")
+                
+                # Use .loc for assignments with safe defaults
+                latest_row.loc[:, "rsi_daily_change"] = (
+                    rsi_value - yesterday_rsi if yesterday_rsi is not None else 0.0
                 )
-                latest_row.loc[:, "rsi_weekly_change"] = rsi_value - historical_rsi.get(
-                    "week_ago", rsi_value
+                latest_row.loc[:, "rsi_weekly_change"] = (
+                    rsi_value - week_ago_rsi if week_ago_rsi is not None else 0.0
                 )
 
                 all_values = pd.concat([all_values, latest_row])
@@ -221,3 +229,16 @@ def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
         app_logger.error(
             f"Failed to save RSI results for candle {daily_candle_id}: {str(e)}"
         )
+
+if __name__ == "__main__":
+
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import Symbol, fetch_symbols
+
+    load_dotenv()
+    conn = connect_to_sql()
+    symbols = fetch_symbols(conn)
+    symbol = [symbol for symbol in symbols if symbol.symbol_name == "LINK"][0]
+    print(create_rsi_table_for_symbol(symbol, conn))
