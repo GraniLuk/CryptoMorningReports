@@ -295,16 +295,20 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime = None) ->
 
 
 if __name__ == "__main__":
-    symbol = "KCS-USDT"  # Specify the trading pair
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import fetch_symbols
+
+    load_dotenv()
+    conn = connect_to_sql()
+    symbols = fetch_symbols(conn)
+    symbol = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"][0]
     start_date = "2025-01-11"  # Start date (YYYY-MM-DD)
     end_date = "2025-01-14"  # End date (YYYY-MM-DD)
-    kucoin_credentials = get_kucoin_credentials()
-    (kucoin_credentials["api_key"],)
-    (kucoin_credentials["api_secret"],)
-    kucoin_credentials["api_passphrase"]
 
-    daily_ranges = fetch_daily_ranges(symbol, start_date, end_date)
-    for day_range in daily_ranges:
-        print(
-            f"Date: {day_range['date']}, High: {day_range['high']}, Low: {day_range['low']}"
-        )
+    hourly_candle = fetch_kucoin_hourly_kline(symbol)
+    print(
+        f"Date: {hourly_candle.end_date}, High: {hourly_candle.high}, Low: {hourly_candle.low}, "
+        f"Open: {hourly_candle.open}, Close: {hourly_candle.close}, Volume: {hourly_candle.volume}"
+    )
