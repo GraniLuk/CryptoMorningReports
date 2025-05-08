@@ -14,9 +14,9 @@ from technical_analysis.rsi_calculator import update_rsi_for_all_candles
 
 def fetch_fifteen_minutes_candles_for_all_symbols(
     symbols: List[Symbol],
-    conn,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    conn=None,
 ) -> List[Candle]:
     """
     Fetches daily candles for given symbols and returns a list of Candle objects
