@@ -39,7 +39,7 @@ def fetch_close_prices_from_Binance(
     client = BinanceClient()
 
     try:
-        start_time = datetime.now() - timedelta(days=lookback_days)
+        start_time = datetime.now(timezone.utc) - timedelta(days=lookback_days)
 
         klines = client.get_historical_klines(
             symbol=symbol,
@@ -123,6 +123,141 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date = date.today()) -> 
         return None
     except Exception as e:
         app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+        return None
+
+
+# Adding hourly and fifteen-minute candle fetching functions
+
+
+def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Candle:
+    """
+    Fetch open, close, high, low prices and volume from Binance for the specified hour.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        end_time: End time for the candle period (defaults to current hour)
+
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    client = BinanceClient()
+    end_time = end_time or datetime.now(timezone.utc).replace(
+        minute=0, second=0, microsecond=0
+    )
+
+    # Start time is 1 hour before end time
+    start_time = end_time - timedelta(hours=1)
+
+    # Convert to milliseconds for Binance API
+    start_timestamp_ms = int(start_time.timestamp() * 1000)
+    end_timestamp_ms = int(end_time.timestamp() * 1000)
+
+    try:
+        # Fetch 1-hour Kline data
+        klines = client.get_klines(
+            symbol=symbol.binance_name,
+            interval=client.KLINE_INTERVAL_1HOUR,
+            startTime=start_timestamp_ms,
+            endTime=end_timestamp_ms,
+            limit=1,
+        )
+
+        if not klines:
+            app_logger.error(f"No hourly Kline data found for {symbol.symbol_name}")
+            return None
+
+        return Candle(
+            end_date=end_time,
+            source=SourceID.BINANCE,
+            open=float(klines[0][1]),
+            close=float(klines[0][4]),
+            symbol=symbol.symbol_name,
+            low=float(klines[0][3]),
+            high=float(klines[0][2]),
+            last=float(klines[0][4]),
+            volume=float(klines[0][5]),
+            volume_quote=float(klines[0][7]),
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error fetching hourly data for {symbol.symbol_name}: {e.message}"
+        )
+        return None
+    except Exception as e:
+        app_logger.error(
+            f"Unexpected error for {symbol.symbol_name} hourly data: {str(e)}"
+        )
+        return None
+
+
+def fetch_binance_fifteen_min_kline(
+    symbol: Symbol, end_time: datetime = None
+) -> Candle:
+    """
+    Fetch open, close, high, low prices and volume from Binance for the specified 15-minute interval.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        end_time: End time for the candle period (defaults to current 15-minute interval)
+
+    Returns:
+        Candle object if successful, None otherwise
+    """
+    client = BinanceClient()
+
+    if end_time is None:
+        end_time = datetime.now(timezone.utc)
+        # Round to nearest 15 minutes
+        minutes = (end_time.minute // 15) * 15
+        end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
+    elif end_time.tzinfo is None:
+        # Convert naive datetime to timezone-aware
+        end_time = end_time.replace(tzinfo=timezone.utc)
+
+    # Start time is 15 minutes before end time
+    start_time = end_time - timedelta(minutes=15)
+
+    # Convert to milliseconds for Binance API
+    start_timestamp_ms = int(start_time.timestamp() * 1000)
+    end_timestamp_ms = int(end_time.timestamp() * 1000)
+
+    try:
+        # Fetch 15-minute Kline data
+        klines = client.get_klines(
+            symbol=symbol.binance_name,
+            interval=client.KLINE_INTERVAL_15MINUTE,
+            startTime=start_timestamp_ms,
+            endTime=end_timestamp_ms,
+            limit=1,
+        )
+
+        if not klines:
+            app_logger.error(f"No 15-minute Kline data found for {symbol.symbol_name}")
+            return None
+
+        return Candle(
+            end_date=end_time,
+            source=SourceID.BINANCE,
+            open=float(klines[0][1]),
+            close=float(klines[0][4]),
+            symbol=symbol.symbol_name,
+            low=float(klines[0][3]),
+            high=float(klines[0][2]),
+            last=float(klines[0][4]),
+            volume=float(klines[0][5]),
+            volume_quote=float(klines[0][7]),
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error fetching 15-minute data for {symbol.symbol_name}: {e.message}"
+        )
+        return None
+    except Exception as e:
+        app_logger.error(
+            f"Unexpected error for {symbol.symbol_name} 15-minute data: {str(e)}"
+        )
         return None
 
 

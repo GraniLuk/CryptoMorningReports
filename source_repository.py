@@ -77,3 +77,52 @@ def fetch_symbols(conn) -> List[Symbol]:
     except Exception as e:
         app_logger.error(f"Error fetching symbols: {str(e)}")
         raise
+
+
+def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
+    """
+    Fetches a specific symbol by name from the database
+
+    Args:
+        conn: Database connection
+        symbol_name: The symbol name to look up (e.g., "BTC", "ETH")
+
+    Returns:
+        Symbol: The symbol object if found, None otherwise
+    """
+    try:
+        if conn:
+            try:
+                cursor = conn.cursor()
+                query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
+
+                row = cursor.execute(query, (symbol_name,)).fetchone()
+
+                if row:
+                    symbol = Symbol(
+                        symbol_id=row[0],
+                        symbol_name=row[1],
+                        full_name=row[2],
+                        source_id=SourceID(row[3]),  # Convert to SourceID enum
+                        coingecko_name=row[4],
+                    )
+                    cursor.close()
+                    return symbol
+                else:
+                    app_logger.warning(
+                        f"Symbol '{symbol_name}' not found in the database"
+                    )
+                    cursor.close()
+                    return None
+            except pyodbc.Error as e:
+                app_logger.error(f"ODBC Error while fetching symbol {symbol_name}: {e}")
+                return None
+            except Exception as e:
+                app_logger.error(f"Error fetching symbol {symbol_name}: {str(e)}")
+                return None
+        else:
+            app_logger.error("Database connection was not established.")
+            return None
+    except Exception as e:
+        app_logger.error(f"Error fetching symbol {symbol_name}: {str(e)}")
+        return None
