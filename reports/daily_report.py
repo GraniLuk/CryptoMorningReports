@@ -15,8 +15,6 @@ from sharedCode.telegram import send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.daily_candle import fetch_daily_candles
-from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
-from technical_analysis.hourly_candle import fetch_hourly_candles
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.movingAveragesReport import calculate_indicators
@@ -169,7 +167,7 @@ async def process_daily_report(
         marketcap_report,
         parse_mode="HTML",
     )
-    
+
     if launchpool_report:
         message_part3 = f"New Launchpool Report: <pre>{launchpool_report}</pre>"
         await send_telegram_message(
