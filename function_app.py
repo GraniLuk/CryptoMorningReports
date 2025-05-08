@@ -132,7 +132,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if save_to_onedrive:
                 from integrations.onedrive_uploader import upload_to_onedrive
 
-                today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
                 onedrive_filename = f"{symbol.upper()}_Situation_{today_date}.md"
 
                 await upload_to_onedrive(
