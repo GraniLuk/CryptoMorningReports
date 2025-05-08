@@ -7,7 +7,6 @@ from prettytable import PrettyTable
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
-from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
 def get_rsi_for_symbol_timeframe(
