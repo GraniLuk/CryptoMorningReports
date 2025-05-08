@@ -148,8 +148,14 @@ async def generate_crypto_situation_report(conn, symbol_name):
             fifteen_min_candles=fifteen_min_formatted,
         )
 
-        # For PerplexityClient
-        if isinstance(ai_client, type) and ai_client.__name__ == "PerplexityClient":
+        # Initialize analysis to handle potential cases where no condition matches
+        analysis = ""
+
+        # For PerplexityClient - checking for an instance instead of a class type
+        if ai_api_type == "perplexity" or (
+            hasattr(ai_client, "__class__")
+            and ai_client.__class__.__name__ == "PerplexityClient"
+        ):
             data = {
                 "model": "sonar-pro",  # Use appropriate model
                 "messages": [
@@ -204,6 +210,16 @@ async def generate_crypto_situation_report(conn, symbol_name):
                 )
                 logger.error(error_msg)
                 return error_msg
+        else:
+            error_msg = f"Failed: Unsupported AI client type: {ai_api_type}"
+            logger.error(error_msg)
+            return error_msg
+
+        # Check if we got a valid analysis
+        if not analysis:
+            error_msg = "Failed: No analysis was generated"
+            logger.error(error_msg)
+            return error_msg
 
         # Add header to the report
         report_title = f"# {symbol_name} Situation Report\n\n"
