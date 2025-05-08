@@ -15,7 +15,7 @@ def fetch_gstgmt_ratio_range():
         workspace_id = os.environ.get("PriceAlerts_APPINSIGHTS_WORKSPACE_ID")
         if not workspace_id:
             app_logger.error("Workspace ID environment variable not set")
-            return None
+            return 0, 0, 0  # Return default values instead of None
 
         app_logger.info(f"Using workspace ID: {workspace_id}")
 
@@ -33,12 +33,21 @@ def fetch_gstgmt_ratio_range():
         if response and len(response.tables) > 0 and len(response.tables[0].rows) > 0:
             min_value = response.tables[0].rows[0][0]
             max_value = response.tables[0].rows[0][1]
-            range_24h = (max_value - min_value) / min_value * 100
+            
+            # Handle None values that might come from the query
+            if min_value is None or max_value is None:
+                app_logger.info("Received None values from the query, using default values")
+                return 0, 0, 0
+                
+            # Calculate range safely
+            range_24h = (max_value - min_value) / min_value * 100 if min_value > 0 else 0
             return min_value, max_value, range_24h
-        return None, None, None
+            
+        app_logger.info("No data found in query response, using default values")
+        return 0, 0, 0  # Return default values when no data
     except Exception as e:
         app_logger.error(f"Error fetching ratio range: {str(e)}")
-        return None, None, None
+        return 0, 0, 0  # Return default values on error
 
 
 if __name__ == "__main__":
