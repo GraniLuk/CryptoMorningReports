@@ -135,8 +135,8 @@ def get_historical_rsi(conn, symbol_id: int, date: date) -> dict:
             return results
 
     except pyodbc.Error as e:
-        app_logger.error(f"ODBC Error while fetching historical RSI: {e}")
+        app_logger.error(f"ODBC Error while fetching historical RSI for symbol {symbol_id}: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching historical RSI: {str(e)}")
+        app_logger.error(f"Error fetching historical RSI for symbol {symbol_id}: {str(e)}")
         raise
