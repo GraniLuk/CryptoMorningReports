@@ -171,7 +171,7 @@ def fetch_daily_candles(
 
 
 def fetch_hourly_candles(
-    symbol: Symbol, start_time: datetime, end_time: datetime = None, conn=None
+    symbol: Symbol, start_time: datetime = None, end_time: datetime = None, conn=None
 ) -> List[Candle]:
     """
     Fetch multiple hourly candles for a given symbol between start_time and end_time.
@@ -187,6 +187,13 @@ def fetch_hourly_candles(
     Returns:
         List of Candle objects
     """
+
+    if not start_time:
+        start_time = datetime.now(timezone.utc) - timedelta(
+            days=1
+        )  # Default to 1 day back
+    if not end_time:
+        end_time = datetime.now(timezone.utc)
     end_time = end_time or datetime.now(timezone.utc)
     # Ensure both start_time and end_time are timezone-aware
     if start_time.tzinfo is None:
@@ -363,27 +370,32 @@ if __name__ == "__main__":
 
     load_dotenv()
     conn = connect_to_sql()
-    symbol = Symbol(
-        symbol_id=1,  # Added required field
-        symbol_name="KCS",
-        full_name="Bitcoin",  # Added required field
-        source_id=SourceID.KUCOIN,
-    )
+    # symbol = Symbol(
+    #     symbol_id=7,  # Added required field
+    #     symbol_name="KCS",
+    #     full_name="Bitcoin",  # Added required field
+    #     source_id=SourceID.KUCOIN,
+    # )
 
-    daily_candle = fetch_daily_candle(symbol, conn=conn)
-    print(f"Daily candle for {symbol.symbol_name}: {daily_candle}")
+    # daily_candle = fetch_hourly_candles(symbol, conn=conn)
+    # print(
+    #     f"Daily candle for {symbol.symbol_name}: {daily_candle.close} {daily_candle.end_date}"
+    # )
     # current_price = fetch_current_price(symbol)
     # print(f"Current price for {symbol.symbol_name}: {current_price}")
 
     symbol = Symbol(
-        symbol_id=1,  # Added required field
-        symbol_name="BTC",
+        symbol_id=3,  # Added required field
+        symbol_name="XRP",
         full_name="Bitcoin",  # Added required field
         source_id=SourceID.BINANCE,
     )
 
-    daily_candle = fetch_daily_candle(symbol, conn=conn)
-    print(f"Daily candle for {symbol.symbol_name}: {daily_candle}")
+    daily_candles = fetch_hourly_candles(symbol, conn=conn)
+    for daily_candle in daily_candles:
+        print(
+            f"Daily candle for {symbol.symbol_name}: {daily_candle.close} {daily_candle.end_date}"
+        )
     # current_price = fetch_current_price(symbol)
     # print(f"Current price for {symbol.symbol_name}: {current_price}")
 
