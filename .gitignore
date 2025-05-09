@@ -51,3 +51,4 @@ __azurite_db*__.json
 
 *.xlsx
 strategy_results_*.html
+.vscode/settings.json
