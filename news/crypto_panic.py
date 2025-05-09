@@ -45,8 +45,8 @@ def get_panic_news(symbols):
                     ],
                 }
                 for post in data.get("results", [])
-                if now - datetime.strptime(post["created_at"], "%Y-%m-%dT%H:%M:%SZ")
-                <= timedelta(days=5)
+                if now - datetime.strptime(post["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                <= timedelta(days=3)
             ]
 
             all_news.extend(symbol_news)
