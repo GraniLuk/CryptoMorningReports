@@ -50,7 +50,7 @@ def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
     # Store rows with range calculation
     range_rows = []
     for result in sorted_results:
-        symbol_name = result.symbol.symbol_name
+        symbol_name = result.symbol
         high = format_to_6digits_withoutTrailingZeros(result.high)
         low = format_to_6digits_withoutTrailingZeros(result.low)
         price_range = ((result.high - result.low) / result.low) * 100
