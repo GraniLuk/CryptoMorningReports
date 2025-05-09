@@ -1,0 +1,2 @@
+GET https://cryptopanic.com/api/v1/posts/?auth_token={{apiKey}}&currencies=VIRTUAL
+Accept: application/json

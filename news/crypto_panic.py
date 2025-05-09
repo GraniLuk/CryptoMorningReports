@@ -27,8 +27,6 @@ def get_panic_news(symbols):
             params = {
                 "auth_token": api_key,
                 "currencies": symbol,
-                "filter": "rising",
-                "kind": "news",
             }
 
             response = requests.get(CRYPTOPANIC_API, params=params)
@@ -48,7 +46,7 @@ def get_panic_news(symbols):
                 }
                 for post in data.get("results", [])
                 if now - datetime.strptime(post["created_at"], "%Y-%m-%dT%H:%M:%SZ")
-                <= timedelta(days=3)
+                <= timedelta(days=5)
             ]
 
             all_news.extend(symbol_news)
@@ -77,7 +75,7 @@ if __name__ == "__main__":
     # Get API keys from environment
 
     print("🔄 Fetching news from cryptopanic...\n")
-    symbols = ["BTC", "ETH", "VIRTUAL"]
+    symbols = ["VIRTUAL"]
 
     # News
     news_message = get_panic_news(symbols)
