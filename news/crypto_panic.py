@@ -6,12 +6,13 @@ import requests
 CRYPTOPANIC_API = "https://cryptopanic.com/api/v1/posts/"
 
 
-def get_panic_news(symbols):
+def get_panic_news(symbols, days=1):
     """Fetch regulatory news from CryptoPanic for multiple symbols
 
     Args:
         api_key (str): CryptoPanic API key
         symbols (list): List of cryptocurrency symbols to filter (e.g. ["BTC", "ETH"])
+        days (int): Number of days to look back for news
 
     Returns:
         str: Aggregated news message for all symbols
@@ -46,7 +47,7 @@ def get_panic_news(symbols):
                 }
                 for post in data.get("results", [])
                 if now - datetime.strptime(post["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-                <= timedelta(days=3)
+                <= timedelta(days=days)
             ]
 
             all_news.extend(symbol_news)
@@ -78,5 +79,5 @@ if __name__ == "__main__":
     print("🔄 Fetching news from cryptopanic...\n")
     symbols = ["VIRTUAL"]
     # News
-    news_message = get_panic_news(symbols)
+    news_message = get_panic_news(symbols, days=1)
     print(news_message)
