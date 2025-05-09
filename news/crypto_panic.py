@@ -72,10 +72,11 @@ def get_panic_news(symbols):
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
     # Get API keys from environment
-
+    load_dotenv()
     print("🔄 Fetching news from cryptopanic...\n")
     symbols = ["VIRTUAL"]
-
     # News
     news_message = get_panic_news(symbols)
+    print(news_message)
