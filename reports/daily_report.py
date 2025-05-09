@@ -47,7 +47,7 @@ async def process_daily_report(
     pricechange_table = fetch_price_change_report(symbols, conn)
     sopr_table = fetch_sopr_metrics(conn)
     symbols_list = [symbol.symbol_name for symbol in symbols]
-    news = get_panic_news(symbols_list)
+    news = get_panic_news(symbols_list, days=1)
 
     # Format messages
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
