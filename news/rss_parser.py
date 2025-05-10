@@ -54,7 +54,9 @@ def fetch_rss_news(feed_url, source, class_name):
         for entry in feed.entries:
             # Make published_time timezone-aware by adding UTC timezone
             published_time = datetime.fromtimestamp(mktime(entry.published_parsed))
-            published_time = published_time.replace(tzinfo=timezone.utc)  # Add timezone info
+            published_time = published_time.replace(
+                tzinfo=timezone.utc
+            )  # Add timezone info
 
             if current_time - published_time <= timedelta(days=1):
                 full_content = fetch_full_content(entry.link, class_name)
