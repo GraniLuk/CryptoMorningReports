@@ -65,24 +65,12 @@ def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
-    from source_repository import SourceID, Symbol
+    from infra.sql_connection import connect_to_sql
+    from source_repository import fetch_symbols
 
     load_dotenv()
-    conn = None
-    symbols = [
-        Symbol(
-            symbol_id=1,
-            symbol_name="BTC",
-            full_name="Bitcoin",
-            source_id=SourceID.BINANCE,
-        ),
-        Symbol(
-            symbol_id=2,
-            symbol_name="ETH",
-            full_name="Ethereum",
-            source_id=SourceID.BINANCE,
-        ),
-    ]
+    conn = connect_to_sql()
+    symbols = fetch_symbols(conn)
 
     table = fetch_range_price(symbols, conn)
     print(table)

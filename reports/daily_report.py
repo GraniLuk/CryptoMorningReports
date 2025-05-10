@@ -102,7 +102,9 @@ async def process_daily_report(
         analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
             ai_api_key, aggregated_data, fetched_news, ai_api_type
         )
-        # highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
+        highlight_articles_message = highlight_articles(
+            ai_api_key, symbols, fetched_news, ai_api_type
+        )
 
         # --- Added OneDrive Upload ---
         if not analysis_reported_without_news.startswith("Failed"):
@@ -198,11 +200,33 @@ async def process_daily_report(
         telegram_enabled, telegram_token, telegram_chat_id, news, parse_mode="HTML"
     )
 
-    # if not highlight_articles_message.startswith("Failed"):
-    #     await send_telegram_message(
-    #         telegram_enabled,
-    #         telegram_token,
-    #         telegram_chat_id,
-    #         highlight_articles_message,
-    #         parse_mode="HTML",
-    #     )
+    if not highlight_articles_message.startswith("Failed"):
+        await send_telegram_message(
+            telegram_enabled,
+            telegram_token,
+            telegram_chat_id,
+            highlight_articles_message,
+            parse_mode="HTML",
+        )
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import fetch_symbols
+
+    load_dotenv()
+    conn = connect_to_sql()
+    telegram_enabled = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
+    telegram_token = os.getenv("TELEGRAM_TOKEN", "")
+    telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+
+    async def main():
+        await process_daily_report(
+            conn, telegram_enabled, telegram_token, telegram_chat_id
+        )
+
+    asyncio.run(main())
