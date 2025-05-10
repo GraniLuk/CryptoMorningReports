@@ -94,7 +94,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
                 min_24h=min_24h,
                 max_24h=max_24h,
                 range_24h=range_percent,
-                rsi=rsi_results[-1],
+                rsi=float(rsi_results.iloc[-1]) if not rsi_results.empty else None,
                 transactions_count=transactions_count,
             )
         except Exception as e:
