@@ -351,7 +351,7 @@ class GeminiClient(AIClient):
         self.api_key = api_key
         genai.configure(api_key=api_key)
         # Default to most capable model
-        self.model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25")
+        self.model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
 
     def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
         start_time = time.time()
