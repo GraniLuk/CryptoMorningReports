@@ -32,7 +32,7 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str = Non
     payload = {
         "filename": filename,
         "content": content,
-        "folder_path": full_path,
+        "folderPath": full_path,
             }
 
     headers = {
