@@ -1,4 +1,5 @@
 import json
+import time  # Added for struct_time type checking
 from datetime import datetime, timedelta, timezone
 from time import mktime
 
@@ -50,13 +51,18 @@ def fetch_rss_news(feed_url, source, class_name):
         feed = feedparser.parse(feed_url)
         latest_news = []
         current_time = datetime.now(timezone.utc)
-
         for entry in feed.entries:
             # Make published_time timezone-aware by adding UTC timezone
-            published_time = datetime.fromtimestamp(mktime(entry.published_parsed))
-            published_time = published_time.replace(
-                tzinfo=timezone.utc
-            )  # Add timezone info
+            if hasattr(entry, "published_parsed") and isinstance(
+                entry.published_parsed, time.struct_time
+            ):
+                published_time = datetime.fromtimestamp(mktime(entry.published_parsed))
+                published_time = published_time.replace(
+                    tzinfo=timezone.utc
+                )  # Add timezone info
+            else:
+                # Fallback to current time if published_parsed is not valid
+                published_time = current_time
 
             if current_time - published_time <= timedelta(days=1):
                 full_content = fetch_full_content(entry.link, class_name)
