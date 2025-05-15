@@ -239,18 +239,25 @@ async def generate_crypto_situation_report(conn, symbol_name):
             except Exception as e:
                 error_msg = f"Failed to get crypto situation analysis: {str(e)}"
                 logger.error(error_msg)
-                return error_msg
-
-        # For GeminiClient
+                return error_msg  # For GeminiClient
         elif ai_api_type == "gemini":
-            try:
-                prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
-                response = ai_client.model.generate_content(prompt)
+            try:  # Import GeminiClient to check the client type
+                from news.news_agent import GeminiClient
 
-                if response.candidates and len(response.candidates) > 0:
-                    analysis = response.text
+                # Check if it's a GeminiClient
+                if isinstance(ai_client, GeminiClient):
+                    prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
+                    # Now we know it's a GeminiClient with a model attribute
+                    response = ai_client.model.generate_content(prompt)
+
+                    if response.candidates and len(response.candidates) > 0:
+                        analysis = response.text
+                    else:
+                        error_msg = "Failed: No valid response from Gemini API"
+                        logger.error(error_msg)
+                        return error_msg
                 else:
-                    error_msg = "Failed: No valid response from Gemini API"
+                    error_msg = "Failed: Invalid Gemini client configuration"
                     logger.error(error_msg)
                     return error_msg
             except Exception as e:
