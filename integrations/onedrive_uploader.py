@@ -21,7 +21,7 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str = Non
         return False
         
     # Set the base folder path for crypto reports
-    base_folder = "Brain/Personal/Projects/CryptoMorningReports/Analysis"
+    base_folder = "/Brain/Personal/Projects/CryptoMorningReports/Analysis"
     
     # If a specific folder path is provided, append it to the base folder
     if folder_path:
