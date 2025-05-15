@@ -104,21 +104,24 @@ async def process_daily_report(
         )
         highlight_articles_message = highlight_articles(
             ai_api_key, symbols, fetched_news, ai_api_type
-        )
-
-        # --- Added OneDrive Upload ---
+        )        # --- Added OneDrive Upload ---
         if not analysis_reported_without_news.startswith("Failed"):
+            # Save detailed analysis without news in "detailed_analysis" subfolder
             onedrive_filename = f"CryptoAnalysis_{today_date}.md"
             analysis_saved_to_onedrive = await upload_to_onedrive(
                 filename=onedrive_filename,
                 content=analysis_reported_without_news,
+                folder_path="detailed_analysis"
             )
+            
+            # Save detailed analysis with news in "detailed_analysis_with_news" subfolder
             onedrive_filename_analysis_with_news = (
                 f"CryptoAnalysisWithNews_{today_date}.md"
             )
             await upload_to_onedrive(
                 filename=onedrive_filename_analysis_with_news,
                 content=analysis_reported_with_news,
+                folder_path="detailed_analysis_with_news"
             )
         else:
             analysis_saved_to_onedrive = False
