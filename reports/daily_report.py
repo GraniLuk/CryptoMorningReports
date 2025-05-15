@@ -106,7 +106,8 @@ async def process_daily_report(
         )
         highlight_articles_message = highlight_articles(
             ai_api_key, symbols, fetched_news, ai_api_type
-        )  # --- Added OneDrive Upload ---
+        )
+        # --- OneDrive Uploads ---
         if not analysis_reported_without_news.startswith("Failed"):
             # Save detailed analysis without news in "detailed_analysis" subfolder
             onedrive_filename = f"CryptoAnalysis_{today_date}.md"
@@ -125,9 +126,26 @@ async def process_daily_report(
                 content=analysis_reported_with_news,
                 folder_path="detailed_analysis_with_news",
             )
+
+            # Save highlighted articles in "news" subfolder
+            if not highlight_articles_message.startswith("Failed"):
+                onedrive_filename_highlights = f"HighlightedNews_{today_date}.md"
+                highlights_saved_to_onedrive = await upload_to_onedrive(
+                    filename=onedrive_filename_highlights,
+                    content=highlight_articles_message,
+                    folder_path="news",
+                )
+                if highlights_saved_to_onedrive:
+                    logger.info(
+                        f"Highlighted articles for {today_date} saved to OneDrive news folder."
+                    )
+                else:
+                    logger.warning(
+                        f"Failed to save highlighted articles for {today_date} to OneDrive."
+                    )
         else:
             analysis_saved_to_onedrive = False
-        # --- End Added OneDrive Upload ---
+        # --- End OneDrive Uploads ---
 
     # Send all messages
     await send_telegram_message(
