@@ -126,18 +126,20 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if report.startswith("Failed") or report.startswith("Error"):
                 return func.HttpResponse(
                     f"Error generating report: {report}", status_code=500
-                )
-
-            # Save to OneDrive if requested
+                )            # Save to OneDrive if requested
             if save_to_onedrive:
                 from integrations.onedrive_uploader import upload_to_onedrive
 
                 today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
                 onedrive_filename = f"{symbol.upper()}_Situation_{today_date}.md"
+                
+                # Use "current_situation/SYMBOL" as folder path
+                folder_path = f"current_situation/{symbol.upper()}"
 
                 await upload_to_onedrive(
                     filename=onedrive_filename,
                     content=report,
+                    folder_path=folder_path
                 )
 
             # Send to Telegram if requested
