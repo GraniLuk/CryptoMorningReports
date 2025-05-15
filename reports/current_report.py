@@ -219,10 +219,13 @@ async def generate_crypto_situation_report(conn, symbol_name):
             try:
                 import requests
 
+                # Ensure we have headers for the Perplexity client
+                headers = getattr(ai_client, "headers", {})
+
                 response = requests.post(
                     "https://api.perplexity.ai/chat/completions",
                     json=data,
-                    headers=ai_client.headers,
+                    headers=headers,
                 )
 
                 if response.status_code == 200:
