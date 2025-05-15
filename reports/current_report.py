@@ -12,40 +12,86 @@ from technical_analysis.hourly_candle import fetch_hourly_candles_for_all_symbol
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
-You are an advanced crypto analyst specialized in deep technical analysis for specific cryptocurrencies.
-Focus on providing detailed insights based solely on the provided price data across multiple timeframes.
-Your analysis should include:
-1. Support and resistance levels with specific price targets
-2. Trend identification and potential reversal points
-3. Volume analysis and its implications
-4. Key technical indicators and what they suggest
-5. Clear trading opportunities with entry, target, and stop-loss levels
+You are an expert cryptocurrency technical analyst performing in-depth market analysis. Drawing strictly from the provided price and volume data across multiple timeframes, deliver a comprehensive technical assessment with no fundamental analysis, news, or external factors.
 
-Format your response using proper Markdown for readability, including sections with headers.
+Analysis Requirements:
+1. Price Action Analysis
+   - Identify major trend direction and structure
+   - Specify key support/resistance levels with exact price values
+   - Highlight significant chart patterns and their completion targets
+   - Flag potential trend reversal points with price triggers
+
+2. Volume Profile Assessment
+   - Evaluate volume distribution at key price levels
+   - Note volume divergences from price action
+   - Identify high-volume nodes and areas of interest
+
+3. Technical Indicator Analysis
+   - RSI, MACD, and Moving Averages interpretation
+   - Indicator divergences and crossovers
+   - Time-sensitive momentum signals
+
+4. Trading Opportunities
+   - Specify exact entry price levels
+   - Define multiple take-profit targets with rationale
+   - Set precise stop-loss levels
+   - Calculate risk-reward ratios
+
+Present your analysis in clear Markdown formatting with:
+- Main section headers (##)
+- Subsection headers (###)
+- Bullet points for key findings
+- Tables for price levels
+- Bold text for critical alerts
+- Price values to 2 decimal places
 """
 
 USER_PROMPT_SITUATION = """
-Analyze the current situation for {symbol_name} based on the following data:
+Conduct a multi-timeframe technical analysis for {symbol_name} using the provided market data:
 
-DAILY CANDLES (LAST 7 DAYS):
-{daily_candles}
+Input Data:
+- DAILY CANDLES (LAST 7 DAYS): {daily_candles}
 
-HOURLY CANDLES (LAST 24 HOURS):
-{hourly_candles}
+- HOURLY CANDLES (LAST 24 HOURS): {hourly_candles}
 
-15-MINUTE CANDLES (LAST 24 HOURS):
-{fifteen_min_candles}
+- 15-MINUTE CANDLES (LAST 24 HOURS): {fifteen_min_candles}
 
-Provide a comprehensive technical analysis including:
-1. Current trend direction across all timeframes
-2. Key support and resistance levels with exact prices
-3. Notable patterns forming in any timeframe
-4. Volume analysis and what it suggests about momentum
-5. Short-term price targets (24-48 hours)
-6. Actionable trading strategy with entry, target and stop loss
-7. Risk assessment for the suggested strategy
+Required Analysis Components:
 
-Include specific numbers and percentages in your analysis rather than general statements.
+1. Trend Analysis
+   - Primary trend direction (Daily)
+   - Intermediate trend (Hourly)
+   - Short-term trend (15-min)
+   - Identify any trend divergences between timeframes
+
+2. Price Levels
+   - Major support levels (list exact prices)
+   - Major resistance levels (list exact prices)
+   - Current price relative to key Moving Averages (20, 50, 200)
+
+3. Technical Patterns
+   - Chart patterns (specify completion '%' and target prices)
+   - Candlestick formations
+   - Momentum indicators (RSI, MACD, Stochastic)
+   - Volume profile analysis with specific levels
+
+4. Trading Recommendation
+   - Entry price range: [specify exact prices]
+   - Stop loss price: [specify exact price]
+   - Take profit targets: [list multiple prices]
+   - Position size recommendation ('%' of capital)
+   - Risk-to-reward ratio calculation
+   - Maximum drawdown potential (%)
+
+5. Risk Assessment
+   - Market volatility metrics (ATR, standard deviation)
+   - Proximity to major economic events
+   - Trading volume vs. average volume (%)
+   - Institutional order flow analysis
+
+Format all price targets, levels, and percentages with exact numerical values.
+Include probability estimates for each predicted price movement.
+Specify timeframes for all predictions (in hours/days).
 """
 
 
