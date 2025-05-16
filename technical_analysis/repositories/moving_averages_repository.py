@@ -1,7 +1,9 @@
+from datetime import date, timedelta
+
 import pandas as pd
 import pyodbc
+
 from infra.telegram_logging_handler import app_logger
-from datetime import date, timedelta
 
 
 def save_moving_averages_results(
@@ -10,9 +12,9 @@ def save_moving_averages_results(
     current_price: float,
     ma50: float,
     ma200: float,
-    ema50: float = None,
-    ema200: float = None,
-    indicator_date: date = None,
+    ema50: float,
+    ema200: float,
+    indicator_date: date,
 ) -> None:
     """
     Saves moving averages results to the database
@@ -65,7 +67,7 @@ def save_moving_averages_results(
         raise
 
 
-def fetch_yesterday_moving_averages(conn, target_date: date = None) -> pd.DataFrame:
+def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
     """
     Fetches all moving averages records from yesterday
 
@@ -95,7 +97,8 @@ def fetch_yesterday_moving_averages(conn, target_date: date = None) -> pd.DataFr
                 f"Successfully fetched {len(df)} moving averages records for {yesterday}"
             )
             return df
-
+        else:
+            return pd.DataFrame()
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching yesterday's moving averages: {e}")
         raise
