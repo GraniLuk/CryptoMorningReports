@@ -242,27 +242,27 @@ def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
 
         # Extract latest values
         if daily_df is not None and not daily_df.empty:
-            symbol_data["daily_price"] = float(daily_df["Close"].iloc[-1])
+            symbol_data["daily_price"] = f"{float(daily_df['Close'].iloc[-1]):.2f}"
             symbol_data["daily_rsi"] = (
-                float(daily_df["RSI"].iloc[-1])
+                f"{float(daily_df['RSI'].iloc[-1]):.2f}"
                 if pd.notna(daily_df["RSI"].iloc[-1])
-                else None
+                else "N/A"
             )
 
         if hourly_df is not None and not hourly_df.empty:
-            symbol_data["hourly_price"] = float(hourly_df["Close"].iloc[-1])
+            symbol_data["hourly_price"] = f"{float(hourly_df['Close'].iloc[-1]):.2f}"
             symbol_data["hourly_rsi"] = (
-                float(hourly_df["RSI"].iloc[-1])
+                f"{float(hourly_df['RSI'].iloc[-1]):.2f}"
                 if pd.notna(hourly_df["RSI"].iloc[-1])
-                else None
+                else "N/A"
             )
 
         if fifteen_min_df is not None and not fifteen_min_df.empty:
-            symbol_data["fifteen_min_price"] = float(fifteen_min_df["Close"].iloc[-1])
+            symbol_data["fifteen_min_price"] = f"{float(fifteen_min_df['Close'].iloc[-1]):.2f}"
             symbol_data["fifteen_min_rsi"] = (
-                float(fifteen_min_df["RSI"].iloc[-1])
+                f"{float(fifteen_min_df['RSI'].iloc[-1]):.2f}"
                 if pd.notna(fifteen_min_df["RSI"].iloc[-1])
-                else None
+                else "N/A"
             )
 
         data.append(symbol_data)
