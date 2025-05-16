@@ -113,13 +113,12 @@ def create_multi_timeframe_rsi_table(
                 "rsi": float(latest_row["RSI"])
                 if pd.notna(latest_row["RSI"])
                 else None,
-            }
-
-    # Add the row to the table
+            }    # Add the row to the table
     row_data = []
 
     # Use the most recent date from any timeframe
-    most_recent_date = max([data["date"] for data in latest_data.values()])
+    # Convert all date objects to pandas Timestamp to ensure consistent comparison
+    most_recent_date = max([pd.Timestamp(data["date"]) for data in latest_data.values()])
     row_data.append(most_recent_date.strftime("%Y-%m-%d %H:%M"))
 
     # Add data for each timeframe
@@ -309,6 +308,11 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
+    symbols = [
+        symbol
+        for symbol in symbols
+        if symbol.symbol_name in ["VIRTUAL"]
+    ]  # Filter for testing
 
     # Update RSI for all timeframes before generating reports
     update_daily_rsi_for_all_symbols(conn, symbols)
@@ -317,7 +321,7 @@ if __name__ == "__main__":
 
     # Generate reports
     print("Individual Symbol Report:")
-    symbol = next((s for s in symbols if s.symbol_name == "BTC"), symbols[0])
+    symbol = next((s for s in symbols if s.symbol_name == "VIRTUAL"), symbols[0])
     table = create_multi_timeframe_rsi_table(symbol, conn)
     if table:
         print(table)
