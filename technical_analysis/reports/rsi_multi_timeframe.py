@@ -264,9 +264,7 @@ def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
                 else "N/A"
             )
 
-        data.append(symbol_data)
-
-    # Create consolidated table
+        data.append(symbol_data)    # Create consolidated table
     table = PrettyTable()
     table.field_names = ["Symbol", "Daily RSI", "Hourly RSI", "15min RSI"]
 
@@ -281,15 +279,9 @@ def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
         table.add_row(
             [
                 row["symbol"],
-                f"{row.get('daily_rsi', 'N/A'):.2f}"
-                if row.get("daily_rsi") is not None
-                else "N/A",
-                f"{row.get('hourly_rsi', 'N/A'):.2f}"
-                if row.get("hourly_rsi") is not None
-                else "N/A",
-                f"{row.get('fifteen_min_rsi', 'N/A'):.2f}"
-                if row.get("fifteen_min_rsi") is not None
-                else "N/A",
+                row.get('daily_rsi', 'N/A'),
+                row.get('hourly_rsi', 'N/A'),
+                row.get('fifteen_min_rsi', 'N/A')
             ]
         )
 
@@ -325,9 +317,3 @@ if __name__ == "__main__":
     table = create_multi_timeframe_rsi_table(symbol, conn)
     if table:
         print(table)
-
-    print("\nConsolidated RSI Report:")
-    table = create_consolidated_rsi_table(
-        symbols[:5], conn
-    )  # Using first 5 symbols for testing
-    print(table)
