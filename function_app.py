@@ -131,7 +131,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                 from integrations.onedrive_uploader import upload_to_onedrive
 
                 today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
-                onedrive_filename = f"{symbol.upper()}_Situation_{today_date}.md"
+                onedrive_filename = f"{today_date}.md"
                 
                 # Use "current_situation/SYMBOL" as folder path
                 folder_path = f"current_situation/{symbol.upper()}"
@@ -158,7 +158,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                         telegram_token,
                         telegram_chat_id,
                         report,
-                        parse_mode="HTML",
+                        parse_mode="MarkdownV2",
                     )
 
             # Return the report content
