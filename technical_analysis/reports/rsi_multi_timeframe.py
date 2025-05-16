@@ -45,7 +45,7 @@ def get_rsi_for_symbol_timeframe(
     try:
         # Get candle data with RSI values from the database, using the extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
-            conn, symbol.symbol_id, calculation_start_date, timeframe
+            conn, symbol.symbol_id, calculation_start_date.isoformat(), timeframe
         )
 
         if not candles_with_rsi:
@@ -60,8 +60,32 @@ def get_rsi_for_symbol_timeframe(
         df.sort_index(inplace=True)
         df["symbol"] = symbol.symbol_name
 
-        # Check if any candles in the requested date range are missing RSI values
-        requested_df = df[df.index >= pd.Timestamp(start_date)]
+        # Ensure the index is DatetimeIndex
+        df.index = pd.to_datetime(df.index)
+        # Explicitly cast to DatetimeIndex if it's not already, for type safety
+        if not isinstance(df.index, pd.DatetimeIndex):
+            df.index = pd.DatetimeIndex(df.index)
+
+        # Convert start_date (datetime.date) to pandas Timestamp
+        # This is crucial for comparison with DatetimeIndex
+        start_timestamp = pd.Timestamp(start_date)
+
+        # Now, compare df.index with start_timestamp.
+        # If df.index is timezone-aware, start_timestamp must also be made aware or comparison might fail/behave unexpectedly.
+        # If df.index is naive, start_timestamp should also be naive.
+        if df.index.tz is not None:
+            # If start_timestamp is naive, localize it to df.index.tz
+            if start_timestamp.tz is None:
+                start_timestamp = start_timestamp.tz_localize(df.index.tz)
+            # If start_timestamp is aware but different tz, convert it
+            elif start_timestamp.tz != df.index.tz:
+                start_timestamp = start_timestamp.tz_convert(df.index.tz)
+        else:
+            # If df.index is naive, ensure start_timestamp is also naive
+            if start_timestamp.tz is not None:
+                start_timestamp = start_timestamp.tz_localize(None)
+        
+        requested_df = df[df.index >= start_timestamp]
         missing_rsi = requested_df["RSI"].isna().any()
         
         if missing_rsi:
@@ -105,8 +129,8 @@ def get_rsi_for_symbol_timeframe(
             
             app_logger.info(f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}")
         
-        # Return only the data for the requested date range
-        return df[df.index >= pd.Timestamp(start_date)]
+        # Return only the data for the requested date range using the aligned start_timestamp
+        return df[df.index >= start_timestamp]
 
     except Exception as e:
         app_logger.error(
@@ -206,7 +230,11 @@ def create_multi_timeframe_rsi_table(
             else "N/A"
         )
 
-    rsi_table.add_row(row_data)
+    # Check if all required RSI values are present
+    if latest_data['fifteen_min']['rsi'] is not None and \
+       latest_data['hourly']['rsi'] is not None and \
+       latest_data['daily']['rsi'] is not None:
+        rsi_table.add_row(row_data)
 
     return rsi_table
 
@@ -311,13 +339,13 @@ def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
         if hourly_df is not None and not hourly_df.empty:
             symbol_data["hourly_price"] = f"{float(hourly_df['Close'].iloc[-1]):.2f}"
             symbol_data["hourly_rsi"] = (
-                f"{float(hourly_df['RSI'].iloc[-1]):.2f}"
+                f"{float(hourly_df['RSI'].iloc[-1])::.2f}"
                 if pd.notna(hourly_df["RSI"].iloc[-1])
                 else "N/A"
             )
 
         if fifteen_min_df is not None and not fifteen_min_df.empty:
-            symbol_data["fifteen_min_price"] = f"{float(fifteen_min_df['Close'].iloc[-1]):.2f}"
+            symbol_data["fifteen_min_price"] = f"{float(fifteen_min_df['Close'].iloc[-1])::.2f}"
             symbol_data["fifteen_min_rsi"] = (
                 f"{float(fifteen_min_df['RSI'].iloc[-1]):.2f}"
                 if pd.notna(fifteen_min_df["RSI"].iloc[-1])
