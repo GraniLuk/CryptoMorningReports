@@ -349,7 +349,6 @@ class PerplexityClient(AIClient):
 class GeminiClient(AIClient):
     def __init__(self, api_key):
         self.api_key = api_key
-        genai.configure(api_key=api_key)
         # Default to most capable model
         self.model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
 
