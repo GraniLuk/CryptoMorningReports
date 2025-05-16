@@ -86,7 +86,6 @@ Required Analysis Components:
    - Entry price range: [specify exact prices]
    - Stop loss price: [specify exact price]
    - Take profit targets: [list multiple prices]
-   - Position size recommendation ('%' of capital)
    - Risk-to-reward ratio calculation
    - Maximum drawdown potential (%)
 
