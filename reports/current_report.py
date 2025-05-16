@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from datetime import datetime, timedelta, timezone
 
 from infra.telegram_logging_handler import app_logger
@@ -9,6 +10,7 @@ from technical_analysis.fifteen_min_candle import (
     fetch_fifteen_minutes_candles_for_all_symbols,
 )
 from technical_analysis.hourly_candle import fetch_hourly_candles_for_all_symbols
+from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
@@ -55,6 +57,11 @@ Input Data:
 - HOURLY CANDLES (LAST 24 HOURS): {hourly_candles}
 
 - 15-MINUTE CANDLES (LAST 24 HOURS): {fifteen_min_candles}
+
+- RSI DATA (MULTIPLE TIMEFRAMES):
+  Daily RSI: {daily_rsi}
+  Hourly RSI: {hourly_rsi}
+  15-min RSI: {fifteen_min_rsi}
 
 Required Analysis Components:
 
@@ -110,6 +117,27 @@ def format_candle_data(candles):
     return formatted
 
 
+def format_rsi_data(rsi_df):
+    """Format RSI data for AI prompt"""
+    if rsi_df is None or rsi_df.empty:
+        return "No RSI data available"
+
+    formatted = "Date | Close Price | RSI Value\n"
+    formatted += "---- | ----------- | ---------\n"
+
+    for idx, row in rsi_df.iterrows():
+        date_str = idx.strftime("%Y-%m-%d %H:%M")
+        close_price = row.get("Close", "N/A")
+        rsi_value = row.get("RSI", "N/A")
+        
+        if pd.notna(close_price) and pd.notna(rsi_value):
+            formatted += f"{date_str} | {close_price:.4f} | {rsi_value:.2f}\n"
+        else:
+            formatted += f"{date_str} | {close_price if pd.notna(close_price) else 'N/A'} | {rsi_value if pd.notna(rsi_value) else 'N/A'}\n"
+
+    return formatted
+
+
 async def generate_crypto_situation_report(conn, symbol_name):
     """
     Generate a comprehensive situation report for a specific cryptocurrency
@@ -136,9 +164,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
     # Calculate date ranges using UTC time
     now = datetime.now(timezone.utc)
     seven_days_ago = now - timedelta(days=7)
-    one_day_ago = now - timedelta(days=1)
-
-    # Fetch candles for different timeframes
+    one_day_ago = now - timedelta(days=1)    # Fetch candles for different timeframes
     daily_candles = fetch_daily_candles(
         symbols, conn, start_date=seven_days_ago.date(), end_date=now.date()
     )
@@ -148,6 +174,11 @@ async def generate_crypto_situation_report(conn, symbol_name):
     fifteen_min_candles = fetch_fifteen_minutes_candles_for_all_symbols(
         symbols, end_time=now, start_time=one_day_ago, conn=conn
     )
+
+    # Fetch RSI data for different timeframes
+    daily_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=7)
+    hourly_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=1)
+    fifteen_min_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "fifteen_min", lookback_days=1)
 
     # Check if we have data
     if not daily_candles or not hourly_candles or not fifteen_min_candles:
@@ -161,6 +192,11 @@ async def generate_crypto_situation_report(conn, symbol_name):
     daily_formatted = format_candle_data(daily_candles)
     hourly_formatted = format_candle_data(hourly_candles)
     fifteen_min_formatted = format_candle_data(fifteen_min_candles)
+
+    # Format RSI data for the AI prompt
+    daily_rsi_formatted = format_rsi_data(daily_rsi)
+    hourly_rsi_formatted = format_rsi_data(hourly_rsi)
+    fifteen_min_rsi_formatted = format_rsi_data(fifteen_min_rsi)
 
     # Determine which AI API to use
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -184,14 +220,15 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     try:
         # Create AI client and generate analysis
-        ai_client = create_ai_client(ai_api_type, ai_api_key)
-
-        # Prepare prompt content
+        ai_client = create_ai_client(ai_api_type, ai_api_key)        # Prepare prompt content
         formatted_prompt = USER_PROMPT_SITUATION.format(
             symbol_name=symbol_name,
             daily_candles=daily_formatted,
             hourly_candles=hourly_formatted,
             fifteen_min_candles=fifteen_min_formatted,
+            daily_rsi=daily_rsi_formatted,
+            hourly_rsi=hourly_rsi_formatted,
+            fifteen_min_rsi=fifteen_min_rsi_formatted,
         )
 
         # Initialize analysis to handle potential cases where no condition matches

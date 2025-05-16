@@ -13,7 +13,8 @@ def get_rsi_for_symbol_timeframe(
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ):
     """
-    Gets RSI data for a symbol in the specified timeframe
+    Gets RSI data for a symbol in the specified timeframe.
+    If RSI values are missing in the database, it calculates them only for the requested period.
 
     Args:
         symbol: Symbol object
@@ -27,11 +28,24 @@ def get_rsi_for_symbol_timeframe(
     # Calculate appropriate start date based on the timeframe
     target_date = date.today()
     start_date = target_date - timedelta(days=lookback_days)
+    
+    # We need to pull data from an earlier start date to calculate RSI accurately
+    # RSI typically uses 14 periods, so we add extra days/periods depending on timeframe
+    rsi_periods = 14  # Standard RSI period
+    
+    # Calculate additional lookback based on timeframe (add more periods for higher frequency data)
+    additional_lookback = {
+        "daily": rsi_periods,
+        "hourly": rsi_periods // 24 + 1,  # Minimum 1 day
+        "fifteen_min": rsi_periods // (24 * 4) + 1  # Minimum 1 day
+    }
+    
+    calculation_start_date = start_date - timedelta(days=additional_lookback.get(timeframe, rsi_periods))
 
     try:
-        # Get candle data with RSI values from the database
+        # Get candle data with RSI values from the database, using the extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
-            conn, symbol.symbol_id, start_date, timeframe
+            conn, symbol.symbol_id, calculation_start_date, timeframe
         )
 
         if not candles_with_rsi:
@@ -46,7 +60,53 @@ def get_rsi_for_symbol_timeframe(
         df.sort_index(inplace=True)
         df["symbol"] = symbol.symbol_name
 
-        return df
+        # Check if any candles in the requested date range are missing RSI values
+        requested_df = df[df.index >= pd.Timestamp(start_date)]
+        missing_rsi = requested_df["RSI"].isna().any()
+        
+        if missing_rsi:
+            app_logger.info(
+                f"Found missing {timeframe} RSI values for {symbol.symbol_name}, calculating them now..."
+            )
+            
+            # Import calculation functions inline to avoid circular imports
+            from technical_analysis.rsi import calculate_rsi_using_RMA
+            from technical_analysis.repositories.rsi_repository import save_rsi_by_timeframe
+            
+            # Calculate RSI for the entire dataframe (to ensure accurate values)
+            df["calculated_RSI"] = calculate_rsi_using_RMA(df["Close"])
+            
+            # Find rows with missing RSI values in the requested date range
+            missing_rows = requested_df[requested_df["RSI"].isna()]
+            app_logger.info(f"Found {len(missing_rows)} rows with missing RSI in the requested date range")
+              # Update only the missing values in the database
+            for idx, row in missing_rows.iterrows():
+                candle_id = int(row["SymbolId"])
+                try:
+                    calculated_rsi = float(df.at[idx, "calculated_RSI"])
+                    
+                    if not pd.isna(calculated_rsi):
+                        # Save the calculated value to the database
+                        save_rsi_by_timeframe(conn, candle_id, calculated_rsi, timeframe)
+                        
+                        # Update the dataframe
+                        df.at[idx, "RSI"] = calculated_rsi
+                        
+                        app_logger.info(
+                            f"Saved {timeframe} RSI for {symbol.symbol_name} candle {candle_id}: RSI={calculated_rsi:.2f}"
+                        )
+                except Exception as e:
+                    app_logger.error(
+                        f"Failed to save {timeframe} RSI for candle {candle_id}: {str(e)}"
+                    )
+            
+            # Remove the temporary calculation column
+            df.drop("calculated_RSI", axis=1, inplace=True, errors="ignore")
+            
+            app_logger.info(f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}")
+        
+        # Return only the data for the requested date range
+        return df[df.index >= pd.Timestamp(start_date)]
 
     except Exception as e:
         app_logger.error(
