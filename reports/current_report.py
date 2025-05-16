@@ -200,12 +200,12 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     # Calculate date ranges using UTC time
     now = datetime.now(timezone.utc)
-    seven_days_ago = now - timedelta(days=7)
+    twenty_days_ago = now - timedelta(days=20)
     one_day_ago = now - timedelta(days=1)
 
     # Fetch candles for different timeframes
     daily_candles = fetch_daily_candles(
-        symbols, conn, start_date=seven_days_ago.date(), end_date=now.date()
+        symbols, conn, start_date=twenty_days_ago.date(), end_date=now.date()
     )
     hourly_candles = fetch_hourly_candles_for_all_symbols(
         symbols, end_time=now, start_time=one_day_ago, conn=conn
