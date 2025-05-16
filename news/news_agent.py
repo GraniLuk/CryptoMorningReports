@@ -349,10 +349,45 @@ class PerplexityClient(AIClient):
 class GeminiClient(AIClient):
     def __init__(self, api_key):
         self.api_key = api_key
-        # Default to most capable model
-        self.model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
+        self.model = None  # Changed from genai.generativeModel("gemini-2.5-flash-preview-04-17")
+        logging.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
+
+        if not self.api_key:
+            logging.error("GeminiClient [__init__]: API key is missing. Configuration aborted.")
+            return
+
+        try:
+            logging.info("GeminiClient [__init__]: Attempting to import google.generativeai as active_genai_module...")
+            import google.generativeai as active_genai_module
+            logging.info(f"GeminiClient [__init__]: Imported google.generativeai as active_genai_module.")
+            
+            # Check for configure attribute
+            if hasattr(active_genai_module, 'configure'):
+                logging.info("GeminiClient [__init__]: active_genai_module.configure found. Calling it.")
+                active_genai_module.configure(api_key=self.api_key)
+                logging.info("GeminiClient [__init__]: active_genai_module.configure called.")
+            else:
+                logging.error("GeminiClient [__init__]: active_genai_module.configure NOT FOUND. Cannot configure API.")
+                return # Stop if cannot configure
+
+            # Check for GenerativeModel attribute
+            if hasattr(active_genai_module, 'GenerativeModel'):
+                logging.info("GeminiClient [__init__]: active_genai_module.GenerativeModel found. Initializing model gemini-2.5-flash-preview-04-17.")
+                self.model = active_genai_module.GenerativeModel("gemini-2.5-flash-preview-04-17")
+                logging.info("GeminiClient [__init__]: Model initialized.")
+            else:
+                logging.error("GeminiClient [__init__]: active_genai_module.GenerativeModel NOT FOUND. Cannot initialize model.")
+                return # Stop if cannot initialize model
+
+        except ImportError as e:
+            logging.error(f"GeminiClient [__init__]: ImportError: {e}. Ensure 'google-generativeai' is installed.")
+        except Exception as e:
+            logging.error(f"GeminiClient [__init__]: Unexpected error: {e}")
 
     def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
+        if not self.model:
+            logging.warning("GeminiClient [get_detailed_crypto_analysis]: Model not initialized.")
+            return "Error: Gemini client not properly initialized."
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with Gemini")
 
@@ -401,6 +436,9 @@ class GeminiClient(AIClient):
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
     ):
+        if not self.model:
+            logging.warning("GeminiClient [get_detailed_crypto_analysis_with_news]: Model not initialized.")
+            return "Error: Gemini client not properly initialized."
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with news using Gemini")
         logging.debug(f"Input news articles count: {len(news_feeded)}")
@@ -448,6 +486,9 @@ class GeminiClient(AIClient):
             return error_msg
 
     def highlight_articles(self, user_crypto_list, news_feeded):
+        if not self.model:
+            logging.warning("GeminiClient [highlight_articles]: Model not initialized.")
+            return "Error: Gemini client not properly initialized."
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
         logging.info("Starting article highlighting with Gemini")
         logging.debug(f"Symbol names provided: {symbol_names}")
