@@ -1,5 +1,6 @@
 import time
 from datetime import date, datetime, timedelta, timezone
+from typing import Optional
 
 import pandas as pd
 from kucoin import Client as KucoinClient
@@ -78,7 +79,7 @@ def fetch_daily_ranges(
     return date_ranges
 
 
-def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Candle:
+def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Optional[Candle]:
     """Fetch open, close, high, low prices and volume from KuCoin for the last full day."""
     client = KucoinClient()
 
@@ -104,15 +105,16 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> C
 
         return Candle(
             end_date=end_date,
-            source=SourceID.KUCOIN,
+            source=SourceID.KUCOIN.value,
             open=float(klines[0][1]),
             close=float(klines[0][2]),
-            symbol=symbol,
+            symbol=symbol.symbol_name,
             low=float(klines[0][4]),
             high=float(klines[0][3]),
             last=float(klines[0][2]),
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][6]),
+            id=symbol.symbol_id,
         )
 
     except Exception as e:
