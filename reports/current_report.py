@@ -1,6 +1,7 @@
 import os
-import pandas as pd
 from datetime import datetime, timedelta, timezone
+
+import pandas as pd
 
 from infra.telegram_logging_handler import app_logger
 from news.news_agent import create_ai_client
@@ -11,6 +12,9 @@ from technical_analysis.fifteen_min_candle import (
 )
 from technical_analysis.hourly_candle import fetch_hourly_candles_for_all_symbols
 from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
+from technical_analysis.repositories.moving_averages_repository import (
+    fetch_moving_averages_for_symbol,
+)
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
@@ -62,6 +66,9 @@ Input Data:
   Daily RSI: {daily_rsi}
   Hourly RSI: {hourly_rsi}
   15-min RSI: {fifteen_min_rsi}
+
+- MOVING AVERAGES DATA (LAST 7 DAYS):
+  {moving_averages}
 
 Required Analysis Components:
 
@@ -128,11 +135,42 @@ def format_rsi_data(rsi_df):
         date_str = idx.strftime("%Y-%m-%d %H:%M")
         close_price = row.get("Close", "N/A")
         rsi_value = row.get("RSI", "N/A")
-        
+
         if pd.notna(close_price) and pd.notna(rsi_value):
             formatted += f"{date_str} | {close_price:.4f} | {rsi_value:.2f}\n"
         else:
             formatted += f"{date_str} | {close_price if pd.notna(close_price) else 'N/A'} | {rsi_value if pd.notna(rsi_value) else 'N/A'}\n"
+
+    return formatted
+
+
+def format_moving_averages_data(ma_df):
+    """Format moving averages data for AI prompt"""
+    if ma_df is None or ma_df.empty:
+        return "No moving averages data available"
+
+    formatted = "Date | Price | MA50 | MA200 | EMA50 | EMA200\n"
+    formatted += "---- | ----- | ---- | ----- | ----- | ------\n"
+
+    for _, row in ma_df.iterrows():
+        date_str = row.get("IndicatorDate", "").strftime("%Y-%m-%d")
+        price = row.get("CurrentPrice", "N/A")
+        ma50 = row.get("MA50", "N/A")
+        ma200 = row.get("MA200", "N/A")
+        ema50 = row.get("EMA50", "N/A")
+        ema200 = row.get("EMA200", "N/A")
+
+        if all(pd.notna(x) for x in [price, ma50, ma200, ema50, ema200]):
+            formatted += f"{date_str} | {price:.4f} | {ma50:.4f} | {ma200:.4f} | {ema50:.4f} | {ema200:.4f}\n"
+        else:
+            values = [
+                price if pd.notna(price) else "N/A",
+                ma50 if pd.notna(ma50) else "N/A",
+                ma200 if pd.notna(ma200) else "N/A",
+                ema50 if pd.notna(ema50) else "N/A",
+                ema200 if pd.notna(ema200) else "N/A",
+            ]
+            formatted += f"{date_str} | {values[0]} | {values[1]} | {values[2]} | {values[3]} | {values[4]}\n"
 
     return formatted
 
@@ -162,10 +200,12 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     # Calculate date ranges using UTC time
     now = datetime.now(timezone.utc)
-    seven_days_ago = now - timedelta(days=7)
-    one_day_ago = now - timedelta(days=1)    # Fetch candles for different timeframes
+    twenty_days_ago = now - timedelta(days=20)
+    one_day_ago = now - timedelta(days=1)
+
+    # Fetch candles for different timeframes
     daily_candles = fetch_daily_candles(
-        symbols, conn, start_date=seven_days_ago.date(), end_date=now.date()
+        symbols, conn, start_date=twenty_days_ago.date(), end_date=now.date()
     )
     hourly_candles = fetch_hourly_candles_for_all_symbols(
         symbols, end_time=now, start_time=one_day_ago, conn=conn
@@ -177,7 +217,14 @@ async def generate_crypto_situation_report(conn, symbol_name):
     # Fetch RSI data for different timeframes
     daily_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=7)
     hourly_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=1)
-    fifteen_min_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "fifteen_min", lookback_days=1)
+    fifteen_min_rsi = get_rsi_for_symbol_timeframe(
+        symbol, conn, "fifteen_min", lookback_days=1
+    )
+
+    # Fetch moving averages data for the symbol
+    moving_averages = fetch_moving_averages_for_symbol(
+        conn, symbol.symbol_id, lookback_days=7
+    )
 
     # Check if we have data
     if not daily_candles or not hourly_candles or not fifteen_min_candles:
@@ -196,6 +243,9 @@ async def generate_crypto_situation_report(conn, symbol_name):
     daily_rsi_formatted = format_rsi_data(daily_rsi)
     hourly_rsi_formatted = format_rsi_data(hourly_rsi)
     fifteen_min_rsi_formatted = format_rsi_data(fifteen_min_rsi)
+
+    # Format moving averages data for the AI prompt
+    moving_averages_formatted = format_moving_averages_data(moving_averages)
 
     # Determine which AI API to use
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -219,7 +269,9 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     try:
         # Create AI client and generate analysis
-        ai_client = create_ai_client(ai_api_type, ai_api_key)        # Prepare prompt content
+        ai_client = create_ai_client(ai_api_type, ai_api_key)
+
+        # Prepare prompt content
         formatted_prompt = USER_PROMPT_SITUATION.format(
             symbol_name=symbol_name,
             daily_candles=daily_formatted,
@@ -228,6 +280,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
             daily_rsi=daily_rsi_formatted,
             hourly_rsi=hourly_rsi_formatted,
             fifteen_min_rsi=fifteen_min_rsi_formatted,
+            moving_averages=moving_averages_formatted,
         )
 
         # Initialize analysis to handle potential cases where no condition matches
