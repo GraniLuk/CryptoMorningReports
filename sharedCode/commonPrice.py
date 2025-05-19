@@ -18,7 +18,7 @@ class Candle:
         last: float,
         volume: float,
         volume_quote: float,
-        id: int = None,
+        id: int,
     ):
         self.symbol = symbol
         self.source = source
