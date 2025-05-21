@@ -83,7 +83,7 @@ def fetch_close_prices_from_Binance(
         return pd.DataFrame()
 
 
-def fetch_binance_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Candle:
+def fetch_binance_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Optional[Candle]:
     """Fetch open and close prices from Binance for the last full day."""
     client = BinanceClient()
 
@@ -131,7 +131,7 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date = date.today()) -> 
 # Adding hourly and fifteen-minute candle fetching functions
 
 
-def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Candle:
+def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Optional[Candle]:
     """
     Fetch open, close, high, low prices and volume from Binance for the specified hour.
 
@@ -143,9 +143,6 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Can
         Candle object if successful, None otherwise
     """
     client = BinanceClient()
-    end_time = end_time or datetime.now(timezone.utc).replace(
-        minute=0, second=0, microsecond=0
-    )
 
     # Start time is 1 hour before end time
     start_time = end_time - timedelta(hours=1)
@@ -170,7 +167,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Can
 
         return Candle(
             end_date=end_time,
-            source=SourceID.BINANCE,
+            source=SourceID.BINANCE.value,
             open=float(klines[0][1]),
             close=float(klines[0][4]),
             symbol=symbol.symbol_name,
@@ -179,6 +176,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Can
             last=float(klines[0][4]),
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][7]),
+            id=symbol.symbol_id,
         )
 
     except BinanceAPIException as e:
@@ -194,8 +192,8 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Can
 
 
 def fetch_binance_fifteen_min_kline(
-    symbol: Symbol, end_time: datetime = None
-) -> Candle:
+    symbol: Symbol, end_time: datetime
+) -> Optional[Candle]:
     """
     Fetch open, close, high, low prices and volume from Binance for the specified 15-minute interval.
 
@@ -208,12 +206,7 @@ def fetch_binance_fifteen_min_kline(
     """
     client = BinanceClient()
 
-    if end_time is None:
-        end_time = datetime.now(timezone.utc)
-        # Round to nearest 15 minutes
-        minutes = (end_time.minute // 15) * 15
-        end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
-    elif end_time.tzinfo is None:
+    if end_time.tzinfo is None:
         # Convert naive datetime to timezone-aware
         end_time = end_time.replace(tzinfo=timezone.utc)
 
@@ -240,7 +233,7 @@ def fetch_binance_fifteen_min_kline(
 
         return Candle(
             end_date=end_time,
-            source=SourceID.BINANCE,
+            source=SourceID.BINANCE.value,
             open=float(klines[0][1]),
             close=float(klines[0][4]),
             symbol=symbol.symbol_name,
@@ -249,6 +242,7 @@ def fetch_binance_fifteen_min_kline(
             last=float(klines[0][4]),
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][7]),
+            id=symbol.symbol_id,
         )
 
     except BinanceAPIException as e:
