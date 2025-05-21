@@ -31,7 +31,7 @@ def fetch_daily_candle(
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)
-        cached_candle = repo.get_candle(symbol, end_date)
+        cached_candle = repo.get_candle(symbol, datetime.combine(end_date, datetime.min.time()))
         if cached_candle:
             return cached_candle
 
