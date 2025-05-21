@@ -27,7 +27,7 @@ _price_cache: Dict[Tuple[str, SourceID], TickerPrice] = {}
 
 def fetch_daily_candle(
     symbol: Symbol, end_date: date = date.today(), conn=None
-) -> Candle:
+) -> Optional[Candle]:
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)
@@ -50,7 +50,7 @@ def fetch_daily_candle(
 
 
 def fetch_hourly_candle(
-    symbol: Symbol, end_time: datetime = None, conn=None
+    symbol: Symbol, end_time: datetime, conn=None
 ) -> Optional[Candle]:
     """
     Fetch hourly candle data for a symbol at the specified end time
@@ -63,7 +63,6 @@ def fetch_hourly_candle(
     Returns:
         Candle object if successful, None otherwise
     """
-    end_time = end_time or datetime.now(timezone.utc)
     # Ensure end_time is timezone-aware
     if end_time.tzinfo is None:
         end_time = end_time.replace(tzinfo=timezone.utc)
