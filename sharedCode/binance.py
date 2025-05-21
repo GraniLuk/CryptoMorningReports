@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
+from typing import Optional
 
 import pandas as pd
 from binance.client import Client as BinanceClient
@@ -9,7 +10,7 @@ from sharedCode.commonPrice import Candle, TickerPrice
 from source_repository import SourceID, Symbol
 
 
-def fetch_binance_price(symbol: Symbol) -> TickerPrice:
+def fetch_binance_price(symbol: Symbol) -> Optional[TickerPrice]:
     """Fetch price data from Binance exchange."""
     # Initialize the client
     client = BinanceClient()
