@@ -80,7 +80,7 @@ def calculate_macd(
             # Determine status
             status = "🟢" if histogram > 0 else "🔴"
             # Check for crossovers
-            if not yesterdayValues.empty:
+            if yesterdayValues is not None and not yesterdayValues.empty:
                 yesterday_data = yesterdayValues[
                     yesterdayValues["SymbolName"] == symbol.symbol_name
                 ]

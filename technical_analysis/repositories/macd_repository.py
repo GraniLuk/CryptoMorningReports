@@ -1,3 +1,4 @@
+from typing import Optional
 import pandas as pd
 import pyodbc
 from infra.telegram_logging_handler import app_logger
@@ -11,7 +12,7 @@ def save_macd_results(
     macd: float,
     signal: float,
     histogram: float,
-    indicator_date: date = None,
+    indicator_date: date,
 ) -> None:
     """
     Saves MACD results to the database
@@ -62,7 +63,7 @@ def save_macd_results(
         raise
 
 
-def fetch_yesterday_macd(conn, target_date: date = None) -> pd.DataFrame:
+def fetch_yesterday_macd(conn, target_date: date) -> Optional[pd.DataFrame]:
     """
     Fetches all MACD records from yesterday
 
@@ -75,7 +76,6 @@ def fetch_yesterday_macd(conn, target_date: date = None) -> pd.DataFrame:
     """
     try:
         if conn:
-            target_date = target_date or date.today()
             yesterday = target_date - timedelta(days=1)
 
             query = """
