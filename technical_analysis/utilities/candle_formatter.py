@@ -41,10 +41,10 @@ def get_candle_data(
 
         # Filter candles for this symbol
         symbol_hourly_candles = [
-            c for c in hourly_candles if c.symbol_id == symbol.symbol_id
+            c for c in hourly_candles if c.id == symbol.symbol_id
         ]
         symbol_fifteen_min_candles = [
-            c for c in fifteen_min_candles if c.symbol_id == symbol.symbol_id
+            c for c in fifteen_min_candles if c.id == symbol.symbol_id
         ]
 
         # Format the candles
