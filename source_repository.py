@@ -119,11 +119,10 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
 
         query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
 
-        query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
-
         with conn.cursor() as cursor:
             row = cursor.execute(query, (symbol_name,)).fetchone()
-            raise SymbolNotFoundError(f"Symbol '{symbol_name}' not found in the database")
+            if row is None:
+                raise SymbolNotFoundError(f"Symbol '{symbol_name}' not found in the database")
 
         return Symbol(
             symbol_id=row[0],
