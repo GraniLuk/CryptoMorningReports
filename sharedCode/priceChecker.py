@@ -96,7 +96,7 @@ def fetch_hourly_candle(
 
 
 def fetch_hourly_candles(
-    symbol: Symbol, start_time: datetime = None, end_time: datetime = None, conn=None
+    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> List[Candle]:
     """
     Fetch multiple hourly candles for a given symbol between start_time and end_time.
@@ -182,7 +182,7 @@ def fetch_hourly_candles(
 
 
 def fetch_fifteen_min_candle(
-    symbol: Symbol, end_time: datetime = None, conn=None
+    symbol: Symbol, end_time: datetime, conn=None
 ) -> Optional[Candle]:
     """
     Fetch 15-minute candle data for a symbol at the specified end time
@@ -230,7 +230,7 @@ def fetch_fifteen_min_candle(
 
 
 def fetch_fifteen_min_candles(
-    symbol: Symbol, start_time: datetime = None, end_time: datetime = None, conn=None
+    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> List[Candle]:
     """
     Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
@@ -325,7 +325,11 @@ def fetch_daily_candles(
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)
-        cached_candles = repo.get_candles(symbol, start_date, end_date)
+        cached_candles = repo.get_candles(
+            symbol, 
+            datetime.combine(start_date, datetime.min.time()),
+            datetime.combine(end_date, datetime.min.time())
+        )
         if cached_candles:
             return cached_candles
 
@@ -341,7 +345,7 @@ def fetch_daily_candles(
     return candles
 
 
-def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPrice:
+def fetch_current_price(symbol: Symbol, source_id: SourceID) -> TickerPrice:
     # Use provided source_id if available, otherwise use symbol's source_id
     used_source_id = source_id if source_id is not None else symbol.source_id
     cache_key = (symbol.symbol_name, used_source_id)
@@ -360,6 +364,8 @@ def fetch_current_price(symbol: Symbol, source_id: SourceID = None) -> TickerPri
         price = fetch_coingecko_price(symbol)
 
     # Update cache
+    if price is None:
+        raise ValueError(f"Failed to fetch price for {symbol.symbol_name} from {used_source_id}")
     _price_cache[cache_key] = price
     return price
 
@@ -392,8 +398,11 @@ if __name__ == "__main__":
         full_name="Bitcoin",  # Added required field
         source_id=SourceID.BINANCE,
     )
+    
+    start_time = datetime.now(timezone.utc) - timedelta(days=1)
+    end_time = datetime.now(timezone.utc)
 
-    daily_candles = fetch_hourly_candles(symbol, conn=conn)
+    daily_candles = fetch_hourly_candles(symbol, start_time=start_time, end_time=end_time, conn=conn)
     for daily_candle in daily_candles:
         print(
             f"Daily candle for {symbol.symbol_name}: {daily_candle.close} {daily_candle.end_date}"
