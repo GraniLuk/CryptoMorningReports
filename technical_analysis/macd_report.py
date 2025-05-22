@@ -16,12 +16,11 @@ from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 
 
 def calculate_macd(
-    symbols: List[Symbol], conn, target_date: date = None
+    symbols: List[Symbol], conn, target_date: date
 ) -> PrettyTable:
     """
     Calculates MACD indicators for given symbols and returns a formatted table
     """
-    target_date = target_date or date.today()
 
     macd_values = []
     MACDData = namedtuple(
@@ -163,5 +162,5 @@ if __name__ == "__main__":
 
     symbols = [symbol]
 
-    macd_report = calculate_macd(symbols, conn=conn)
+    macd_report = calculate_macd(symbols, conn=conn, target_date=date.today())
     print(macd_report)
