@@ -21,7 +21,7 @@ class Symbol:
     symbol_name: str
     full_name: str
     source_id: SourceID  # Use enum for SourceID
-    coingecko_name: Optional[str] = None
+    coingecko_name: str
 
     @property
     def kucoin_name(self) -> str:

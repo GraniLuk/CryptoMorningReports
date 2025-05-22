@@ -263,6 +263,7 @@ if __name__ == "__main__":
         symbol_name="BTC",
         full_name="Bitcoin",
         source_id=SourceID.BINANCE,
+        coingecko_name="bitcoin",
     )
 
     # # Fetch current price
