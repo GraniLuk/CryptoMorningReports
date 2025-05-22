@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -15,12 +15,11 @@ from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
 def create_rsi_table_for_symbol(
-    symbol: Symbol, conn, target_date: date = None
-) -> PrettyTable:
+    symbol: Symbol, conn, target_date: date
+) -> Optional[PrettyTable]:
     """
     Creates RSI table for a given symbol using daily candles data
     """
-    target_date = target_date or date.today()
     all_values = pd.DataFrame()
 
     try:
@@ -110,12 +109,11 @@ def create_rsi_table_for_symbol(
 
 
 def create_rsi_table(
-    symbols: List[Symbol], conn, target_date: date = None
+    symbols: List[Symbol], conn, target_date: date
 ) -> PrettyTable:
     """
     Creates RSI table for given symbols using daily candles data
     """
-    target_date = target_date or date.today()
     all_values = pd.DataFrame()
 
     for symbol in symbols:
@@ -241,4 +239,4 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
     symbol = [symbol for symbol in symbols if symbol.symbol_name == "LINK"][0]
-    print(create_rsi_table_for_symbol(symbol, conn))
+    print(create_rsi_table_for_symbol(symbol, conn, target_date=date.today()))
