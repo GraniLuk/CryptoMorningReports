@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Optional
 
 import pyodbc
 
@@ -105,7 +106,7 @@ def save_rsi_by_timeframe(
 
 def get_candles_with_rsi(
     conn, symbol_id: int, from_date, timeframe: str = "daily"
-) -> list:
+) -> Optional[list]:
     """
     Fetches candle data with RSI for a specific symbol,
     only returning records on or after the specified date.
@@ -191,6 +192,8 @@ def get_historical_rsi(
     Returns:
         dict: Dictionary containing current, yesterday and week ago RSI values
     """
+    results = {}  # Initialize empty results dictionary
+    
     try:
         if conn:
             cursor = conn.cursor()
@@ -241,7 +244,6 @@ def get_historical_rsi(
             """
             cursor.execute(query, (symbol_id, date, date))
 
-            results = {}
             for row in cursor.fetchall():
                 # Handle case where RSI might be None
                 if row[1] is not None:
@@ -269,7 +271,8 @@ def get_historical_rsi(
                             results[week_description] = float(row[1])
 
             cursor.close()
-            return results
+        
+        return results  # Return results dictionary (empty if conn is None or exception occurs)
 
     except pyodbc.Error as e:
         app_logger.error(
