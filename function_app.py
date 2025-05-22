@@ -41,7 +41,8 @@ async def run_report(report_type="daily"):
                     conn, telegram_enabled, telegram_token, telegram_chat_id
                 )
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     except Exception as e:
         logger.error(f"Function failed with error: {str(e)}")
@@ -165,7 +166,8 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse(report, mimetype="text/markdown")
 
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     except Exception as e:
         app_logger.error(f"Error in crypto_situation function: {str(e)}")
