@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 import pandas as pd
@@ -40,8 +41,8 @@ def run_backtest(
     for i in range(len(df)):
         if not active_trade and df.loc[i, "signal"] and (i + daysAfterToBuy < len(df)):
             active_trade = True
-            entry_date = df.loc[i + daysAfterToBuy, "date"]
-            entry_price = df.loc[i + daysAfterToBuy, "Open"]
+            entry_date = datetime.strptime(str(df.loc[i + daysAfterToBuy, "date"]), "%Y-%m-%d") 
+            entry_price = Decimal(str(df.loc[i + daysAfterToBuy, "Open"]))
             print(
                 f"Started {position_type} position for {symbol_name} on date {entry_date} with entry price {entry_price}"
             )
@@ -55,9 +56,9 @@ def run_backtest(
             close_price = None
 
             for j in range(i + daysAfterToBuy, len(df)):
-                current_high = df.loc[j, "High"]
-                current_low = df.loc[j, "Low"]
-                current_date = df.loc[j, "date"]
+                current_high = Decimal(str(df.loc[j, "High"]))
+                current_low = Decimal(str(df.loc[j, "Low"]))
+                current_date = datetime.strptime(str(df.loc[j, "date"]), "%Y-%m-%d")
                 close_date = current_date
 
                 if position_type == "LONG":
