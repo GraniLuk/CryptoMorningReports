@@ -9,11 +9,11 @@ def save_stepn_results(
     gst_price: float,
     ratio: float,
     ema: float,
-    min_24h: float = None,
-    max_24h: float = None,
-    range_24h: float = None,
-    rsi: float = None,
-    transactions_count: int = None,
+    min_24h: float,
+    max_24h: float,
+    range_24h: float,
+    rsi: float,
+    transactions_count: int,
 ) -> None:
     """
     Saves STEPN results to the database
