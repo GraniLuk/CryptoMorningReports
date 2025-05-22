@@ -44,12 +44,12 @@ def fetch_stepn_report(conn) -> PrettyTable:
 
     # Fetch and calculate 24h range
     gst_ratio_result = fetch_gstgmt_ratio_range()
-    min_24h, max_24h, range_percent = None, None, None
+    min_24h, max_24h, range_percent = 0, 0, 0
     if gst_ratio_result:
         min_24h, max_24h, range_percent = fetch_gstgmt_ratio_range()
 
     # Get transaction count
-    transactions_count = None
+    transactions_count = 0
     try:
         api_key = os.environ.get("BSC_SCAN_API_KEY")
         if api_key:
@@ -98,7 +98,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
                 min_24h=min_24h,
                 max_24h=max_24h,
                 range_24h=range_percent,
-                rsi=float(rsi_results.iloc[-1]) if not rsi_results.empty else None,
+                rsi=float(rsi_results.iloc[-1]) if not rsi_results.empty else 0,
                 transactions_count=transactions_count,
             )
         except Exception as e:
