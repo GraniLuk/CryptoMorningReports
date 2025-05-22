@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -9,13 +10,12 @@ from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def create_rsi_table_for_symbol(
-    symbol: Symbol, conn, target_date: date = None
-) -> PrettyTable:
+    symbol: Symbol, conn, target_date: date
+) -> Optional[PrettyTable]:
     """
     Creates RSI table for a symbol using daily candles data for the last 30 days,
     identifies divergences, and checks for RSI trendline breakouts.
     """
-    target_date = target_date or date.today()
     all_values = pd.DataFrame()
 
     try:
