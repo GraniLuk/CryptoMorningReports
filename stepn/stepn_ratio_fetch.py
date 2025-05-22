@@ -5,7 +5,7 @@ import os
 from datetime import timedelta
 
 
-def fetch_gstgmt_ratio_range():
+def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
     try:
         # Initialize credentials and Logs Query Client
         credential = DefaultAzureCredential()
