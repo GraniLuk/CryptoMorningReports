@@ -83,8 +83,9 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
 
     only_btc = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
-
+    end_time = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    start_time = end_time - timedelta(hours=1)
     # Test fetching hourly candles
-    fetch_hourly_candles(only_btc[0], conn=conn)
+    fetch_hourly_candles(only_btc[0], start_time=start_time, end_time=end_time, conn=conn)
     # Test calculating hourly RSI
     calculate_hourly_rsi(only_btc, conn=conn)
