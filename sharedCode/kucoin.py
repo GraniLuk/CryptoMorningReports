@@ -129,7 +129,7 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
 # Adding hourly and fifteen-minute candle fetching functions
 
 
-def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Candle:
+def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime) -> Optional[Candle]:
     """
     Fetch open, close, high, low prices and volume from KuCoin for the specified hour.
 
@@ -192,7 +192,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Cand
         return None
 
 
-def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime = None) -> Candle:
+def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Optional[Candle]:
     """
     Fetch open, close, high, low prices and volume from KuCoin for the specified 15-minute interval.
 
@@ -205,13 +205,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime = None) ->
     """
     client = KucoinClient()
 
-    if end_time is None:
-        # Get the current time in UTC
-        current_time = datetime.now(timezone.utc)
-        # Round to nearest 15 minutes (floor)
-        minutes = (current_time.minute // 15) * 15
-        end_time = current_time.replace(minute=minutes, second=0, microsecond=0)
-    elif end_time.tzinfo is None:
+    if end_time.tzinfo is None:
         # Convert naive datetime to timezone-aware
         end_time = end_time.replace(tzinfo=timezone.utc)
 
@@ -267,10 +261,15 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
     symbol = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"][0]
     start_date = "2025-01-11"  # Start date (YYYY-MM-DD)
-    end_date = "2025-01-14"  # End date (YYYY-MM-DD)
+    end_date = datetime.now(timezone.utc)
+    end_date = end_date.replace(minute=0, second=0, microsecond=0)  # End date (YYYY-MM-DD)
 
-    hourly_candle = fetch_kucoin_hourly_kline(symbol)
-    print(
-        f"Date: {hourly_candle.end_date}, High: {hourly_candle.high}, Low: {hourly_candle.low}, "
-        f"Open: {hourly_candle.open}, Close: {hourly_candle.close}, Volume: {hourly_candle.volume}"
-    )
+    hourly_candle = fetch_kucoin_hourly_kline(symbol, end_time=end_date)
+    if hourly_candle:
+        # Print the fetched hourly candle data
+        print(
+            f"Date: {hourly_candle.end_date}, High: {hourly_candle.high}, Low: {hourly_candle.low}, "
+            f"Open: {hourly_candle.open}, Close: {hourly_candle.close}, Volume: {hourly_candle.volume}"
+        )
+    else:
+        print("Failed to fetch hourly candle data.")    
