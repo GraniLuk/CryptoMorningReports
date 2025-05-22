@@ -68,20 +68,18 @@ def fetch_symbols(conn) -> List[Symbol]:
         if not conn:
             raise ConnectionError("Database connection was not established.")
 
-        cursor = conn.cursor()
         query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE IsActive = 1"
 
-        for row in cursor.execute(query):
-            symbol = Symbol(
-                symbol_id=row[0],
-                symbol_name=row[1],
-                full_name=row[2],
-                source_id=SourceID(row[3]),
-                coingecko_name=row[4],
-            )
-            symbols.append(symbol)
-
-        cursor.close()
+        with conn.cursor() as cursor:
+            for row in cursor.execute(query):
+                symbol = Symbol(
+                    symbol_id=row[0],
+                    symbol_name=row[1],
+                    full_name=row[2],
+                    source_id=SourceID(row[3]),
+                    coingecko_name=row[4],
+                )
+                symbols.append(symbol)
 
         if not symbols:
             app_logger.error("No active symbols found in the database")
@@ -119,14 +117,12 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
         if not conn:
             raise ConnectionError("Database connection was not established.")
 
-        cursor = conn.cursor()
         query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
 
-        row = cursor.execute(query, (symbol_name,)).fetchone()
-        cursor.close()
+        query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
 
-        if not row:
-            app_logger.warning(f"Symbol '{symbol_name}' not found in the database")
+        with conn.cursor() as cursor:
+            row = cursor.execute(query, (symbol_name,)).fetchone()
             raise SymbolNotFoundError(f"Symbol '{symbol_name}' not found in the database")
 
         return Symbol(
