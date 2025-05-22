@@ -3,7 +3,7 @@ Utility functions for formatting candle data for AI prompts
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 from source_repository import Symbol
@@ -30,13 +30,14 @@ def get_candle_data(
 
     # Get the current time for end time
     end_time = datetime.now(timezone.utc)
-
-    # Fetch candles from database
-    hourly_candles = fetch_hourly_candles(symbols, conn, end_time=end_time)
-    fifteen_min_candles = fetch_fifteen_min_candles(symbols, conn, end_time=end_time)
+    hourly_start_time = end_time - timedelta(hours=hourly_limit)
+    fifteen_min_start_time = end_time - timedelta(minutes=minute_limit)
 
     # Process candles for each symbol
     for symbol in symbols:
+        # Fetch candles from database
+        hourly_candles = fetch_hourly_candles(symbol=symbol, start_time=hourly_start_time, end_time=end_time, conn=conn)
+        fifteen_min_candles = fetch_fifteen_min_candles(symbol=symbol, start_time=fifteen_min_start_time, end_time=end_time, conn=conn)
         symbol_name = symbol.symbol_name
 
         # Filter candles for this symbol
@@ -50,28 +51,28 @@ def get_candle_data(
         # Format the candles
         hourly_data = [
             {
-                "time": c.time_open.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "o": c.price_open,
-                "h": c.price_high,
-                "l": c.price_low,
-                "c": c.price_close,
+                "time": c.end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "o": c.open,
+                "h": c.high,
+                "l": c.low,
+                "c": c.close,
                 "v": c.volume,
             }
-            for c in sorted(symbol_hourly_candles, key=lambda x: x.time_open)[
+            for c in sorted(symbol_hourly_candles, key=lambda x: x.end_date)[
                 -hourly_limit:
             ]
         ]
 
         fifteen_min_data = [
             {
-                "time": c.time_open.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "o": c.price_open,
-                "h": c.price_high,
-                "l": c.price_low,
-                "c": c.price_close,
+                "time": c.end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "o": c.open,
+                "h": c.high,
+                "l": c.low,
+                "c": c.close,
                 "v": c.volume,
             }
-            for c in sorted(symbol_fifteen_min_candles, key=lambda x: x.time_open)[
+            for c in sorted(symbol_fifteen_min_candles, key=lambda x: x.end_date)[
                 -minute_limit:
             ]
         ]

@@ -22,7 +22,6 @@ def create_rsi_table_for_symbol(
         # Get 30 days of data with RSI values
         start_date = target_date - timedelta(days=30)
         candles_with_rsi = get_candles_with_rsi(conn, symbol.symbol_id, start_date)
-        print(candles_with_rsi[0])
 
         if not candles_with_rsi:
             return None
