@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import requests
 from prettytable import PrettyTable
@@ -10,7 +11,7 @@ from technical_analysis.repositories.sopr_repository import save_sopr_results
 API_BASE = "https://bitcoin-data.com/"
 
 
-def fetch_sopr_metrics(conn) -> tuple:
+def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
     """
     Retrieves yesterday's SOPR variants from BGeometrics API and saves to database
 
@@ -18,7 +19,7 @@ def fetch_sopr_metrics(conn) -> tuple:
         conn: Database connection
 
     Returns:
-        tuple: (PrettyTable) containing formatted table for display
+        PrettyTable: containing formatted table for display
     """
     metrics = {}
     yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
