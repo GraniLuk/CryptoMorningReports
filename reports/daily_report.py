@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from infra.telegram_logging_handler import app_logger
 from integrations.onedrive_uploader import upload_to_onedrive  # Added import
@@ -40,7 +40,7 @@ async def process_daily_report(
     ma_average_table, ema_average_table = calculate_indicators(symbols, conn)
     range_table = fetch_range_price(symbols, conn)
     stepn_table = fetch_stepn_report(conn)
-    macd_table = calculate_macd(symbols, conn)
+    macd_table = calculate_macd(symbols, conn, target_date=date.today())
     launchpool_report = check_gempool_articles()
     volume_table = fetch_volume_report(symbols, conn)
     marketcap_table = fetch_marketcap_report(symbols, conn)
