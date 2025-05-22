@@ -13,11 +13,9 @@ import pandas as pd
 
 
 def calculate_indicators(
-    symbols: List[Symbol], conn, target_date: date = None
+    symbols: List[Symbol], conn, target_date: date
 ) -> tuple[PrettyTable, PrettyTable]:
     # If no date provided, use today's date
-    target_date = target_date or date.today()
-
     ma_values = []
     ema_values = []
     MAData = namedtuple(
@@ -312,4 +310,4 @@ if __name__ == "__main__":
     )
 
     symbols = [symbol]
-    calculate_indicators(symbols, conn)
+    calculate_indicators(symbols, conn, target_date=date.today())
