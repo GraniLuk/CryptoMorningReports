@@ -345,10 +345,8 @@ def fetch_daily_candles(
     return candles
 
 
-def fetch_current_price(symbol: Symbol, source_id: SourceID) -> TickerPrice:
-    # Use provided source_id if available, otherwise use symbol's source_id
-    used_source_id = source_id if source_id is not None else symbol.source_id
-    cache_key = (symbol.symbol_name, used_source_id)
+def fetch_current_price(symbol: Symbol) -> TickerPrice:
+    cache_key = (symbol.symbol_name, symbol.source_id)
 
     # Check cache
     if cache_key in _price_cache:
@@ -356,16 +354,16 @@ def fetch_current_price(symbol: Symbol, source_id: SourceID) -> TickerPrice:
 
     # Fetch new price
     price = None
-    if used_source_id == SourceID.KUCOIN:
+    if symbol.source_id == SourceID.KUCOIN:
         price = fetch_kucoin_price(symbol)
-    if used_source_id == SourceID.BINANCE:
+    if symbol.source_id == SourceID.BINANCE:
         price = fetch_binance_price(symbol)
-    if used_source_id == SourceID.COINGECKO:
+    if symbol.source_id == SourceID.COINGECKO:
         price = fetch_coingecko_price(symbol)
 
     # Update cache
     if price is None:
-        raise ValueError(f"Failed to fetch price for {symbol.symbol_name} from {used_source_id}")
+        raise ValueError(f"Failed to fetch price for {symbol.symbol_name} from {symbol.source_id}")
     _price_cache[cache_key] = price
     return price
 
@@ -397,6 +395,7 @@ if __name__ == "__main__":
         symbol_name="XRP",
         full_name="Bitcoin",  # Added required field
         source_id=SourceID.BINANCE,
+        coingecko_name="ripple",
     )
     
     start_time = datetime.now(timezone.utc) - timedelta(days=1)

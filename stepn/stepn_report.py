@@ -19,6 +19,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
             symbol_name="GMT",
             full_name="STEPN Token",
             source_id=SourceID.BINANCE,
+            coingecko_name="stepn",
         ),
         Symbol(
             symbol_id=2,

@@ -308,6 +308,7 @@ if __name__ == "__main__":
         symbol_name="BTC",
         full_name="Bitcoin",  # Added required field
         source_id=SourceID.BINANCE,
+        coingecko_name="bitcoin",  # Added required field
     )
 
     symbols = [symbol]

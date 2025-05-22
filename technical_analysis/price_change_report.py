@@ -77,12 +77,14 @@ if __name__ == "__main__":
             symbol_name="BTC",
             full_name="Bitcoin",
             source_id=SourceID.BINANCE,
+            coingecko_name="bitcoin",
         ),
         Symbol(
             symbol_id=2,
             symbol_name="ETH",
             full_name="Ethereum",
             source_id=SourceID.BINANCE,
+            coingecko_name="ethereum",
         ),
     ]
 
