@@ -1,4 +1,6 @@
 import pyodbc
+from typing import List, Tuple, Optional
+from datetime import date
 
 from infra.telegram_logging_handler import app_logger
 
@@ -72,7 +74,7 @@ def save_stepn_results(
         raise
 
 
-def fetch_stepn_results_last_14_days(conn):
+def fetch_stepn_results_last_14_days(conn) -> Optional[List[Tuple[float, float, float, date]]]:
     """
     Fetches STEPN results from the last 14 days from the database.
 
