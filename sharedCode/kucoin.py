@@ -215,7 +215,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Cand
 
         return Candle(
             end_date=end_time,
-            source=SourceID.KUCOIN,
+            source=SourceID.KUCOIN.value,
             open=float(klines[0][1]),
             close=float(klines[0][2]),
             symbol=symbol.symbol_name,
@@ -224,6 +224,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime = None) -> Cand
             last=float(klines[0][2]),  # Using close as last
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][6]),
+            id=symbol.symbol_id,
         )
 
     except Exception as e:
