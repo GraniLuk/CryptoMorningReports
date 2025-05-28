@@ -91,17 +91,18 @@ Only consider the articles provided in the input.
 
 class AIClient(ABC):
     @abstractmethod
-    def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
+    def get_detailed_crypto_analysis(self, indicators_message, conn=None) -> str:
         pass
 
     @abstractmethod
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
-    ):
+    ) -> str:
         pass
 
     @abstractmethod
-    def highlight_articles(self, user_crypto_list, news_feeded):
+    def highlight_articles(self, user_crypto_list, news_feeded) -> str:
+        """Highlight articles based on user crypto list and news feed"""
         pass
 
 
@@ -114,7 +115,13 @@ class PerplexityClient(AIClient):
         }
         self.url = "https://api.perplexity.ai/chat/completions"
 
-    def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
+    def get_detailed_crypto_analysis(self, indicators_message, conn=None) -> str:
+        """Get detailed crypto analysis using Perplexity API
+        Args:
+            indicators_message (str): Indicators message for analysis
+            conn (object, optional): Database connection object
+        Returns:
+            str: Analysis result or error message"""
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with Perplexity")
 
@@ -195,7 +202,14 @@ class PerplexityClient(AIClient):
 
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
-    ):
+    ) -> str:
+        """Get detailed crypto analysis with news using Perplexity API
+        Args:
+            indicators_message (str): Indicators message for analysis
+            news_feeded (str): News articles to analyze
+            conn (object, optional): Database connection object
+        Returns:
+            str: Analysis result or error message"""
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with news using Perplexity")
         logging.debug(f"Input news articles count: {len(news_feeded)}")
@@ -277,7 +291,7 @@ class PerplexityClient(AIClient):
 
         return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"
 
-    def highlight_articles(self, user_crypto_list, news_feeded):
+    def highlight_articles(self, user_crypto_list, news_feeded) -> str:
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
 
         models = ["sonar-deep-research", "sonar-pro"]  # Models to try in order
@@ -349,44 +363,77 @@ class PerplexityClient(AIClient):
 class GeminiClient(AIClient):
     def __init__(self, api_key):
         self.api_key = api_key
-        self.model = None  # Changed from genai.generativeModel("gemini-2.5-flash-preview-04-17")
-        logging.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
+        self.model = (
+            None  # Changed from genai.generativeModel("gemini-2.5-flash-preview-04-17")
+        )
+        logging.info(
+            f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}"
+        )
 
         if not self.api_key:
-            logging.error("GeminiClient [__init__]: API key is missing. Configuration aborted.")
+            logging.error(
+                "GeminiClient [__init__]: API key is missing. Configuration aborted."
+            )
             return
 
         try:
-            logging.info("GeminiClient [__init__]: Attempting to import google.generativeai as active_genai_module...")
+            logging.info(
+                "GeminiClient [__init__]: Attempting to import google.generativeai as active_genai_module..."
+            )
             import google.generativeai as active_genai_module
-            logging.info(f"GeminiClient [__init__]: Imported google.generativeai as active_genai_module.")
-            
+
+            logging.info(
+                "GeminiClient [__init__]: Imported google.generativeai as active_genai_module."
+            )
+
             # Check for configure attribute
-            if hasattr(active_genai_module, 'configure'):
-                logging.info("GeminiClient [__init__]: active_genai_module.configure found. Calling it.")
+            if hasattr(active_genai_module, "configure"):
+                logging.info(
+                    "GeminiClient [__init__]: active_genai_module.configure found. Calling it."
+                )
                 active_genai_module.configure(api_key=self.api_key)
-                logging.info("GeminiClient [__init__]: active_genai_module.configure called.")
+                logging.info(
+                    "GeminiClient [__init__]: active_genai_module.configure called."
+                )
             else:
-                logging.error("GeminiClient [__init__]: active_genai_module.configure NOT FOUND. Cannot configure API.")
-                return # Stop if cannot configure
+                logging.error(
+                    "GeminiClient [__init__]: active_genai_module.configure NOT FOUND. Cannot configure API."
+                )
+                return  # Stop if cannot configure
 
             # Check for GenerativeModel attribute
-            if hasattr(active_genai_module, 'GenerativeModel'):
-                logging.info("GeminiClient [__init__]: active_genai_module.GenerativeModel found. Initializing model gemini-2.5-flash-preview-04-17.")
-                self.model = active_genai_module.GenerativeModel("gemini-2.5-flash-preview-04-17")
+            if hasattr(active_genai_module, "GenerativeModel"):
+                logging.info(
+                    "GeminiClient [__init__]: active_genai_module.GenerativeModel found. Initializing model gemini-2.5-flash-preview-04-17."
+                )
+                self.model = active_genai_module.GenerativeModel(
+                    "gemini-2.5-flash-preview-04-17"
+                )
                 logging.info("GeminiClient [__init__]: Model initialized.")
             else:
-                logging.error("GeminiClient [__init__]: active_genai_module.GenerativeModel NOT FOUND. Cannot initialize model.")
-                return # Stop if cannot initialize model
+                logging.error(
+                    "GeminiClient [__init__]: active_genai_module.GenerativeModel NOT FOUND. Cannot initialize model."
+                )
+                return  # Stop if cannot initialize model
 
         except ImportError as e:
-            logging.error(f"GeminiClient [__init__]: ImportError: {e}. Ensure 'google-generativeai' is installed.")
+            logging.error(
+                f"GeminiClient [__init__]: ImportError: {e}. Ensure 'google-generativeai' is installed."
+            )
         except Exception as e:
             logging.error(f"GeminiClient [__init__]: Unexpected error: {e}")
 
-    def get_detailed_crypto_analysis(self, indicators_message, news_feeded, conn=None):
+    def get_detailed_crypto_analysis(self, indicators_message, conn=None) -> str:
+        """Get detailed crypto analysis using Gemini API
+        Args:
+            indicators_message (str): Indicators message for analysis
+            conn (object, optional): Database connection object
+        Returns:
+            str: Analysis result or error message"""
         if not self.model:
-            logging.warning("GeminiClient [get_detailed_crypto_analysis]: Model not initialized.")
+            logging.warning(
+                "GeminiClient [get_detailed_crypto_analysis]: Model not initialized."
+            )
             return "Error: Gemini client not properly initialized."
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with Gemini")
@@ -435,9 +482,18 @@ class GeminiClient(AIClient):
 
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
-    ):
+    ) -> str:
+        """Get detailed crypto analysis with news using Gemini API
+        Args:
+            indicators_message (str): Indicators message for analysis
+            news_feeded (str): News articles to analyze
+            conn: Database connection object (optional)
+        Returns:
+            str: Analysis result or error message"""
         if not self.model:
-            logging.warning("GeminiClient [get_detailed_crypto_analysis_with_news]: Model not initialized.")
+            logging.warning(
+                "GeminiClient [get_detailed_crypto_analysis_with_news]: Model not initialized."
+            )
             return "Error: Gemini client not properly initialized."
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with news using Gemini")
@@ -485,7 +541,13 @@ class GeminiClient(AIClient):
             logging.error(error_msg)
             return error_msg
 
-    def highlight_articles(self, user_crypto_list, news_feeded):
+    def highlight_articles(self, user_crypto_list, news_feeded) -> str:
+        """Highlight articles based on user crypto list and news feed using Gemini API
+        Args:
+            user_crypto_list (list): List of user crypto symbols
+            news_feeded (str): News articles to analyze
+        Returns:
+            str: Highlighted articles or error message"""
         if not self.model:
             logging.warning("GeminiClient [highlight_articles]: Model not initialized.")
             return "Error: Gemini client not properly initialized."
@@ -535,10 +597,10 @@ def create_ai_client(api_type, api_key):
 
 # Legacy functions for backwards compatibility
 def get_detailed_crypto_analysis(
-    api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
+    api_key, indicators_message, api_type="perplexity", conn=None
 ):
     client = create_ai_client(api_type, api_key)
-    return client.get_detailed_crypto_analysis(indicators_message, news_feeded, conn)
+    return client.get_detailed_crypto_analysis(indicators_message, conn)
 
 
 def get_detailed_crypto_analysis_with_news(
