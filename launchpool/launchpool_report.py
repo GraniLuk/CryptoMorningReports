@@ -9,6 +9,7 @@ def check_gempool_articles():
 
     # Fetch articles from the API
     response = requests.get(URL)
+    new_articles = []
 
     if response.status_code == 200:
         data = response.json()

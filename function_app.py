@@ -22,12 +22,13 @@ async def run_report(report_type="daily"):
         f"{report_type.capitalize()} report function started at {datetime.now(timezone.utc).isoformat()}"
     )
 
+    logger = app_logger
+
     try:
         # Load configuration
         telegram_enabled = os.environ["TELEGRAM_ENABLED"].lower() == "true"
         telegram_token = os.environ["TELEGRAM_TOKEN"]
         telegram_chat_id = os.environ["TELEGRAM_CHAT_ID"]
-        logger = app_logger
         logger.info("Configuration loaded. Telegram enabled: %s", telegram_enabled)
 
         conn = connect_to_sql()
@@ -127,20 +128,18 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if report.startswith("Failed") or report.startswith("Error"):
                 return func.HttpResponse(
                     f"Error generating report: {report}", status_code=500
-                )            # Save to OneDrive if requested
+                )  # Save to OneDrive if requested
             if save_to_onedrive:
                 from integrations.onedrive_uploader import upload_to_onedrive
 
                 today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
                 onedrive_filename = f"{today_date}.md"
-                
+
                 # Use "current_situation/SYMBOL" as folder path
                 folder_path = f"current_situation/{symbol.upper()}"
 
                 await upload_to_onedrive(
-                    filename=onedrive_filename,
-                    content=report,
-                    folder_path=folder_path
+                    filename=onedrive_filename, content=report, folder_path=folder_path
                 )
 
             # Send to Telegram if requested
