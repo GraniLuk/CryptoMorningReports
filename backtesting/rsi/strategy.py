@@ -41,7 +41,9 @@ def run_backtest(
     for i in range(len(df)):
         if not active_trade and df.loc[i, "signal"] and (i + daysAfterToBuy < len(df)):
             active_trade = True
-            entry_date = datetime.strptime(str(df.loc[i + daysAfterToBuy, "date"]), "%Y-%m-%d") 
+            entry_date = datetime.strptime(
+                str(df.loc[i + daysAfterToBuy, "date"]), "%Y-%m-%d"
+            )
             entry_price = Decimal(str(df.loc[i + daysAfterToBuy, "Open"]))
             print(
                 f"Started {position_type} position for {symbol_name} on date {entry_date} with entry price {entry_price}"
@@ -54,6 +56,7 @@ def run_backtest(
             days_taken = 0
             close_date = None
             close_price = None
+            profit = 0  # Initialize profit
 
             for j in range(i + daysAfterToBuy, len(df)):
                 current_high = Decimal(str(df.loc[j, "High"]))
