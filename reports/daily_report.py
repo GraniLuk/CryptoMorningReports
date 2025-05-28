@@ -37,14 +37,18 @@ async def process_daily_report(
     fetch_daily_candles(symbols, conn)  # Fetch daily candles
 
     rsi_table = create_rsi_table(symbols, conn, target_date=date.today())
-    ma_average_table, ema_average_table = calculate_indicators(symbols, conn, target_date=date.today())
+    ma_average_table, ema_average_table = calculate_indicators(
+        symbols, conn, target_date=date.today()
+    )
     range_table = fetch_range_price(symbols, conn)
     stepn_table = fetch_stepn_report(conn)
     macd_table = calculate_macd(symbols, conn, target_date=date.today())
     launchpool_report = check_gempool_articles()
     volume_table = fetch_volume_report(symbols, conn)
     marketcap_table = fetch_marketcap_report(symbols, conn)
-    pricechange_table = fetch_price_change_report(symbols, conn, target_date=date.today())
+    pricechange_table = fetch_price_change_report(
+        symbols, conn, target_date=date.today()
+    )
     sopr_table = fetch_sopr_metrics(conn)
     symbols_list = [symbol.symbol_name for symbol in symbols]
     news = get_panic_news(symbols_list, days=1)
@@ -98,7 +102,6 @@ async def process_daily_report(
         analysis_reported_without_news = get_detailed_crypto_analysis(
             ai_api_key,
             message_part1 + message_part2 + volume_report + sopr_report,
-            fetched_news,
             ai_api_type,
         )
         analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
