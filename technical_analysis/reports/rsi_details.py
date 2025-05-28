@@ -70,9 +70,14 @@ def create_rsi_table_for_symbol(
     ]
 
     for date_idx, row in all_values.iterrows():
+        if isinstance(date_idx, pd.Timestamp):
+            date_str = date_idx.strftime("%Y-%m-%d")
+        else:
+            date_str = str(date_idx)
+
         rsi_table.add_row(
             [
-                date_idx.strftime("%Y-%m-%d"),
+                date_str,
                 row["symbol"],
                 f"${float(row['Close']):,.2f}",
                 f"{float(row['RSI']):.2f}",
