@@ -5,7 +5,7 @@ from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
 from sharedCode.priceChecker import fetch_daily_candles
-from source_repository import Symbol
+from source_repository import Symbol, fetch_symbols
 
 
 def fetch_price_change_report(
@@ -67,26 +67,11 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import SourceID, Symbol
+    from source_repository import Symbol
 
     load_dotenv()
     conn = connect_to_sql()
-    symbols = [
-        Symbol(
-            symbol_id=1,
-            symbol_name="BTC",
-            full_name="Bitcoin",
-            source_id=SourceID.BINANCE,
-            coingecko_name="bitcoin",
-        ),
-        Symbol(
-            symbol_id=2,
-            symbol_name="ETH",
-            full_name="Ethereum",
-            source_id=SourceID.BINANCE,
-            coingecko_name="ethereum",
-        ),
-    ]
+    symbols = fetch_symbols(conn)
 
     table = fetch_price_change_report(symbols, conn, target_date=date.today())
     print(table)

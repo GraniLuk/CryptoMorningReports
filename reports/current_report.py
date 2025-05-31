@@ -202,21 +202,22 @@ async def generate_crypto_situation_report(conn, symbol_name):
     now = datetime.now(timezone.utc)
     half_year_ago = now - timedelta(days=180)
     one_day_ago = now - timedelta(days=1)
+    two_days_ago = now - timedelta(days=2)
 
     # Fetch candles for different timeframes
     daily_candles = fetch_daily_candles(
         symbols, conn, start_date=half_year_ago.date(), end_date=now.date()
     )
     hourly_candles = fetch_hourly_candles_for_all_symbols(
-        symbols, end_time=now, start_time=one_day_ago, conn=conn
+        symbols, end_time=now, start_time=two_days_ago, conn=conn
     )
     fifteen_min_candles = fetch_fifteen_minutes_candles_for_all_symbols(
         symbols, end_time=now, start_time=one_day_ago, conn=conn
     )
 
     # Fetch RSI data for different timeframes
-    daily_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=7)
-    hourly_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=1)
+    daily_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=180)
+    hourly_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=2)
     fifteen_min_rsi = get_rsi_for_symbol_timeframe(
         symbol, conn, "fifteen_min", lookback_days=1
     )
