@@ -11,6 +11,10 @@ from technical_analysis.fifteen_min_candle import (
     fetch_fifteen_minutes_candles_for_all_symbols,
 )
 from technical_analysis.hourly_candle import fetch_hourly_candles_for_all_symbols
+from technical_analysis.reports.current_data_table import (
+    get_current_data_for_ai_prompt,
+    get_current_data_summary_table,
+)
 from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
 from technical_analysis.repositories.moving_averages_repository import (
     fetch_moving_averages_for_symbol,
@@ -54,6 +58,9 @@ Present your analysis in clear Markdown formatting with:
 
 USER_PROMPT_SITUATION = """
 Conduct a multi-timeframe technical analysis for {symbol_name} using the provided market data:
+
+CURRENT MARKET SNAPSHOT:
+{current_data_snapshot}
 
 Input Data:
 - DAILY CANDLES (LAST 7 DAYS): {daily_candles}
@@ -243,10 +250,14 @@ async def generate_crypto_situation_report(conn, symbol_name):
     # Format RSI data for the AI prompt
     daily_rsi_formatted = format_rsi_data(daily_rsi)
     hourly_rsi_formatted = format_rsi_data(hourly_rsi)
-    fifteen_min_rsi_formatted = format_rsi_data(fifteen_min_rsi)
-
-    # Format moving averages data for the AI prompt
+    fifteen_min_rsi_formatted = format_rsi_data(
+        fifteen_min_rsi
+    )  # Format moving averages data for the AI prompt
     moving_averages_formatted = format_moving_averages_data(moving_averages)
+
+    # Generate current data snapshot for AI prompt and final report
+    current_data_snapshot = get_current_data_for_ai_prompt(symbol, conn)
+    current_data_table = get_current_data_summary_table(symbol, conn)
 
     # Determine which AI API to use
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -270,11 +281,10 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
     try:
         # Create AI client and generate analysis
-        ai_client = create_ai_client(ai_api_type, ai_api_key)
-
-        # Prepare prompt content
+        ai_client = create_ai_client(ai_api_type, ai_api_key)  # Prepare prompt content
         formatted_prompt = USER_PROMPT_SITUATION.format(
             symbol_name=symbol_name,
+            current_data_snapshot=current_data_snapshot,
             daily_candles=daily_formatted,
             hourly_candles=hourly_formatted,
             fifteen_min_candles=fifteen_min_formatted,
@@ -365,13 +375,11 @@ async def generate_crypto_situation_report(conn, symbol_name):
         if not analysis:
             error_msg = "Failed: No analysis was generated"
             logger.error(error_msg)
-            return error_msg
-
-        # Add header to the report
+            return error_msg  # Add header to the report
         report_title = f"# {symbol_name} Situation Report\n\n"
         report_date = f"*Generated on: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}*\n\n"
 
-        full_report = report_title + report_date + analysis
+        full_report = report_title + report_date + current_data_table + analysis
         logger.info(f"Successfully generated situation report for {symbol_name}")
 
         return full_report
