@@ -6,7 +6,11 @@ from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
-from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
+from technical_analysis.repositories.rsi_repository import get_candles_with_rsi, save_rsi_by_timeframe
+from technical_analysis.repositories.daily_candle_repository import DailyCandleRepository
+from technical_analysis.repositories.hourly_candle_repository import HourlyCandleRepository
+from technical_analysis.repositories.fifteen_min_candle_repository import FifteenMinCandleRepository
+from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
 def get_rsi_for_symbol_timeframe(
@@ -42,17 +46,36 @@ def get_rsi_for_symbol_timeframe(
     
     calculation_start_date = start_date - timedelta(days=additional_lookback.get(timeframe, rsi_periods))
 
-    try:
-        # Get candle data with RSI values from the database, using the extended date range for calculation
+    try:        # Get candle data with RSI values from the database, using the extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
             conn, symbol.symbol_id, calculation_start_date.isoformat(), timeframe
         )
 
         if not candles_with_rsi:
             app_logger.warning(
-                f"No {timeframe} RSI data found for {symbol.symbol_name}"
+                f"No {timeframe} RSI data found for {symbol.symbol_name}, attempting to calculate RSI"
             )
-            return None
+            
+            # Attempt to fetch candles directly and calculate RSI
+            repository = _get_candle_repository(conn, timeframe)
+            if not repository:
+                app_logger.error(f"No repository available for timeframe: {timeframe}")
+                return None            # Fetch candles for calculation (need more data for RSI calculation)
+            extended_start_date = calculation_start_date - timedelta(days=30)  # Get more historical data for RSI calculation
+            # Convert date to datetime for repository call
+            extended_start_datetime = datetime.combine(extended_start_date, datetime.min.time())
+            candles = repository.get_candles(symbol, extended_start_datetime, datetime.now())
+            
+            if not candles:
+                app_logger.warning(f"No {timeframe} candles found for {symbol.symbol_name}")
+                return None
+            
+            # Calculate and save RSI for missing data
+            candles_with_rsi = _calculate_and_save_rsi(conn, symbol, candles, timeframe)
+            
+            if not candles_with_rsi:
+                app_logger.error(f"Failed to calculate RSI for {symbol.symbol_name} {timeframe}")
+                return None
 
         # Create DataFrame from candles
         df = pd.DataFrame(candles_with_rsi)
@@ -374,6 +397,81 @@ def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
         )
 
     return table
+
+
+
+def _get_candle_repository(conn, timeframe: str):
+    """
+    Returns the appropriate candle repository based on timeframe.
+    """
+    timeframe_lower = timeframe.lower()
+    if timeframe_lower == "daily":
+        return DailyCandleRepository(conn)
+    elif timeframe_lower == "hourly":
+        return HourlyCandleRepository(conn)
+    elif timeframe_lower == "fifteen_min":
+        return FifteenMinCandleRepository(conn)
+    else:
+        app_logger.error(f"Unknown timeframe: {timeframe}")
+        return None
+
+
+def _calculate_and_save_rsi(conn, symbol: Symbol, candles: List, timeframe: str):
+    """
+    Calculate RSI for the given candles and save to database.
+    Returns list of candles with RSI data in the format expected by the calling function.
+    """
+    if not candles:
+        return None
+    
+    try:
+        # Create DataFrame from candles
+        df = pd.DataFrame([
+            {
+                "date": candle.end_date,
+                "close": candle.close,
+                "candle_id": candle.id,
+                "open": candle.open,
+                "high": candle.high,
+                "low": candle.low,
+                "volume": candle.volume
+            }
+            for candle in candles
+        ])
+        
+        df.set_index("date", inplace=True)
+        df.sort_index(inplace=True)
+        
+        # Calculate RSI using RMA method
+        df["rsi"] = calculate_rsi_using_RMA(df["close"])
+          # Save RSI values to database
+        for index, row in df.iterrows():
+            if not pd.isna(row["rsi"]):
+                save_rsi_by_timeframe(conn, int(row["candle_id"]), float(row["rsi"]), timeframe)
+        
+        # Return data in the format expected by the calling function
+        # Reset index to make date a column again
+        df.reset_index(inplace=True)
+        
+        # Filter out rows with NaN RSI values and return as list of dictionaries
+        valid_data = df.dropna(subset=["rsi"])
+        
+        return [
+            {
+                "date": row["date"],
+                "close": row["close"],
+                "open": row["open"],
+                "high": row["high"],
+                "low": row["low"],
+                "volume": row["volume"],
+                "rsi": row["rsi"]
+            }
+            for _, row in valid_data.iterrows()
+        ]
+        
+    except Exception as e:
+        app_logger.error(f"Error calculating RSI for {symbol.symbol_name} {timeframe}: {str(e)}")
+        return None
 
 
 if __name__ == "__main__":
