@@ -89,13 +89,13 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
             symbol, conn, "fifteen_min", lookback_days=1
         )
 
-        # Extract latest price (prefer daily candles, then hourly, then 15min)
-        if daily_rsi_df is not None and not daily_rsi_df.empty:
-            data["latest_price"] = get_latest_price_from_candles(daily_rsi_df)
+        # Extract latest price (prefer 15min, then hourly, then daily)
+        if fifteen_min_rsi_df is not None and not fifteen_min_rsi_df.empty:
+            data["latest_price"] = get_latest_price_from_candles(fifteen_min_rsi_df)
         elif hourly_rsi_df is not None and not hourly_rsi_df.empty:
             data["latest_price"] = get_latest_price_from_candles(hourly_rsi_df)
-        elif fifteen_min_rsi_df is not None and not fifteen_min_rsi_df.empty:
-            data["latest_price"] = get_latest_price_from_candles(fifteen_min_rsi_df)
+        elif daily_rsi_df is not None and not daily_rsi_df.empty:
+            data["latest_price"] = get_latest_price_from_candles(daily_rsi_df)
 
         # Extract RSI values for each timeframe
         data["daily_rsi"] = get_latest_rsi_from_df(daily_rsi_df)
