@@ -53,3 +53,4 @@ __azurite_db*__.json
 strategy_results_*.html
 .vscode/settings.json
 .vscode/extensions.json
+*.rest
