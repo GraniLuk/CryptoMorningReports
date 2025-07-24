@@ -1,4 +1,5 @@
 ### Request 1
+{{apikey}} = 38187eab8bbb7cec51b387d3b4b86696359e1707
 GET https://cryptopanic.com/api/v1/posts/?auth_token={{apiKey}}&currencies=VIRTUAL
 Accept: application/json
 
