@@ -363,9 +363,7 @@ class PerplexityClient(AIClient):
 class GeminiClient(AIClient):
     def __init__(self, api_key):
         self.api_key = api_key
-        self.model = (
-            None  # Changed from genai.generativeModel("gemini-2.5-flash-preview-04-17")
-        )
+        self.model = None
         logging.info(
             f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}"
         )
@@ -407,7 +405,7 @@ class GeminiClient(AIClient):
                     "GeminiClient [__init__]: active_genai_module.GenerativeModel found. Initializing model gemini-2.5-flash-preview-04-17."
                 )
                 self.model = active_genai_module.GenerativeModel(
-                    "gemini-2.5-flash-preview-04-17"
+                    "gemini-2.5-flash-preview-05-20"
                 )
                 logging.info("GeminiClient [__init__]: Model initialized.")
             else:
