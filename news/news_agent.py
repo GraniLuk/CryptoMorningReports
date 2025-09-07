@@ -381,7 +381,7 @@ class GeminiClient(AIClient):
                 raise RuntimeError(
                     "GenerativeModel not available in google.generativeai module"
                 )
-            self.model: Any = generative_cls("gemini-2.5-flash-preview-04-17")
+            self.model: Any = generative_cls("gemini-2.5-flash-preview-05-20")
             logging.info("GeminiClient [__init__]: Gemini model initialized.")
         except Exception as e:
             raise RuntimeError(
