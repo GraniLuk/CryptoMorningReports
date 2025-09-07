@@ -3,7 +3,7 @@ Module for generating current data tables with latest indicators for crypto symb
 This module can be easily extended to add more indicators in the future.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -11,6 +11,9 @@ import pandas as pd
 from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
+from technical_analysis.repositories.daily_candle_repository import (
+    DailyCandleRepository,
+)
 
 
 def get_latest_price_from_candles(
@@ -74,6 +77,12 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         "daily_rsi": None,
         "hourly_rsi": None,
         "fifteen_min_rsi": None,
+        # Daily range related fields
+        "daily_high": None,
+        "daily_low": None,
+        "daily_range": None,
+        "daily_range_pct": None,
+        "daily_ranges_7d": [],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
 
@@ -101,6 +110,55 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         data["daily_rsi"] = get_latest_rsi_from_df(daily_rsi_df)
         data["hourly_rsi"] = get_latest_rsi_from_df(hourly_rsi_df)
         data["fifteen_min_rsi"] = get_latest_rsi_from_df(fifteen_min_rsi_df)
+
+        # Fetch daily candles (look back 7 days) to compute daily range and recent history
+        try:
+            daily_repo = DailyCandleRepository(conn)
+            now_utc = datetime.now(timezone.utc)
+            start = now_utc - timedelta(days=7)
+            candles = daily_repo.get_candles(symbol, start, now_utc)
+            if candles:
+                # Latest candle for headline metrics
+                last_candle = candles[-1]
+                high = float(last_candle.high)
+                low = float(last_candle.low)
+                if low is not None and high is not None and low > 0:
+                    rng = high - low
+                    rng_pct = (rng / low) * 100.0
+                    data["daily_high"] = high
+                    data["daily_low"] = low
+                    data["daily_range"] = rng
+                    data["daily_range_pct"] = rng_pct
+
+                # Build 7-day history (up to 7 most recent candles)
+                recent = candles[-7:]
+                ranges = []
+                for c in recent:
+                    try:
+                        c_high = float(c.high)
+                        c_low = float(c.low)
+                        if c_low is not None and c_high is not None and c_low > 0:
+                            c_range = c_high - c_low
+                            c_range_pct = (c_range / c_low) * 100.0
+                        else:
+                            c_range = None
+                            c_range_pct = None
+                        ranges.append(
+                            {
+                                "date": c.end_date.strftime("%Y-%m-%d"),
+                                "high": c_high if c_high is not None else None,
+                                "low": c_low if c_low is not None else None,
+                                "range": c_range,
+                                "range_pct": c_range_pct,
+                            }
+                        )
+                    except Exception:
+                        continue
+                data["daily_ranges_7d"] = ranges
+        except Exception as inner_e:
+            app_logger.warning(
+                f"Could not compute daily range for {symbol.symbol_name}: {inner_e}"
+            )
 
         app_logger.info(f"Successfully retrieved current data for {symbol.symbol_name}")
 
@@ -141,6 +199,38 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
         f"{fifteen_min_rsi:.2f}" if fifteen_min_rsi is not None else "N/A"
     )
 
+    # Daily range values
+    daily_high = symbol_data.get("daily_high")
+    daily_low = symbol_data.get("daily_low")
+    daily_range = symbol_data.get("daily_range")
+    daily_range_pct = symbol_data.get("daily_range_pct")
+
+    if daily_high is not None and daily_low is not None:
+        high_str = f"${daily_high:,.4f}"
+        low_str = f"${daily_low:,.4f}"
+    else:
+        high_str = low_str = "N/A"
+
+    if daily_range is not None and daily_range_pct is not None:
+        range_str = f"${daily_range:,.4f} ({daily_range_pct:.2f}%)"
+    else:
+        range_str = "N/A"
+
+    # Last 7 days ranges table
+    ranges_7d = symbol_data.get("daily_ranges_7d", [])
+    if ranges_7d:
+        history_table = "\n### Last 7 Daily Ranges\n\n| Date | High | Low | Range | Range % |\n|------|------|-----|-------|---------|\n"
+        for r in ranges_7d:
+            h = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
+            l = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
+            rng_val = r.get("range")
+            rng_pct_val = r.get("range_pct")
+            rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
+            rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
+            history_table += f"| {r.get('date','')} | {h} | {l} | {rng_str} | {rng_pct_str} |\n"
+    else:
+        history_table = "\n_No recent daily range data available_\n"
+
     # Create markdown table
     table_md = f"""
 ## Current Market Data for {symbol_name}
@@ -153,6 +243,11 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
 | **Daily RSI** | {daily_rsi_str} |
 | **Hourly RSI** | {hourly_rsi_str} |
 | **15-min RSI** | {fifteen_min_rsi_str} |
+| **Daily High** | {high_str} |
+| **Daily Low** | {low_str} |
+| **Daily Range (H-L)** | {range_str} |
+
+{history_table}
 
 """
 
@@ -217,6 +312,26 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
 
         timestamp = symbol_data.get("timestamp", "Unknown")
 
+        # Build last 7 days range lines
+        ranges_lines = []
+        ranges_7d = symbol_data.get("daily_ranges_7d", [])
+        if ranges_7d:
+            ranges_lines.append("Last 7 Daily Ranges (Date | High | Low | Range | Range %):")
+            for r in ranges_7d:
+                h = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
+                l = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
+                rng_val = r.get("range")
+                rng_pct_val = r.get("range_pct")
+                rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
+                rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
+                ranges_lines.append(
+                    f"- {r.get('date','')}: {h} | {l} | {rng_str} | {rng_pct_str}"
+                )
+        else:
+            ranges_lines.append("No recent daily range data available")
+
+        ranges_block = "\n".join(ranges_lines)
+
         prompt_data = f"""
 CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 - Current Price: {price_str}
@@ -224,6 +339,7 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 - Hourly RSI: {hourly_rsi_str}
 - 15-minute RSI: {fifteen_min_rsi_str}
 - Data timestamp: {timestamp}
+- Daily ranges: {ranges_block}
 """
 
         return prompt_data.strip()
