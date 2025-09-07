@@ -347,7 +347,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
                 # Check if it's a GeminiClient
                 if isinstance(ai_client, GeminiClient):
                     prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
-                    # Now we know it's a GeminiClient with a model attribute
+                    # Direct call (GeminiClient now guarantees model is always initialized with real or dummy)
                     response = ai_client.model.generate_content(prompt)
 
                     if response.candidates and len(response.candidates) > 0:
