@@ -3,6 +3,39 @@ from typing import List, Tuple, Optional
 from datetime import date
 
 from infra.telegram_logging_handler import app_logger
+import math
+from typing import Any
+
+
+def _sanitize_float(value: Any) -> Optional[float]:
+    """Coerce incoming numeric-like values to a finite float or return None.
+
+    This defends against values that SQL Server rejects (e.g. NaN, inf, empty strings,
+    objects) which can surface as the generic ODBC error about invalid float instance.
+    """
+    if value is None:
+        return None
+    try:
+        # Reject empty strings / whitespace
+        if isinstance(value, str):
+            if value.strip() == "":
+                return None
+        f = float(value)
+        if not math.isfinite(f):  # NaN, inf, -inf -> store NULL
+            return None
+        return f
+    except (ValueError, TypeError):
+        return None
+
+
+def _sanitize_int(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        i = int(value)
+        return i
+    except (ValueError, TypeError):
+        return None
 
 
 def save_stepn_results(
@@ -35,37 +68,67 @@ def save_stepn_results(
     try:
         if conn:
             cursor = conn.cursor()
+
+            # Sanitize all incoming numeric parameters
+            sanitized_params = {
+                "gmt_price": _sanitize_float(gmt_price),
+                "gst_price": _sanitize_float(gst_price),
+                "ratio": _sanitize_float(ratio),
+                "ema": _sanitize_float(ema),
+                "min_24h": _sanitize_float(min_24h),
+                "max_24h": _sanitize_float(max_24h),
+                "range_24h": _sanitize_float(range_24h),
+                "rsi": _sanitize_float(rsi),
+                "transactions_count": _sanitize_int(transactions_count),
+            }
+
+            app_logger.debug(
+                "Prepared STEPN params: %s",
+                ", ".join(f"{k}={v}" for k, v in sanitized_params.items()),
+            )
+
             query = """
                 MERGE INTO StepNResults AS target
                 USING (
-                    SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio, 
+                    SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio,
                            CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
                            ? AS Min24Value, ? AS Max24Value, ? AS Range24,
                            ? AS RSI, ? AS TransactionsCount
                 ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
                 ON target.Date = source.Date
+                WHEN MATCHED THEN
+                    UPDATE SET
+                        GMTPrice = source.GMTPrice,
+                        GSTPrice = source.GSTPrice,
+                        Ratio = source.Ratio,
+                        EMA14 = source.EMA14,
+                        Min24Value = source.Min24Value,
+                        Max24Value = source.Max24Value,
+                        Range24 = source.Range24,
+                        RSI = source.RSI,
+                        TransactionsCount = source.TransactionsCount
                 WHEN NOT MATCHED THEN
                     INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
-                    VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date, 
-                           source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI, source.TransactionsCount);
+                    VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date,
+                            source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI, source.TransactionsCount);
             """
             cursor.execute(
                 query,
                 (
-                    gmt_price,
-                    gst_price,
-                    ratio,
-                    ema,
-                    min_24h,
-                    max_24h,
-                    range_24h,
-                    rsi,
-                    transactions_count,
+                    sanitized_params["gmt_price"],
+                    sanitized_params["gst_price"],
+                    sanitized_params["ratio"],
+                    sanitized_params["ema"],
+                    sanitized_params["min_24h"],
+                    sanitized_params["max_24h"],
+                    sanitized_params["range_24h"],
+                    sanitized_params["rsi"],
+                    sanitized_params["transactions_count"],
                 ),
             )
             conn.commit()
             cursor.close()
-            app_logger.info("Successfully saved STEPN results to database")
+            app_logger.info("Successfully upserted STEPN results to database")
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving STEPN results: {e}")
         raise
