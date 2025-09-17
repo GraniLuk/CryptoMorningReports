@@ -3,11 +3,21 @@ import logging
 import re
 import requests
 import time
+from typing import List, Optional
 
 MAX_TELEGRAM_LENGTH = 4096
 
 
-async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HTML"):
+async def send_telegram_message(
+    enabled,
+    token,
+    chat_id,
+    message,
+    parse_mode: Optional[str] = "HTML",
+    disable_web_page_preview: bool = False,
+    disable_notification: bool = False,
+    protect_content: bool = False,
+):
     if not enabled:
         logging.info("Telegram notifications are disabled")
         return
@@ -16,39 +26,82 @@ async def send_telegram_message(enabled, token, chat_id, message, parse_mode="HT
         logging.error("Empty message, skipping telegram notification")
         return
 
+    original_parse_mode = parse_mode
+
     if parse_mode == "MarkdownV2":
         message = enforce_markdown_v2(message)
-
-    if parse_mode == "HTML":
+    elif parse_mode == "HTML":
         message = sanitize_html(message)
+    elif parse_mode not in (None, ""):
+        logging.warning(
+            "Unsupported parse_mode '%s' provided. Falling back to raw text (no parse mode).",
+            parse_mode,
+        )
+        parse_mode = None
 
     try:
-        # Split message into chunks
-        chunks = [
-            message[i : i + MAX_TELEGRAM_LENGTH]
-            for i in range(0, len(message), MAX_TELEGRAM_LENGTH)
-        ]
+        # Split message into chunks at paragraph boundaries where possible
+        chunks = smart_split(message, MAX_TELEGRAM_LENGTH, parse_mode)
 
         for chunk in chunks:
             url = f"https://api.telegram.org/bot{token}/sendMessage"
-            response = requests.post(
-                url, json={"chat_id": chat_id, "text": chunk, "parse_mode": parse_mode}
-            )
-            response.raise_for_status()
+            payload = {
+                "chat_id": chat_id,
+                "text": chunk,
+            }
+            if parse_mode:
+                payload["parse_mode"] = parse_mode
+            if disable_web_page_preview:
+                payload["disable_web_page_preview"] = True
+            if disable_notification:
+                payload["disable_notification"] = True
+            if protect_content:
+                payload["protect_content"] = True
+
+            response = requests.post(url, json=payload)
+
+            if not response.ok:
+                # Gather diagnostics
+                try:
+                    err_json = response.json()
+                except Exception:
+                    err_json = {"raw_text": (response.text[:500] if response.text else None)}
+                logging.error(
+                    "Telegram API error (status=%s, parse_mode=%s original_parse_mode=%s, chunk_len=%d): %s",
+                    response.status_code,
+                    parse_mode,
+                    original_parse_mode,
+                    len(chunk),
+                    err_json,
+                )
+                response.raise_for_status()
             time.sleep(0.5)
 
         return True
 
     except Exception as e:
+        # Avoid logging the entire large message to keep logs clean / protect data
+        snippet = (message[:500] + "...<truncated>") if len(message) > 600 else message
         logging.error(
-            f"Failed to send telegram message: {str(e)} with message {message}"
+            "Failed to send telegram message: %s | snippet: %s", str(e), snippet
         )
         return False
 
 
-def enforce_markdown_v2(text):
-    # Escape unescaped special chars not in formatting blocks
-    return re.sub(r"(?<!\\)([_*\[\]()~`>#+=|{}.!-])", r"\\\1", text)
+def enforce_markdown_v2(text: str) -> str:
+    """Escape characters required by Telegram MarkdownV2 while preserving existing
+    code spans. We do a lightweight parse: split by backticks and only escape in the
+    non-code segments (even indices after split). This is not a full Markdown parser
+    but sufficient for typical report content.
+    """
+    # Telegram MarkdownV2 special chars to escape:
+    # _ * [ ] ( ) ~ ` > # + - = | { } . !
+    special_pattern = re.compile(r"([_\*\[\]\(\)~`>#\+\-=\|{}\.\!])")
+    parts = text.split("`")
+    for i in range(0, len(parts), 2):  # only escape outside code spans
+        parts[i] = special_pattern.sub(r"\\\1", parts[i])
+    # Rejoin with unescaped backticks between parts
+    return "`".join(parts)
 
 
 def sanitize_html(message):
@@ -95,6 +148,65 @@ async def try_send_report_with_HTML_or_Markdown(
         )
 
     return success
+
+
+def smart_split(text: str, limit: int, parse_mode: Optional[str]) -> List[str]:
+    """Split the text into <=limit sized chunks, preferring to break on double newlines
+    (paragraphs). If a single paragraph exceeds the limit, fall back to hard slicing.
+    For HTML parse_mode we also try not to cut inside an open tag (very naive: ensure
+    open '<' without closing '>' inside the slice gets extended to the closing '>').
+    """
+    if len(text) <= limit:
+        return [text]
+
+    paragraphs = text.split("\n\n")
+    chunks: List[str] = []
+    current = []
+    current_len = 0
+    for p in paragraphs:
+        p_block = (p + "\n\n")  # keep delimiter
+        if len(p_block) > limit:
+            # Flush current
+            if current:
+                chunks.append("".join(current).rstrip())
+                current = []
+                current_len = 0
+            # Hard slice this oversize paragraph
+            for i in range(0, len(p_block), limit):
+                slice_ = p_block[i : i + limit]
+                if parse_mode == "HTML":
+                    slice_ = _extend_to_close_tag(p_block, i, slice_, limit)
+                chunks.append(slice_)
+            continue
+        if current_len + len(p_block) <= limit:
+            current.append(p_block)
+            current_len += len(p_block)
+        else:
+            chunks.append("".join(current).rstrip())
+            current = [p_block]
+            current_len = len(p_block)
+
+    if current:
+        chunks.append("".join(current).rstrip())
+    return chunks
+
+
+def _extend_to_close_tag(full_text: str, start_index: int, slice_: str, limit: int) -> str:
+    """If the slice ends in the middle of an HTML tag (has unmatched '<'), extend until
+    the closing '>' if possible within a small lookahead window. This is a heuristic to
+    reduce parse errors when using HTML parse_mode."""
+    if slice_.count("<") == slice_.count(">"):
+        return slice_
+    # Look ahead up to 200 chars beyond limit (Telegram still enforces limit, so we must respect it)
+    # If we can't fix within limit, return original slice.
+    # Since we cannot exceed limit, we actually can only shrink, not extend. So instead we try to
+    # trim back to last '>' to avoid dangling '<'.
+    last_gt = slice_.rfind(">")
+    last_lt = slice_.rfind("<")
+    if last_lt > last_gt:
+        # drop dangling part after last '<'
+        return slice_[:last_lt]
+    return slice_
 
 
 if __name__ == "__main__":
