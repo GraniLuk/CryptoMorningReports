@@ -11,7 +11,7 @@ from news.news_agent import (
     highlight_articles,
 )
 from news.rss_parser import get_news
-from sharedCode.telegram import send_telegram_message
+from sharedCode.telegram import send_telegram_message, send_telegram_document
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.daily_candle import fetch_daily_candles
@@ -129,6 +129,23 @@ async def process_daily_report(
                 content=analysis_reported_with_news,
                 folder_path="detailed_analysis_with_news",
             )
+
+            # Attempt to send the detailed analysis with news as a Telegram document for better readability
+            # Use in-memory bytes to avoid filesystem dependency; could alternatively write a temp file.
+            try:
+                await send_telegram_document(
+                    telegram_enabled,
+                    telegram_token,
+                    telegram_chat_id,
+                    file_bytes=analysis_reported_with_news.encode("utf-8"),
+                    filename=onedrive_filename_analysis_with_news,
+                    caption=f"Detailed Crypto Analysis with News {today_date}",
+                    parse_mode=None,  # treat as plain text/markdown without Telegram parsing
+                )
+            except Exception as doc_err:
+                logger.warning(
+                    "Failed to send analysis with news as document: %s", doc_err
+                )
 
             # Save highlighted articles in "news" subfolder
             if not highlight_articles_message.startswith("Failed"):
