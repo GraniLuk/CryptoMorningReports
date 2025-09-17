@@ -6,6 +6,7 @@ import time
 from typing import List, Optional
 
 MAX_TELEGRAM_LENGTH = 4096
+MAX_DOCUMENT_SIZE = 50 * 1024 * 1024  # 50MB Telegram limit for standard bots
 
 
 async def send_telegram_message(
@@ -189,6 +190,93 @@ def smart_split(text: str, limit: int, parse_mode: Optional[str]) -> List[str]:
     if current:
         chunks.append("".join(current).rstrip())
     return chunks
+
+
+async def send_telegram_document(
+    enabled: bool,
+    token: str,
+    chat_id: str,
+    file_bytes: bytes | None = None,
+    filename: str = "report.txt",
+    caption: str | None = None,
+    parse_mode: Optional[str] = None,
+    local_path: Optional[str] = None,
+):
+    """Send a document (e.g. markdown report) to Telegram.
+    Either provide file_bytes OR a local_path. If both are provided local_path takes precedence.
+    Returns True on success, False otherwise.
+    """
+    if not enabled:
+        logging.info("Telegram notifications are disabled")
+        return False
+
+    if not token or not chat_id:
+        logging.error("Missing token or chat_id for send_telegram_document")
+        return False
+
+    file_handle = None
+    close_after = False
+    try:
+        if local_path:
+            if not os.path.exists(local_path):
+                logging.error("Local file does not exist: %s", local_path)
+                return False
+            file_size = os.path.getsize(local_path)
+            if file_size > MAX_DOCUMENT_SIZE:
+                logging.error(
+                    "File %s exceeds Telegram max size (%d > %d)",
+                    local_path,
+                    file_size,
+                    MAX_DOCUMENT_SIZE,
+                )
+                return False
+            file_handle = open(local_path, "rb")
+            close_after = True
+        else:
+            if file_bytes is None:
+                logging.error("Neither file_bytes nor local_path provided for document")
+                return False
+            if len(file_bytes) > MAX_DOCUMENT_SIZE:
+                logging.error(
+                    "In-memory file exceeds Telegram max size (%d > %d)",
+                    len(file_bytes),
+                    MAX_DOCUMENT_SIZE,
+                )
+                return False
+            file_handle = file_bytes
+            close_after = False
+
+        url = f"https://api.telegram.org/bot{token}/sendDocument"
+        files = {
+            "document": (filename, file_handle if isinstance(file_handle, bytes) else file_handle, "application/octet-stream"),
+        }
+        data = {"chat_id": chat_id}
+        if caption:
+            data["caption"] = caption[:1024]  # Telegram caption limit
+        if parse_mode:
+            data["parse_mode"] = parse_mode
+
+        response = requests.post(url, data=data, files=files)
+        if not response.ok:
+            try:
+                err_json = response.json()
+            except Exception:
+                err_json = {"raw": response.text[:300]}
+            logging.error(
+                "Failed to send document (status=%s): %s", response.status_code, err_json
+            )
+            return False
+        logging.info("Document %s successfully sent to Telegram", filename)
+        return True
+    except Exception as e:
+        logging.error("Exception while sending document: %s", e)
+        return False
+    finally:
+        if close_after and hasattr(file_handle, "close"):
+            try:
+                file_handle.close()  # type: ignore[attr-defined]
+            except Exception:
+                pass
 
 
 def _extend_to_close_tag(full_text: str, start_index: int, slice_: str, limit: int) -> str:
