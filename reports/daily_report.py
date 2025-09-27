@@ -243,15 +243,6 @@ async def process_daily_report(
         telegram_enabled, telegram_token, telegram_chat_id, news, parse_mode="HTML"
     )
 
-    if not highlight_articles_message.startswith("Failed"):
-        await send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            highlight_articles_message,
-            parse_mode="HTML",
-        )
-
 
 if __name__ == "__main__":
     import asyncio
