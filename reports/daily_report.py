@@ -10,6 +10,7 @@ from news.news_agent import (
     get_detailed_crypto_analysis_with_news,
     highlight_articles,
 )
+from sharedCode.priceChecker import fetch_current_price
 from news.rss_parser import get_news
 from sharedCode.telegram import send_telegram_message, send_telegram_document
 from source_repository import fetch_symbols
@@ -56,7 +57,38 @@ async def process_daily_report(
     # Format messages
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    message_part1 = f"Crypto Report: {today_date}\n"
+    # --- Current Prices Section (added to indicators message) ---
+    def build_current_prices_section(symbols, limit: int = 12) -> str:
+        """Build a current prices snapshot for inclusion in analysis prompt.
+
+        Prioritizes BTC & ETH, then fills remaining slots with other symbols.
+        Returns an HTML-formatted <pre> block consistent with other sections.
+        """
+        # Reorder symbols so BTC/ETH first
+        priority = ["BTC", "ETH"]
+        ordered = sorted(
+            symbols,
+            key=lambda s: (0 if s.symbol_name in priority else 1, s.symbol_name),
+        )[:limit]
+        lines = ["Symbol  | Last        | 24h Low     | 24h High    | Range% | FromLow% | FromHigh%"]
+        lines.append("--------|------------|------------|------------|--------|----------|-----------")
+        for sym in ordered:
+            try:
+                tp = fetch_current_price(sym)
+                rng = tp.high - tp.low if tp.high and tp.low else 0
+                pos_pct = ((tp.last - tp.low) / rng * 100) if rng > 0 else 0
+                from_low = ((tp.last - tp.low) / tp.low * 100) if tp.low else 0
+                from_high = ((tp.high - tp.last) / tp.high * 100) if tp.high else 0
+                lines.append(
+                    f"{sym.symbol_name:<7}| {tp.last:>10.6f} | {tp.low:>10.6f} | {tp.high:>10.6f} | {pos_pct:>6.2f} | {from_low:>8.2f} | {from_high:>9.2f}"
+                )
+            except Exception as e:  # noqa: BLE001 - we want robustness here
+                lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")
+        return "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
+
+    current_prices_section = build_current_prices_section(symbols)
+
+    message_part1 = f"Crypto Report: {today_date}\n" + current_prices_section
     message_part1 += f"24h Range Report:\n<pre>{range_table}</pre>"
     message_part1 += f"Price Change Report: <pre>{pricechange_table}</pre>\n\n"
     message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
