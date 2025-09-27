@@ -35,6 +35,7 @@ If there is no significant information to report, state that there is no notewor
 At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
 """
 
+
 SYSTEM_PROMPT_ANALYSIS_NEWS = """\
 You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
 Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
@@ -143,7 +144,6 @@ class PerplexityClient(AIClient):
                 price_data = "No price data available."
         else:
             price_data = "No price data available (database connection not provided)."
-
         models = ["sonar-pro"]  # Models to try in order
         max_retries = len(models)
         current_try = 0
@@ -155,14 +155,12 @@ class PerplexityClient(AIClient):
             data = {
                 "model": current_model,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT_ANALYSIS,
-                    },
+                    {"role": "system", "content": SYSTEM_PROMPT_ANALYSIS},
                     {
                         "role": "user",
                         "content": USER_PROMPT_ANALYSIS.format(
-                            indicators_message=indicators_message, price_data=price_data
+                            indicators_message=indicators_message,
+                            price_data=price_data,
                         ),
                     },
                 ],
@@ -244,10 +242,7 @@ class PerplexityClient(AIClient):
             data = {
                 "model": current_model,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT_ANALYSIS_NEWS,
-                    },
+                    {"role": "system", "content": SYSTEM_PROMPT_ANALYSIS_NEWS},
                     {
                         "role": "user",
                         "content": USER_PROMPT_ANALYSIS_NEWS.format(
@@ -417,7 +412,10 @@ class GeminiClient(AIClient):
             price_data = "No price data available (database connection not provided)."
 
         try:
-            prompt = f"{SYSTEM_PROMPT_ANALYSIS}\n\n{USER_PROMPT_ANALYSIS.format(indicators_message=indicators_message, price_data=price_data)}"
+            user_section = USER_PROMPT_ANALYSIS.format(
+                indicators_message=indicators_message, price_data=price_data
+            )
+            prompt = f"{SYSTEM_PROMPT_ANALYSIS}\n\n{user_section}"
 
             response = self.model.generate_content(prompt)
 
@@ -473,7 +471,12 @@ class GeminiClient(AIClient):
             price_data = "No price data available (database connection not provided)."
 
         try:
-            prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{USER_PROMPT_ANALYSIS_NEWS.format(news_feeded=news_feeded, indicators_message=indicators_message, price_data=price_data)}"
+            user_section = USER_PROMPT_ANALYSIS_NEWS.format(
+                news_feeded=news_feeded,
+                indicators_message=indicators_message,
+                price_data=price_data,
+            )
+            prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{user_section}"
 
             response = self.model.generate_content(prompt)
 
