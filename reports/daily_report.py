@@ -136,8 +136,37 @@ async def process_daily_report(
             message_part1 + message_part2 + volume_report + sopr_report,
             ai_api_type,
         )
+        # Reuse current_prices_section also for the news-enhanced analysis by prepending it to aggregated indicators
+        def format_aggregated(agg_list) -> str:
+            if not agg_list:
+                return "No aggregated indicator data available.\n"
+            header = (
+                "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | Range%\n"
+                "-------|-----|-------|-----|------|------|-------|-----|------|-------\n"
+            )
+            lines = []
+            for row in agg_list:
+                try:
+                    lines.append(
+                        f"{row.get('SymbolName',''):>6} | "
+                        f"{row.get('RSI', '')!s:>4} | "
+                        f"{row.get('RSIClosePrice',''):>6} | "
+                        f"{row.get('MA50',''):>5} | "
+                        f"{row.get('MA200',''):>6} | "
+                        f"{row.get('EMA50',''):>6} | "
+                        f"{row.get('EMA200',''):>7} | "
+                        f"{row.get('LowPrice',''):>5} | "
+                        f"{row.get('HighPrice',''):>6} | "
+                        f"{row.get('RangePercent',''):>6}"
+                    )
+                except Exception as e:  # noqa: BLE001
+                    lines.append(f"Row format error: {e}")
+            return "Aggregated Indicators:\n<pre>" + header + "\n".join(lines) + "</pre>\n\n"
+
+        aggregated_formatted = format_aggregated(aggregated_data)
+        aggregated_with_prices = current_prices_section + aggregated_formatted
         analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
-            ai_api_key, aggregated_data, fetched_news, ai_api_type
+            ai_api_key, aggregated_with_prices, fetched_news, ai_api_type
         )
         highlight_articles_message = highlight_articles(
             ai_api_key, symbols, fetched_news, ai_api_type
