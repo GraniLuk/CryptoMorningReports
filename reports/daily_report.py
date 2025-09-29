@@ -2,6 +2,7 @@ import os
 from datetime import date, datetime, timezone
 
 from infra.telegram_logging_handler import app_logger
+from integrations.email_sender import send_email_with_epub_attachment
 from integrations.onedrive_uploader import upload_to_onedrive  # Added import
 from launchpool.launchpool_report import check_gempool_articles
 from news.crypto_panic import get_panic_news
@@ -25,6 +26,7 @@ from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
+from integrations.pandoc_converter import convert_markdown_to_epub_async
 
 
 async def process_daily_report(
@@ -190,6 +192,39 @@ async def process_daily_report(
                 logger.warning(
                     "Failed to send analysis with news as document: %s", doc_err
                 )
+
+            epub_filename = onedrive_filename_analysis_with_news.replace(".md", ".epub")
+            try:
+                epub_bytes = await convert_markdown_to_epub_async(
+                    analysis_reported_with_news,
+                    metadata={"title": f"Crypto Analysis with News {today_date}"},
+                )
+            except RuntimeError as convert_err:
+                logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
+            else:
+                recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
+                recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
+
+                if not recipients:
+                    logger.info(
+                        "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; skipping email dispatch."
+                    )
+                else:
+                    email_body = (
+                        "Hi,\n\n"
+                        "Please find attached the EPUB version of today's detailed crypto analysis with news.\n\n"
+                        "Regards,\n"
+                        "Crypto Morning Reports Bot"
+                    )
+                    email_sent = await send_email_with_epub_attachment(
+                        subject=f"Crypto Analysis with News {today_date}",
+                        body=email_body,
+                        attachment_bytes=epub_bytes,
+                        attachment_filename=epub_filename,
+                        recipients=recipients,
+                    )
+                    if not email_sent:
+                        logger.warning("Failed to send EPUB analysis report via email.")
 
             # Save highlighted articles in "news" subfolder
             if not highlight_articles_message.startswith("Failed"):
