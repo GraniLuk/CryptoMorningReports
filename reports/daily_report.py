@@ -131,11 +131,6 @@ async def process_daily_report(
         # Process and send news reports
         fetched_news = get_news()
         aggregated_data = get_aggregated_data(conn)
-        analysis_reported_without_news = get_detailed_crypto_analysis(
-            ai_api_key,
-            message_part1 + message_part2 + volume_report + sopr_report,
-            ai_api_type,
-        )
         # Reuse current_prices_section also for the news-enhanced analysis by prepending it to aggregated indicators
         def format_aggregated(agg_list) -> str:
             if not agg_list:
@@ -172,16 +167,8 @@ async def process_daily_report(
             ai_api_key, symbols, fetched_news, ai_api_type
         )
         # --- OneDrive Uploads ---
-        if not analysis_reported_without_news.startswith("Failed"):
-            # Save detailed analysis without news in "detailed_analysis" subfolder
-            onedrive_filename = f"CryptoAnalysis_{today_date}.md"
-            analysis_saved_to_onedrive = await upload_to_onedrive(
-                filename=onedrive_filename,
-                content=analysis_reported_without_news,
-                folder_path="detailed_analysis",
-            )
+        if not analysis_reported_with_news.startswith("Failed"):
 
-            # Save detailed analysis with news in "detailed_analysis_with_news" subfolder
             onedrive_filename_analysis_with_news = (
                 f"CryptoAnalysisWithNews_{today_date}.md"
             )
@@ -283,22 +270,6 @@ async def process_daily_report(
             message_part3,
             parse_mode="HTML",
         )
-
-    if not analysis_reported_without_news.startswith("Failed"):
-        await send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            analysis_reported_without_news,
-            parse_mode="HTML",
-        )
-        # Optionally notify about OneDrive save status
-        if analysis_saved_to_onedrive:
-            logger.info(f"Analysis report for {today_date} saved to OneDrive.")
-        else:
-            logger.warning(
-                f"Failed to save analysis report for {today_date} to OneDrive."
-            )
 
     await send_telegram_message(
         telegram_enabled, telegram_token, telegram_chat_id, news, parse_mode="HTML"
