@@ -123,10 +123,6 @@ async def process_daily_report(
 
     if not ai_api_key:
         logger.error(f"No API key found for {ai_api_type}")
-        analysis_reported_without_news = (
-            f"Failed: No {ai_api_type.title()} API key found"
-        )
-        analysis_saved_to_onedrive = False  # Flag to track upload status
     else:
         # Process and send news reports
         fetched_news = get_news()
