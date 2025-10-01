@@ -2,9 +2,66 @@ import asyncio
 import importlib
 import os
 import tempfile
+from threading import Lock
 from typing import Dict, Iterable, Optional
 
 from infra.telegram_logging_handler import app_logger
+
+_pypandoc_lock = Lock()
+_pypandoc_module = None
+
+
+def _resolve_pandoc_download_dir() -> str:
+    custom_dir = os.environ.get("PANDOC_DOWNLOAD_DIR")
+    if custom_dir:
+        return custom_dir
+
+    script_root = os.environ.get("AzureWebJobsScriptRoot")
+    if script_root:
+        return os.path.join(script_root, ".pandoc-cache")
+
+    home_dir = os.environ.get("HOME") or os.getcwd()
+    return os.path.join(home_dir, ".pandoc-cache")
+
+
+def _ensure_pandoc_available():
+    global _pypandoc_module
+    with _pypandoc_lock:
+        if _pypandoc_module is not None:
+            return _pypandoc_module
+
+        try:
+            pypandoc = importlib.import_module("pypandoc")
+        except ImportError as exc:  # pragma: no cover - defensive guard
+            raise RuntimeError(
+                "pypandoc is not installed. Please install it via requirements.txt."
+            ) from exc
+
+        try:
+            existing_path = pypandoc.get_pandoc_path()
+            if existing_path and os.path.isfile(existing_path):
+                app_logger.debug("Pandoc already available at %s", existing_path)
+                _pypandoc_module = pypandoc
+                return _pypandoc_module
+        except OSError:
+            app_logger.info("Pandoc binary not found; downloading on startup...")
+
+        target_dir = _resolve_pandoc_download_dir()
+        try:
+            os.makedirs(target_dir, exist_ok=True)
+            pandoc_path = pypandoc.download_pandoc(
+                targetfolder=target_dir, delete_installer=True
+            )
+            os.environ["PYPANDOC_PANDOC"] = pandoc_path
+            app_logger.info("Pandoc downloaded to %s", pandoc_path)
+        except Exception as exc:  # noqa: BLE001 - want to bubble informative error
+            raise RuntimeError(
+                "Failed to download Pandoc automatically. "
+                "Ensure the Function App has outbound internet access and a writable storage location."
+            ) from exc
+
+        _pypandoc_module = pypandoc
+        return _pypandoc_module
 
 
 def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
@@ -21,12 +78,7 @@ def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
 def _convert_markdown_to_epub_sync(
     markdown_text: str, metadata: Optional[Dict[str, str]] = None
 ) -> bytes:
-    try:
-        pypandoc = importlib.import_module("pypandoc")
-    except ImportError as exc:  # pragma: no cover - defensive guard
-        raise RuntimeError(
-            "pypandoc is not installed. Please install it via requirements.txt."
-        ) from exc
+    pypandoc = _ensure_pandoc_available()
 
     metadata_args = list(_build_metadata_args(metadata))
 
