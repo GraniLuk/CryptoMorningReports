@@ -25,6 +25,7 @@ def get_aggregated_data(conn):
                     ,[HighPrice]
                     ,[RangePercent]
                 FROM [dbo].[SymbolDataView]
+                order by RSIIndicatorDate desc
             """
 
         cursor.execute(query)
