@@ -1,113 +1,124 @@
 # Crypto Morning Reports
 
-An automated cryptocurrency market analysis tool that generates comprehensive daily reports about the crypto market, delivering insights through Telegram messages.
+Crypto Morning Reports is an Azure Functions project that aggregates market, technical, and news data to publish daily briefings through Telegram and optional document exports.
 
-## Features
+---
 
-### Technical Analysis
-- **RSI (Relative Strength Index)**
-  - Tracks overbought and oversold conditions
-  - Helps identify potential market reversals
+## Key Capabilities
 
-- **Moving Averages**
-  - Simple Moving Average (SMA)
-  - Exponential Moving Average (EMA)
-  - Multiple timeframes analysis
+- **Automated Scheduling** – Daily and weekly jobs execute via Azure Functions timers.
+- **Telegram Delivery** – Tight integration with Telegram bots for real-time notifications.
+- **Document Generation** – Markdown sources can be converted to EPUB using Pandoc, which is fetched dynamically at startup (see below).
+- **Flexible Data Sources** – Pulls price, volume, market cap, and sentiment signals from Binance, KuCoin, and external APIs.
+- **Modular Architecture** – Shared utilities and domain-specific packages keep the codebase organized and testable.
 
-- **MACD (Moving Average Convergence Divergence)**
-  - Momentum indicator
-  - Trend direction and strength analysis
-  - Signal line crossovers
+---
 
-- **Market Capitalization**
-  - Track market dominance
-  - Market value comparisons
-  - Market cap rankings
-
-- **Price Change Analysis**
-  - 24-hour price changes
-  - 7-day price changes
-  - Percentage-based comparisons
-  - Sorted by performance
-
-- **Price Range Monitoring**
-  - 24-hour high/low tracking
-  - Range percentage calculation
-  - Volatility insights
-  - Historical price ranges
-
-- **Volume Analysis**
-  - 24-hour trading volume
-  - Multi-exchange volume aggregation (Binance, KuCoin)
-  - Volume-based ranking
-  - USD-denominated values
-
-### Additional Features
-- Daily and weekly automated reports
-- Telegram integration for instant notifications
-- Multi-exchange price monitoring (Binance, KuCoin)
-- Customizable cryptocurrency tracking
-- News aggregation and analysis
-
-## Setup
+## Getting Started
 
 ### Prerequisites
-- Python 3.8+
-- Azure Functions Core Tools
-- SQL Server
-- Telegram Bot Token
+
+- Python 3.10 or later (aligned with Azure Functions Python worker support).
+- Azure Functions Core Tools (for local development and testing).
+- Access to an Azure SQL database.
+- A Telegram bot token and chat ID for alert delivery.
 
 ### Environment Variables
-Create a `.env` file in the root directory with the following variables:
-```
+
+Create a `.env` or configure your Function App settings with the following values:
+
+```ini
 TELEGRAM_ENABLED=true
-TELEGRAM_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
-SQL_PASSWORD=your_sql_password
-KUCOIN_API_KEY=your_kucoin_api_key
-KUCOIN_API_SECRET=your_kucoin_secret
-KUCOIN_API_PASSPHRASE=your_kucoin_passphrase
-PERPLEXITY_API_KEY=your_perplexity_api_key
+TELEGRAM_TOKEN=<telegram_bot_token>
+TELEGRAM_CHAT_ID=<telegram_chat_id>
+SQL_PASSWORD=<sql_password>
+KUCOIN_API_KEY=<kucoin_api_key>
+KUCOIN_API_SECRET=<kucoin_api_secret>
+KUCOIN_API_PASSPHRASE=<kucoin_api_passphrase>
+PERPLEXITY_API_KEY=<perplexity_api_key>
+PANDOC_DOWNLOAD_DIR=<optional_custom_path>
 ```
 
-### Installation
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/CryptoMorningReports.git
-cd CryptoMorningReports
+> ℹ️ `PANDOC_DOWNLOAD_DIR` is optional. If omitted, the function uses a cache folder under the script root.
+
+### Install Dependencies
+
+From the project root:
+
+```pwsh
+python -m pip install -r requirements.txt
 ```
 
-2. Install dependencies
-```bash
-pip install -r requirements.txt
+If you are using the Azure Functions Core Tools workflow, the provided VS Code tasks handle installation automatically before starting the host.
+
+---
+
+## Pandoc Download Flow
+
+To avoid container images or manual provisioning, the function ensures Pandoc is present at cold start:
+
+1. **Lazy Check** – The first conversion request calls `_ensure_pandoc_available` in `integrations/pandoc_converter.py`.
+2. **Download if Missing** – If the Pandoc binary isn't found, the helper downloads the appropriate archive to a writable cache directory using `pypandoc`.
+3. **Warm Cache** – Subsequent requests reuse the cached binary. You can pre-warm the cache by invoking any conversion path during startup (e.g., via a timer trigger that creates a dummy EPUB).
+4. **Custom Paths** – Override the cache directory with `PANDOC_DOWNLOAD_DIR` when you need a persistent storage mount (for example, Azure Files).
+
+> ✅ The approach works on Consumption and Premium plans as long as outbound internet access is allowed. No container or custom image is required.
+
+---
+
+## Running Locally
+
+```pwsh
+func host start
 ```
 
-## Usage
+The local host exposes HTTP endpoints (see `function_app.py`) and runs scheduled triggers according to the cron expressions defined in the function metadata.
 
-### Manual Trigger
-You can manually trigger reports using the HTTP endpoint:
-```bash
-curl "http://localhost:7071/api/manual-trigger?type=daily"
+To trigger the daily report manually during development:
+
+```pwsh
+Invoke-RestMethod "http://localhost:7071/api/manual-trigger?type=daily" -Method Get
 ```
 
-### Automated Reports
-The application runs automatically based on the following schedule:
-- Daily reports: Every day at 5:00 UTC
-- Weekly reports: Every Sunday at 4:00 UTC
+---
 
-## Project Structure
-```
+## Project Layout
+
+```text
 CryptoMorningReports/
-├── reports/              # Report generation modules
-├── technical_analysis/   # Technical indicators calculation
-├── news/                # News aggregation and analysis
-├── sharedCode/          # Shared utilities and API clients
-├── infra/               # Infrastructure and configuration
-└── function_app.py      # Azure Functions entry point
+├── reports/               # Report generation modules (daily, weekly, current status)
+├── technical_analysis/    # Indicators (RSI, MACD, moving averages, etc.)
+├── news/                  # News aggregation and parsing utilities
+├── integrations/          # External services (Pandoc, OneDrive, etc.)
+├── infra/                 # Configuration, SQL connectivity, telemetry
+├── sharedCode/            # Common SDK wrappers and helpers
+└── function_app.py        # Azure Functions entry point
 ```
+
+---
+
+## Testing
+
+Run the existing unit tests with:
+
+```pwsh
+pytest
+```
+
+Add new tests under `tests/` whenever you extend functionality. Focus on keeping external calls mocked so test runs remain fast and deterministic.
+
+---
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Contributions are welcome! Please:
+
+- Open an issue describing proposed changes.
+- Include tests or sample data updates where relevant.
+- Verify `pytest` passes locally before submitting a pull request.
+
+---
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+
+MIT License. See [`LICENSE`](LICENSE) for details.
