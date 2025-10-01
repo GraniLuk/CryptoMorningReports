@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure Functions: https://aka.ms/python-webapps-actions
 
-name: Build and deploy containerized Azure Function App - CryptoMorningReports
+name: Build and deploy Python project to Azure Function App - CryptoMorningReports
 
 on:
   push:
@@ -11,33 +11,21 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: '3.11'
-  IMAGE_NAME: 'cryptomorningreports'
-  BICEP_FILE: infra/bicep/main.bicep
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  PYTHON_VERSION: '3.11' # set this to the python version to use (supports 3.6, 3.7, 3.8)
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-      checks: write
-      pull-requests: write
-    env:
-      ACR_NAME: ${{ vars.ACR_NAME }}
-      ACR_SKU: ${{ vars.ACR_SKU }}
-      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-      LOCATION: ${{ vars.AZURE_LOCATION }}
-      STORAGE_ACCOUNT_NAME: ${{ vars.AZURE_STORAGE_ACCOUNT_NAME }}
-      HOSTING_PLAN_NAME: ${{ vars.AZURE_HOSTING_PLAN_NAME }}
-      HOSTING_PLAN_SKU: ${{ vars.AZURE_HOSTING_PLAN_SKU }}
-      FUNCTION_APP_NAME: ${{ vars.AZURE_FUNCTION_APP_NAME }}
-      IMAGE_TAG: ${{ github.sha }}
+      checks: write      # Required for test results
+      contents: read     # Required for actions/checkout
+      pull-requests: write  # Required for PR comments
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python version
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -48,11 +36,15 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          # Freeze dependencies to ensure version consistency
+          pip freeze > requirements.txt
 
       - name: Run tests
+        id: run_tests
         run: |
           source venv/bin/activate
           python -m pytest tests/ --junitxml=test-results.xml
+        continue-on-error: true
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -60,77 +52,60 @@ jobs:
         with:
           files: test-results.xml
 
-      - name: Validate required deployment variables
+      - name: Package app with dependencies
+        if: steps.run_tests.outcome == 'success'
         run: |
-          missing=()
-          for var in ACR_NAME RESOURCE_GROUP LOCATION STORAGE_ACCOUNT_NAME HOSTING_PLAN_NAME FUNCTION_APP_NAME; do
-            value="${!var}"
-            if [ -z "$value" ]; then
-              missing+=("$var")
-            fi
-          done
-          if [ ${#missing[@]} -ne 0 ]; then
-            echo "Missing required variables: ${missing[*]}. Configure repository or environment variables before running this workflow." >&2
-            exit 1
-          fi
+          source venv/bin/activate
+          mkdir -p packaged_function
+          # Copy all files except the 'packaged_function' directory itself
+          shopt -s extglob
+          cp -r !(packaged_function) packaged_function/
+          cp -r venv/lib/python${{ env.PYTHON_VERSION }}/site-packages/* packaged_function/
+          cd packaged_function
+          zip -r ../release.zip .
+    
+      - name: Upload artifact for deployment job
+        if: steps.run_tests.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: release.zip
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: success() # Only run deploy if build job succeeded (including tests)
+    
+    permissions:
+      id-token: write #This is required for requesting the JWT
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Unzip artifact for deployment
+        run: unzip release.zip     
+        
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DA38FBCD3C9347B7AA9854172D5427A3 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A790E00F99C84387B62D7CBA507121C1 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_76FEC4D3DAB84C5BB970E615839F3DE5 }}
 
-      - name: Login to Azure Container Registry
-        run: az acr login --name "$ACR_NAME"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push function image
-        uses: docker/build-push-action@v5
+      - name: 'Deploy to Azure Functions'
+        uses: Azure/functions-action@v1
+        id: deploy-to-function
         with:
-          context: .
-          push: true
-          platforms: linux/amd64
-          tags: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          app-name: 'BitcoinChecker'
+          slot-name: 'Production'
+          package: 'release.zip'
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
 
-      - name: Render Function App app settings
-        env:
-          FUNCTION_APP_SETTINGS_JSON: ${{ secrets.FUNCTION_APP_SETTINGS_JSON }}
+      - name: Install dependencies on Azure
         run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          payload = os.environ.get('FUNCTION_APP_SETTINGS_JSON')
-          if payload:
-              try:
-                  data = json.loads(payload)
-              except json.JSONDecodeError as exc:
-                  raise SystemExit(f'Invalid JSON in FUNCTION_APP_SETTINGS_JSON secret: {exc}')
-          else:
-              data = []
-
-          Path('appsettings.json').write_text(json.dumps(data))
-          PY
-
-      - name: Deploy infrastructure with Bicep
-        run: |
-          : "${ACR_SKU:=Basic}"
-          : "${HOSTING_PLAN_SKU:=EP1}"
-          az deployment group create \
-            --resource-group "$RESOURCE_GROUP" \
-            --template-file "$BICEP_FILE" \
-            --parameters \
-              location="$LOCATION" \
-              acrName="$ACR_NAME" \
-              acrSku="$ACR_SKU" \
-              storageAccountName="$STORAGE_ACCOUNT_NAME" \
-              hostingPlanName="$HOSTING_PLAN_NAME" \
-              hostingPlanSku="$HOSTING_PLAN_SKU" \
-              functionAppName="$FUNCTION_APP_NAME" \
-              imageName="$IMAGE_NAME" \
-              imageTag="$IMAGE_TAG" \
-              appSettings=@appsettings.json
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
