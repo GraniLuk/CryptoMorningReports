@@ -55,6 +55,9 @@ def _ensure_pandoc_available():
             os.environ["PYPANDOC_PANDOC"] = pandoc_path
             app_logger.info("Pandoc downloaded to %s", pandoc_path)
         except Exception as exc:  # noqa: BLE001 - want to bubble informative error
+            app_logger.exception(
+                "Pandoc download failed; target_dir=%s", target_dir
+            )
             raise RuntimeError(
                 "Failed to download Pandoc automatically. "
                 "Ensure the Function App has outbound internet access and a writable storage location."
