@@ -39,7 +39,6 @@ At the end of the analysis, provide information about missing indicators and sug
 SYSTEM_PROMPT_ANALYSIS_NEWS = """\
 You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
 Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
-Focus only on the news articles provided.
 Ensure responses are cleanly formatted with proper Markdown syntax.
 """
 
@@ -50,8 +49,7 @@ Focus on:
 2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.
 3. Statistical data and charts that support your analysis.
 4. Market sentiment with specific reasons.
-Only use the provided news articles for your analysis. 
-Base your analysis on these indicators: {indicators_message}
+Base your analysis also on these indicators: {indicators_message}
 And this recent price data (most recent entries last):
 {price_data}
 You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
