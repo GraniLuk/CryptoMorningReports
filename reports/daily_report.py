@@ -5,7 +5,6 @@ from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
 from integrations.onedrive_uploader import upload_to_onedrive  # Added import
 from launchpool.launchpool_report import check_gempool_articles
-from news.crypto_panic import get_panic_news
 from news.news_agent import (
     get_detailed_crypto_analysis,
     get_detailed_crypto_analysis_with_news,
@@ -53,8 +52,6 @@ async def process_daily_report(
         symbols, conn, target_date=date.today()
     )
     sopr_table = fetch_sopr_metrics(conn)
-    symbols_list = [symbol.symbol_name for symbol in symbols]
-    news = get_panic_news(symbols_list, days=1)
 
     # Format messages
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -243,7 +240,7 @@ async def process_daily_report(
                         f"Failed to save highlighted articles for {today_date} to OneDrive."
                     )
         else:
-            analysis_saved_to_onedrive = False
+            pass
         # --- End OneDrive Uploads ---
 
     # Send all messages
@@ -302,9 +299,6 @@ async def process_daily_report(
             parse_mode="HTML",
         )
 
-    await send_telegram_message(
-        telegram_enabled, telegram_token, telegram_chat_id, news, parse_mode="HTML"
-    )
 
 
 if __name__ == "__main__":
