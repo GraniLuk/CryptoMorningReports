@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import os
 import tempfile
+from pathlib import Path, PureWindowsPath
 from threading import Lock
 from typing import Dict, Iterable, Optional
 
@@ -11,10 +12,25 @@ _pypandoc_lock = Lock()
 _pypandoc_module = None
 
 
+def _normalize_custom_dir(custom_dir: str) -> str:
+    expanded = os.path.expandvars(os.path.expanduser(custom_dir))
+
+    if os.name != "nt":
+        windows_candidate = PureWindowsPath(expanded)
+        if windows_candidate.drive:
+            home_root = os.environ.get("HOME")
+            if home_root and windows_candidate.drive.lower() == "d:":
+                suffix_parts = windows_candidate.parts[1:]
+                return str(Path(home_root, *suffix_parts))
+        expanded = expanded.replace("\\", "/")
+
+    return os.path.normpath(expanded)
+
+
 def _resolve_pandoc_download_dir() -> str:
     custom_dir = os.environ.get("PANDOC_DOWNLOAD_DIR")
     if custom_dir:
-        return custom_dir
+        return _normalize_custom_dir(custom_dir)
 
     script_root = os.environ.get("AzureWebJobsScriptRoot")
     if script_root:
