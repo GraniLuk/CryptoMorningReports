@@ -68,6 +68,16 @@ def _ensure_pandoc_available():
             pandoc_path = pypandoc.download_pandoc(
                 targetfolder=target_dir, delete_installer=True
             )
+            
+            # download_pandoc may return None on some platforms; construct expected path
+            if not pandoc_path:
+                pandoc_path = os.path.join(target_dir, "pandoc")
+            
+            if not os.path.isfile(pandoc_path):
+                raise FileNotFoundError(
+                    f"Pandoc binary not found at expected location: {pandoc_path}"
+                )
+            
             os.environ["PYPANDOC_PANDOC"] = pandoc_path
             app_logger.info("Pandoc downloaded to %s", pandoc_path)
         except Exception as exc:  # noqa: BLE001 - want to bubble informative error
