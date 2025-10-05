@@ -94,10 +94,16 @@ def _ensure_pandoc_available():
 
 
 def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
-    if not metadata:
-        return ()
+    # Ensure required EPUB metadata fields are present
+    defaults = {
+        "lang": "en-US",
+        "language": "en-US",
+    }
+    
+    merged = {**defaults, **(metadata or {})}
+    
     args: list[str] = []
-    for key, value in metadata.items():
+    for key, value in merged.items():
         if value is None:
             continue
         args.extend(["-M", f"{key}={value}"])
