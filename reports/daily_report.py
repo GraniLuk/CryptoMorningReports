@@ -194,7 +194,11 @@ async def process_daily_report(
             try:
                 epub_bytes = await convert_markdown_to_epub_async(
                     analysis_reported_with_news,
-                    metadata={"title": f"Crypto Analysis with News {today_date}"},
+                    metadata={
+                        "title": f"Crypto Analysis with News {today_date}",
+                        "author": "Crypto Morning Reports Bot",
+                        "date": today_date,
+                    },
                 )
             except RuntimeError as convert_err:
                 logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
