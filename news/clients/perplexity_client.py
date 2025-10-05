@@ -8,10 +8,8 @@ import requests
 
 from news.clients.base_client import AIClient
 from news.prompts import (
-    SYSTEM_PROMPT_ANALYSIS,
     SYSTEM_PROMPT_ANALYSIS_NEWS,
     SYSTEM_PROMPT_HIGHLIGHT,
-    USER_PROMPT_ANALYSIS,
     USER_PROMPT_ANALYSIS_NEWS,
     USER_PROMPT_HIGHLIGHT,
 )
@@ -64,35 +62,6 @@ class PerplexityClient(AIClient):
         except Exception as e:
             error_msg = f"Request failed: {str(e)}"
             return False, error_msg
-
-    def get_detailed_crypto_analysis(self, indicators_message, conn=None) -> str:
-        """Get detailed crypto analysis using Perplexity API."""
-        start_time = time.time()
-        logging.info("Starting detailed crypto analysis with Perplexity")
-
-        price_data = fetch_and_format_candle_data(conn)
-        
-        models = ["sonar-pro"]
-        
-        def request_func(model):
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT_ANALYSIS},
-                {
-                    "role": "user",
-                    "content": USER_PROMPT_ANALYSIS.format(
-                        indicators_message=indicators_message,
-                        price_data=price_data,
-                    ),
-                },
-            ]
-            return self._make_request(model, messages)
-        
-        result = retry_with_fallback_models(
-            models, request_func, "Crypto analysis"
-        )
-        
-        logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
-        return result
 
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None

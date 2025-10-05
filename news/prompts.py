@@ -5,28 +5,6 @@ This module contains all system and user prompts used by AI clients
 for analyzing cryptocurrency markets and highlighting relevant articles.
 """
 
-# Analysis prompts
-SYSTEM_PROMPT_ANALYSIS = """\
-You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.
-Provide in-depth explanations, including the reasoning behind resistance levels, support for analysis with charts and statistics, and comprehensive on-chain metrics interpretation.
-Ensure responses are cleanly formatted with proper Markdown syntax.
-"""
-
-USER_PROMPT_ANALYSIS = """\
-Analyze the situation of current crypto market situation.
-Focus on:
-1. Detailed technical analysis, explaining why specific resistance/support levels are important.
-2. On-chain analysis, interpreting metrics like active addresses, transaction volume, and network health.
-3. Statistical data and charts that support your analysis.
-4. Market sentiment with specific reasons.
-Base your analysis on these indicators: {indicators_message}
-And this recent price data (most recent entries last):
-{price_data}
-You need to choose one cryptocurrency to make a daily trade, short or long with explanations. 
-If there is no significant information to report, state that there is no noteworthy information.
-At the end of the analysis, provide information about missing indicators and suggest what to look for in the future.
-"""
-
 # Analysis with news prompts
 SYSTEM_PROMPT_ANALYSIS_NEWS = """\
 You are an advanced crypto analyst specializing in detailed technical and on-chain analysis.

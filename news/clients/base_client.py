@@ -5,20 +5,6 @@ from abc import ABC, abstractmethod
 
 class AIClient(ABC):
     """Abstract base class for AI client implementations."""
-    
-    @abstractmethod
-    def get_detailed_crypto_analysis(self, indicators_message, conn=None) -> str:
-        """
-        Get detailed crypto analysis.
-        
-        Args:
-            indicators_message (str): Indicators message for analysis
-            conn (object, optional): Database connection object
-            
-        Returns:
-            str: Analysis result or error message
-        """
-        pass
 
     @abstractmethod
     def get_detailed_crypto_analysis_with_news(

@@ -3,10 +3,9 @@ from datetime import date, datetime, timezone
 
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
-from integrations.onedrive_uploader import upload_to_onedrive  # Added import
+from integrations.onedrive_uploader import upload_to_onedrive  # Import for OneDrive uploads
 from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import (
-    get_detailed_crypto_analysis,
     get_detailed_crypto_analysis_with_news,
     highlight_articles,
 )

@@ -8,10 +8,8 @@ import google.generativeai as genai  # type: ignore
 
 from news.clients.base_client import AIClient
 from news.prompts import (
-    SYSTEM_PROMPT_ANALYSIS,
     SYSTEM_PROMPT_ANALYSIS_NEWS,
     SYSTEM_PROMPT_HIGHLIGHT,
-    USER_PROMPT_ANALYSIS,
     USER_PROMPT_ANALYSIS_NEWS,
     USER_PROMPT_HIGHLIGHT,
 )
@@ -84,24 +82,6 @@ class GeminiClient(AIClient):
             error_msg = f"Failed to get response from Gemini: {str(e)}"
             logging.error(error_msg)
             return error_msg
-
-    def get_detailed_crypto_analysis(self, indicators_message, conn=None) -> str:
-        """Get detailed crypto analysis using Gemini API."""
-        start_time = time.time()
-        logging.info("Starting detailed crypto analysis with Gemini")
-
-        price_data = fetch_and_format_candle_data(conn)
-        
-        user_section = USER_PROMPT_ANALYSIS.format(
-            indicators_message=indicators_message, price_data=price_data
-        )
-        prompt = f"{SYSTEM_PROMPT_ANALYSIS}\n\n{user_section}"
-        logging.debug(f"Generated prompt length: {len(prompt)}")
-        logging.debug(f"Generated prompt: {prompt}")
-        result = self._generate_content(prompt)
-        logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
-        return result
-
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
     ) -> str:

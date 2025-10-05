@@ -27,14 +27,6 @@ def create_ai_client(api_type, api_key):
         raise ValueError(f"Unsupported AI API type: {api_type}")
 
 
-# Legacy functions for backwards compatibility
-def get_detailed_crypto_analysis(
-    api_key, indicators_message, api_type="perplexity", conn=None
-):
-    client = create_ai_client(api_type, api_key)
-    return client.get_detailed_crypto_analysis(indicators_message, conn)
-
-
 def get_detailed_crypto_analysis_with_news(
     api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
 ):
