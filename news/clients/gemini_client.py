@@ -56,7 +56,7 @@ class GeminiClient(AIClient):
         except Exception as e:
             raise RuntimeError(f"GeminiClient initialization failed: {e}") from e
 
-    def _generate_content(self, prompt: 'str | list') -> str:
+    def _generate_content(self, prompt: Any) -> str:
         """
         Generate content using Gemini API.
         
@@ -100,7 +100,7 @@ class GeminiClient(AIClient):
         )
 
         prompt_parts = [
-            {"role": "system", "parts": [{"text": SYSTEM_PROMPT_ANALYSIS_NEWS}]}
+            {"role": "user", "parts": [{"text": SYSTEM_PROMPT_ANALYSIS_NEWS}]}
         ] + [
             {"role": "user", "parts": [{"text": message}]}
             for message in user_messages
