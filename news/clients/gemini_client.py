@@ -98,6 +98,9 @@ class GeminiClient(AIClient):
             price_data=price_data,
         )
         prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{user_section}"
+
+        logging.debug(f"Generated prompt length: {len(prompt)}")
+        logging.debug(f"Generated prompt: {prompt}")
         
         result = self._generate_content(prompt)
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
