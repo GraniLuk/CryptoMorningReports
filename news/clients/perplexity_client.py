@@ -10,8 +10,8 @@ from news.clients.base_client import AIClient
 from news.prompts import (
     SYSTEM_PROMPT_ANALYSIS_NEWS,
     SYSTEM_PROMPT_HIGHLIGHT,
-    USER_PROMPT_ANALYSIS_NEWS,
     USER_PROMPT_HIGHLIGHT,
+    build_analysis_user_messages,
 )
 from news.utils.candle_data import fetch_and_format_candle_data
 from news.utils.retry_handler import retry_with_fallback_models
@@ -74,19 +74,20 @@ class PerplexityClient(AIClient):
         price_data = fetch_and_format_candle_data(conn)
         
         models = ["sonar-deep-research"]
-        
+
         def request_func(model):
+            user_messages = build_analysis_user_messages(
+                news_feeded=news_feeded,
+                indicators_message=indicators_message,
+                price_data=price_data,
+            )
+
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT_ANALYSIS_NEWS},
-                {
-                    "role": "user",
-                    "content": USER_PROMPT_ANALYSIS_NEWS.format(
-                        news_feeded=news_feeded,
-                        indicators_message=indicators_message,
-                        price_data=price_data,
-                    ),
-                },
             ]
+            messages.extend(
+                {"role": "user", "content": chunk} for chunk in user_messages
+            )
             return self._make_request(model, messages)
         
         result = retry_with_fallback_models(

@@ -51,7 +51,24 @@ If the provided inputs are insufficient for meaningful analysis, explain what is
 """
 
 USER_PROMPT_ANALYSIS_NEWS = """\
-Input News / Narrative Items:\n{news_feeded}\n\nIndicators Provided:\n{indicators_message}\n\nRecent Price Data (chronological, most recent last):\n{price_data}\n\nInstructions:\n- Use ONLY the information above. Treat any other metric (on-chain specifics, derivatives data like funding/open interest, order flow, liquidity map, sentiment indices) as MISSING unless it is explicitly inferable from the given indicators text.\n- Follow the SYSTEM prompt’s required 9 sections exactly.\n- Choose at most one PRIMARY trade setup unless two have distinctly different uncorrelated drivers; otherwise limit to one to reduce overexposure.\n- If symbols are ambiguous from the data, state ambiguity before proposing a setup.\n- Explicitly list every assumption you introduce that is not directly stated in the inputs.\n- If nothing reaches high conviction, output a “No high-conviction setup” message instead of forcing a trade.\n\nProceed with the structured analysis now.\n"""
+Instructions:\n- Use ONLY the information provided in the current message chunks (news, indicators, price data) supplied for this analysis. Treat any other metric (on-chain specifics, derivatives data like funding/open interest, order flow, liquidity map, sentiment indices) as MISSING unless it is explicitly inferable from the given indicators text.\n- Follow the SYSTEM prompt’s required 9 sections exactly.\n- Choose at most one PRIMARY trade setup unless two have distinctly different uncorrelated drivers; otherwise limit to one to reduce overexposure.\n- If symbols are ambiguous from the data, state ambiguity before proposing a setup.\n- Explicitly list every assumption you introduce that is not directly stated in the inputs.\n- If nothing reaches high conviction, output a “No high-conviction setup” message instead of forcing a trade.\n\nProceed with the structured analysis now.\n"""
+
+
+def build_analysis_user_messages(
+    news_feeded: str, indicators_message: str, price_data: str
+) -> list[str]:
+    """Create ordered user message chunks for analysis prompts."""
+
+    news_text = news_feeded
+    indicators_text = indicators_message
+    price_text = price_data
+
+    return [
+        f"Input News / Narrative Items:\n{news_text}",
+        f"Indicators Provided:\n{indicators_text}",
+        f"Recent Price Data (chronological, most recent last):\n{price_text}",
+        USER_PROMPT_ANALYSIS_NEWS,
+    ]
 
 # Article highlighting prompts
 SYSTEM_PROMPT_HIGHLIGHT = """\
