@@ -88,7 +88,7 @@ class GeminiClient(AIClient):
         """Get detailed crypto analysis with news using Gemini API."""
         start_time = time.time()
         logging.info("Starting detailed crypto analysis with news using Gemini")
-        logging.debug(f"Input news articles count: {len(news_feeded)}")
+        logging.info(f"Input news articles count: {len(news_feeded)}")
 
         price_data = fetch_and_format_candle_data(conn)
         
@@ -99,8 +99,8 @@ class GeminiClient(AIClient):
         )
         prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{user_section}"
 
-        logging.debug(f"Generated prompt length: {len(prompt)}")
-        logging.debug(f"Generated prompt: {prompt}")
+        logging.info(f"Generated prompt length: {len(prompt)}")
+        logging.info(f"Generated prompt: {prompt}")
         
         result = self._generate_content(prompt)
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
