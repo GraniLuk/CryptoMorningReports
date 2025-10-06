@@ -10,8 +10,8 @@ from news.clients.base_client import AIClient
 from news.prompts import (
     SYSTEM_PROMPT_ANALYSIS_NEWS,
     SYSTEM_PROMPT_HIGHLIGHT,
-    USER_PROMPT_ANALYSIS_NEWS,
     USER_PROMPT_HIGHLIGHT,
+    build_analysis_user_messages,
 )
 from news.utils.candle_data import fetch_and_format_candle_data
 
@@ -56,12 +56,13 @@ class GeminiClient(AIClient):
         except Exception as e:
             raise RuntimeError(f"GeminiClient initialization failed: {e}") from e
 
-    def _generate_content(self, prompt: str) -> str:
+    def _generate_content(self, prompt: 'str | list') -> str:
         """
         Generate content using Gemini API.
         
         Args:
-            prompt (str): Combined system and user prompt
+            prompt: Combined system and user prompt; can be a single string or
+                a structured list of chat messages compatible with the Gemini SDK.
             
         Returns:
             str: Generated content or error message
@@ -91,18 +92,28 @@ class GeminiClient(AIClient):
         logging.info(f"Input news articles count: {len(news_feeded)}")
 
         price_data = fetch_and_format_candle_data(conn)
-        
-        user_section = USER_PROMPT_ANALYSIS_NEWS.format(
+
+        user_messages = build_analysis_user_messages(
             news_feeded=news_feeded,
             indicators_message=indicators_message,
             price_data=price_data,
         )
-        prompt = f"{SYSTEM_PROMPT_ANALYSIS_NEWS}\n\n{user_section}"
 
-        logging.info(f"Generated prompt length: {len(prompt)}")
-        logging.info(f"Generated prompt: {prompt}")
-        
-        result = self._generate_content(prompt)
+        prompt_parts = [
+            {"role": "system", "parts": [{"text": SYSTEM_PROMPT_ANALYSIS_NEWS}]}
+        ] + [
+            {"role": "user", "parts": [{"text": message}]}
+            for message in user_messages
+        ]
+
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug("Generated prompt length for each part: %s", [
+                (part["role"], sum(len(p["text"]) for p in part["parts"]))
+                for part in prompt_parts
+            ])
+        logging.debug("Generated prompt parts: %s", prompt_parts)
+
+        result = self._generate_content(prompt_parts)
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
