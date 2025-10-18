@@ -18,14 +18,14 @@ from news.utils.candle_data import fetch_and_format_candle_data
 
 class GeminiClient(AIClient):
     """Client for Google Gemini AI API."""
-    
+
     def __init__(self, api_key):
         """
         Initialize Gemini client.
-        
+
         Args:
             api_key (str): Google Gemini API key
-            
+
         Raises:
             ValueError: If API key is missing
             RuntimeError: If Gemini SDK initialization fails
@@ -34,7 +34,7 @@ class GeminiClient(AIClient):
         logging.info(
             f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}"
         )
-        
+
         if not self.api_key:
             raise ValueError("GeminiClient initialization failed: API key missing")
 
@@ -59,17 +59,17 @@ class GeminiClient(AIClient):
     def _generate_content(self, prompt: Any) -> str:
         """
         Generate content using Gemini API.
-        
+
         Args:
             prompt: Combined system and user prompt; can be a single string or
                 a structured list of chat messages compatible with the Gemini SDK.
-            
+
         Returns:
             str: Generated content or error message
         """
         try:
             response = self.model.generate_content(prompt)
-            
+
             if response.candidates and len(response.candidates) > 0:
                 content = response.text
                 logging.info(f"Successfully processed. Length: {len(content)} chars")
@@ -78,11 +78,12 @@ class GeminiClient(AIClient):
                 error_msg = "Failed: No valid response from Gemini API"
                 logging.error(error_msg)
                 return error_msg
-                
+
         except Exception as e:
             error_msg = f"Failed to get response from Gemini: {str(e)}"
             logging.error(error_msg)
             return error_msg
+
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
     ) -> str:
@@ -102,16 +103,18 @@ class GeminiClient(AIClient):
         prompt_parts = [
             {"role": "user", "parts": [{"text": SYSTEM_PROMPT_ANALYSIS_NEWS}]}
         ] + [
-            {"role": "user", "parts": [{"text": message}]}
-            for message in user_messages
+            {"role": "user", "parts": [{"text": message}]} for message in user_messages
         ]
 
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            logging.debug("Generated prompt length for each part: %s", [
-                (part["role"], sum(len(p["text"]) for p in part["parts"]))
-                for part in prompt_parts
-            ])
-        logging.debug("Generated prompt parts: %s", prompt_parts)
+        if logging.getLogger().isEnabledFor(logging.INFO):
+            logging.info(
+                "Generated prompt length for each part: %s",
+                [
+                    (part["role"], sum(len(p["text"]) for p in part["parts"]))
+                    for part in prompt_parts
+                ],
+            )
+        logging.info("Generated prompt parts: %s", prompt_parts)
 
         result = self._generate_content(prompt_parts)
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
@@ -127,5 +130,5 @@ class GeminiClient(AIClient):
             f"{SYSTEM_PROMPT_HIGHLIGHT}\n\n"
             f"{USER_PROMPT_HIGHLIGHT.format(news_feeded=news_feeded, symbol_names=symbol_names)}"
         )
-        
+
         return self._generate_content(prompt)
