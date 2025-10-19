@@ -36,8 +36,17 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          # Install type checking tools
+          pip install pyright
           # Freeze dependencies to ensure version consistency
           pip freeze > requirements.txt
+
+      - name: Run type checking
+        id: type_check
+        run: |
+          source venv/bin/activate
+          pyright --warnings
+        continue-on-error: false  # Fail the build if type checking fails
 
       - name: Run tests
         id: run_tests
@@ -53,7 +62,7 @@ jobs:
           files: test-results.xml
 
       - name: Package app with dependencies
-        if: steps.run_tests.outcome == 'success'
+        if: steps.run_tests.outcome == 'success' && steps.type_check.outcome == 'success'
         run: |
           source venv/bin/activate
           mkdir -p packaged_function
