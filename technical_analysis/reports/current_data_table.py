@@ -14,6 +14,9 @@ from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_ti
 from technical_analysis.repositories.daily_candle_repository import (
     DailyCandleRepository,
 )
+from technical_analysis.repositories.moving_averages_repository import (
+    fetch_moving_averages_for_symbol,
+)
 
 
 def get_latest_price_from_candles(
@@ -77,6 +80,11 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         "daily_rsi": None,
         "hourly_rsi": None,
         "fifteen_min_rsi": None,
+        # Moving averages
+        "ma50": None,
+        "ma200": None,
+        "ema50": None,
+        "ema200": None,
         # Daily range related fields
         "daily_high": None,
         "daily_low": None,
@@ -110,6 +118,20 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         data["daily_rsi"] = get_latest_rsi_from_df(daily_rsi_df)
         data["hourly_rsi"] = get_latest_rsi_from_df(hourly_rsi_df)
         data["fifteen_min_rsi"] = get_latest_rsi_from_df(fifteen_min_rsi_df)
+
+        # Fetch moving averages data (latest values)
+        try:
+            ma_df = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=1)
+            if ma_df is not None and not ma_df.empty:
+                latest_ma = ma_df.iloc[-1]
+                data["ma50"] = float(latest_ma["MA50"]) if pd.notna(latest_ma.get("MA50")) else None
+                data["ma200"] = float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
+                data["ema50"] = float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
+                data["ema200"] = float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
+        except Exception as ma_error:
+            app_logger.warning(
+                f"Could not fetch moving averages for {symbol.symbol_name}: {ma_error}"
+            )
 
         # Fetch daily candles (look back 7 days) to compute daily range and recent history
         try:
@@ -199,6 +221,19 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
         f"{fifteen_min_rsi:.2f}" if fifteen_min_rsi is not None else "N/A"
     )
 
+    # Format moving averages
+    ma50 = symbol_data.get("ma50")
+    ma50_str = f"${ma50:,.4f}" if ma50 is not None else "N/A"
+
+    ma200 = symbol_data.get("ma200")
+    ma200_str = f"${ma200:,.4f}" if ma200 is not None else "N/A"
+
+    ema50 = symbol_data.get("ema50")
+    ema50_str = f"${ema50:,.4f}" if ema50 is not None else "N/A"
+
+    ema200 = symbol_data.get("ema200")
+    ema200_str = f"${ema200:,.4f}" if ema200 is not None else "N/A"
+
     # Daily range values
     daily_high = symbol_data.get("daily_high")
     daily_low = symbol_data.get("daily_low")
@@ -243,6 +278,10 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
 | **Daily RSI** | {daily_rsi_str} |
 | **Hourly RSI** | {hourly_rsi_str} |
 | **15-min RSI** | {fifteen_min_rsi_str} |
+| **MA50** | {ma50_str} |
+| **MA200** | {ma200_str} |
+| **EMA50** | {ema50_str} |
+| **EMA200** | {ema200_str} |
 | **Daily High** | {high_str} |
 | **Daily Low** | {low_str} |
 | **Daily Range (H-L)** | {range_str} |
@@ -296,9 +335,11 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
         symbol_data = get_current_data_for_symbol(symbol, conn)
 
         # Format for AI prompt
+        # Format price
         latest_price = symbol_data.get("latest_price")
         price_str = f"${latest_price:,.4f}" if latest_price is not None else "N/A"
 
+        # Format RSI values
         daily_rsi = symbol_data.get("daily_rsi")
         daily_rsi_str = f"{daily_rsi:.2f}" if daily_rsi is not None else "N/A"
 
@@ -309,6 +350,19 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
         fifteen_min_rsi_str = (
             f"{fifteen_min_rsi:.2f}" if fifteen_min_rsi is not None else "N/A"
         )
+
+        # Format moving averages
+        ma50 = symbol_data.get("ma50")
+        ma50_str = f"${ma50:,.4f}" if ma50 is not None else "N/A"
+
+        ma200 = symbol_data.get("ma200")
+        ma200_str = f"${ma200:,.4f}" if ma200 is not None else "N/A"
+
+        ema50 = symbol_data.get("ema50")
+        ema50_str = f"${ema50:,.4f}" if ema50 is not None else "N/A"
+
+        ema200 = symbol_data.get("ema200")
+        ema200_str = f"${ema200:,.4f}" if ema200 is not None else "N/A"
 
         timestamp = symbol_data.get("timestamp", "Unknown")
 
@@ -338,6 +392,10 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 - Daily RSI: {daily_rsi_str}
 - Hourly RSI: {hourly_rsi_str}
 - 15-minute RSI: {fifteen_min_rsi_str}
+- MA50: {ma50_str}
+- MA200: {ma200_str}
+- EMA50: {ema50_str}
+- EMA200: {ema200_str}
 - Data timestamp: {timestamp}
 - Daily ranges: {ranges_block}
 """
