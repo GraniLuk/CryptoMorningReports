@@ -80,7 +80,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
         results.append(("EMA14", ema14_results[-1]))
 
         # Convert list of ratios to DataFrame with a column name and convert to float
-        df_ratios = pd.DataFrame(ratios, columns=["Ratio"])
+        df_ratios = pd.DataFrame({"Ratio": ratios})
         df_ratios["Ratio"] = df_ratios["Ratio"].astype(float)
 
         # Then pass the Series to your RSI calculation function
@@ -89,12 +89,15 @@ def fetch_stepn_report(conn) -> PrettyTable:
 
         # Save results to database
         try:
+            # Ensure ema value is float
+            ema_value: float = float(ema14_results[-1])
+
             save_stepn_results(
                 conn=conn,
                 gmt_price=results[0][1],
                 gst_price=results[1][1],
                 ratio=gmt_gst_ratio,
-                ema=ema14_results[-1],
+                ema=ema_value,
                 min_24h=min_24h,
                 max_24h=max_24h,
                 range_24h=range_percent,
@@ -136,7 +139,7 @@ def calculate_ema14(ratios):
     if not ratios:
         return []
 
-    df = pd.DataFrame(ratios, columns=["Ratio"])
+    df = pd.DataFrame({"Ratio": ratios})
     df["EMA14"] = df["Ratio"].ewm(span=14, adjust=False).mean()
 
     return df["EMA14"].tolist()
