@@ -62,8 +62,15 @@ def get_optimized_rsi_for_symbol_timeframe(
         df["symbol"] = symbol.symbol_name
 
         # Check if any candles in the requested date range are missing RSI values
-        requested_df = df[df.index >= pd.Timestamp(start_date)]
-        missing_rsi = requested_df["RSI"].isna().any()
+        requested_df: pd.DataFrame = df[df.index >= pd.Timestamp(start_date)]
+        
+        # Ensure RSI column exists and check for missing values
+        if "RSI" not in requested_df.columns:
+            requested_df["RSI"] = pd.NA
+        
+        # Extract RSI column as Series and check for missing values
+        rsi_series: pd.Series = requested_df["RSI"]
+        missing_rsi: bool = bool(rsi_series.isna().any())
         
         if missing_rsi:
             app_logger.info(
@@ -75,21 +82,30 @@ def get_optimized_rsi_for_symbol_timeframe(
             df["calculated_RSI"] = calculated_rsi
             
             # Find rows with missing RSI values in the requested date range
-            missing_rows = requested_df[requested_df["RSI"].isna()]
+            rsi_mask: pd.Series = requested_df["RSI"].isna()
+            missing_rows: pd.DataFrame = requested_df[rsi_mask]
             app_logger.info(f"Found {len(missing_rows)} rows with missing RSI in the requested date range")
             
             # Update only the missing values in the database
-            for index, row in missing_rows.iterrows():
+            for idx, row in missing_rows.iterrows():
+                # Type assertion to help type checker understand idx is a valid index
+                assert isinstance(idx, (pd.Timestamp, str, int)), f"Unexpected index type: {type(idx)}"
+                
                 candle_id = int(row["SymbolId"])
-                if not pd.isna(df.at[index, "calculated_RSI"]):
-                    calculated_rsi_value = float(df.at[index, "calculated_RSI"])
+                
+                # Get the calculated RSI value using loc for proper type inference
+                calculated_value = df.loc[idx, "calculated_RSI"]
+                
+                if pd.notna(calculated_value):
+                    # Type ignore: RSI values are always numeric, safe to convert to float
+                    calculated_rsi_value = float(calculated_value)  # type: ignore[arg-type]
                     
                     try:
                         # Save the calculated value to the database
                         save_rsi_by_timeframe(conn, candle_id, calculated_rsi_value, timeframe)
                         
-                        # Update the dataframe
-                        df.at[index, "RSI"] = calculated_rsi_value
+                        # Update the dataframe using loc
+                        df.loc[idx, "RSI"] = calculated_rsi_value
                         
                         app_logger.info(
                             f"Saved {timeframe} RSI for {symbol.symbol_name} candle {candle_id}: RSI={calculated_rsi_value:.2f}"
@@ -148,10 +164,12 @@ def test_optimized_rsi():
     print("\nDataFrame with optimized RSI calculation:")
     print(df_complete.head())
     
-    # Check if all values have RSI
-    print(f"\nAre there any missing RSI values? {df_complete['RSI'].isna().any()}")
+    # Check if all values have RSI - ensure df_complete is a DataFrame
+    assert isinstance(df_complete, pd.DataFrame), "Expected a DataFrame"
+    has_missing_rsi: bool = bool(df_complete['RSI'].isna().any())
+    print(f"\nAre there any missing RSI values? {has_missing_rsi}")
     
-    if not df_complete['RSI'].isna().any():
+    if not has_missing_rsi:
         print("\nSUCCESS: All RSI values are present and accounted for!")
     else:
         print("\nFAILED: There are missing RSI values")
