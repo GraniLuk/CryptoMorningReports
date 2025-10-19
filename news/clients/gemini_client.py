@@ -100,21 +100,90 @@ class GeminiClient(AIClient):
             price_data=price_data,
         )
 
+        # Build prompt parts - system prompt first, then each user message separately
         prompt_parts = [
             {"role": "user", "parts": [{"text": SYSTEM_PROMPT_ANALYSIS_NEWS}]}
         ] + [
             {"role": "user", "parts": [{"text": message}]} for message in user_messages
         ]
 
-        if logging.getLogger().isEnabledFor(logging.INFO):
-            logging.info(
-                "Generated prompt length for each part: %s",
-                [
-                    (part["role"], sum(len(p["text"]) for p in part["parts"]))
-                    for part in prompt_parts
-                ],
-            )
-        logging.info("Generated prompt parts: %s", prompt_parts)
+        # Log each message part separately for debugging
+        logging.info("=" * 80)
+        logging.info(f"GEMINI API REQUEST - Total parts: {len(prompt_parts)}")
+        logging.info("=" * 80)
+
+        for idx, part in enumerate(prompt_parts):
+            text_content = part["parts"][0]["text"]
+            text_length = len(text_content)
+
+            # Identify the part type for clearer logging
+            if idx == 0:
+                part_type = "SYSTEM_PROMPT"
+            elif "News Article" in text_content[:100]:
+                # Extract article number from the message
+                import re
+
+                match = re.search(r"News Article (\d+)/(\d+)", text_content[:100])
+                if match:
+                    part_type = f"NEWS_ARTICLE_{match.group(1)}_of_{match.group(2)}"
+                else:
+                    part_type = "NEWS_ARTICLE"
+            elif "Input News" in text_content[:100]:
+                part_type = "NEWS_HEADER"
+            elif (
+                "Technical Indicators" in text_content[:100]
+                or "Indicators Provided" in text_content[:100]
+                or "Momentum" in text_content[:100]
+            ):
+                part_type = "INDICATORS"
+            elif (
+                "Price Data" in text_content[:100]
+                or "Recent Price Data" in text_content[:100]
+            ):
+                part_type = "PRICE_DATA"
+            elif (
+                "Core principles" in text_content[:100]
+                or "MANDATORY OUTPUT SECTIONS" in text_content[:200]
+            ):
+                part_type = "USER_INSTRUCTIONS"
+            else:
+                part_type = "OTHER"
+
+            logging.info(f"\n--- Part {idx}: {part_type} ---")
+            logging.info(f"Role: {part['role']}")
+            logging.info(f"Length: {text_length:,} characters")
+
+            # Log preview (first 300 chars)
+            preview = text_content[:300].replace("\n", " ")
+            logging.info(f"Preview: {preview}...")
+
+            # For news articles, log the source and title if available
+            if "NEWS_ARTICLE" in part_type and text_length < 10000:
+                try:
+                    import json
+
+                    # Try to extract article info
+                    if "News Article" in text_content:
+                        article_json_start = text_content.find("{")
+                        if article_json_start > 0:
+                            article_json = text_content[article_json_start:]
+                            article_data = json.loads(article_json)
+                            logging.info(
+                                f"  Source: {article_data.get('source', 'N/A')}"
+                            )
+                            logging.info(
+                                f"  Title: {article_data.get('title', 'N/A')[:100]}"
+                            )
+                except Exception:
+                    pass
+
+            # For debugging, log full content of shorter parts (< 2000 chars)
+            if text_length < 2000:
+                logging.debug(f"Full content:\n{text_content}\n")
+
+        logging.info(f"\n{'=' * 80}")
+        logging.info("Sending request to Gemini API...")
+        logging.info(f"{'=' * 80}\n")
 
         result = self._generate_content(prompt_parts)
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")

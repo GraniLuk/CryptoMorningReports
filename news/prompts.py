@@ -57,18 +57,47 @@ Instructions:\n- Use ONLY the information provided in the current message chunks
 def build_analysis_user_messages(
     news_feeded: str, indicators_message: str, price_data: str
 ) -> list[str]:
-    """Create ordered user message chunks for analysis prompts."""
+    """Create ordered user message chunks for analysis prompts.
 
-    news_text = news_feeded
-    indicators_text = indicators_message
-    price_text = price_data
+    Each news article is returned as a separate message for better context handling.
+    """
+    import json
 
-    return [
-        f"Input News / Narrative Items:\n{news_text}",
-        f"Indicators Provided:\n{indicators_text}",
-        f"Recent Price Data (chronological, most recent last):\n{price_text}",
-        USER_PROMPT_ANALYSIS_NEWS,
-    ]
+    messages = []
+
+    # Try to parse news as JSON array and send each article separately
+    try:
+        news_articles = json.loads(news_feeded)
+        if isinstance(news_articles, list):
+            # Add header message
+            messages.append(
+                f"Input News / Narrative Items (Total: {len(news_articles)} articles)"
+            )
+
+            # Add each article as a separate message
+            for idx, article in enumerate(news_articles, 1):
+                article_text = json.dumps(article, indent=2)
+                messages.append(
+                    f"News Article {idx}/{len(news_articles)}:\n{article_text}"
+                )
+        else:
+            # Fallback if not a list
+            messages.append(f"Input News / Narrative Items:\n{news_feeded}")
+    except json.JSONDecodeError:
+        # Fallback if not JSON
+        messages.append(f"Input News / Narrative Items:\n{news_feeded}")
+
+    # Add indicators and price data
+    messages.extend(
+        [
+            f"Indicators Provided:\n{indicators_message}",
+            f"Recent Price Data (chronological, most recent last):\n{price_data}",
+            USER_PROMPT_ANALYSIS_NEWS,
+        ]
+    )
+
+    return messages
+
 
 # Article highlighting prompts
 SYSTEM_PROMPT_HIGHLIGHT = """\
