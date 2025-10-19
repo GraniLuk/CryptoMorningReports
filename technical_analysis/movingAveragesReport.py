@@ -1,15 +1,17 @@
 from collections import namedtuple
-from prettytable import PrettyTable
-from technical_analysis.repositories.moving_averages_repository import (
-    save_moving_averages_results,
-    fetch_yesterday_moving_averages,
-)
-from sharedCode.priceChecker import fetch_daily_candles
-from infra.telegram_logging_handler import app_logger
-from source_repository import Symbol
-from typing import List
 from datetime import date, timedelta
+from typing import List
+
 import pandas as pd
+from prettytable import PrettyTable
+
+from infra.telegram_logging_handler import app_logger
+from sharedCode.priceChecker import fetch_daily_candles
+from source_repository import Symbol
+from technical_analysis.repositories.moving_averages_repository import (
+    fetch_yesterday_moving_averages,
+    save_moving_averages_results,
+)
 
 
 def calculate_indicators(
@@ -20,11 +22,27 @@ def calculate_indicators(
     ema_values = []
     MAData = namedtuple(
         "MAData",
-        ["symbol", "current_price", "ma50", "ma200", "ma50_status", "ma200_status", "cross_status"],
+        [
+            "symbol",
+            "current_price",
+            "ma50",
+            "ma200",
+            "ma50_status",
+            "ma200_status",
+            "cross_status",
+        ],
     )
     EMAData = namedtuple(
         "EMAData",
-        ["symbol", "current_price", "ema50", "ema200", "ema50_status", "ema200_status", "cross_status"],
+        [
+            "symbol",
+            "current_price",
+            "ema50",
+            "ema200",
+            "ema50_status",
+            "ema200_status",
+            "cross_status",
+        ],
     )
 
     # Fetch previous day's values (relative to target_date)
@@ -37,9 +55,9 @@ def calculate_indicators(
             )
 
             # Get historical data from database
-            start_date = target_date - timedelta(days=200) 
+            start_date = target_date - timedelta(days=200)
             candles = fetch_daily_candles(symbol, start_date, target_date, conn)
-            
+
             if not candles:
                 app_logger.warning(
                     f"No data available for {symbol.symbol_name} on {target_date}"
@@ -47,14 +65,11 @@ def calculate_indicators(
                 continue
 
             # Create DataFrame from candles
-            df = pd.DataFrame([
-                {
-                    'Close': candle.close,
-                    'Date': candle.end_date
-                } for candle in candles
-            ])
-            df.set_index('Date', inplace=True)
-            
+            df = pd.DataFrame(
+                [{"Close": candle.close, "Date": candle.end_date} for candle in candles]
+            )
+            df.set_index("Date", inplace=True)
+
             if df.empty:
                 app_logger.warning(
                     f"No data available for {symbol.symbol_name} up to {target_date}"
@@ -92,10 +107,26 @@ def calculate_indicators(
                 )
 
             # Initialize status indicators
-            ma50_status = f"🟢{period_warning}" if target_price > target_MA50 else f"🔴{period_warning}"
-            ma200_status = f"🟢{period_warning}" if target_price > target_MA200 else f"🔴{period_warning}"
-            ema50_status = f"🟢{period_warning}" if target_price > target_EMA50 else f"🔴{period_warning}"
-            ema200_status = f"🟢{period_warning}" if target_price > target_EMA200 else f"🔴{period_warning}"
+            ma50_status = (
+                f"🟢{period_warning}"
+                if target_price > target_MA50
+                else f"🔴{period_warning}"
+            )
+            ma200_status = (
+                f"🟢{period_warning}"
+                if target_price > target_MA200
+                else f"🔴{period_warning}"
+            )
+            ema50_status = (
+                f"🟢{period_warning}"
+                if target_price > target_EMA50
+                else f"🔴{period_warning}"
+            )
+            ema200_status = (
+                f"🟢{period_warning}"
+                if target_price > target_EMA200
+                else f"🔴{period_warning}"
+            )
 
             # Initialize cross status
             ma_cross_status = ""
@@ -107,11 +138,18 @@ def calculate_indicators(
                     yesterdayValues["SymbolName"] == symbol.symbol_name
                 ]
                 if not yesterday_data.empty:
-                    yesterday_price = yesterday_data["CurrentPrice"].iloc[0]
-                    yesterday_ma50 = yesterday_data["MA50"].iloc[0]
-                    yesterday_ma200 = yesterday_data["MA200"].iloc[0]
-                    yesterday_ema50 = yesterday_data["EMA50"].iloc[0]
-                    yesterday_ema200 = yesterday_data["EMA200"].iloc[0]
+                    # Extract series with explicit type annotations to help type checker
+                    price_series: pd.Series = yesterday_data["CurrentPrice"]
+                    ma50_series: pd.Series = yesterday_data["MA50"]
+                    ma200_series: pd.Series = yesterday_data["MA200"]
+                    ema50_series: pd.Series = yesterday_data["EMA50"]
+                    ema200_series: pd.Series = yesterday_data["EMA200"]
+
+                    yesterday_price = price_series.iloc[0]
+                    yesterday_ma50 = ma50_series.iloc[0]
+                    yesterday_ma200 = ma200_series.iloc[0]
+                    yesterday_ema50 = ema50_series.iloc[0]
+                    yesterday_ema200 = ema200_series.iloc[0]
 
                     # MA Crossovers
                     if yesterday_price < yesterday_ma50 and target_price > target_MA50:
@@ -164,15 +202,13 @@ def calculate_indicators(
                         app_logger.info(f"{symbol.symbol_name} crossed below EMA200")
 
                     # Add Golden/Death Cross detection for MA
-                    if (
-                        yesterday_ma50 < yesterday_ma200
-                        and target_MA50 > target_MA200
-                    ):
+                    if yesterday_ma50 < yesterday_ma200 and target_MA50 > target_MA200:
                         ma_cross_status = "⚡️🟡"  # Golden Cross
-                        app_logger.info(f"{symbol.symbol_name} MA Golden Cross detected")
+                        app_logger.info(
+                            f"{symbol.symbol_name} MA Golden Cross detected"
+                        )
                     elif (
-                        yesterday_ma50 > yesterday_ma200
-                        and target_MA50 < target_MA200
+                        yesterday_ma50 > yesterday_ma200 and target_MA50 < target_MA200
                     ):
                         ma_cross_status = "💀"  # Death Cross
                         app_logger.info(f"{symbol.symbol_name} MA Death Cross detected")
@@ -183,13 +219,17 @@ def calculate_indicators(
                         and target_EMA50 > target_EMA200
                     ):
                         ema_cross_status = "⚡️🟡"  # Golden Cross
-                        app_logger.info(f"{symbol.symbol_name} EMA Golden Cross detected")
+                        app_logger.info(
+                            f"{symbol.symbol_name} EMA Golden Cross detected"
+                        )
                     elif (
                         yesterday_ema50 > yesterday_ema200
                         and target_EMA50 < target_EMA200
                     ):
                         ema_cross_status = "💀"  # Death Cross
-                        app_logger.info(f"{symbol.symbol_name} EMA Death Cross detected")
+                        app_logger.info(
+                            f"{symbol.symbol_name} EMA Death Cross detected"
+                        )
 
             # Store the results
             ma_values.append(
@@ -200,7 +240,7 @@ def calculate_indicators(
                     ma200=target_MA200,
                     ma50_status=ma50_status,
                     ma200_status=ma200_status,
-                    cross_status=ma_cross_status
+                    cross_status=ma_cross_status,
                 )
             )
 
@@ -212,7 +252,7 @@ def calculate_indicators(
                     ema200=target_EMA200,
                     ema50_status=ema50_status,
                     ema200_status=ema200_status,
-                    cross_status=ema_cross_status
+                    cross_status=ema_cross_status,
                 )
             )
 
@@ -292,6 +332,7 @@ def calculate_indicators(
         )
 
     return ma_table, ema_table
+
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
