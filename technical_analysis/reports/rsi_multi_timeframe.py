@@ -115,7 +115,8 @@ def get_rsi_for_symbol_timeframe(
 
         # Type assertion to help type checker understand df.index is DatetimeIndex
         assert isinstance(df.index, pd.DatetimeIndex), "Index must be DatetimeIndex"
-        datetime_index: pd.DatetimeIndex = df.index
+        # Cast to DatetimeIndex for type checker
+        datetime_index = pd.DatetimeIndex(df.index)
 
         # Convert start_date (datetime.date) to pandas Timestamp
         # This is crucial for comparison with DatetimeIndex
