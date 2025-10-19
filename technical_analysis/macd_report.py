@@ -6,18 +6,16 @@ import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
+from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import SourceID, Symbol
 from technical_analysis.repositories.macd_repository import (
     fetch_yesterday_macd,
     save_macd_results,
 )
-from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
 
 
-def calculate_macd(
-    symbols: List[Symbol], conn, target_date: date
-) -> PrettyTable:
+def calculate_macd(symbols: List[Symbol], conn, target_date: date) -> PrettyTable:
     """
     Calculates MACD indicators for given symbols and returns a formatted table
     """
@@ -85,7 +83,9 @@ def calculate_macd(
                     yesterdayValues["SymbolName"] == symbol.symbol_name
                 ]
                 if not yesterday_data.empty:
-                    yesterday_histogram = yesterday_data["Histogram"].iloc[0]
+                    # Extract series with explicit type annotation to help type checker
+                    histogram_series: pd.Series = yesterday_data["Histogram"]
+                    yesterday_histogram = histogram_series.iloc[0]
 
                     if yesterday_histogram < 0 and histogram > 0:
                         status = "🚨🟢"  # Bullish crossover
