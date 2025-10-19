@@ -21,7 +21,7 @@
   "reportAssignmentType": "error",
   "pythonVersion": "3.11",
   "pythonPlatform": "All",
-  "typeCheckingMode": "basic",
+  "typeCheckingMode": "standard",
   "useLibraryCodeForTypes": true,
   "venvPath": ".",
   "venv": ".venv"
