@@ -256,13 +256,13 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
     if ranges_7d:
         history_table = "\n### Last 7 Daily Ranges\n\n| Date | High | Low | Range | Range % |\n|------|------|-----|-------|---------|\n"
         for r in ranges_7d:
-            h = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
-            l = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
+            high_str = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
+            low_str = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
             rng_val = r.get("range")
             rng_pct_val = r.get("range_pct")
             rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
             rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
-            history_table += f"| {r.get('date','')} | {h} | {l} | {rng_str} | {rng_pct_str} |\n"
+            history_table += f"| {r.get('date','')} | {high_str} | {low_str} | {rng_str} | {rng_pct_str} |\n"
     else:
         history_table = "\n_No recent daily range data available_\n"
 
@@ -372,14 +372,14 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
         if ranges_7d:
             ranges_lines.append("Last 7 Daily Ranges (Date | High | Low | Range | Range %):")
             for r in ranges_7d:
-                h = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
-                l = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
+                high_str = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
+                low_str = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
                 rng_val = r.get("range")
                 rng_pct_val = r.get("range_pct")
                 rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
                 rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
                 ranges_lines.append(
-                    f"- {r.get('date','')}: {h} | {l} | {rng_str} | {rng_pct_str}"
+                    f"- {r.get('date','')}: {high_str} | {low_str} | {rng_str} | {rng_pct_str}"
                 )
         else:
             ranges_lines.append("No recent daily range data available")

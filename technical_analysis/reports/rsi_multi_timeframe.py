@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -24,7 +24,7 @@ from technical_analysis.rsi import calculate_rsi_using_RMA
 
 def get_rsi_for_symbol_timeframe(
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
-):
+) -> Optional[pd.DataFrame]:
     """
     Gets RSI data for a symbol in the specified timeframe.
     If RSI values are missing in the database, it calculates them only for the requested period.
@@ -36,7 +36,10 @@ def get_rsi_for_symbol_timeframe(
         lookback_days: How many days to look back for data
 
     Returns:
-        DataFrame: DataFrame with RSI data or None if no data
+        DataFrame with RSI data or None if no data available
+        
+    Raises:
+        TypeError: If the function returns anything other than DataFrame or None
     """
     # Calculate appropriate start date based on the timeframe
     target_date = date.today()
@@ -191,7 +194,16 @@ def get_rsi_for_symbol_timeframe(
             )
 
         # Return only the data for the requested date range using the aligned start_timestamp
-        return df[df.index >= start_timestamp]
+        result = df[df.index >= start_timestamp]
+        
+        # Validate that we're returning a DataFrame
+        if not isinstance(result, pd.DataFrame):
+            raise TypeError(
+                f"get_rsi_for_symbol_timeframe must return DataFrame or None, "
+                f"but got {type(result).__name__} for {symbol.symbol_name}"
+            )
+        
+        return result
 
     except Exception as e:
         app_logger.error(
