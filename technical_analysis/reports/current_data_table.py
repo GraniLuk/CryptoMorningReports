@@ -3,7 +3,7 @@ Module for generating current data tables with latest indicators for crypto symb
 This module can be easily extended to add more indicators in the future.
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -121,13 +121,31 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
 
         # Fetch moving averages data (latest values)
         try:
-            ma_df = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=1)
+            ma_df = fetch_moving_averages_for_symbol(
+                conn, symbol.symbol_id, lookback_days=1
+            )
             if ma_df is not None and not ma_df.empty:
                 latest_ma = ma_df.iloc[-1]
-                data["ma50"] = float(latest_ma["MA50"]) if pd.notna(latest_ma.get("MA50")) else None
-                data["ma200"] = float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
-                data["ema50"] = float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
-                data["ema200"] = float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
+                data["ma50"] = (
+                    float(latest_ma["MA50"])
+                    if pd.notna(latest_ma.get("MA50"))
+                    else None
+                )
+                data["ma200"] = (
+                    float(latest_ma["MA200"])
+                    if pd.notna(latest_ma.get("MA200"))
+                    else None
+                )
+                data["ema50"] = (
+                    float(latest_ma["EMA50"])
+                    if pd.notna(latest_ma.get("EMA50"))
+                    else None
+                )
+                data["ema200"] = (
+                    float(latest_ma["EMA200"])
+                    if pd.notna(latest_ma.get("EMA200"))
+                    else None
+                )
         except Exception as ma_error:
             app_logger.warning(
                 f"Could not fetch moving averages for {symbol.symbol_name}: {ma_error}"
@@ -262,7 +280,7 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
             rng_pct_val = r.get("range_pct")
             rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
             rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
-            history_table += f"| {r.get('date','')} | {high_str} | {low_str} | {rng_str} | {rng_pct_str} |\n"
+            history_table += f"| {r.get('date', '')} | {high_str} | {low_str} | {rng_str} | {rng_pct_str} |\n"
     else:
         history_table = "\n_No recent daily range data available_\n"
 
@@ -370,16 +388,20 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
         ranges_lines = []
         ranges_7d = symbol_data.get("daily_ranges_7d", [])
         if ranges_7d:
-            ranges_lines.append("Last 7 Daily Ranges (Date | High | Low | Range | Range %):")
+            ranges_lines.append(
+                "Last 7 Daily Ranges (Date | High | Low | Range | Range %):"
+            )
             for r in ranges_7d:
                 high_str = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
                 low_str = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
                 rng_val = r.get("range")
                 rng_pct_val = r.get("range_pct")
                 rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
-                rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
+                rng_pct_str = (
+                    f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
+                )
                 ranges_lines.append(
-                    f"- {r.get('date','')}: {high_str} | {low_str} | {rng_str} | {rng_pct_str}"
+                    f"- {r.get('date', '')}: {high_str} | {low_str} | {rng_str} | {rng_pct_str}"
                 )
         else:
             ranges_lines.append("No recent daily range data available")

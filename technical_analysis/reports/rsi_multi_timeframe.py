@@ -37,7 +37,7 @@ def get_rsi_for_symbol_timeframe(
 
     Returns:
         DataFrame with RSI data or None if no data available
-        
+
     Raises:
         TypeError: If the function returns anything other than DataFrame or None
     """
@@ -195,14 +195,14 @@ def get_rsi_for_symbol_timeframe(
 
         # Return only the data for the requested date range using the aligned start_timestamp
         result = df[df.index >= start_timestamp]
-        
+
         # Validate that we're returning a DataFrame
         if not isinstance(result, pd.DataFrame):
             raise TypeError(
                 f"get_rsi_for_symbol_timeframe must return DataFrame or None, "
                 f"but got {type(result).__name__} for {symbol.symbol_name}"
             )
-        
+
         return result
 
     except Exception as e:
