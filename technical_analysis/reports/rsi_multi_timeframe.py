@@ -113,6 +113,10 @@ def get_rsi_for_symbol_timeframe(
         if not isinstance(df.index, pd.DatetimeIndex):
             df.index = pd.DatetimeIndex(df.index)
 
+        # Type assertion to help type checker understand df.index is DatetimeIndex
+        assert isinstance(df.index, pd.DatetimeIndex), "Index must be DatetimeIndex"
+        datetime_index: pd.DatetimeIndex = df.index
+
         # Convert start_date (datetime.date) to pandas Timestamp
         # This is crucial for comparison with DatetimeIndex
         start_timestamp = pd.Timestamp(start_date)
@@ -120,13 +124,13 @@ def get_rsi_for_symbol_timeframe(
         # Now, compare df.index with start_timestamp.
         # If df.index is timezone-aware, start_timestamp must also be made aware or comparison might fail/behave unexpectedly.
         # If df.index is naive, start_timestamp should also be naive.
-        if df.index.tz is not None:
+        if datetime_index.tz is not None:
             # If start_timestamp is naive, localize it to df.index.tz
             if start_timestamp.tz is None:
-                start_timestamp = start_timestamp.tz_localize(df.index.tz)
+                start_timestamp = start_timestamp.tz_localize(datetime_index.tz)
             # If start_timestamp is aware but different tz, convert it
-            elif start_timestamp.tz != df.index.tz:
-                start_timestamp = start_timestamp.tz_convert(df.index.tz)
+            elif start_timestamp.tz != datetime_index.tz:
+                start_timestamp = start_timestamp.tz_convert(datetime_index.tz)
         else:
             # If df.index is naive, ensure start_timestamp is also naive
             if start_timestamp.tz is not None:
