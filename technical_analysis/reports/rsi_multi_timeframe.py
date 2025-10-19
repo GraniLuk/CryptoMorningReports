@@ -108,8 +108,9 @@ def get_rsi_for_symbol_timeframe(
             if start_timestamp.tz is not None:
                 start_timestamp = start_timestamp.tz_localize(None)
         
-        requested_df = df[df.index >= start_timestamp]
-        missing_rsi = requested_df["RSI"].isna().any()
+        requested_df: pd.DataFrame = df[df.index >= start_timestamp]
+        rsi_series: pd.Series = requested_df["RSI"]
+        missing_rsi: bool = bool(rsi_series.isna().any())
         
         if missing_rsi:
             app_logger.info(
@@ -124,20 +125,26 @@ def get_rsi_for_symbol_timeframe(
             df["calculated_RSI"] = calculate_rsi_using_RMA(df["Close"])
             
             # Find rows with missing RSI values in the requested date range
-            missing_rows = requested_df[requested_df["RSI"].isna()]
+            missing_mask: pd.Series = requested_df["RSI"].isna()
+            missing_rows: pd.DataFrame = requested_df[missing_mask]
             app_logger.info(f"Found {len(missing_rows)} rows with missing RSI in the requested date range")
               # Update only the missing values in the database
             for idx, row in missing_rows.iterrows():
+                # Type assertion to help type checker understand idx is a valid index
+                assert isinstance(idx, (pd.Timestamp, str, int)), f"Unexpected index type: {type(idx)}"
+                
                 candle_id = int(row["SymbolId"])
                 try:
-                    calculated_rsi = float(df.at[idx, "calculated_RSI"])
+                    # Use loc instead of at for better type inference
+                    calculated_value = df.loc[idx, "calculated_RSI"]
+                    calculated_rsi = float(calculated_value)  # type: ignore[arg-type]
                     
                     if not pd.isna(calculated_rsi):
                         # Save the calculated value to the database
                         save_rsi_by_timeframe(conn, candle_id, calculated_rsi, timeframe)
                         
                         # Update the dataframe
-                        df.at[idx, "RSI"] = calculated_rsi
+                        df.loc[idx, "RSI"] = calculated_rsi
                         
                         app_logger.info(
                             f"Saved {timeframe} RSI for {symbol.symbol_name} candle {candle_id}: RSI={calculated_rsi:.2f}"
@@ -225,8 +232,14 @@ def create_multi_timeframe_rsi_table(
 
     # Use the most recent date from any timeframe
     # Convert all date objects to pandas Timestamp to ensure consistent comparison
-    most_recent_date = max([pd.Timestamp(data["date"]) for data in latest_data.values()])
-    row_data.append(most_recent_date.strftime("%Y-%m-%d %H:%M"))
+    timestamps = [pd.Timestamp(data["date"]) for data in latest_data.values()]
+    most_recent_date: pd.Timestamp = max(timestamps)
+    
+    # Ensure the timestamp is valid before calling strftime
+    if pd.notna(most_recent_date):
+        row_data.append(most_recent_date.strftime("%Y-%m-%d %H:%M"))
+    else:
+        row_data.append("N/A")
 
     # Add data for each timeframe
     if "daily" in latest_data:
@@ -352,26 +365,38 @@ def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
 
         # Extract latest values
         if daily_df is not None and not daily_df.empty:
-            symbol_data["daily_price"] = f"{float(daily_df['Close'].iloc[-1]):.2f}"
+            # Type annotation to help type checker
+            daily_close: pd.Series = daily_df['Close']
+            daily_rsi: pd.Series = daily_df['RSI']
+            
+            symbol_data["daily_price"] = f"{float(daily_close.iloc[-1]):.2f}"
             symbol_data["daily_rsi"] = (
-                f"{float(daily_df['RSI'].iloc[-1]):.2f}"
-                if pd.notna(daily_df["RSI"].iloc[-1])
+                f"{float(daily_rsi.iloc[-1]):.2f}"
+                if pd.notna(daily_rsi.iloc[-1])
                 else "N/A"
             )
 
         if hourly_df is not None and not hourly_df.empty:
-            symbol_data["hourly_price"] = f"{float(hourly_df['Close'].iloc[-1]):.2f}"
+            # Type annotation to help type checker
+            hourly_close: pd.Series = hourly_df['Close']
+            hourly_rsi: pd.Series = hourly_df['RSI']
+            
+            symbol_data["hourly_price"] = f"{float(hourly_close.iloc[-1]):.2f}"
             symbol_data["hourly_rsi"] = (
-                f"{float(hourly_df['RSI'].iloc[-1])::.2f}"
-                if pd.notna(hourly_df["RSI"].iloc[-1])
+                f"{float(hourly_rsi.iloc[-1])::.2f}"
+                if pd.notna(hourly_rsi.iloc[-1])
                 else "N/A"
             )
 
         if fifteen_min_df is not None and not fifteen_min_df.empty:
-            symbol_data["fifteen_min_price"] = f"{float(fifteen_min_df['Close'].iloc[-1])::.2f}"
+            # Type annotation to help type checker
+            fifteen_close: pd.Series = fifteen_min_df['Close']
+            fifteen_rsi: pd.Series = fifteen_min_df['RSI']
+            
+            symbol_data["fifteen_min_price"] = f"{float(fifteen_close.iloc[-1])::.2f}"
             symbol_data["fifteen_min_rsi"] = (
-                f"{float(fifteen_min_df['RSI'].iloc[-1]):.2f}"
-                if pd.notna(fifteen_min_df["RSI"].iloc[-1])
+                f"{float(fifteen_rsi.iloc[-1]):.2f}"
+                if pd.notna(fifteen_rsi.iloc[-1])
                 else "N/A"
             )
 
