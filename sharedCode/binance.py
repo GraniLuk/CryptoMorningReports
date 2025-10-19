@@ -50,23 +50,28 @@ def fetch_close_prices_from_Binance(
         )
 
         # Create DataFrame with numeric types
-        df = pd.DataFrame(
-            klines,
-            columns=[
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "close_time",
-                "quote_volume",
-                "trades",
-                "taker_buy_base",
-                "taker_buy_quote",
-                "ignore",
-            ],
-        )
+        # Using list comprehension to create DataFrame with named columns
+        if klines:
+            df = pd.DataFrame(
+                klines,
+                columns=[  # type: ignore[arg-type]
+                    "timestamp",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume",
+                    "close_time",
+                    "quote_volume",
+                    "trades",
+                    "taker_buy_base",
+                    "taker_buy_quote",
+                    "ignore",
+                ],
+            )
+        else:
+            # Return empty DataFrame with proper columns if no data
+            return pd.DataFrame(columns=["timestamp", "close"])  # type: ignore[arg-type]
 
         # Convert price columns to float
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
@@ -83,7 +88,9 @@ def fetch_close_prices_from_Binance(
         return pd.DataFrame()
 
 
-def fetch_binance_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Optional[Candle]:
+def fetch_binance_daily_kline(
+    symbol: Symbol, end_date: date = date.today()
+) -> Optional[Candle]:
     """Fetch open and close prices from Binance for the last full day."""
     client = BinanceClient()
 

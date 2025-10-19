@@ -102,13 +102,20 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
 
         # Kucoin returns data in format:
         # [timestamp, open, close, high, low, volume, turnover]
-        df = pd.DataFrame(
-            klines,
-            columns=["timestamp", "open", "close", "high", "low", "volume", "turnover"],
-        )
+        if klines:
+            df = pd.DataFrame(
+                klines,
+                columns=["timestamp", "open", "close", "high", "low", "volume", "turnover"],  # type: ignore[arg-type]
+            )
+        else:
+            # Return empty DataFrame with proper columns if no data
+            return pd.DataFrame(columns=["timestamp", "close"])  # type: ignore[arg-type]
 
         # Convert timestamp strings to numeric first, then to datetime
-        df["timestamp"] = pd.to_datetime(pd.to_numeric(df["timestamp"]), unit="s")
+        # Extract the timestamp column as Series for better type inference
+        timestamp_series: pd.Series = df["timestamp"]
+        numeric_timestamps = pd.to_numeric(timestamp_series, errors="coerce")
+        df["timestamp"] = pd.to_datetime(numeric_timestamps, unit="s")  # type: ignore[arg-type]
         # df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
         # Convert string values to float
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
