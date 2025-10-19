@@ -4,6 +4,7 @@
 
 azure-functions
 pandas
+pandas-stubs
 configparser
 prettytable
 python-telegram-bot
