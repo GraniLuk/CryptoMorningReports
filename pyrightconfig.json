@@ -11,10 +11,18 @@
     "packaged_function",
     "**/results"
   ],
-  "reportMissingImports": true,
-  "reportMissingTypeStubs": false,
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "none",
+  "reportUndefinedVariable": "error",
+  "reportAttributeAccessIssue": "warning",
+  "reportArgumentType": "warning",
+  "reportCallIssue": "warning",
+  "reportGeneralTypeIssues": "none",
+  "reportAssignmentType": "none",
   "pythonVersion": "3.11",
   "pythonPlatform": "All",
   "typeCheckingMode": "basic",
-  "useLibraryCodeForTypes": true
+  "useLibraryCodeForTypes": true,
+  "venvPath": ".",
+  "venv": ".venv"
 }
