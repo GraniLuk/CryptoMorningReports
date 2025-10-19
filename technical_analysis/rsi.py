@@ -1,7 +1,6 @@
 import pandas as pd
 
 from infra.telegram_logging_handler import app_logger
-from source_repository import Symbol
 from technical_analysis.repositories.daily_candle_repository import (
     DailyCandleRepository,
 )
@@ -103,7 +102,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     # Save RSI results for each day in the current year
     for _, row in df.iterrows():
         rsi_val = row["RSI"]
-        daily_candle_id = row["daily_candle_id"]
+        daily_candle_id: int = int(row["daily_candle_id"])
 
         # Skip if RSI is NaN
         if pd.isna(rsi_val):
@@ -127,7 +126,7 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql
-    from source_repository import SourceID, Symbol, fetch_symbols
+    from source_repository import fetch_symbols
 
     load_dotenv()
     conn = connect_to_sql()
