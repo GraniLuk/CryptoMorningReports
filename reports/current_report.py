@@ -51,9 +51,9 @@ Present your analysis in clear Markdown formatting with:
 - Main section headers (##)
 - Subsection headers (###)
 - Bullet points for key findings
-- Tables for price levels
-- Bold text for critical alerts
+- Use **bold** for critical alerts and important levels
 - Price values to 2 decimal places
+- Use emojis to make sections more readable (📈 for trends, 💰 for prices, 🎯 for targets, ⚠️ for risks, etc.)
 """
 
 USER_PROMPT_SITUATION = """
@@ -182,16 +182,86 @@ def format_moving_averages_data(ma_df):
     return formatted
 
 
+def convert_markdown_to_telegram_html(markdown_text: str) -> str:
+    """
+    Convert markdown text to Telegram-compatible HTML.
+
+    Supported Markdown Features:
+        - Headers: #, ##, ### converted to styled <b> and <u> HTML tags.
+        - Bold: **text** converted to <b>text</b>.
+        - Italic: *text* and _text_ converted to <i>text</i>.
+        - Inline code: `text` converted to <code>text</code>.
+        - Code blocks: ```text``` converted to <pre>text</pre>.
+        - Bullet points: - and * converted to •.
+        - Numbered lists: 1. 2. etc. converted to numbered HTML.
+    # Escape HTML special characters except those in tags we'll create
+    import html
+    html_text = html.escape(markdown_text)
+    Limitations:
+        - Nested markdown (e.g., bold inside italic) may not be fully supported.
+        - Complex tables, links, images, and advanced markdown extensions are not converted.
+        - Only basic markdown features are supported; unsupported features will remain unchanged.
+        - HTML escaping is minimal; ensure input is trusted if used in Telegram.
+
+    Args:
+        markdown_text: Markdown formatted text
+
+    Returns:
+        HTML formatted text compatible with Telegram
+    """
+    import re
+
+    # Escape HTML special characters except those in tags we'll create
+    html_text = markdown_text
+
+    # Convert headers
+    html_text = re.sub(
+        r"^### (.+)$", r"<b><u>\1</u></b>", html_text, flags=re.MULTILINE
+    )
+    html_text = re.sub(
+        r"^## (.+)$", r"<b>═══ \1 ═══</b>", html_text, flags=re.MULTILINE
+    )
+    html_text = re.sub(r"^# (.+)$", r"<b>▓▓▓ \1 ▓▓▓</b>", html_text, flags=re.MULTILINE)
+
+    # Convert bold text
+    html_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html_text)
+
+    # Convert italic text
+    html_text = re.sub(r"\*(.+?)\*", r"<i>\1</i>", html_text)
+    html_text = re.sub(r"_(.+?)_", r"<i>\1</i>", html_text)
+
+    # Convert inline code
+    html_text = re.sub(r"`(.+?)`", r"<code>\1</code>", html_text)
+
+    # Convert code blocks
+    html_text = re.sub(
+        r"```[\w]*\n(.*?)\n```", r"<pre>\1</pre>", html_text, flags=re.DOTALL
+    )
+
+    # Convert bullet points with emojis for better visibility
+    html_text = re.sub(r"^\s*[-*]\s+(.+)$", r"  • \1", html_text, flags=re.MULTILINE)
+
+    # Convert numbered lists
+    html_text = re.sub(
+        r"^\s*(\d+)\.\s+(.+)$", r"  \1. \2", html_text, flags=re.MULTILINE
+    )
+
+    # Add spacing around sections
+    html_text = re.sub(r"(<b>═══.*?═══</b>)", r"\n\1\n", html_text)
+
+    return html_text
+
+
 async def generate_crypto_situation_report(conn, symbol_name):
     """
-    Generate a comprehensive situation report for a specific cryptocurrency
+    Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 
     Args:
         conn: Database connection
         symbol_name: Cryptocurrency symbol (e.g., "BTC", "ETH")
 
     Returns:
-        Markdown formatted situation report
+        HTML formatted situation report for Telegram
     """
     logger = app_logger
     logger.info(f"Generating situation report for {symbol_name}")
@@ -255,9 +325,8 @@ async def generate_crypto_situation_report(conn, symbol_name):
     )  # Format moving averages data for the AI prompt
     moving_averages_formatted = format_moving_averages_data(moving_averages)
 
-    # Generate current data snapshot for AI prompt and final report
+    # Generate current data snapshot for AI prompt
     current_data_snapshot = get_current_data_for_ai_prompt(symbol, conn)
-    current_data_table = get_current_data_summary_table(symbol, conn)
 
     # Determine which AI API to use
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -375,13 +444,59 @@ async def generate_crypto_situation_report(conn, symbol_name):
         if not analysis:
             error_msg = "Failed: No analysis was generated"
             logger.error(error_msg)
-            return error_msg  # Add header to the report
-        report_title = f"# {symbol_name} Situation Report\n\n"
-        report_date = f"*Generated on: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}*\n\n"
+            return error_msg
 
-        full_report = report_title + report_date + current_data_table + analysis
-        logger.info(f"Successfully generated situation report for {symbol_name}")
+        # Generate HTML formatted report
+        report_title = f"<b>📊 {symbol_name} Situation Report</b>\n\n"
+        report_date = f"<i>🕒 Generated on: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}</i>\n\n"
 
+        # Get HTML formatted current data
+        current_data_html = get_current_data_summary_table(symbol, conn)
+
+        # Ensure consistent emoji usage in analysis
+        def enforce_emoji_usage(text):
+            # Add emojis to section headers if missing
+            import re
+
+            emoji_map = {
+                "Trend": "📈",
+                "Price": "💰",
+                "Target": "🎯",
+                "Risk": "⚠️",
+                "Support": "💰",
+                "Resistance": "💰",
+                "Trading": "💰",
+                "Volatility": "⚠️",
+                "Momentum": "📈",
+                "Opportunity": "🎯",
+            }
+
+            def add_emoji(match):
+                header = match.group(1)
+                for key, emoji in emoji_map.items():
+                    if key.lower() in header.lower() and emoji not in header:
+                        return f"{emoji} {header}"
+                return header
+
+            # Add emojis to markdown headers
+            text = re.sub(
+                r"^(##+)\s*(.+)$",
+                lambda m: f"{m.group(1)} {add_emoji(m)}",
+                text,
+                flags=re.MULTILINE,
+            )
+            return text
+
+        analysis_with_emojis = enforce_emoji_usage(analysis)
+        # Convert AI analysis from markdown to HTML
+        analysis_html = convert_markdown_to_telegram_html(analysis_with_emojis)
+
+        full_report = (
+            report_title + report_date + current_data_html + "\n" + analysis_html
+        )
+        logger.info(f"Successfully generated HTML situation report for {symbol_name}")
+
+        return full_report
         return full_report
 
     except Exception as e:

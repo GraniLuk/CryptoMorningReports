@@ -210,15 +210,15 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
     return data
 
 
-def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
+def format_current_data_for_telegram_html(symbol_data: Dict[str, Any]) -> str:
     """
-    Format current data for a single symbol into a markdown table.
+    Format current data for a single symbol into HTML for Telegram.
 
     Args:
         symbol_data: Dictionary containing current data for the symbol
 
     Returns:
-        Markdown formatted table string
+        HTML formatted string for Telegram
     """
     symbol_name = symbol_data.get("symbol", "Unknown")
     timestamp = symbol_data.get("timestamp", "Unknown")
@@ -227,17 +227,25 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
     latest_price = symbol_data.get("latest_price")
     price_str = f"${latest_price:,.4f}" if latest_price is not None else "N/A"
 
-    # Format RSI values
+    # Format RSI values with emojis
+    def format_rsi_with_emoji(rsi_value):
+        if rsi_value is None:
+            return "N/A"
+        rsi_str = f"{rsi_value:.2f}"
+        if rsi_value >= 70:
+            return f"🔴 {rsi_str} (Overbought)"
+        elif rsi_value <= 30:
+            return f"🟢 {rsi_str} (Oversold)"
+        else:
+            return f"🟡 {rsi_str}"
+
     daily_rsi = symbol_data.get("daily_rsi")
-    daily_rsi_str = f"{daily_rsi:.2f}" if daily_rsi is not None else "N/A"
-
     hourly_rsi = symbol_data.get("hourly_rsi")
-    hourly_rsi_str = f"{hourly_rsi:.2f}" if hourly_rsi is not None else "N/A"
-
     fifteen_min_rsi = symbol_data.get("fifteen_min_rsi")
-    fifteen_min_rsi_str = (
-        f"{fifteen_min_rsi:.2f}" if fifteen_min_rsi is not None else "N/A"
-    )
+
+    daily_rsi_str = format_rsi_with_emoji(daily_rsi)
+    hourly_rsi_str = format_rsi_with_emoji(hourly_rsi)
+    fifteen_min_rsi_str = format_rsi_with_emoji(fifteen_min_rsi)
 
     # Format moving averages
     ma50 = symbol_data.get("ma50")
@@ -262,79 +270,79 @@ def format_current_data_table(symbol_data: Dict[str, Any]) -> str:
         high_str = f"${daily_high:,.4f}"
         low_str = f"${daily_low:,.4f}"
     else:
-        high_str = low_str = "N/A"
+        high_str, low_str = "N/A", "N/A"
 
     if daily_range is not None and daily_range_pct is not None:
         range_str = f"${daily_range:,.4f} ({daily_range_pct:.2f}%)"
     else:
         range_str = "N/A"
 
-    # Last 7 days ranges table
+    # Last 7 days ranges
     ranges_7d = symbol_data.get("daily_ranges_7d", [])
+    history_html = ""
     if ranges_7d:
-        history_table = "\n### Last 7 Daily Ranges\n\n| Date | High | Low | Range | Range % |\n|------|------|-----|-------|---------|\n"
-        for r in ranges_7d:
-            high_str = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
-            low_str = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
-            rng_val = r.get("range")
-            rng_pct_val = r.get("range_pct")
-            rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
-            rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
-            history_table += f"| {r.get('date', '')} | {high_str} | {low_str} | {rng_str} | {rng_pct_str} |\n"
-    else:
-        history_table = "\n_No recent daily range data available_\n"
+        history_html = "\n<b>📊 Last 7 Days Price Ranges:</b>\n<pre>"
+        for day_data in ranges_7d:
+            date_str = day_data.get("date", "N/A")
+            day_range = day_data.get("range", 0)
+            day_range_pct = day_data.get("range_pct", 0)
+            day_range_str = f"${day_range:,.4f}" if day_range is not None else "N/A"
+            day_range_pct_str = (
+                f"{day_range_pct:.2f}%" if day_range_pct is not None else "N/A"
+            )
+            history_html += f"{date_str}: {day_range_str} ({day_range_pct_str})\n"
+        history_html += "</pre>"
 
-    # Create markdown table
-    table_md = f"""
-## Current Market Data for {symbol_name}
+    # Create HTML formatted message
+    html_message = f"""<b>📈 Current Market Data for {symbol_name}</b>
 
-*Data retrieved at: {timestamp}*
+<i>⏰ {timestamp}</i>
 
-| Indicator | Value |
-|-----------|-------|
-| **Latest Price** | {price_str} |
-| **Daily RSI** | {daily_rsi_str} |
-| **Hourly RSI** | {hourly_rsi_str} |
-| **15-min RSI** | {fifteen_min_rsi_str} |
-| **MA50** | {ma50_str} |
-| **MA200** | {ma200_str} |
-| **EMA50** | {ema50_str} |
-| **EMA200** | {ema200_str} |
-| **Daily High** | {high_str} |
-| **Daily Low** | {low_str} |
-| **Daily Range (H-L)** | {range_str} |
+<b>💰 Price Information:</b>
+├ Latest Price: <code>{price_str}</code>
+├ Daily High: <code>{high_str}</code>
+├ Daily Low: <code>{low_str}</code>
+└ Daily Range: <code>{range_str}</code>
 
-{history_table}
+<b>📊 RSI Indicators:</b>
+├ Daily RSI: {daily_rsi_str}
+├ Hourly RSI: {hourly_rsi_str}
+└ 15-min RSI: {fifteen_min_rsi_str}
 
+<b>📉 Moving Averages:</b>
+├ MA50: <code>{ma50_str}</code>
+├ MA200: <code>{ma200_str}</code>
+├ EMA50: <code>{ema50_str}</code>
+└ EMA200: <code>{ema200_str}</code>
+{history_html}
 """
 
-    return table_md
+    return html_message
 
 
 def get_current_data_summary_table(symbol: Symbol, conn) -> str:
     """
-    Generate a summary table of current data for a symbol.
-    This function can be easily extended to include more indicators.
+    Generate a summary table of current data for a symbol in HTML format for Telegram.
 
     Args:
         symbol: Symbol object
         conn: Database connection
 
     Returns:
-        Markdown formatted table with current data
+        HTML formatted table with current data for Telegram
     """
     try:
         # Get current data
         symbol_data = get_current_data_for_symbol(symbol, conn)
 
-        # Format as table
-        return format_current_data_table(symbol_data)
+        # Format as HTML
+        return format_current_data_for_telegram_html(symbol_data)
 
     except Exception as e:
         app_logger.error(
             f"Error generating current data summary for {symbol.symbol_name}: {str(e)}"
         )
-        return f"# Error\n\nFailed to retrieve current data for {symbol.symbol_name}: {str(e)}"
+        return f"<b>Error:</b> Unable to generate summary for {symbol.symbol_name}"
 
 
 def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
