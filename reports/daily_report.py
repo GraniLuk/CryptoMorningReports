@@ -155,7 +155,7 @@ async def process_daily_report(
         aggregated_formatted = format_aggregated(aggregated_data)
         aggregated_with_prices = current_prices_section + aggregated_formatted
         analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
-            ai_api_key, aggregated_with_prices, fetched_news, ai_api_type
+            ai_api_key, aggregated_with_prices, fetched_news, ai_api_type, conn
         )
         highlight_articles_message = highlight_articles(
             ai_api_key, symbols, fetched_news, ai_api_type

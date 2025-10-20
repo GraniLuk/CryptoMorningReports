@@ -177,8 +177,13 @@ class GeminiClient(AIClient):
                 except Exception:
                     pass
 
-            # For debugging, log full content of shorter parts (< 2000 chars)
-            if text_length < 2000:
+            # For INDICATORS and PRICE_DATA, log full content for debugging
+            if part_type in ["INDICATORS", "PRICE_DATA"]:
+                logging.info(f"Full {part_type} content:")
+                logging.info(text_content)
+                logging.info(f"--- End of {part_type} ---")
+            # For other short parts, log full content at debug level
+            elif text_length < 2000:
                 logging.debug(f"Full content:\n{text_content}\n")
 
         logging.info(f"\n{'=' * 80}")
