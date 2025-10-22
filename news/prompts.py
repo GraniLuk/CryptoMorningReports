@@ -91,7 +91,7 @@ def build_analysis_user_messages(
     messages.extend(
         [
             f"Indicators Provided:\n{indicators_message}",
-            f"Recent Price Data (chronological, most recent last):\n{price_data}",
+            f"Recent Intraday Price Action (last few hourly & 15m candles for momentum analysis):\n{price_data}",
             USER_PROMPT_ANALYSIS_NEWS,
         ]
     )

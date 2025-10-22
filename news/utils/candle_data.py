@@ -11,7 +11,10 @@ from technical_analysis.utilities.candle_formatter import (
 
 def fetch_and_format_candle_data(conn) -> str:
     """
-    Fetch and format candle data for BTC and ETH.
+    Fetch and format recent intraday candle data for all tracked symbols.
+    
+    This provides recent price action for intraday momentum analysis,
+    complementing the longer-term indicators already provided.
     
     Args:
         conn: Database connection object. If None, returns error message.
@@ -24,13 +27,10 @@ def fetch_and_format_candle_data(conn) -> str:
     
     try:
         symbols = fetch_symbols(conn)
-        # Filter for BTC and ETH
-        btc_eth = [
-            symbol for symbol in symbols if symbol.symbol_name in ["BTC", "ETH"]
-        ]
-        candle_data = get_candle_data(btc_eth, conn)
-        price_data = format_candle_data_for_prompt(candle_data)
-        logging.info("Successfully fetched candle data for analysis")
+        # Include all symbols for comprehensive analysis
+        candle_data = get_candle_data(symbols, conn, hourly_limit=6, minute_limit=8)
+        price_data = format_candle_data_for_prompt(candle_data, max_display_candles=3)
+        logging.info(f"Successfully fetched candle data for {len(symbols)} symbols")
         return price_data
     except Exception as e:
         logging.error(f"Failed to fetch candle data: {str(e)}")
