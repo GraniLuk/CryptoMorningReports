@@ -1,11 +1,11 @@
-import pyodbc
-from typing import List, Tuple, Optional
-from datetime import date
+import math
 import os
+from datetime import date
+from typing import Any, List, Optional, Tuple
+
+import pyodbc
 
 from infra.telegram_logging_handler import app_logger
-import math
-from typing import Any
 
 
 def _is_sqlite() -> bool:
@@ -96,8 +96,9 @@ def save_stepn_results(
             if _is_sqlite():
                 # SQLite version - use INSERT OR REPLACE
                 from datetime import date as date_type
+
                 today = date_type.today().isoformat()
-                
+
                 query = """
                     INSERT OR REPLACE INTO StepNResults 
                     (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
@@ -159,7 +160,7 @@ def save_stepn_results(
                         sanitized_params["transactions_count"],
                     ),
                 )
-            
+
             conn.commit()
             cursor.close()
             app_logger.info("Successfully upserted STEPN results to database")
@@ -171,7 +172,9 @@ def save_stepn_results(
         raise
 
 
-def fetch_stepn_results_last_14_days(conn) -> Optional[List[Tuple[float, float, float, date]]]:
+def fetch_stepn_results_last_14_days(
+    conn,
+) -> Optional[List[Tuple[float, float, float, date]]]:
     """
     Fetches STEPN results from the last 14 days from the database.
 
@@ -184,7 +187,7 @@ def fetch_stepn_results_last_14_days(conn) -> Optional[List[Tuple[float, float, 
     try:
         if conn:
             cursor = conn.cursor()
-            
+
             if _is_sqlite():
                 # SQLite version - use date() function
                 query = """
@@ -201,7 +204,7 @@ def fetch_stepn_results_last_14_days(conn) -> Optional[List[Tuple[float, float, 
                     WHERE Date >= DATEADD(DAY, -14, CAST(GETDATE() AS DATE))
                     ORDER BY Date DESC;
                 """
-            
+
             cursor.execute(query)
             results = cursor.fetchall()
             cursor.close()

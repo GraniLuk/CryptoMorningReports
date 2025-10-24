@@ -3,35 +3,35 @@ Add StepNResults table to existing SQLite database.
 This migration adds support for STEPN token metrics tracking.
 """
 
-import sqlite3
 import os
+import sqlite3
 
 
 def migrate_add_stepn_table(db_path="./local_crypto.db"):
     """Add StepNResults table to existing database"""
-    
+
     if not os.path.exists(db_path):
         print(f"❌ Database not found: {db_path}")
         print("   Please run: python -m database.init_sqlite")
         return False
-    
+
     print(f"🔄 Adding StepNResults table to: {db_path}")
-    
+
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        
+
         # Check if table already exists
         cursor.execute("""
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='StepNResults'
         """)
-        
+
         if cursor.fetchone():
             print("✓ StepNResults table already exists")
             conn.close()
             return True
-        
+
         # Create StepNResults table
         cursor.execute("""
             CREATE TABLE StepNResults (
@@ -49,19 +49,19 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
                 CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # Create index for date queries
         cursor.execute("""
             CREATE INDEX idx_stepn_date ON StepNResults(Date)
         """)
-        
+
         conn.commit()
         conn.close()
-        
+
         print("✅ StepNResults table created successfully!")
         print("   STEPN metrics tracking is now enabled")
         return True
-        
+
     except sqlite3.Error as e:
         print(f"❌ Migration failed: {e}")
         return False
@@ -73,9 +73,9 @@ if __name__ == "__main__":
     print("  📊 STEPN Table Migration")
     print("═" * 60)
     print("")
-    
+
     success = migrate_add_stepn_table()
-    
+
     if success:
         print("")
         print("🎉 Migration complete! STEPN reporting is now available.")

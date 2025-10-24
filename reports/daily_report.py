@@ -116,7 +116,11 @@ async def process_daily_report(
     volume_report = f"Volume Report: <pre>{volume_table}</pre>"
     marketcap_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
-    sopr_report = f"SOPR bitcoin report: <pre>{sopr_table}</pre>"
+    sopr_report = (
+        f"SOPR bitcoin report: <pre>{sopr_table}</pre>"
+        if sopr_table
+        else None
+    )
 
     # Determine which API to use (Perplexity or Gemini)
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -301,13 +305,14 @@ async def process_daily_report(
         parse_mode="HTML",
     )
 
-    await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        sopr_report,
-        parse_mode="HTML",
-    )
+    if sopr_report:
+        await send_telegram_message(
+            telegram_enabled,
+            telegram_token,
+            telegram_chat_id,
+            sopr_report,
+            parse_mode="HTML",
+        )
 
     await send_telegram_message(
         telegram_enabled,
