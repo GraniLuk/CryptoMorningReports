@@ -4,6 +4,7 @@
 $TaskName = "CryptoDailyReport"
 $TaskDescription = "Runs crypto daily report with fresh market data analysis"
 $ScriptPath = $PSScriptRoot
+$WrapperScript = Join-Path $ScriptPath "run-daily-task.ps1"
 $PythonScriptPath = Join-Path $ScriptPath "local_runner.py"
 $VenvPython = Join-Path $ScriptPath ".venv\Scripts\python.exe"
 
@@ -29,6 +30,11 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 # Verify paths exist
+if (-not (Test-Path $WrapperScript)) {
+    Write-Host "❌ Error: run-daily-task.ps1 not found at: $WrapperScript" -ForegroundColor Red
+    exit 1
+}
+
 if (-not (Test-Path $PythonScriptPath)) {
     Write-Host "❌ Error: local_runner.py not found at: $PythonScriptPath" -ForegroundColor Red
     exit 1
@@ -40,6 +46,7 @@ if (-not (Test-Path $VenvPython)) {
     exit 1
 }
 
+Write-Host "✓ Found wrapper: $WrapperScript" -ForegroundColor Green
 Write-Host "✓ Found script: $PythonScriptPath" -ForegroundColor Green
 Write-Host "✓ Found Python: $VenvPython" -ForegroundColor Green
 Write-Host ""
@@ -61,10 +68,10 @@ if ($ExistingTask) {
     }
 }
 
-# Create scheduled task action
+# Create scheduled task action - Use PowerShell wrapper for better logging
 $Action = New-ScheduledTaskAction `
-    -Execute $VenvPython `
-    -Argument "local_runner.py daily" `
+    -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$WrapperScript`"" `
     -WorkingDirectory $ScriptPath
 
 # Create trigger - Daily at 5:00 AM
@@ -115,15 +122,18 @@ try {
     Write-Host "  5. Creates EPUB and emails to Kindle" -ForegroundColor Gray
     Write-Host ""
     Write-Host "📝 Useful Commands:" -ForegroundColor Cyan
-    Write-Host "  View task:      Get-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
+    Write-Host "  Check status:   .\check-task-status.ps1" -ForegroundColor Gray
+    Write-Host "  View log:       Get-Content task_runner.log -Tail 50" -ForegroundColor Gray
+    Write-Host "  Live log:       Get-Content task_runner.log -Wait -Tail 50" -ForegroundColor Gray
     Write-Host "  Run now:        Start-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
-    Write-Host "  View history:   Get-ScheduledTaskInfo -TaskName '$TaskName'" -ForegroundColor Gray
+    Write-Host "  View task:      Get-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host "  Disable task:   Disable-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host "  Enable task:    Enable-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host "  Remove task:    Unregister-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host ""
     Write-Host "💡 To test the task now, run:" -ForegroundColor Yellow
     Write-Host "  Start-ScheduledTask -TaskName '$TaskName'" -ForegroundColor White
+    Write-Host "  .\check-task-status.ps1  # Check if it's running" -ForegroundColor White
     Write-Host ""
     
 }
