@@ -5,9 +5,19 @@ from infra.telegram_logging_handler import app_logger
 
 def get_aggregated_data(conn):
     """
-    Fetch data from SymbolDataView
+    Fetch data from SymbolDataView (SQL Server) or construct from tables (SQLite)
     Returns: List of dictionaries containing aggregated symbol data
     """
+    import os
+
+    is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
+
+    if is_sqlite:
+        # SQLite doesn't have the view, return empty for now
+        # TODO: Construct aggregated data from individual tables if needed
+        app_logger.info("Skipping aggregated data for SQLite mode")
+        return []
+
     try:
         cursor = conn.cursor()
 

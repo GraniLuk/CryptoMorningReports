@@ -1,8 +1,10 @@
+from datetime import date, timedelta
 from typing import Optional
+
 import pandas as pd
 import pyodbc
+
 from infra.telegram_logging_handler import app_logger
-from datetime import date, timedelta
 
 
 def save_macd_results(
@@ -30,22 +32,38 @@ def save_macd_results(
         if conn:
             indicator_date = indicator_date or date.today()
             cursor = conn.cursor()
-            query = """
-                MERGE INTO MACD AS target
-                USING (SELECT ? AS SymbolID, ? AS IndicatorDate, 
-                             ? AS CurrentPrice, ? AS MACD, ? AS Signal, ? AS Histogram) 
-                    AS source (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
-                ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
-                WHEN MATCHED THEN
-                    UPDATE SET CurrentPrice = source.CurrentPrice,
-                             MACD = source.MACD,
-                             Signal = source.Signal,
-                             Histogram = source.Histogram
-                WHEN NOT MATCHED THEN
-                    INSERT (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
-                    VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
-                           source.MACD, source.Signal, source.Histogram);
-            """
+
+            # Check if we're using SQLite or SQL Server
+            import os
+
+            is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
+
+            if is_sqlite:
+                # SQLite uses INSERT OR REPLACE
+                query = """
+                    INSERT OR REPLACE INTO MACD 
+                    (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """
+            else:
+                # SQL Server uses MERGE
+                query = """
+                    MERGE INTO MACD AS target
+                    USING (SELECT ? AS SymbolID, ? AS IndicatorDate, 
+                                 ? AS CurrentPrice, ? AS MACD, ? AS Signal, ? AS Histogram) 
+                        AS source (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                    WHEN MATCHED THEN
+                        UPDATE SET CurrentPrice = source.CurrentPrice,
+                                 MACD = source.MACD,
+                                 Signal = source.Signal,
+                                 Histogram = source.Histogram
+                    WHEN NOT MATCHED THEN
+                        INSERT (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
+                        VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
+                               source.MACD, source.Signal, source.Histogram);
+                """
+
             cursor.execute(
                 query,
                 (symbol_id, indicator_date, current_price, macd, signal, histogram),
@@ -87,6 +105,13 @@ def fetch_yesterday_macd(conn, target_date: date) -> Optional[pd.DataFrame]:
             """
 
             df = pd.read_sql(query, conn, params=[yesterday])
+
+            # Normalize IndicatorDate to timezone-naive datetime for consistent comparison
+            if not df.empty and "IndicatorDate" in df.columns:
+                df["IndicatorDate"] = pd.to_datetime(
+                    df["IndicatorDate"], utc=True
+                ).dt.tz_localize(None)
+
             app_logger.info(
                 f"Successfully fetched {len(df)} MACD records for {yesterday}"
             )

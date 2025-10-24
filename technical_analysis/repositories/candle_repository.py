@@ -12,34 +12,63 @@ class CandleRepository(ABC):
         self.table_name = table_name
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
-        sql = f"""
-        MERGE {self.table_name} AS target
-        USING (SELECT ? as SymbolID, ? as SourceID, ? as EndDate) AS source
-        ON (target.SymbolID = source.SymbolID 
-            AND target.SourceID = source.SourceID 
-            AND target.EndDate = source.EndDate)
-        WHEN NOT MATCHED THEN
-            INSERT (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        """
-        self.conn.execute(
-            sql,
-            (
-                symbol.symbol_id,
-                source,
-                candle.end_date,  # For the USING clause
-                symbol.symbol_id,
-                source,
-                candle.end_date,  # For the INSERT clause
-                candle.open,
-                candle.close,
-                candle.high,
-                candle.low,
-                candle.last,
-                candle.volume,
-                candle.volume_quote,
-            ),
-        )
+        # Check if we're using SQLite or SQL Server
+        import os
+
+        is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
+
+        if is_sqlite:
+            # SQLite uses INSERT OR REPLACE
+            sql = f"""
+            INSERT OR REPLACE INTO {self.table_name} 
+            (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.conn.execute(
+                sql,
+                (
+                    symbol.symbol_id,
+                    source,
+                    candle.end_date,
+                    candle.open,
+                    candle.close,
+                    candle.high,
+                    candle.low,
+                    candle.last,
+                    candle.volume,
+                    candle.volume_quote,
+                ),
+            )
+        else:
+            # SQL Server uses MERGE
+            sql = f"""
+            MERGE {self.table_name} AS target
+            USING (SELECT ? as SymbolID, ? as SourceID, ? as EndDate) AS source
+            ON (target.SymbolID = source.SymbolID 
+                AND target.SourceID = source.SourceID 
+                AND target.EndDate = source.EndDate)
+            WHEN NOT MATCHED THEN
+                INSERT (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """
+            self.conn.execute(
+                sql,
+                (
+                    symbol.symbol_id,
+                    source,
+                    candle.end_date,  # For the USING clause
+                    symbol.symbol_id,
+                    source,
+                    candle.end_date,  # For the INSERT clause
+                    candle.open,
+                    candle.close,
+                    candle.high,
+                    candle.low,
+                    candle.last,
+                    candle.volume,
+                    candle.volume_quote,
+                ),
+            )
         self.conn.commit()
 
     def get_candle(self, symbol: Symbol, end_date: datetime) -> Optional[Candle]:

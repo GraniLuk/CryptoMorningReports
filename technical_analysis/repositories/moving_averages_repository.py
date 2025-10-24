@@ -33,23 +33,39 @@ def save_moving_averages_results(
         if conn:
             indicator_date = indicator_date or date.today()
             cursor = conn.cursor()
-            query = """
-                MERGE INTO MovingAverages AS target
-                USING (SELECT ? AS SymbolID, ? AS IndicatorDate, 
-                             ? AS CurrentPrice, ? AS MA50, ? AS MA200, ? AS EMA50, ? AS EMA200) 
-                    AS source (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
-                ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
-                WHEN MATCHED THEN
-                    UPDATE SET CurrentPrice = source.CurrentPrice,
-                             MA50 = source.MA50,
-                             MA200 = source.MA200,
-                             EMA50 = source.EMA50,
-                             EMA200 = source.EMA200
-                WHEN NOT MATCHED THEN
-                    INSERT (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
-                    VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
-                           source.MA50, source.MA200, source.EMA50, source.EMA200);
-            """
+
+            # Check if we're using SQLite or SQL Server
+            import os
+
+            is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
+
+            if is_sqlite:
+                # SQLite uses INSERT OR REPLACE
+                query = """
+                    INSERT OR REPLACE INTO MovingAverages 
+                    (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """
+            else:
+                # SQL Server uses MERGE
+                query = """
+                    MERGE INTO MovingAverages AS target
+                    USING (SELECT ? AS SymbolID, ? AS IndicatorDate, 
+                                 ? AS CurrentPrice, ? AS MA50, ? AS MA200, ? AS EMA50, ? AS EMA200) 
+                        AS source (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                    WHEN MATCHED THEN
+                        UPDATE SET CurrentPrice = source.CurrentPrice,
+                                 MA50 = source.MA50,
+                                 MA200 = source.MA200,
+                                 EMA50 = source.EMA50,
+                                 EMA200 = source.EMA200
+                    WHEN NOT MATCHED THEN
+                        INSERT (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
+                        VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
+                               source.MA50, source.MA200, source.EMA50, source.EMA200);
+                """
+
             cursor.execute(
                 query,
                 (symbol_id, indicator_date, current_price, ma50, ma200, ema50, ema200),

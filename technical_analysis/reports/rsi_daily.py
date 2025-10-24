@@ -59,7 +59,7 @@ def create_rsi_table_for_symbol(
             # Safely get historical values with defaults
             yesterday_rsi = historical_rsi.get("yesterday")
             week_ago_rsi = historical_rsi.get("week_ago")
-            
+
             # Use .loc for assignments with safe defaults
             latest_row.loc[:, "rsi_daily_change"] = (
                 rsi_value - yesterday_rsi if yesterday_rsi is not None else 0.0
@@ -108,9 +108,7 @@ def create_rsi_table_for_symbol(
     return rsi_table
 
 
-def create_rsi_table(
-    symbols: List[Symbol], conn, target_date: date
-) -> PrettyTable:
+def create_rsi_table(symbols: List[Symbol], conn, target_date: date) -> PrettyTable:
     """
     Creates RSI table for given symbols using daily candles data
     """
@@ -154,7 +152,7 @@ def create_rsi_table(
                 # Safely get historical values with defaults
                 yesterday_rsi = historical_rsi.get("yesterday")
                 week_ago_rsi = historical_rsi.get("week_ago")
-                
+
                 # Use .loc for assignments with safe defaults
                 latest_row.loc[:, "rsi_daily_change"] = (
                     rsi_value - yesterday_rsi if yesterday_rsi is not None else 0.0
@@ -186,8 +184,13 @@ def create_rsi_table(
         except Exception as e:
             app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
 
-    # Sort by RSI descending
-    all_values = all_values.sort_values("RSI", ascending=False)
+    # Sort by RSI descending only if we have data
+    if not all_values.empty and "RSI" in all_values.columns:
+        all_values = all_values.sort_values("RSI", ascending=False)
+    else:
+        app_logger.warning(
+            "No RSI values calculated - all_values DataFrame is empty or missing RSI column"
+        )
 
     # Create table with new columns
     rsi_table = PrettyTable()
@@ -228,8 +231,8 @@ def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
             f"Failed to save RSI results for candle {daily_candle_id}: {str(e)}"
         )
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql

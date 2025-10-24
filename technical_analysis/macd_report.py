@@ -57,6 +57,11 @@ def calculate_macd(symbols: List[Symbol], conn, target_date: date) -> PrettyTabl
                     for candle in candles
                 ]
             )
+
+            # Normalize dates to timezone-naive datetime objects for consistent comparison
+            if not df.empty and "Date" in df.columns:
+                df["Date"] = pd.to_datetime(df["Date"], utc=True).dt.tz_localize(None)
+
             df.set_index("Date", inplace=True)
             df.sort_index(inplace=True)
 

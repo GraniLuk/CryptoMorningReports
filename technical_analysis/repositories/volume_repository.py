@@ -1,4 +1,5 @@
 import pyodbc
+
 from infra.telegram_logging_handler import app_logger
 
 
@@ -13,16 +14,32 @@ def save_volume_results(conn, sorted_results):
     try:
         if conn:
             cursor = conn.cursor()
-            query = """
-                MERGE INTO VolumeHistory AS target
-                USING (SELECT ? AS SymbolID, ? AS Volume, CAST(GETDATE() AS DATE) AS IndicatorDate)
-                    AS source (SymbolID, Volume, IndicatorDate)
-                ON target.SymbolID = source.SymbolID 
-                   AND target.IndicatorDate = source.IndicatorDate
-                WHEN NOT MATCHED THEN
-                    INSERT (SymbolID, Volume, IndicatorDate)
-                    VALUES (source.SymbolID, source.Volume, source.IndicatorDate);
-            """
+
+            # Check if we're using SQLite or SQL Server
+            import os
+            from datetime import date
+
+            is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
+
+            if is_sqlite:
+                # SQLite uses INSERT OR REPLACE
+                query = """
+                    INSERT OR REPLACE INTO VolumeHistory 
+                    (SymbolID, Volume, IndicatorDate)
+                    VALUES (?, ?, DATE('now'))
+                """
+            else:
+                # SQL Server uses MERGE
+                query = """
+                    MERGE INTO VolumeHistory AS target
+                    USING (SELECT ? AS SymbolID, ? AS Volume, CAST(GETDATE() AS DATE) AS IndicatorDate)
+                        AS source (SymbolID, Volume, IndicatorDate)
+                    ON target.SymbolID = source.SymbolID 
+                       AND target.IndicatorDate = source.IndicatorDate
+                    WHEN NOT MATCHED THEN
+                        INSERT (SymbolID, Volume, IndicatorDate)
+                        VALUES (source.SymbolID, source.Volume, source.IndicatorDate);
+                """
 
             for result in sorted_results:
                 cursor.execute(query, (result["symbol_id"], result["total"]))
