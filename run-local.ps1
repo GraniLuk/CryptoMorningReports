@@ -1,9 +1,8 @@
 # PowerShell script to run Azure Function locally
 # Usage: 
-#   .\run-local.ps1                 # Daily report (online if DB available)
-#   .\run-local.ps1 offline         # Offline report with mock data
-#   .\run-local.ps1 current BTC     # Current situation report
-#   .\run-local.ps1 offline BTC     # Offline situation report for BTC
+#   .\run-local.ps1                 # Daily report
+#   .\run-local.ps1 current BTC     # Current situation report for BTC
+#   .\run-local.ps1 weekly          # Weekly report
 
 param(
     [Parameter(Mandatory = $false)]
@@ -24,8 +23,6 @@ if (-not (Test-Path ".env")) {
     Write-Host ""
     Write-Host "You can copy .env.example to .env and fill in your values:" -ForegroundColor Yellow
     Write-Host "  Copy-Item .env.example .env" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "For offline mode (no database needed), just set OFFLINE_MODE=true" -ForegroundColor Yellow
     exit 1
 }
 

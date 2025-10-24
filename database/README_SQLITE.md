@@ -27,7 +27,6 @@ This will:
 ```env
 DATABASE_TYPE=sqlite
 SQLITE_DB_PATH=./local_crypto.db
-OFFLINE_MODE=false
 ```
 
 ### 3. Run your reports with REAL data!
