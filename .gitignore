@@ -56,3 +56,4 @@ strategy_results_*.html
 *.rest
 temp_output.txt
 database/fetch_historical_data.py
+.pandoc-cache
