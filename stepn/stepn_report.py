@@ -13,16 +13,6 @@ from technical_analysis.rsi import calculate_rsi_using_EMA
 
 
 def fetch_stepn_report(conn) -> PrettyTable:
-    # Skip STEPN report for SQLite (requires specific tables not in SQLite schema)
-    import os
-
-    is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
-    if is_sqlite:
-        table = PrettyTable()
-        table.field_names = ["Note"]
-        table.add_row(["STEPN data not available in SQLite mode"])
-        return table
-
     symbols = [
         Symbol(
             symbol_id=1,

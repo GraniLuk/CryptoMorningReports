@@ -219,6 +219,24 @@ def create_sqlite_database(db_path="./local_crypto.db"):
         )
     """)
 
+    # Create StepNResults table for STEPN token metrics
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS StepNResults (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            GMTPrice REAL,
+            GSTPrice REAL,
+            Ratio REAL,
+            Date TEXT NOT NULL UNIQUE,
+            EMA14 REAL,
+            Min24Value REAL,
+            Max24Value REAL,
+            Range24 REAL,
+            RSI REAL,
+            TransactionsCount INTEGER,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Create indexes for better query performance
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_hourly_symbol_date ON HourlyCandles(SymbolID, EndDate)"

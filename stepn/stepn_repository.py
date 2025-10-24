@@ -1,10 +1,16 @@
 import pyodbc
 from typing import List, Tuple, Optional
 from datetime import date
+import os
 
 from infra.telegram_logging_handler import app_logger
 import math
 from typing import Any
+
+
+def _is_sqlite() -> bool:
+    """Check if we're using SQLite database"""
+    return os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
 
 def _sanitize_float(value: Any) -> Optional[float]:
@@ -87,45 +93,73 @@ def save_stepn_results(
                 ", ".join(f"{k}={v}" for k, v in sanitized_params.items()),
             )
 
-            query = """
-                MERGE INTO StepNResults AS target
-                USING (
-                    SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio,
-                           CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
-                           ? AS Min24Value, ? AS Max24Value, ? AS Range24,
-                           ? AS RSI, ? AS TransactionsCount
-                ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
-                ON target.Date = source.Date
-                WHEN MATCHED THEN
-                    UPDATE SET
-                        GMTPrice = source.GMTPrice,
-                        GSTPrice = source.GSTPrice,
-                        Ratio = source.Ratio,
-                        EMA14 = source.EMA14,
-                        Min24Value = source.Min24Value,
-                        Max24Value = source.Max24Value,
-                        Range24 = source.Range24,
-                        RSI = source.RSI,
-                        TransactionsCount = source.TransactionsCount
-                WHEN NOT MATCHED THEN
-                    INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
-                    VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date,
-                            source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI, source.TransactionsCount);
-            """
-            cursor.execute(
-                query,
-                (
-                    sanitized_params["gmt_price"],
-                    sanitized_params["gst_price"],
-                    sanitized_params["ratio"],
-                    sanitized_params["ema"],
-                    sanitized_params["min_24h"],
-                    sanitized_params["max_24h"],
-                    sanitized_params["range_24h"],
-                    sanitized_params["rsi"],
-                    sanitized_params["transactions_count"],
-                ),
-            )
+            if _is_sqlite():
+                # SQLite version - use INSERT OR REPLACE
+                from datetime import date as date_type
+                today = date_type.today().isoformat()
+                
+                query = """
+                    INSERT OR REPLACE INTO StepNResults 
+                    (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+                cursor.execute(
+                    query,
+                    (
+                        sanitized_params["gmt_price"],
+                        sanitized_params["gst_price"],
+                        sanitized_params["ratio"],
+                        today,
+                        sanitized_params["ema"],
+                        sanitized_params["min_24h"],
+                        sanitized_params["max_24h"],
+                        sanitized_params["range_24h"],
+                        sanitized_params["rsi"],
+                        sanitized_params["transactions_count"],
+                    ),
+                )
+            else:
+                # SQL Server version - use MERGE
+                query = """
+                    MERGE INTO StepNResults AS target
+                    USING (
+                        SELECT ? AS GMTPrice, ? AS GSTPrice, ? AS Ratio,
+                               CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
+                               ? AS Min24Value, ? AS Max24Value, ? AS Range24,
+                               ? AS RSI, ? AS TransactionsCount
+                    ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
+                    ON target.Date = source.Date
+                    WHEN MATCHED THEN
+                        UPDATE SET
+                            GMTPrice = source.GMTPrice,
+                            GSTPrice = source.GSTPrice,
+                            Ratio = source.Ratio,
+                            EMA14 = source.EMA14,
+                            Min24Value = source.Min24Value,
+                            Max24Value = source.Max24Value,
+                            Range24 = source.Range24,
+                            RSI = source.RSI,
+                            TransactionsCount = source.TransactionsCount
+                    WHEN NOT MATCHED THEN
+                        INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
+                        VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date,
+                                source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI, source.TransactionsCount);
+                """
+                cursor.execute(
+                    query,
+                    (
+                        sanitized_params["gmt_price"],
+                        sanitized_params["gst_price"],
+                        sanitized_params["ratio"],
+                        sanitized_params["ema"],
+                        sanitized_params["min_24h"],
+                        sanitized_params["max_24h"],
+                        sanitized_params["range_24h"],
+                        sanitized_params["rsi"],
+                        sanitized_params["transactions_count"],
+                    ),
+                )
+            
             conn.commit()
             cursor.close()
             app_logger.info("Successfully upserted STEPN results to database")
@@ -150,12 +184,24 @@ def fetch_stepn_results_last_14_days(conn) -> Optional[List[Tuple[float, float, 
     try:
         if conn:
             cursor = conn.cursor()
-            query = """
-                SELECT GMTPrice, GSTPrice, Ratio, Date
-                FROM StepNResults
-                WHERE Date >= DATEADD(DAY, -14, CAST(GETDATE() AS DATE))
-                ORDER BY Date DESC;
-            """
+            
+            if _is_sqlite():
+                # SQLite version - use date() function
+                query = """
+                    SELECT GMTPrice, GSTPrice, Ratio, Date
+                    FROM StepNResults
+                    WHERE Date >= date('now', '-14 days')
+                    ORDER BY Date DESC;
+                """
+            else:
+                # SQL Server version - use DATEADD
+                query = """
+                    SELECT GMTPrice, GSTPrice, Ratio, Date
+                    FROM StepNResults
+                    WHERE Date >= DATEADD(DAY, -14, CAST(GETDATE() AS DATE))
+                    ORDER BY Date DESC;
+                """
+            
             cursor.execute(query)
             results = cursor.fetchall()
             cursor.close()
