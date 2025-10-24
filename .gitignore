@@ -54,11 +54,5 @@ strategy_results_*.html
 .vscode/settings.json
 .vscode/extensions.json
 *.rest
-local_crypto.db
-.gitignore
-local_crypto.db-wal
-local_crypto.db-shm
-local_crypto.db
 temp_output.txt
-local_crypto.db
 database/fetch_historical_data.py
