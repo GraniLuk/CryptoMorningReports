@@ -61,3 +61,4 @@ local_crypto.db-shm
 local_crypto.db
 temp_output.txt
 local_crypto.db
+database/fetch_historical_data.py
