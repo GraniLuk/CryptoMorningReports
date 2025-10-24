@@ -341,6 +341,9 @@ def get_historical_rsi(
                         row_date = dt.fromisoformat(row_date.replace("Z", "+00:00"))
                     elif hasattr(row_date, "to_pydatetime"):
                         row_date = row_date.to_pydatetime()
+                    elif not isinstance(row_date, dt):
+                        # Convert date to datetime for comparison
+                        row_date = dt.combine(row_date, dt.min.time())
 
                     if timeframe.lower() == "daily":
                         if (

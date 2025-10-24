@@ -42,6 +42,10 @@ def create_rsi_table_for_symbol(
             ]
         )
         df.set_index("Date", inplace=True)
+        
+        # Normalize index to timezone-naive date objects (handle mixed datetime/date/timezone types)
+        df.index = pd.to_datetime(df.index, utc=True).tz_localize(None).date
+        
         df.sort_index(inplace=True)
 
         if not df.empty:
@@ -50,9 +54,15 @@ def create_rsi_table_for_symbol(
             latest_row = df.iloc[[-1]].copy()
             # Get the date from the index
             latest_date = latest_row.index[-1]
+            
+            # Convert to date object for comparison (handle both datetime and date types)
+            if hasattr(latest_date, 'date'):
+                latest_date_for_query = latest_date.date()
+            else:
+                latest_date_for_query = latest_date
 
             # Fetch historical RSI values
-            historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date)
+            historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date_for_query)
 
             # Calculate RSI changes
             rsi_value = float(latest_row["RSI"].iloc[-1])
@@ -135,6 +145,10 @@ def create_rsi_table(symbols: List[Symbol], conn, target_date: date) -> PrettyTa
                 ]
             )
             df.set_index("Date", inplace=True)
+            
+            # Normalize index to timezone-naive date objects (handle mixed datetime/date/timezone types)
+            df.index = pd.to_datetime(df.index, utc=True).tz_localize(None).date
+            
             df.sort_index(inplace=True)
 
             if not df.empty:
@@ -143,9 +157,15 @@ def create_rsi_table(symbols: List[Symbol], conn, target_date: date) -> PrettyTa
                 latest_row = df.iloc[[-1]].copy()
                 # Get the date from the index
                 latest_date = latest_row.index[-1]
+                
+                # Convert to date object for comparison (handle both datetime and date types)
+                if hasattr(latest_date, 'date'):
+                    latest_date_for_query = latest_date.date()
+                else:
+                    latest_date_for_query = latest_date
 
                 # Fetch historical RSI values
-                historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date)
+                historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date_for_query)
 
                 # Calculate RSI changes
                 rsi_value = float(latest_row["RSI"].iloc[-1])
