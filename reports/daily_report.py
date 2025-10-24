@@ -117,9 +117,7 @@ async def process_daily_report(
     marketcap_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
     sopr_report = (
-        f"SOPR bitcoin report: <pre>{sopr_table}</pre>"
-        if sopr_table
-        else None
+        f"SOPR bitcoin report: <pre>{sopr_table}</pre>" if sopr_table else None
     )
 
     # Determine which API to use (Perplexity or Gemini)

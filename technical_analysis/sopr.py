@@ -26,8 +26,10 @@ def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
 
     try:
         # Fetch base SOPR
-        response = requests.get(f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10)
-        
+        response = requests.get(
+            f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10
+        )
+
         # Check for rate limiting or other HTTP errors
         if response.status_code == 429:
             app_logger.warning(
@@ -36,22 +38,32 @@ def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
             )
             return None
         elif response.status_code != 200:
-            app_logger.error(f"SOPR API returned status {response.status_code}: {response.text}")
+            app_logger.error(
+                f"SOPR API returned status {response.status_code}: {response.text}"
+            )
             return None
-        
+
         metrics["SOPR"] = response.json()[0]
 
         # Fetch STH-SOPR
-        response = requests.get(f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10)
+        response = requests.get(
+            f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10
+        )
         if response.status_code != 200:
-            app_logger.warning(f"STH-SOPR API error (status {response.status_code}), skipping")
+            app_logger.warning(
+                f"STH-SOPR API error (status {response.status_code}), skipping"
+            )
             return None
         metrics["STH-SOPR"] = response.json()[0]
 
         # Fetch LTH-SOPR
-        response = requests.get(f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10)
+        response = requests.get(
+            f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10
+        )
         if response.status_code != 200:
-            app_logger.warning(f"LTH-SOPR API error (status {response.status_code}), skipping")
+            app_logger.warning(
+                f"LTH-SOPR API error (status {response.status_code}), skipping"
+            )
             return None
         metrics["LTH-SOPR"] = response.json()[0]
 
