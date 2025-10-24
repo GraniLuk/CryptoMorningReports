@@ -1,17 +1,21 @@
 import os
 from datetime import date, datetime, timezone
 
+from database.update_latest_data import update_latest_daily_candles
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
-from integrations.onedrive_uploader import upload_to_onedrive  # Import for OneDrive uploads
+from integrations.onedrive_uploader import (
+    upload_to_onedrive,  # Import for OneDrive uploads
+)
+from integrations.pandoc_converter import convert_markdown_to_epub_async
 from launchpool.launchpool_report import check_gempool_articles
 from news.news_agent import (
     get_detailed_crypto_analysis_with_news,
     highlight_articles,
 )
-from sharedCode.priceChecker import fetch_current_price
 from news.rss_parser import get_news
-from sharedCode.telegram import send_telegram_message, send_telegram_document
+from sharedCode.priceChecker import fetch_current_price
+from sharedCode.telegram import send_telegram_document, send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.daily_candle import fetch_daily_candles
@@ -24,7 +28,6 @@ from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
-from integrations.pandoc_converter import convert_markdown_to_epub_async
 
 
 async def process_daily_report(
@@ -33,6 +36,13 @@ async def process_daily_report(
     logger = app_logger
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for daily report...", len(symbols))
+
+    # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
+    logger.info("📊 Updating latest market data before analysis...")
+    updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
+    logger.info(
+        f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed"
+    )
 
     # Generate all reports
     fetch_daily_candles(symbols, conn)  # Fetch daily candles
@@ -68,8 +78,12 @@ async def process_daily_report(
             symbols,
             key=lambda s: (0 if s.symbol_name in priority else 1, s.symbol_name),
         )[:limit]
-        lines = ["Symbol  | Last        | 24h Low     | 24h High    | Range% | FromLow% | FromHigh%"]
-        lines.append("--------|------------|------------|------------|--------|----------|-----------")
+        lines = [
+            "Symbol  | Last        | 24h Low     | 24h High    | Range% | FromLow% | FromHigh%"
+        ]
+        lines.append(
+            "--------|------------|------------|------------|--------|----------|-----------"
+        )
         for sym in ordered:
             try:
                 tp = fetch_current_price(sym)
@@ -82,7 +96,9 @@ async def process_daily_report(
                 )
             except Exception as e:  # noqa: BLE001 - we want robustness here
                 lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")
-        return "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
+        return (
+            "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
+        )
 
     current_prices_section = build_current_prices_section(symbols)
 
@@ -125,6 +141,7 @@ async def process_daily_report(
         # Process and send news reports
         fetched_news = get_news()
         aggregated_data = get_aggregated_data(conn)
+
         # Reuse current_prices_section also for the news-enhanced analysis by prepending it to aggregated indicators
         def format_aggregated(agg_list) -> str:
             if not agg_list:
@@ -137,20 +154,25 @@ async def process_daily_report(
             for row in agg_list:
                 try:
                     lines.append(
-                        f"{row.get('SymbolName',''):>6} | "
+                        f"{row.get('SymbolName', ''):>6} | "
                         f"{row.get('RSI', '')!s:>4} | "
-                        f"{row.get('RSIClosePrice',''):>6} | "
-                        f"{row.get('MA50',''):>5} | "
-                        f"{row.get('MA200',''):>6} | "
-                        f"{row.get('EMA50',''):>6} | "
-                        f"{row.get('EMA200',''):>7} | "
-                        f"{row.get('LowPrice',''):>5} | "
-                        f"{row.get('HighPrice',''):>6} | "
-                        f"{row.get('RangePercent',''):>6}"
+                        f"{row.get('RSIClosePrice', ''):>6} | "
+                        f"{row.get('MA50', ''):>5} | "
+                        f"{row.get('MA200', ''):>6} | "
+                        f"{row.get('EMA50', ''):>6} | "
+                        f"{row.get('EMA200', ''):>7} | "
+                        f"{row.get('LowPrice', ''):>5} | "
+                        f"{row.get('HighPrice', ''):>6} | "
+                        f"{row.get('RangePercent', ''):>6}"
                     )
                 except Exception as e:  # noqa: BLE001
                     lines.append(f"Row format error: {e}")
-            return "Aggregated Indicators:\n<pre>" + header + "\n".join(lines) + "</pre>\n\n"
+            return (
+                "Aggregated Indicators:\n<pre>"
+                + header
+                + "\n".join(lines)
+                + "</pre>\n\n"
+            )
 
         aggregated_formatted = format_aggregated(aggregated_data)
         aggregated_with_prices = current_prices_section + aggregated_formatted
@@ -162,7 +184,6 @@ async def process_daily_report(
         )
         # --- OneDrive Uploads ---
         if not analysis_reported_with_news.startswith("Failed"):
-
             onedrive_filename_analysis_with_news = (
                 f"CryptoAnalysisWithNews_{today_date}.md"
             )
@@ -200,10 +221,14 @@ async def process_daily_report(
                     },
                 )
             except RuntimeError as convert_err:
-                logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
+                logger.warning(
+                    "Failed to convert analysis markdown to EPUB: %s", convert_err
+                )
             else:
                 recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
-                recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
+                recipients = [
+                    addr.strip() for addr in recipients_env.split(",") if addr.strip()
+                ]
 
                 if not recipients:
                     logger.info(
@@ -301,7 +326,6 @@ async def process_daily_report(
             message_part3,
             parse_mode="HTML",
         )
-
 
 
 if __name__ == "__main__":

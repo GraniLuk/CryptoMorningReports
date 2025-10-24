@@ -316,13 +316,17 @@ def get_historical_rsi(
                 cursor.execute(query, (symbol_id, date, date))
 
             # Convert date to datetime for comparison if it's a date object
+            from datetime import date as date_type
             from datetime import datetime as dt
 
             if isinstance(date, dt):
                 compare_date = date
             elif hasattr(date, "to_pydatetime"):  # pandas Timestamp
-                compare_date = date.to_pydatetime()
-            else:  # date object
+                compare_date = date.to_pydatetime()  # type: ignore
+            elif isinstance(date, date_type):  # date object (not datetime)
+                compare_date = dt.combine(date, dt.min.time())
+            else:
+                # Fallback for any other type
                 compare_date = dt.combine(date, dt.min.time())
 
             for row in cursor.fetchall():

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from database.update_latest_data import update_latest_daily_candles
 from infra.telegram_logging_handler import app_logger
 from sharedCode.telegram import send_telegram_message
 from source_repository import fetch_symbols
@@ -13,6 +14,13 @@ async def process_weekly_report(
     logger = app_logger
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for weekly report...", len(symbols))
+
+    # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
+    logger.info("📊 Updating latest market data before weekly analysis...")
+    updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
+    logger.info(
+        f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed"
+    )
 
     # Calculate date range for weekly report
     end_date = datetime.now(timezone.utc)

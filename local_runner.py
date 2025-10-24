@@ -20,9 +20,7 @@ async def main():
     if len(sys.argv) > 1:
         report_type = sys.argv[1].lower()
         if report_type not in ["daily", "weekly", "current"]:
-            print(
-                "Usage: python local_runner.py [daily|weekly|current] [symbol]"
-            )
+            print("Usage: python local_runner.py [daily|weekly|current] [symbol]")
             print("  daily   - Run daily report")
             print("  weekly  - Run weekly report")
             print("  current [symbol] - Run current situation report")
