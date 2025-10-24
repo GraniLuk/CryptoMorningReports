@@ -53,44 +53,65 @@ def _ensure_pandoc_available():
                 "pypandoc is not installed. Please install it via requirements.txt."
             ) from exc
 
+        # First try to use system-installed pandoc
         try:
             existing_path = pypandoc.get_pandoc_path()
             if existing_path and os.path.isfile(existing_path):
-                app_logger.debug("Pandoc already available at %s", existing_path)
+                app_logger.info("Using system pandoc at %s", existing_path)
                 _pypandoc_module = pypandoc
                 return _pypandoc_module
         except OSError:
-            app_logger.info("Pandoc binary not found; downloading on startup...")
+            pass  # System pandoc not found, will try other methods
 
-        target_dir = _resolve_pandoc_download_dir()
-        try:
-            os.makedirs(target_dir, exist_ok=True)
-            pandoc_path = pypandoc.download_pandoc(
-                targetfolder=target_dir, delete_installer=True
+        # For local development, try to find pandoc in PATH
+        import shutil
+
+        pandoc_in_path = shutil.which("pandoc")
+        if pandoc_in_path:
+            app_logger.info("Using pandoc from PATH at %s", pandoc_in_path)
+            os.environ["PYPANDOC_PANDOC"] = pandoc_in_path
+            _pypandoc_module = pypandoc
+            return _pypandoc_module
+
+        # Only download if running in Azure (has AzureWebJobsScriptRoot)
+        if os.environ.get("AzureWebJobsScriptRoot"):
+            app_logger.info(
+                "Pandoc binary not found; downloading for Azure environment..."
             )
-            
-            # download_pandoc may return None on some platforms; construct expected path
-            if not pandoc_path:
-                pandoc_path = os.path.join(target_dir, "pandoc")
-            
-            if not os.path.isfile(pandoc_path):
-                raise FileNotFoundError(
-                    f"Pandoc binary not found at expected location: {pandoc_path}"
+            target_dir = _resolve_pandoc_download_dir()
+            try:
+                os.makedirs(target_dir, exist_ok=True)
+                pandoc_path = pypandoc.download_pandoc(
+                    targetfolder=target_dir, delete_installer=True
                 )
-            
-            os.environ["PYPANDOC_PANDOC"] = pandoc_path
-            app_logger.info("Pandoc downloaded to %s", pandoc_path)
-        except Exception as exc:  # noqa: BLE001 - want to bubble informative error
-            app_logger.exception(
-                "Pandoc download failed; target_dir=%s", target_dir
-            )
-            raise RuntimeError(
-                "Failed to download Pandoc automatically. "
-                "Ensure the Function App has outbound internet access and a writable storage location."
-            ) from exc
 
-        _pypandoc_module = pypandoc
-        return _pypandoc_module
+                # download_pandoc may return None on some platforms; construct expected path
+                if not pandoc_path:
+                    pandoc_path = os.path.join(target_dir, "pandoc")
+
+                if not os.path.isfile(pandoc_path):
+                    raise FileNotFoundError(
+                        f"Pandoc binary not found at expected location: {pandoc_path}"
+                    )
+
+                os.environ["PYPANDOC_PANDOC"] = pandoc_path
+                app_logger.info("Pandoc downloaded to %s", pandoc_path)
+                _pypandoc_module = pypandoc
+                return _pypandoc_module
+            except Exception as exc:  # noqa: BLE001 - want to bubble informative error
+                app_logger.exception(
+                    "Pandoc download failed; target_dir=%s", target_dir
+                )
+                raise RuntimeError(
+                    "Failed to download Pandoc automatically. "
+                    "Ensure the Function App has outbound internet access and a writable storage location."
+                ) from exc
+        else:
+            # Local environment but pandoc not found
+            raise RuntimeError(
+                "Pandoc not found. For local development, please install pandoc: "
+                "https://pandoc.org/installing.html"
+            )
 
 
 def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
@@ -99,9 +120,9 @@ def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
         "lang": "en-US",
         "language": "en-US",
     }
-    
+
     merged = {**defaults, **(metadata or {})}
-    
+
     args: list[str] = []
     for key, value in merged.items():
         if value is None:

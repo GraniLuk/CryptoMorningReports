@@ -20,9 +20,7 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str):
     logger = app_logger
 
     if not logic_app_url:
-        logger.error(
-            "ONEDRIVE_LOGIC_APP_URL environment variable not set. Cannot upload to OneDrive."
-        )
+        logger.info("ONEDRIVE_LOGIC_APP_URL not configured; skipping OneDrive upload.")
         return False
 
     # Set the base folder path for crypto reports
