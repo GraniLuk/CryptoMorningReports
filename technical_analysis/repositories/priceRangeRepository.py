@@ -1,3 +1,6 @@
+import os
+from datetime import date
+
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
@@ -21,17 +24,19 @@ def save_price_range_results(
             cursor = conn.cursor()
 
             # Check if we're using SQLite or SQL Server
-            import os
-
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
+
+            # Get current date
+            today = date.today()
 
             if is_sqlite:
                 # SQLite uses INSERT OR REPLACE
                 query = """
                     INSERT OR REPLACE INTO PriceRange 
                     (SymbolID, IndicatorDate, LowPrice, HighPrice, RangePercent)
-                    VALUES (?, DATE('now'), ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?)
                 """
+                cursor.execute(query, (symbol_id, today.isoformat(), low_price, high_price, range_percent))
             else:
                 # SQL Server uses MERGE
                 query = """
@@ -49,7 +54,8 @@ def save_price_range_results(
                         VALUES (source.SymbolID, source.IndicatorDate, source.LowPrice, 
                                source.HighPrice, source.RangePercent);
                 """
-            cursor.execute(query, (symbol_id, low_price, high_price, range_percent))
+                cursor.execute(query, (symbol_id, low_price, high_price, range_percent))
+            
             conn.commit()
             cursor.close()
             app_logger.info(

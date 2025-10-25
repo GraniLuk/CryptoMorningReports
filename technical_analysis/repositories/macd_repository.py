@@ -45,6 +45,10 @@ def save_macd_results(
                     (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """
+                cursor.execute(
+                    query,
+                    (symbol_id, indicator_date.isoformat(), current_price, macd, signal, histogram),
+                )
             else:
                 # SQL Server uses MERGE
                 query = """
@@ -63,11 +67,11 @@ def save_macd_results(
                         VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
                                source.MACD, source.Signal, source.Histogram);
                 """
+                cursor.execute(
+                    query,
+                    (symbol_id, indicator_date, current_price, macd, signal, histogram),
+                )
 
-            cursor.execute(
-                query,
-                (symbol_id, indicator_date, current_price, macd, signal, histogram),
-            )
             conn.commit()
             cursor.close()
             app_logger.info(

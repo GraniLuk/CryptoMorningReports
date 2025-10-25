@@ -48,7 +48,15 @@ def get_aggregated_data(conn):
                     vh.IndicatorDate as VolumeDate,
                     -- Market Cap data
                     mc.MarketCap,
-                    mc.IndicatorDate as MarketCapDate
+                    mc.IndicatorDate as MarketCapDate,
+                    -- Open Interest data
+                    oi.OpenInterest,
+                    oi.OpenInterestValue,
+                    oi.IndicatorDate as OpenInterestDate,
+                    -- Funding Rate data
+                    fr.FundingRate,
+                    fr.FundingTime,
+                    fr.IndicatorDate as FundingRateDate
                 FROM Symbols s
                 -- Join with most recent RSI data for each symbol
                 LEFT JOIN (
@@ -91,6 +99,18 @@ def get_aggregated_data(conn):
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM MarketCapHistory
                 ) mc ON s.SymbolID = mc.SymbolID AND mc.rn = 1
+                -- Join with latest OpenInterest
+                LEFT JOIN (
+                    SELECT *, 
+                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
+                    FROM OpenInterest
+                ) oi ON s.SymbolID = oi.SymbolID AND oi.rn = 1
+                -- Join with latest FundingRate
+                LEFT JOIN (
+                    SELECT *, 
+                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
+                    FROM FundingRate
+                ) fr ON s.SymbolID = fr.SymbolID AND fr.rn = 1
                 ORDER BY s.SymbolName
             """
 
@@ -129,6 +149,9 @@ def get_aggregated_data(conn):
                     ,[LowPrice]
                     ,[HighPrice]
                     ,[RangePercent]
+                    ,[OpenInterest]
+                    ,[OpenInterestValue]
+                    ,[FundingRate]
                 FROM [dbo].[SymbolDataView]
                 order by RSIIndicatorDate desc
             """

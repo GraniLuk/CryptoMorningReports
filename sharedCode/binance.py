@@ -10,6 +10,98 @@ from sharedCode.commonPrice import Candle, TickerPrice
 from source_repository import SourceID, Symbol
 
 
+class FuturesMetrics:
+    """Data class for futures market metrics."""
+
+    def __init__(
+        self,
+        symbol: str,
+        open_interest: float,
+        open_interest_value: float,
+        funding_rate: float,
+        next_funding_time: datetime,
+        timestamp: datetime,
+    ):
+        self.symbol = symbol
+        self.open_interest = open_interest
+        self.open_interest_value = open_interest_value
+        self.funding_rate = funding_rate
+        self.next_funding_time = next_funding_time
+        self.timestamp = timestamp
+
+    def __repr__(self):
+        return (
+            f"FuturesMetrics(symbol={self.symbol}, "
+            f"open_interest={self.open_interest}, "
+            f"open_interest_value={self.open_interest_value}, "
+            f"funding_rate={self.funding_rate:.6f}%, "
+            f"next_funding_time={self.next_funding_time})"
+        )
+
+
+def fetch_binance_futures_metrics(symbol: Symbol) -> Optional[FuturesMetrics]:
+    """
+    Fetch Open Interest and Funding Rate from Binance Futures.
+
+    Args:
+        symbol: Symbol object with binance_name property
+
+    Returns:
+        FuturesMetrics object if successful, None otherwise
+    """
+    client = BinanceClient()
+
+    try:
+        # Fetch Open Interest
+        oi_response = client.futures_open_interest(symbol=symbol.binance_name)
+        open_interest = float(oi_response.get("openInterest", 0))
+        oi_timestamp = datetime.fromtimestamp(
+            oi_response.get("time", 0) / 1000, tz=timezone.utc
+        )
+
+        # Fetch current price to calculate OI value
+        ticker = client.futures_ticker(symbol=symbol.binance_name)
+        last_price = float(ticker.get("lastPrice", 0))
+        open_interest_value = open_interest * last_price
+
+        # Fetch Funding Rate
+        funding_response = client.futures_funding_rate(
+            symbol=symbol.binance_name, limit=1
+        )
+
+        if not funding_response:
+            app_logger.warning(f"No funding rate data for {symbol.symbol_name}")
+            return None
+
+        funding_rate = float(funding_response[0].get("fundingRate", 0)) * 100  # Convert to percentage
+
+        # Get next funding time from mark price
+        mark_price = client.futures_mark_price(symbol=symbol.binance_name)
+        next_funding_time = datetime.fromtimestamp(
+            mark_price.get("nextFundingTime", 0) / 1000, tz=timezone.utc
+        )
+
+        return FuturesMetrics(
+            symbol=symbol.symbol_name,
+            open_interest=open_interest,
+            open_interest_value=open_interest_value,
+            funding_rate=funding_rate,
+            next_funding_time=next_funding_time,
+            timestamp=oi_timestamp,
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error fetching futures metrics for {symbol.symbol_name}: {e.message}"
+        )
+        return None
+    except Exception as e:
+        app_logger.error(
+            f"Unexpected error fetching futures metrics for {symbol.symbol_name}: {str(e)}"
+        )
+        return None
+
+
 def fetch_binance_price(symbol: Symbol) -> Optional[TickerPrice]:
     """Fetch price data from Binance exchange."""
     # Initialize the client

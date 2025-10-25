@@ -18,6 +18,7 @@ from sharedCode.priceChecker import fetch_current_price
 from sharedCode.telegram import send_telegram_document, send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
+from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.movingAveragesReport import calculate_indicators
@@ -61,6 +62,7 @@ async def process_daily_report(
         symbols, conn, target_date=date.today()
     )
     sopr_table = fetch_sopr_metrics(conn)
+    derivatives_table = fetch_derivatives_report(symbols, conn)
 
     # Format messages
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -119,6 +121,7 @@ async def process_daily_report(
     sopr_report = (
         f"SOPR bitcoin report: <pre>{sopr_table}</pre>" if sopr_table else None
     )
+    derivatives_report = f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
 
     # Determine which API to use (Perplexity or Gemini)
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -149,12 +152,17 @@ async def process_daily_report(
             if not agg_list:
                 return "No aggregated indicator data available.\n"
             header = (
-                "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | Range%\n"
-                "-------|-----|-------|-----|------|------|-------|-----|------|-------\n"
+                "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | Range% | OI | OI Value | Fund Rate\n"
+                "-------|-----|-------|------|-------|------|--------|-----|------|--------|----|-----------|-----------\n"
             )
             lines = []
             for row in agg_list:
                 try:
+                    # Format Open Interest and Funding Rate with proper handling of None values
+                    oi_str = f"{row.get('OpenInterest', 0):,.0f}" if row.get('OpenInterest') else "N/A"
+                    oi_val_str = f"${row.get('OpenInterestValue', 0):,.0f}" if row.get('OpenInterestValue') else "N/A"
+                    fr_str = f"{row.get('FundingRate', 0):.4f}%" if row.get('FundingRate') else "N/A"
+                    
                     lines.append(
                         f"{row.get('SymbolName', ''):>6} | "
                         f"{row.get('RSI', '')!s:>4} | "
@@ -165,7 +173,10 @@ async def process_daily_report(
                         f"{row.get('EMA200', ''):>7} | "
                         f"{row.get('LowPrice', ''):>5} | "
                         f"{row.get('HighPrice', ''):>6} | "
-                        f"{row.get('RangePercent', ''):>6}"
+                        f"{row.get('RangePercent', ''):>6} | "
+                        f"{oi_str:>10} | "
+                        f"{oi_val_str:>11} | "
+                        f"{fr_str:>11}"
                     )
                 except Exception as e:  # noqa: BLE001
                     lines.append(f"Row format error: {e}")
@@ -317,6 +328,14 @@ async def process_daily_report(
         telegram_token,
         telegram_chat_id,
         marketcap_report,
+        parse_mode="HTML",
+    )
+
+    await send_telegram_message(
+        telegram_enabled,
+        telegram_token,
+        telegram_chat_id,
+        derivatives_report,
         parse_mode="HTML",
     )
 
