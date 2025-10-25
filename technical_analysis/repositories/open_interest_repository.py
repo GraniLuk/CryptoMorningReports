@@ -16,7 +16,11 @@ class OpenInterestRepository:
         self.is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
     def save_open_interest(
-        self, symbol_id: int, open_interest: float, open_interest_value: float, indicator_date: datetime
+        self,
+        symbol_id: int,
+        open_interest: float,
+        open_interest_value: float,
+        indicator_date: datetime,
     ):
         """Save open interest data to database."""
         cursor = self.conn.cursor()
@@ -30,7 +34,12 @@ class OpenInterestRepository:
                     (SymbolID, OpenInterest, OpenInterestValue, IndicatorDate)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (symbol_id, open_interest, open_interest_value, indicator_date.isoformat()),
+                    (
+                        symbol_id,
+                        open_interest,
+                        open_interest_value,
+                        indicator_date.isoformat(),
+                    ),
                 )
             else:
                 # Azure SQL: Use MERGE

@@ -47,7 +47,14 @@ def save_macd_results(
                 """
                 cursor.execute(
                     query,
-                    (symbol_id, indicator_date.isoformat(), current_price, macd, signal, histogram),
+                    (
+                        symbol_id,
+                        indicator_date.isoformat(),
+                        current_price,
+                        macd,
+                        signal,
+                        histogram,
+                    ),
                 )
             else:
                 # SQL Server uses MERGE

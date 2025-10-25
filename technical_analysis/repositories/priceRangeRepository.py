@@ -36,7 +36,16 @@ def save_price_range_results(
                     (SymbolID, IndicatorDate, LowPrice, HighPrice, RangePercent)
                     VALUES (?, ?, ?, ?, ?)
                 """
-                cursor.execute(query, (symbol_id, today.isoformat(), low_price, high_price, range_percent))
+                cursor.execute(
+                    query,
+                    (
+                        symbol_id,
+                        today.isoformat(),
+                        low_price,
+                        high_price,
+                        range_percent,
+                    ),
+                )
             else:
                 # SQL Server uses MERGE
                 query = """
@@ -55,7 +64,7 @@ def save_price_range_results(
                                source.HighPrice, source.RangePercent);
                 """
                 cursor.execute(query, (symbol_id, low_price, high_price, range_percent))
-            
+
             conn.commit()
             cursor.close()
             app_logger.info(

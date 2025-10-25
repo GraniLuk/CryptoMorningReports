@@ -73,7 +73,9 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> Optional[FuturesMetrics]:
             app_logger.warning(f"No funding rate data for {symbol.symbol_name}")
             return None
 
-        funding_rate = float(funding_response[0].get("fundingRate", 0)) * 100  # Convert to percentage
+        funding_rate = (
+            float(funding_response[0].get("fundingRate", 0)) * 100
+        )  # Convert to percentage
 
         # Get next funding time from mark price
         mark_price = client.futures_mark_price(symbol=symbol.binance_name)

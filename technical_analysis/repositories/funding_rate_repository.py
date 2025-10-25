@@ -16,7 +16,11 @@ class FundingRateRepository:
         self.is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
     def save_funding_rate(
-        self, symbol_id: int, funding_rate: float, funding_time: datetime, indicator_date: datetime
+        self,
+        symbol_id: int,
+        funding_rate: float,
+        funding_time: datetime,
+        indicator_date: datetime,
     ):
         """Save funding rate data to database."""
         cursor = self.conn.cursor()
@@ -30,7 +34,12 @@ class FundingRateRepository:
                     (SymbolID, FundingRate, FundingTime, IndicatorDate)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (symbol_id, funding_rate, funding_time.isoformat(), indicator_date.isoformat()),
+                    (
+                        symbol_id,
+                        funding_rate,
+                        funding_time.isoformat(),
+                        indicator_date.isoformat(),
+                    ),
                 )
             else:
                 # Azure SQL: Use MERGE

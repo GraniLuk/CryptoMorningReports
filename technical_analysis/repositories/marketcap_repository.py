@@ -32,7 +32,10 @@ def save_marketcap_results(conn, sorted_results):
                     VALUES (?, ?, ?)
                 """
                 for result in sorted_results:
-                    cursor.execute(query, (result["symbol_id"], result["market_cap"], today.isoformat()))
+                    cursor.execute(
+                        query,
+                        (result["symbol_id"], result["market_cap"], today.isoformat()),
+                    )
             else:
                 # SQL Server uses MERGE
                 query = """

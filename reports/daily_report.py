@@ -159,10 +159,22 @@ async def process_daily_report(
             for row in agg_list:
                 try:
                     # Format Open Interest and Funding Rate with proper handling of None values
-                    oi_str = f"{row.get('OpenInterest', 0):,.0f}" if row.get('OpenInterest') else "N/A"
-                    oi_val_str = f"${row.get('OpenInterestValue', 0):,.0f}" if row.get('OpenInterestValue') else "N/A"
-                    fr_str = f"{row.get('FundingRate', 0):.4f}%" if row.get('FundingRate') else "N/A"
-                    
+                    oi_str = (
+                        f"{row.get('OpenInterest', 0):,.0f}"
+                        if row.get("OpenInterest")
+                        else "N/A"
+                    )
+                    oi_val_str = (
+                        f"${row.get('OpenInterestValue', 0):,.0f}"
+                        if row.get("OpenInterestValue")
+                        else "N/A"
+                    )
+                    fr_str = (
+                        f"{row.get('FundingRate', 0):.4f}%"
+                        if row.get("FundingRate")
+                        else "N/A"
+                    )
+
                     lines.append(
                         f"{row.get('SymbolName', ''):>6} | "
                         f"{row.get('RSI', '')!s:>4} | "
