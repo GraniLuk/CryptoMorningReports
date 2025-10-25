@@ -18,7 +18,6 @@ from sharedCode.priceChecker import fetch_current_price
 from sharedCode.telegram import send_telegram_document, send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
-from technical_analysis.daily_candle import fetch_daily_candles
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.movingAveragesReport import calculate_indicators
@@ -45,7 +44,8 @@ async def process_daily_report(
     )
 
     # Generate all reports
-    fetch_daily_candles(symbols, conn)  # Fetch daily candles
+    # NOTE: fetch_daily_candles() removed - redundant with update_latest_daily_candles() above
+    # Calling it causes duplicate inserts → candle IDs change → RSI becomes orphaned
 
     rsi_table = create_rsi_table(symbols, conn, target_date=date.today())
     ma_average_table, ema_average_table = calculate_indicators(

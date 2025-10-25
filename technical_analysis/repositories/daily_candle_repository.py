@@ -30,11 +30,22 @@ class DailyCandleRepository(CandleRepository):
             )
 
         if is_sqlite:
-            # SQLite uses INSERT OR REPLACE
+            # SQLite: Use INSERT ... ON CONFLICT DO UPDATE to preserve row ID
+            # This prevents orphaning RSI/indicator records that reference DailyCandleID
             sql = f"""
-            INSERT OR REPLACE INTO {self.table_name} 
+            INSERT INTO {self.table_name} 
             (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(SymbolID, SourceID, Date) 
+            DO UPDATE SET
+                EndDate = excluded.EndDate,
+                [Open] = excluded.[Open],
+                [Close] = excluded.[Close],
+                High = excluded.High,
+                Low = excluded.Low,
+                Last = excluded.Last,
+                Volume = excluded.Volume,
+                VolumeQuote = excluded.VolumeQuote
             """
             self.conn.execute(
                 sql,
