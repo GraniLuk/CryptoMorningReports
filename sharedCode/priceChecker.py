@@ -44,6 +44,8 @@ def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) 
     if conn and candle:
         repo = DailyCandleRepository(conn)
         repo.save_candle(symbol, candle, source=symbol.source_id.value)
+        # Re-fetch from database to get the ID
+        candle = repo.get_candle(symbol, datetime.combine(end_date, datetime.min.time()))
 
     return candle
 

@@ -181,16 +181,24 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                 all_values = pd.concat([all_values, latest_row])
                 # Save to database if connection is available
                 if conn:
-                    try:
-                        save_rsi_results(
-                            conn=conn,
-                            daily_candle_id=candles[-1].id,
-                            rsi=float(latest_row["RSI"].iloc[-1]),
-                        )
-                    except Exception as e:
+                    if candles[-1].id is None:
+                        # This should never happen after our fixes, but we check defensively
                         app_logger.error(
-                            f"Failed to save RSI results for {symbol.symbol_name}: {e!s}"
+                            f"Critical data integrity error: Candle for {symbol.symbol_name} "
+                            f"on {target_date} is missing database ID. RSI results cannot be saved. "
+                            f"Check fetch_daily_candle() and repository.get_candle() implementation."
                         )
+                    else:
+                        try:
+                            save_rsi_results(
+                                conn=conn,
+                                daily_candle_id=candles[-1].id,
+                                rsi=float(latest_row["RSI"].iloc[-1]),
+                            )
+                        except Exception as e:
+                            app_logger.error(
+                                f"Failed to save RSI results for {symbol.symbol_name}: {e!s}"
+                            )
 
                 app_logger.info(
                     "%s: Price=%f, RSI=%f",

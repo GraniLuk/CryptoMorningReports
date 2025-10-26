@@ -209,7 +209,6 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> C
             last=float(klines[0][4]),
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][7]),
-            id=symbol.symbol_id,
         )
 
     except BinanceAPIException as e:
@@ -268,7 +267,6 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
             last=float(klines[0][4]),
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][7]),
-            id=symbol.symbol_id,
         )
 
     except BinanceAPIException as e:
@@ -328,7 +326,6 @@ def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candl
             last=float(klines[0][4]),
             volume=float(klines[0][5]),
             volume_quote=float(klines[0][7]),
-            id=symbol.symbol_id,
         )
 
     except BinanceAPIException as e:
