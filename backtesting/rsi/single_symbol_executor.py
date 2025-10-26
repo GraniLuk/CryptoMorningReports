@@ -24,16 +24,12 @@ if __name__ == "__main__":
     # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
     symbols = fetch_symbols(conn)
     if symbols:
-        filtered_symbols = [
-            symbol for symbol in symbols if symbol.symbol_name == symbol_to_execute
-        ]
+        filtered_symbols = [symbol for symbol in symbols if symbol.symbol_name == symbol_to_execute]
         # Calculate the date 4 years before today
         five_years_ago = datetime.now(UTC) - timedelta(days=5 * 365)
 
         # Assuming you have a valid connection and symbol_id
-        candles_data = get_candles_with_rsi(
-            conn, filtered_symbols[0].symbol_id, five_years_ago
-        )
+        candles_data = get_candles_with_rsi(conn, filtered_symbols[0].symbol_id, five_years_ago)
         result_df, ratio = run_strategy_for_symbol_internal(
             candles_data,
             filtered_symbols[0],
@@ -50,9 +46,7 @@ if __name__ == "__main__":
             total_profit = 0.0
 
         if not result_df.empty:
-            save_to_excel(
-                result_df, "strategy_results", filtered_symbols[0].symbol_name
-            )
+            save_to_excel(result_df, "strategy_results", filtered_symbols[0].symbol_name)
 
             # Create and save visualization
             from backtesting.rsi.visualization import create_trading_visualization

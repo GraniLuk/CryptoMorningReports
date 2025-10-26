@@ -248,12 +248,8 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_daily_symbol_date ON DailyCandles(SymbolID, Date)"
     )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_rsi_daily_candle ON RSI(DailyCandleID)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_rsi_hourly_candle ON HourlyRSI(HourlyCandleID)"
-    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_rsi_daily_candle ON RSI(DailyCandleID)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_rsi_hourly_candle ON HourlyRSI(HourlyCandleID)")
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_rsi_fifteen_candle ON FifteenMinRSI(FifteenMinCandleID)"
     )

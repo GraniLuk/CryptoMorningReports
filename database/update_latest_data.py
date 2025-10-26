@@ -84,9 +84,7 @@ def update_latest_daily_candles(conn, days_to_update=3):
         if last_date:
             # We have data - only fetch missing dates
             if last_date >= today:
-                logger.info(
-                    f"✓ {symbol.symbol_name}: Already up-to-date (last: {last_date})"
-                )
+                logger.info(f"✓ {symbol.symbol_name}: Already up-to-date (last: {last_date})")
                 total_skipped += 1
                 continue
 
@@ -172,9 +170,7 @@ def get_last_hourly_candle_time(conn, symbol):
         if "+" in last_time_str or "Z" in last_time_str:
             last_time = datetime.fromisoformat(last_time_str.replace("Z", "+00:00"))
         else:
-            last_time = datetime.fromisoformat(last_time_str).replace(
-                tzinfo=UTC
-            )
+            last_time = datetime.fromisoformat(last_time_str).replace(tzinfo=UTC)
         return last_time
 
     return None
@@ -248,18 +244,14 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
                     )
 
             except Exception as e:
-                logger.error(
-                    f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed - {e}"
-                )
+                logger.error(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed - {e}")
                 total_failed += 1
 
             current_time += timedelta(hours=1)
 
         if symbol_updated > 0:
             total_updated += symbol_updated
-            logger.info(
-                f"✓ {symbol.symbol_name}: Updated {symbol_updated} hourly candle(s)"
-            )
+            logger.info(f"✓ {symbol.symbol_name}: Updated {symbol_updated} hourly candle(s)")
 
     logger.info(
         f"Hourly data update complete: {total_updated} candles updated, "
@@ -297,16 +289,12 @@ if __name__ == "__main__":
         print("=" * 70 + "\n")
 
         # Update daily candles (only missing since last update)
-        daily_updated, daily_failed = update_latest_daily_candles(
-            conn, days_to_update=3
-        )
+        daily_updated, daily_failed = update_latest_daily_candles(conn, days_to_update=3)
 
         print()  # Blank line between daily and hourly updates
 
         # Update hourly candles (only missing since last update)
-        hourly_updated, hourly_failed = update_latest_hourly_candles(
-            conn, hours_to_update=24
-        )
+        hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
 
         print("\n" + "=" * 70)
         print("📈 UPDATE SUMMARY")
@@ -314,12 +302,7 @@ if __name__ == "__main__":
         print(f"✓ Daily candles:  {daily_updated} updated, {daily_failed} failed")
         print(f"✓ Hourly candles: {hourly_updated} updated, {hourly_failed} failed")
 
-        if (
-            daily_updated == 0
-            and hourly_updated == 0
-            and daily_failed == 0
-            and hourly_failed == 0
-        ):
+        if daily_updated == 0 and hourly_updated == 0 and daily_failed == 0 and hourly_failed == 0:
             print("\n💡 All symbols already up-to-date - no API calls needed!")
 
         print("=" * 70 + "\n")

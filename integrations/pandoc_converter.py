@@ -76,9 +76,7 @@ def _ensure_pandoc_available():
 
         # Only download if running in Azure (has AzureWebJobsScriptRoot)
         if os.environ.get("AzureWebJobsScriptRoot"):
-            app_logger.info(
-                "Pandoc binary not found; downloading for Azure environment..."
-            )
+            app_logger.info("Pandoc binary not found; downloading for Azure environment...")
             target_dir = _resolve_pandoc_download_dir()
             try:
                 Path(target_dir).mkdir(parents=True, exist_ok=True)
@@ -100,9 +98,7 @@ def _ensure_pandoc_available():
                 _pypandoc_module = pypandoc
                 return _pypandoc_module
             except Exception as exc:
-                app_logger.exception(
-                    "Pandoc download failed; target_dir=%s", target_dir
-                )
+                app_logger.exception("Pandoc download failed; target_dir=%s", target_dir)
                 raise RuntimeError(
                     "Failed to download Pandoc automatically. "
                     "Ensure the Function App has outbound internet access and a writable storage location."
@@ -175,9 +171,7 @@ def _convert_markdown_to_epub_sync(
                 app_logger.debug("Failed to remove temp file: %s", path)
 
 
-def convert_markdown_to_epub(
-    markdown_text: str, metadata: dict[str, str] | None = None
-) -> bytes:
+def convert_markdown_to_epub(markdown_text: str, metadata: dict[str, str] | None = None) -> bytes:
     return _convert_markdown_to_epub_sync(markdown_text, metadata)
 
 
@@ -185,6 +179,4 @@ async def convert_markdown_to_epub_async(
     markdown_text: str, metadata: dict[str, str] | None = None
 ) -> bytes:
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(
-        None, _convert_markdown_to_epub_sync, markdown_text, metadata
-    )
+    return await loop.run_in_executor(None, _convert_markdown_to_epub_sync, markdown_text, metadata)

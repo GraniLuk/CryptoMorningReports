@@ -20,11 +20,7 @@ class TestTelegramUtils(unittest.TestCase):
 
     def test_smart_split_paragraph_preservation(self):
         paragraph = (
-            "Paragraph one."
-            + "\n\n"
-            + "Paragraph two is here."
-            + "\n\n"
-            + "Paragraph three."
+            "Paragraph one." + "\n\n" + "Paragraph two is here." + "\n\n" + "Paragraph three."
         )  # 3 paragraphs
         chunks = smart_split(paragraph, 25, parse_mode="HTML")
         # With limit 25 we expect splitting roughly per paragraph boundary
@@ -44,10 +40,7 @@ class TestTelegramUtils(unittest.TestCase):
         # Implementation adds delimiter '\n\n' to oversize paragraph, producing an extra tiny chunk
         self.assertIn(len(non_empty), (expected, expected + 1))
         self.assertTrue(
-            all(
-                len(c) <= 1000 or i == len(non_empty) - 1
-                for i, c in enumerate(non_empty)
-            )
+            all(len(c) <= 1000 or i == len(non_empty) - 1 for i, c in enumerate(non_empty))
         )
         reassembled = "".join(non_empty)
         # Remove potential trailing newlines added by splitting logic before comparison
@@ -55,9 +48,7 @@ class TestTelegramUtils(unittest.TestCase):
 
     def test_smart_split_html_tag_boundary(self):
         # Construct text likely to cut inside a tag if naive
-        core = (
-            "<b>" + ("X" * 300) + "</b>" + "\n\n" + "<a href='u'>link</a>" + ("Y" * 300)
-        )
+        core = "<b>" + ("X" * 300) + "</b>" + "\n\n" + "<a href='u'>link</a>" + ("Y" * 300)
         limit = 350  # Forces potential mid-tag splits
         chunks = smart_split(core, limit, parse_mode="HTML")
         # Ensure we never have an unmatched '<' at end of chunk
