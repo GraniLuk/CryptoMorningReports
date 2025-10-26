@@ -57,3 +57,9 @@ strategy_results_*.html
 temp_output.txt
 database/fetch_historical_data.py
 .pandoc-cache
+
+# SQLite database files
+local_crypto.db
+local_crypto.db-shm
+local_crypto.db-wal
+*.db.backup_*
