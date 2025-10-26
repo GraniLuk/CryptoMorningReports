@@ -249,7 +249,7 @@ async def send_telegram_document(
 
         url = f"https://api.telegram.org/bot{token}/sendDocument"
         files = {
-            "document": (filename, file_handle if isinstance(file_handle, bytes) else file_handle, "application/octet-stream"),
+            "document": (filename, file_handle, "application/octet-stream"),
         }
         data = {"chat_id": chat_id}
         if caption:
