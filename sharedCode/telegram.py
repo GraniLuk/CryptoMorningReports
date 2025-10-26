@@ -214,8 +214,6 @@ async def send_telegram_document(
         logging.error("Missing token or chat_id for send_telegram_document")
         return False
 
-    file_handle = None
-    close_after = False
     try:
         if local_path:
             if not os.path.exists(local_path):
@@ -230,8 +228,29 @@ async def send_telegram_document(
                     MAX_DOCUMENT_SIZE,
                 )
                 return False
-            file_handle = open(local_path, "rb")
-            close_after = True
+            
+            # Use context manager for file handling
+            with open(local_path, "rb") as file_handle:
+                url = f"https://api.telegram.org/bot{token}/sendDocument"
+                files = {
+                    "document": (filename, file_handle, "application/octet-stream"),
+                }
+                data = {"chat_id": chat_id}
+                if caption:
+                    data["caption"] = caption[:1024]  # Telegram caption limit
+                if parse_mode:
+                    data["parse_mode"] = parse_mode
+
+                response = requests.post(url, data=data, files=files)
+                if not response.ok:
+                    try:
+                        err_json = response.json()
+                    except Exception:
+                        err_json = {"raw": response.text[:300]}
+                    logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
+                    return False
+                logging.info("Document %s successfully sent to Telegram", filename)
+                return True
         else:
             if file_bytes is None:
                 logging.error("Neither file_bytes nor local_path provided for document")
@@ -243,38 +262,31 @@ async def send_telegram_document(
                     MAX_DOCUMENT_SIZE,
                 )
                 return False
-            file_handle = file_bytes
-            close_after = False
+            
+            # Handle bytes directly (no file to close)
+            url = f"https://api.telegram.org/bot{token}/sendDocument"
+            files = {
+                "document": (filename, file_bytes, "application/octet-stream"),
+            }
+            data = {"chat_id": chat_id}
+            if caption:
+                data["caption"] = caption[:1024]  # Telegram caption limit
+            if parse_mode:
+                data["parse_mode"] = parse_mode
 
-        url = f"https://api.telegram.org/bot{token}/sendDocument"
-        files = {
-            "document": (filename, file_handle, "application/octet-stream"),
-        }
-        data = {"chat_id": chat_id}
-        if caption:
-            data["caption"] = caption[:1024]  # Telegram caption limit
-        if parse_mode:
-            data["parse_mode"] = parse_mode
-
-        response = requests.post(url, data=data, files=files)
-        if not response.ok:
-            try:
-                err_json = response.json()
-            except Exception:
-                err_json = {"raw": response.text[:300]}
-            logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
-            return False
-        logging.info("Document %s successfully sent to Telegram", filename)
-        return True
+            response = requests.post(url, data=data, files=files)
+            if not response.ok:
+                try:
+                    err_json = response.json()
+                except Exception:
+                    err_json = {"raw": response.text[:300]}
+                logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
+                return False
+            logging.info("Document %s successfully sent to Telegram", filename)
+            return True
     except Exception as e:
         logging.error("Exception while sending document: %s", e)
         return False
-    finally:
-        if close_after and hasattr(file_handle, "close"):
-            try:
-                file_handle.close()  # type: ignore[attr-defined]
-            except Exception:
-                pass
 
 
 def _extend_to_close_tag(full_text: str, start_index: int, slice_: str, limit: int) -> str:

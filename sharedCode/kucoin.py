@@ -265,7 +265,7 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    symbol = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"][0]
+    symbol = next(symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL")
     start_date = "2025-01-11"  # Start date (YYYY-MM-DD)
     end_date = datetime.now(UTC)
     end_date = end_date.replace(minute=0, second=0, microsecond=0)  # End date (YYYY-MM-DD)

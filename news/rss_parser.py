@@ -56,10 +56,7 @@ def fetch_rss_news(feed_url, source, class_name):
             if hasattr(entry, "published_parsed") and isinstance(
                 entry.published_parsed, time.struct_time
             ):
-                published_time = datetime.fromtimestamp(mktime(entry.published_parsed))
-                published_time = published_time.replace(
-                    tzinfo=UTC
-                )  # Add timezone info
+                published_time = datetime.fromtimestamp(mktime(entry.published_parsed), tz=UTC)
             else:
                 # Fallback to current time if published_parsed is not valid
                 published_time = current_time

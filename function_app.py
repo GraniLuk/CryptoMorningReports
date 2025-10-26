@@ -126,7 +126,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                     f"Symbol '{symbol}' not found in the database.", status_code=404
                 )
 
-            if report.startswith("Failed") or report.startswith("Error"):
+            if report.startswith(("Failed", "Error")):
                 return func.HttpResponse(
                     f"Error generating report: {report}", status_code=500
                 )  # Save to OneDrive if requested

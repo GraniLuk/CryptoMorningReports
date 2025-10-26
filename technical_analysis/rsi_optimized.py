@@ -94,7 +94,7 @@ def get_optimized_rsi_for_symbol_timeframe(
             # Update only the missing values in the database
             for idx, row in missing_rows.iterrows():
                 # Type assertion to help type checker understand idx is a valid index
-                assert isinstance(idx, (pd.Timestamp, str, int)), f"Unexpected index type: {type(idx)}"
+                assert isinstance(idx, pd.Timestamp | str | int), f"Unexpected index type: {type(idx)}"
 
                 candle_id = int(row["SymbolId"])
 

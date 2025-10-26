@@ -41,15 +41,15 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str):
     headers = {"Content-Type": "application/json"}
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                logic_app_url, headers=headers, data=json.dumps(payload)
-            ) as response:
-                response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-                logger.info(
-                    f"Successfully uploaded '{filename}' to OneDrive via Logic App. Status: {response.status}"
-                )
-                return True
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(logic_app_url, headers=headers, data=json.dumps(payload)) as response,
+        ):
+            response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+            logger.info(
+                f"Successfully uploaded '{filename}' to OneDrive via Logic App. Status: {response.status}"
+            )
+            return True
     except aiohttp.ClientError as e:
         logger.error(f"Error uploading '{filename}' to OneDrive via Logic App: {e}")
         return False

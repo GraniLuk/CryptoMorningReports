@@ -264,5 +264,5 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    symbol = [symbol for symbol in symbols if symbol.symbol_name == "LINK"][0]
+    symbol = next(symbol for symbol in symbols if symbol.symbol_name == "LINK")
     print(create_rsi_table_for_symbol(symbol, conn, target_date=date.today()))

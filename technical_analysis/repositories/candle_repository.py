@@ -1,11 +1,10 @@
-from abc import ABC
 from datetime import datetime
 
 from sharedCode.commonPrice import Candle
 from source_repository import Symbol
 
 
-class CandleRepository(ABC):
+class CandleRepository:
     def __init__(self, conn, table_name: str):
         self.conn = conn
         self.table_name = table_name

@@ -265,5 +265,5 @@ def connect_to_sql(max_retries=3):
                 "Failed to connect to the database after maximum retries"
             )
 
-    if conn is None:
-        raise RuntimeError("Failed to connect to the database after maximum retries")
+    # This should never be reached, but added for type checking
+    raise RuntimeError("Failed to connect to the database after maximum retries")

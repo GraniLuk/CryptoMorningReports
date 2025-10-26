@@ -23,9 +23,8 @@ def _sanitize_float(value: Any) -> float | None:
         return None
     try:
         # Reject empty strings / whitespace
-        if isinstance(value, str):
-            if value.strip() == "":
-                return None
+        if isinstance(value, str) and value.strip() == "":
+            return None
         f = float(value)
         if not math.isfinite(f):  # NaN, inf, -inf -> store NULL
             return None
