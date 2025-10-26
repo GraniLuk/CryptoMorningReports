@@ -104,7 +104,9 @@ class CandleRepository:
 
     def get_candles(self, symbol: Symbol, start_date: datetime, end_date: datetime) -> list[Candle]:
         # Convert datetime objects to ISO format strings for comparison since EndDate is stored as text
-        start_date_str = start_date.isoformat() if isinstance(start_date, datetime) else str(start_date)
+        start_date_str = (
+            start_date.isoformat() if isinstance(start_date, datetime) else str(start_date)
+        )
         end_date_str = end_date.isoformat() if isinstance(end_date, datetime) else str(end_date)
 
         sql = f"""

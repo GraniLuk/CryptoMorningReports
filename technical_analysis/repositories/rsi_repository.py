@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pyodbc
 
@@ -162,6 +162,13 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
                 timeframe.lower(), table_map["daily"]
             )
 
+            # Convert date/datetime to ISO string for SQL comparison
+            # SQLite stores EndDate as text, so we need string comparison
+            if isinstance(from_date, date | datetime):
+                from_date_str = from_date.isoformat()
+            else:
+                from_date_str = str(from_date)
+
             query = f"""
                 SELECT
                     dc.ID,
@@ -177,7 +184,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
                 WHERE dc.SymbolId = ? AND dc.EndDate >= ?
                 ORDER BY dc.EndDate DESC
             """
-            cursor.execute(query, (symbol_id, from_date))
+            cursor.execute(query, (symbol_id, from_date_str))
 
             # Fetch column names
             columns = [column[0] for column in cursor.description]
