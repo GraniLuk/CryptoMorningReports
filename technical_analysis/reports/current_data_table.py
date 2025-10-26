@@ -107,12 +107,8 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
 
     try:
         # Get RSI data for different timeframes
-        daily_rsi_df = get_rsi_for_symbol_timeframe(
-            symbol, conn, "daily", lookback_days=7
-        )
-        hourly_rsi_df = get_rsi_for_symbol_timeframe(
-            symbol, conn, "hourly", lookback_days=2
-        )
+        daily_rsi_df = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=7)
+        hourly_rsi_df = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=2)
         fifteen_min_rsi_df = get_rsi_for_symbol_timeframe(
             symbol, conn, "fifteen_min", lookback_days=1
         )
@@ -132,29 +128,13 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
 
         # Fetch moving averages data (latest values)
         try:
-            ma_df = fetch_moving_averages_for_symbol(
-                conn, symbol.symbol_id, lookback_days=1
-            )
+            ma_df = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=1)
             latest_ma = ma_df.iloc[-1]
-            data["ma50"] = (
-                float(latest_ma["MA50"])
-                if pd.notna(latest_ma.get("MA50"))
-                else None
-            )
-            data["ma200"] = (
-                float(latest_ma["MA200"])
-                if pd.notna(latest_ma.get("MA200"))
-                else None
-            )
-            data["ema50"] = (
-                float(latest_ma["EMA50"])
-                if pd.notna(latest_ma.get("EMA50"))
-                else None
-            )
+            data["ma50"] = float(latest_ma["MA50"]) if pd.notna(latest_ma.get("MA50")) else None
+            data["ma200"] = float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
+            data["ema50"] = float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
             data["ema200"] = (
-                float(latest_ma["EMA200"])
-                if pd.notna(latest_ma.get("EMA200"))
-                else None
+                float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
             )
         except Exception as ma_error:
             app_logger.warning(
@@ -206,9 +186,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                         continue
                 data["daily_ranges_7d"] = ranges
         except Exception as inner_e:
-            app_logger.warning(
-                f"Could not compute daily range for {symbol.symbol_name}: {inner_e}"
-            )
+            app_logger.warning(f"Could not compute daily range for {symbol.symbol_name}: {inner_e}")
 
         # Fetch derivatives data (Open Interest and Funding Rate) - only for Binance symbols
         if symbol.source_id == SourceID.BINANCE:
@@ -237,9 +215,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
         app_logger.info(f"Successfully retrieved current data for {symbol.symbol_name}")
 
     except Exception as e:
-        app_logger.error(
-            f"Error getting current data for {symbol.symbol_name}: {e!s}"
-        )
+        app_logger.error(f"Error getting current data for {symbol.symbol_name}: {e!s}")
 
     return data
 
@@ -320,9 +296,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
             day_range = day_data.get("range", 0)
             day_range_pct = day_data.get("range_pct", 0)
             day_range_str = f"${day_range:,.4f}" if day_range is not None else "N/A"
-            day_range_pct_str = (
-                f"{day_range_pct:.2f}%" if day_range_pct is not None else "N/A"
-            )
+            day_range_pct_str = f"{day_range_pct:.2f}%" if day_range_pct is not None else "N/A"
             history_html += f"{date_str}: {day_range_str} ({day_range_pct_str})\n"
         history_html += "</pre>"
 
@@ -347,9 +321,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
         if funding_rate is not None:
             fr_pct = funding_rate * 100
             fr_str = f"{fr_pct:+.4f}%"
-            emoji = (
-                "🔴" if funding_rate > 0.01 else "🟢" if funding_rate < -0.01 else "🟡"
-            )
+            emoji = "🔴" if funding_rate > 0.01 else "🟢" if funding_rate < -0.01 else "🟡"
             derivatives_html += f"├ Funding Rate: {emoji} <code>{fr_str}</code>\n"
 
         if next_funding_time:
@@ -360,9 +332,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
             derivatives_html += f"└ Next Funding: <code>{funding_time_str}</code>\n"
         elif funding_rate is not None:
             # Add a closing character if we have funding rate but no time
-            derivatives_html = derivatives_html.replace(
-                "├ Funding Rate:", "└ Funding Rate:"
-            )
+            derivatives_html = derivatives_html.replace("├ Funding Rate:", "└ Funding Rate:")
 
     # Create HTML formatted message
     return f"""<b>📈 Current Market Data for {symbol_name}</b>
@@ -389,7 +359,6 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
 """
 
 
-
 def get_current_data_summary_table(symbol: Symbol, conn) -> str:
     """
     Generate a summary table of current data for a symbol in HTML format for Telegram.
@@ -409,9 +378,7 @@ def get_current_data_summary_table(symbol: Symbol, conn) -> str:
         return format_current_data_for_telegram_html(symbol_data)
 
     except Exception as e:
-        app_logger.error(
-            f"Error generating current data summary for {symbol.symbol_name}: {e!s}"
-        )
+        app_logger.error(f"Error generating current data summary for {symbol.symbol_name}: {e!s}")
         return f"<b>Error:</b> Unable to generate summary for {symbol.symbol_name}"
 
 
@@ -443,9 +410,7 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
         hourly_rsi_str = f"{hourly_rsi:.2f}" if hourly_rsi is not None else "N/A"
 
         fifteen_min_rsi = symbol_data.get("fifteen_min_rsi")
-        fifteen_min_rsi_str = (
-            f"{fifteen_min_rsi:.2f}" if fifteen_min_rsi is not None else "N/A"
-        )
+        fifteen_min_rsi_str = f"{fifteen_min_rsi:.2f}" if fifteen_min_rsi is not None else "N/A"
 
         # Format moving averages
         ma50 = symbol_data.get("ma50")
@@ -466,18 +431,14 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
         ranges_lines = []
         ranges_7d = symbol_data.get("daily_ranges_7d", [])
         if ranges_7d:
-            ranges_lines.append(
-                "Last 7 Daily Ranges (Date | High | Low | Range | Range %):"
-            )
+            ranges_lines.append("Last 7 Daily Ranges (Date | High | Low | Range | Range %):")
             for r in ranges_7d:
                 high_str = f"${r['high']:,.4f}" if r.get("high") is not None else "N/A"
                 low_str = f"${r['low']:,.4f}" if r.get("low") is not None else "N/A"
                 rng_val = r.get("range")
                 rng_pct_val = r.get("range_pct")
                 rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
-                rng_pct_str = (
-                    f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
-                )
+                rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
                 ranges_lines.append(
                     f"- {r.get('date', '')}: {high_str} | {low_str} | {rng_str} | {rng_pct_str}"
                 )
@@ -503,12 +464,8 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
         return prompt_data.strip()
 
     except Exception as e:
-        app_logger.error(
-            f"Error generating AI prompt data for {symbol.symbol_name}: {e!s}"
-        )
-        return (
-            f"CURRENT MARKET SNAPSHOT: Error retrieving data for {symbol.symbol_name}"
-        )
+        app_logger.error(f"Error generating AI prompt data for {symbol.symbol_name}: {e!s}")
+        return f"CURRENT MARKET SNAPSHOT: Error retrieving data for {symbol.symbol_name}"
 
 
 # Future extension functions can be added here:

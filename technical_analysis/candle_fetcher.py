@@ -37,26 +37,20 @@ class CandleFetcher:
             List of Candle objects
         """
         end_time = end_time or datetime.now(UTC)
-        self.logger.info(
-            f"Fetching {self.timeframe} candles for {len(symbols)} symbols"
-        )
+        self.logger.info(f"Fetching {self.timeframe} candles for {len(symbols)} symbols")
 
         candles = []
         for symbol in symbols:
             candle = self.fetch_function(symbol, end_time, conn)
             if candle is not None:
                 candles.append(candle)
-                self.logger.debug(
-                    f"Fetched {self.timeframe} candle for {symbol.symbol_name}"
-                )
+                self.logger.debug(f"Fetched {self.timeframe} candle for {symbol.symbol_name}")
             else:
                 self.logger.warning(
                     f"Failed to fetch {self.timeframe} candle for {symbol.symbol_name}"
                 )
 
-        self.logger.info(
-            f"Successfully fetched {len(candles)} {self.timeframe} candles"
-        )
+        self.logger.info(f"Successfully fetched {len(candles)} {self.timeframe} candles")
         return candles
 
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):  # noqa: PLR0915

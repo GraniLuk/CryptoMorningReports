@@ -24,9 +24,7 @@ from technical_analysis.repositories.hourly_candle_repository import (
 _price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 
-def fetch_daily_candle(
-    symbol: Symbol, end_date: date | None = None, conn=None
-) -> Candle | None:
+def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) -> Candle | None:
     if end_date is None:
         end_date = datetime.now(UTC).date()
     # If connection provided, try to get from database first
@@ -50,9 +48,7 @@ def fetch_daily_candle(
     return candle
 
 
-def fetch_hourly_candle(
-    symbol: Symbol, end_time: datetime, conn=None
-) -> Candle | None:
+def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
     """
     Fetch hourly candle data for a symbol at the specified end time
 
@@ -115,9 +111,7 @@ def fetch_hourly_candles(
     """
 
     if not start_time:
-        start_time = datetime.now(UTC) - timedelta(
-            days=1
-        )  # Default to 1 day back
+        start_time = datetime.now(UTC) - timedelta(days=1)  # Default to 1 day back
     if not end_time:
         end_time = datetime.now(UTC)
     end_time = end_time or datetime.now(UTC)
@@ -180,10 +174,7 @@ def fetch_hourly_candles(
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
 
-
-def fetch_fifteen_min_candle(
-    symbol: Symbol, end_time: datetime, conn=None
-) -> Candle | None:
+def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
     """
     Fetch 15-minute candle data for a symbol at the specified end time
 
@@ -313,7 +304,6 @@ def fetch_fifteen_min_candles(
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
 
-
 def fetch_daily_candles(
     symbol: Symbol, start_date: date, end_date: date | None = None, conn=None
 ) -> list[Candle]:
@@ -329,7 +319,7 @@ def fetch_daily_candles(
         cached_candles = repo.get_candles(
             symbol,
             datetime.combine(start_date, datetime.min.time()),
-            datetime.combine(end_date, datetime.min.time())
+            datetime.combine(end_date, datetime.min.time()),
         )
         if cached_candles:
             return cached_candles
@@ -402,7 +392,9 @@ if __name__ == "__main__":
     start_time = datetime.now(UTC) - timedelta(days=1)
     end_time = datetime.now(UTC)
 
-    daily_candles = fetch_hourly_candles(symbol, start_time=start_time, end_time=end_time, conn=conn)
+    daily_candles = fetch_hourly_candles(
+        symbol, start_time=start_time, end_time=end_time, conn=conn
+    )
     for daily_candle in daily_candles:
         print(
             f"Daily candle for {symbol.symbol_name}: {daily_candle.close} {daily_candle.end_date}"

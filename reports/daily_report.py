@@ -40,9 +40,7 @@ async def process_daily_report(  # noqa: PLR0915
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")
     updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
-    logger.info(
-        f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed"
-    )
+    logger.info(f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed")
 
     # Generate all reports
     # NOTE: fetch_daily_candles() removed - redundant with update_latest_daily_candles() above
@@ -98,9 +96,7 @@ async def process_daily_report(  # noqa: PLR0915
                 )
             except Exception as e:
                 lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")
-        return (
-            "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
-        )
+        return "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
 
     current_prices_section = build_current_prices_section(symbols)
 
@@ -110,18 +106,16 @@ async def process_daily_report(  # noqa: PLR0915
     message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
 
     message_part2 = f"Simple Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
-    message_part2 += (
-        f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
-    )
+    message_part2 += f"Exponential Moving Average Report: <pre>{ema_average_table}</pre>\n\n"
     message_part2 += f"MACD Report: <pre>{macd_table}</pre>\n\n"
 
     volume_report = f"Volume Report: <pre>{volume_table}</pre>"
     marketcap_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
-    sopr_report = (
-        f"SOPR bitcoin report: <pre>{sopr_table}</pre>" if sopr_table else None
+    sopr_report = f"SOPR bitcoin report: <pre>{sopr_table}</pre>" if sopr_table else None
+    derivatives_report = (
+        f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
     )
-    derivatives_report = f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
 
     # Determine which API to use (Perplexity or Gemini)
     ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
@@ -160,9 +154,7 @@ async def process_daily_report(  # noqa: PLR0915
                 try:
                     # Format Open Interest and Funding Rate with proper handling of None values
                     oi_str = (
-                        f"{row.get('OpenInterest', 0):,.0f}"
-                        if row.get("OpenInterest")
-                        else "N/A"
+                        f"{row.get('OpenInterest', 0):,.0f}" if row.get("OpenInterest") else "N/A"
                     )
                     oi_val_str = (
                         f"${row.get('OpenInterestValue', 0):,.0f}"
@@ -170,9 +162,7 @@ async def process_daily_report(  # noqa: PLR0915
                         else "N/A"
                     )
                     fr_str = (
-                        f"{row.get('FundingRate', 0):.4f}%"
-                        if row.get("FundingRate")
-                        else "N/A"
+                        f"{row.get('FundingRate', 0):.4f}%" if row.get("FundingRate") else "N/A"
                     )
 
                     lines.append(
@@ -192,12 +182,7 @@ async def process_daily_report(  # noqa: PLR0915
                     )
                 except Exception as e:
                     lines.append(f"Row format error: {e}")
-            return (
-                "Aggregated Indicators:\n<pre>"
-                + header
-                + "\n".join(lines)
-                + "</pre>\n\n"
-            )
+            return "Aggregated Indicators:\n<pre>" + header + "\n".join(lines) + "</pre>\n\n"
 
         aggregated_formatted = format_aggregated(aggregated_data)
         aggregated_with_prices = current_prices_section + aggregated_formatted
@@ -209,9 +194,7 @@ async def process_daily_report(  # noqa: PLR0915
         )
         # --- OneDrive Uploads ---
         if not analysis_reported_with_news.startswith("Failed"):
-            onedrive_filename_analysis_with_news = (
-                f"CryptoAnalysisWithNews_{today_date}.md"
-            )
+            onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}.md"
             await upload_to_onedrive(
                 filename=onedrive_filename_analysis_with_news,
                 content=analysis_reported_with_news,
@@ -231,9 +214,7 @@ async def process_daily_report(  # noqa: PLR0915
                     parse_mode=None,  # treat as plain text/markdown without Telegram parsing
                 )
             except Exception as doc_err:
-                logger.warning(
-                    "Failed to send analysis with news as document: %s", doc_err
-                )
+                logger.warning("Failed to send analysis with news as document: %s", doc_err)
 
             epub_filename = onedrive_filename_analysis_with_news.replace(".md", ".epub")
             try:
@@ -246,14 +227,10 @@ async def process_daily_report(  # noqa: PLR0915
                     },
                 )
             except RuntimeError as convert_err:
-                logger.warning(
-                    "Failed to convert analysis markdown to EPUB: %s", convert_err
-                )
+                logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
             else:
                 recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
-                recipients = [
-                    addr.strip() for addr in recipients_env.split(",") if addr.strip()
-                ]
+                recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
 
                 if not recipients:
                     logger.info(
@@ -377,8 +354,6 @@ if __name__ == "__main__":
     telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
 
     async def main():
-        await process_daily_report(
-            conn, telegram_enabled, telegram_token, telegram_chat_id
-        )
+        await process_daily_report(conn, telegram_enabled, telegram_token, telegram_chat_id)
 
     asyncio.run(main())

@@ -44,9 +44,7 @@ def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
     range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]
 
     # Sort by price range descending
-    sorted_results = sorted(
-        results, key=lambda x: ((x.high - x.low) / x.low) * 100, reverse=True
-    )
+    sorted_results = sorted(results, key=lambda x: ((x.high - x.low) / x.low) * 100, reverse=True)
     # Store rows with range calculation
     range_rows = []
     for result in sorted_results:

@@ -33,4 +33,6 @@ class Candle:
         self.volume = volume
         self.volume_quote = volume_quote
         self.id = candle_id
+
+
 # ruff: noqa: N999

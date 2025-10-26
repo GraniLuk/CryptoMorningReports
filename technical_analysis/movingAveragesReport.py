@@ -50,18 +50,14 @@ def calculate_indicators(  # noqa: PLR0915
 
     for symbol in symbols:
         try:
-            app_logger.info(
-                "Processing symbol: %s for date %s", symbol.symbol_name, target_date
-            )
+            app_logger.info("Processing symbol: %s for date %s", symbol.symbol_name, target_date)
 
             # Get historical data from database
             start_date = target_date - timedelta(days=200)
             candles = fetch_daily_candles(symbol, start_date, target_date, conn)
 
             if not candles:
-                app_logger.warning(
-                    f"No data available for {symbol.symbol_name} on {target_date}"
-                )
+                app_logger.warning(f"No data available for {symbol.symbol_name} on {target_date}")
                 continue
 
             # Create DataFrame from candles
@@ -76,9 +72,7 @@ def calculate_indicators(  # noqa: PLR0915
                 )
                 continue
 
-            app_logger.info(
-                "Retrieved %d data points for %s", len(df), symbol.symbol_name
-            )
+            app_logger.info("Retrieved %d data points for %s", len(df), symbol.symbol_name)
 
             # For new symbols (VIRTUAL, TON), adjust the MA/EMA periods based on available data
             available_periods = len(df)
@@ -108,24 +102,16 @@ def calculate_indicators(  # noqa: PLR0915
 
             # Initialize status indicators
             ma50_status = (
-                f"🟢{period_warning}"
-                if target_price > target_MA50
-                else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_MA50 else f"🔴{period_warning}"
             )
             ma200_status = (
-                f"🟢{period_warning}"
-                if target_price > target_MA200
-                else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_MA200 else f"🔴{period_warning}"
             )
             ema50_status = (
-                f"🟢{period_warning}"
-                if target_price > target_EMA50
-                else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_EMA50 else f"🔴{period_warning}"
             )
             ema200_status = (
-                f"🟢{period_warning}"
-                if target_price > target_EMA200
-                else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_EMA200 else f"🔴{period_warning}"
             )
 
             # Initialize cross status
@@ -155,81 +141,47 @@ def calculate_indicators(  # noqa: PLR0915
                     if yesterday_price < yesterday_ma50 and target_price > target_MA50:
                         ma50_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above MA50")
-                    elif (
-                        yesterday_price > yesterday_ma50 and target_price < target_MA50
-                    ):
+                    elif yesterday_price > yesterday_ma50 and target_price < target_MA50:
                         ma50_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA50")
 
-                    if (
-                        yesterday_price < yesterday_ma200
-                        and target_price > target_MA200
-                    ):
+                    if yesterday_price < yesterday_ma200 and target_price > target_MA200:
                         ma200_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above MA200")
-                    elif (
-                        yesterday_price > yesterday_ma200
-                        and target_price < target_MA200
-                    ):
+                    elif yesterday_price > yesterday_ma200 and target_price < target_MA200:
                         ma200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA200")
 
                     # EMA Crossovers
-                    if (
-                        yesterday_price < yesterday_ema50
-                        and target_price > target_EMA50
-                    ):
+                    if yesterday_price < yesterday_ema50 and target_price > target_EMA50:
                         ema50_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above EMA50")
-                    elif (
-                        yesterday_price > yesterday_ema50
-                        and target_price < target_EMA50
-                    ):
+                    elif yesterday_price > yesterday_ema50 and target_price < target_EMA50:
                         ema50_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below EMA50")
 
-                    if (
-                        yesterday_price < yesterday_ema200
-                        and target_price > target_EMA200
-                    ):
+                    if yesterday_price < yesterday_ema200 and target_price > target_EMA200:
                         ema200_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above EMA200")
-                    elif (
-                        yesterday_price > yesterday_ema200
-                        and target_price < target_EMA200
-                    ):
+                    elif yesterday_price > yesterday_ema200 and target_price < target_EMA200:
                         ema200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below EMA200")
 
                     # Add Golden/Death Cross detection for MA
                     if yesterday_ma50 < yesterday_ma200 and target_MA50 > target_MA200:
                         ma_cross_status = "⚡️🟡"  # Golden Cross
-                        app_logger.info(
-                            f"{symbol.symbol_name} MA Golden Cross detected"
-                        )
-                    elif (
-                        yesterday_ma50 > yesterday_ma200 and target_MA50 < target_MA200
-                    ):
+                        app_logger.info(f"{symbol.symbol_name} MA Golden Cross detected")
+                    elif yesterday_ma50 > yesterday_ma200 and target_MA50 < target_MA200:
                         ma_cross_status = "💀"  # Death Cross
                         app_logger.info(f"{symbol.symbol_name} MA Death Cross detected")
 
                     # Add Golden/Death Cross detection for EMA
-                    if (
-                        yesterday_ema50 < yesterday_ema200
-                        and target_EMA50 > target_EMA200
-                    ):
+                    if yesterday_ema50 < yesterday_ema200 and target_EMA50 > target_EMA200:
                         ema_cross_status = "⚡️🟡"  # Golden Cross
-                        app_logger.info(
-                            f"{symbol.symbol_name} EMA Golden Cross detected"
-                        )
-                    elif (
-                        yesterday_ema50 > yesterday_ema200
-                        and target_EMA50 < target_EMA200
-                    ):
+                        app_logger.info(f"{symbol.symbol_name} EMA Golden Cross detected")
+                    elif yesterday_ema50 > yesterday_ema200 and target_EMA50 < target_EMA200:
                         ema_cross_status = "💀"  # Death Cross
-                        app_logger.info(
-                            f"{symbol.symbol_name} EMA Death Cross detected"
-                        )
+                        app_logger.info(f"{symbol.symbol_name} EMA Death Cross detected")
 
             # Store the results
             ma_values.append(

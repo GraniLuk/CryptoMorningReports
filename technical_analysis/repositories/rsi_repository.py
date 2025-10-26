@@ -57,9 +57,7 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
         raise
 
 
-def save_rsi_by_timeframe(
-    conn, candle_id: int, rsi: float, timeframe: str = "daily"
-) -> None:
+def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "daily") -> None:
     """
     Saves RSI results to the database for different timeframes
 
@@ -131,9 +129,7 @@ def save_rsi_by_timeframe(
         raise
 
 
-def get_candles_with_rsi(
-    conn, symbol_id: int, from_date, timeframe: str = "daily"
-) -> list | None:
+def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "daily") -> list | None:
     """
     Fetches candle data with RSI for a specific symbol,
     only returning records on or after the specified date.
@@ -196,9 +192,7 @@ def get_candles_with_rsi(
             return results
 
     except pyodbc.Error as e:
-        app_logger.error(
-            f"ODBC Error while fetching {timeframe} candle data with RSI: {e}"
-        )
+        app_logger.error(f"ODBC Error while fetching {timeframe} candle data with RSI: {e}")
         raise
     except Exception as e:
         app_logger.error(f"Error fetching {timeframe} candle data with RSI: {e!s}")
@@ -239,8 +233,8 @@ def get_historical_rsi(  # noqa: PLR0915
                 ),
             }
 
-            candle_table, rsi_table, id_column, previous_interval, week_interval = (
-                table_map.get(timeframe.lower(), table_map["daily"])
+            candle_table, rsi_table, id_column, previous_interval, week_interval = table_map.get(
+                timeframe.lower(), table_map["daily"]
             )
 
             # Adjust interval keywords based on timeframe
@@ -335,9 +329,7 @@ def get_historical_rsi(  # noqa: PLR0915
                     interval_description = (
                         "yesterday" if timeframe.lower() == "daily" else "previous"
                     )
-                    week_description = (
-                        "week_ago" if timeframe.lower() == "daily" else "period_ago"
-                    )
+                    week_description = "week_ago" if timeframe.lower() == "daily" else "period_ago"
 
                     # Get the row date and ensure it's datetime for comparison
                     row_date = row[0]
@@ -351,57 +343,36 @@ def get_historical_rsi(  # noqa: PLR0915
 
                     if timeframe.lower() == "daily":
                         if (
-                            abs(
-                                (
-                                    row_date - (compare_date - timedelta(days=1))
-                                ).total_seconds()
-                            )
+                            abs((row_date - (compare_date - timedelta(days=1))).total_seconds())
                             < 86400
                         ):
                             results[interval_description] = float(row[1])
                         elif (
-                            abs(
-                                (
-                                    row_date - (compare_date - timedelta(days=7))
-                                ).total_seconds()
-                            )
+                            abs((row_date - (compare_date - timedelta(days=7))).total_seconds())
                             < 86400
                         ):
                             results[week_description] = float(row[1])
                     elif timeframe.lower() == "hourly":
                         if (
-                            abs(
-                                (
-                                    row_date - (compare_date - timedelta(hours=1))
-                                ).total_seconds()
-                            )
+                            abs((row_date - (compare_date - timedelta(hours=1))).total_seconds())
                             < 3600
                         ):
                             results[interval_description] = float(row[1])
                         elif (
-                            abs(
-                                (
-                                    row_date - (compare_date - timedelta(hours=24))
-                                ).total_seconds()
-                            )
+                            abs((row_date - (compare_date - timedelta(hours=24))).total_seconds())
                             < 3600
                         ):
                             results[week_description] = float(row[1])
                     elif timeframe.lower() == "fifteen_min":
                         if (
-                            abs(
-                                (
-                                    row_date - (compare_date - timedelta(minutes=15))
-                                ).total_seconds()
-                            )
+                            abs((row_date - (compare_date - timedelta(minutes=15))).total_seconds())
                             < 900
                         ):
                             results[interval_description] = float(row[1])
                         elif (
                             abs(
                                 (
-                                    row_date
-                                    - (compare_date - timedelta(minutes=24 * 15))
+                                    row_date - (compare_date - timedelta(minutes=24 * 15))
                                 ).total_seconds()
                             )
                             < 900
@@ -418,7 +389,5 @@ def get_historical_rsi(  # noqa: PLR0915
         )
         raise
     except Exception as e:
-        app_logger.error(
-            f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {e!s}"
-        )
+        app_logger.error(f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {e!s}")
         raise

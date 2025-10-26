@@ -54,9 +54,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
         # Fetch Open Interest
         oi_response = client.futures_open_interest(symbol=symbol.binance_name)
         open_interest = float(oi_response.get("openInterest", 0))
-        oi_timestamp = datetime.fromtimestamp(
-            oi_response.get("time", 0) / 1000, tz=UTC
-        )
+        oi_timestamp = datetime.fromtimestamp(oi_response.get("time", 0) / 1000, tz=UTC)
 
         # Fetch current price to calculate OI value
         ticker = client.futures_ticker(symbol=symbol.binance_name)
@@ -64,9 +62,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
         open_interest_value = open_interest * last_price
 
         # Fetch Funding Rate
-        funding_response = client.futures_funding_rate(
-            symbol=symbol.binance_name, limit=1
-        )
+        funding_response = client.futures_funding_rate(symbol=symbol.binance_name, limit=1)
 
         if not funding_response:
             app_logger.warning(f"No funding rate data for {symbol.symbol_name}")
@@ -92,9 +88,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
         )
 
     except BinanceAPIException as e:
-        app_logger.error(
-            f"Error fetching futures metrics for {symbol.symbol_name}: {e.message}"
-        )
+        app_logger.error(f"Error fetching futures metrics for {symbol.symbol_name}: {e.message}")
         return None
     except Exception as e:
         app_logger.error(
@@ -127,9 +121,7 @@ def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:
         return None
 
 
-def fetch_close_prices_from_Binance(
-    symbol: str, lookback_days: int = 14
-) -> pd.DataFrame:
+def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.DataFrame:
     client = BinanceClient()
 
     try:
@@ -181,9 +173,7 @@ def fetch_close_prices_from_Binance(
         return pd.DataFrame()
 
 
-def fetch_binance_daily_kline(
-    symbol: Symbol, end_date: date | None = None
-) -> Candle | None:
+def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> Candle | None:
     """Fetch open and close prices from Binance for the last full day."""
     if end_date is None:
         end_date = datetime.now(UTC).date()
@@ -282,20 +272,14 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
         )
 
     except BinanceAPIException as e:
-        app_logger.error(
-            f"Error fetching hourly data for {symbol.symbol_name}: {e.message}"
-        )
+        app_logger.error(f"Error fetching hourly data for {symbol.symbol_name}: {e.message}")
         return None
     except Exception as e:
-        app_logger.error(
-            f"Unexpected error for {symbol.symbol_name} hourly data: {e!s}"
-        )
+        app_logger.error(f"Unexpected error for {symbol.symbol_name} hourly data: {e!s}")
         return None
 
 
-def fetch_binance_fifteen_min_kline(
-    symbol: Symbol, end_time: datetime
-) -> Candle | None:
+def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
     """
     Fetch open, close, high, low prices and volume from Binance for the specified 15-minute interval.
 
@@ -348,14 +332,10 @@ def fetch_binance_fifteen_min_kline(
         )
 
     except BinanceAPIException as e:
-        app_logger.error(
-            f"Error fetching 15-minute data for {symbol.symbol_name}: {e.message}"
-        )
+        app_logger.error(f"Error fetching 15-minute data for {symbol.symbol_name}: {e.message}")
         return None
     except Exception as e:
-        app_logger.error(
-            f"Unexpected error for {symbol.symbol_name} 15-minute data: {e!s}"
-        )
+        app_logger.error(f"Unexpected error for {symbol.symbol_name} 15-minute data: {e!s}")
         return None
 
 
@@ -381,9 +361,7 @@ if __name__ == "__main__":
     #     print("No data found")
 
     # Fetch open and close prices for the last full day
-    response = fetch_binance_daily_kline(
-        symbol, datetime.now(UTC) - timedelta(days=1)
-    )
+    response = fetch_binance_daily_kline(symbol, datetime.now(UTC) - timedelta(days=1))
     if response is not None:
         print(f"Yesterday price: {response}")
     else:

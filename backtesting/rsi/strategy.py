@@ -61,7 +61,9 @@ def run_backtest(  # noqa: PLR0915
             for j in range(i + days_after_to_buy, len(df)):
                 current_high = Decimal(str(df.loc[j, "High"]))
                 current_low = Decimal(str(df.loc[j, "Low"]))
-                current_date = datetime.strptime(str(df.loc[j, "date"]), "%Y-%m-%d").replace(tzinfo=UTC)
+                current_date = datetime.strptime(str(df.loc[j, "date"]), "%Y-%m-%d").replace(
+                    tzinfo=UTC
+                )
                 close_date = current_date
 
                 if position_type == "LONG":
@@ -76,15 +78,11 @@ def run_backtest(  # noqa: PLR0915
                 elif current_low <= tp_price:
                     outcome = "TP"
                     close_price = tp_price
-                    profit = investment_value * (
-                        Decimal("1") - (Decimal("2") - tp_value)
-                    )
+                    profit = investment_value * (Decimal("1") - (Decimal("2") - tp_value))
                 elif current_high >= sl_price:
                     outcome = "SL"
                     close_price = sl_price
-                    profit = -investment_value * (
-                        (Decimal("2") - sl_value) - Decimal("1")
-                    )
+                    profit = -investment_value * ((Decimal("2") - sl_value) - Decimal("1"))
 
                 if outcome:
                     days_taken = (current_date - entry_date).days
@@ -147,9 +145,7 @@ def run_backtest(  # noqa: PLR0915
         )
         print(f"Total profit for {symbol_name}: ${total_profit:.2f}")
     else:
-        print(
-            f"\nNo trades were executed for {symbol_name} during the backtest period."
-        )
+        print(f"\nNo trades were executed for {symbol_name} during the backtest period.")
 
     return results_df
 
