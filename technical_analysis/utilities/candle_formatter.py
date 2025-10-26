@@ -49,8 +49,12 @@ def get_candle_data(
         # Format the candles
         hourly_data = [
             {
-                "time": c.end_date if isinstance(c.end_date, str) and "T" in c.end_date else (
-                    datetime.fromisoformat(c.end_date.replace("Z", "+00:00")).strftime("%Y-%m-%dT%H:%M:%SZ")
+                "time": c.end_date
+                if isinstance(c.end_date, str) and "T" in c.end_date
+                else (
+                    datetime.fromisoformat(c.end_date.replace("Z", "+00:00")).strftime(
+                        "%Y-%m-%dT%H:%M:%SZ"
+                    )
                     if isinstance(c.end_date, str)
                     else c.end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                 ),
@@ -65,8 +69,12 @@ def get_candle_data(
 
         fifteen_min_data = [
             {
-                "time": c.end_date if isinstance(c.end_date, str) and "T" in c.end_date else (
-                    datetime.fromisoformat(c.end_date.replace("Z", "+00:00")).strftime("%Y-%m-%dT%H:%M:%SZ")
+                "time": c.end_date
+                if isinstance(c.end_date, str) and "T" in c.end_date
+                else (
+                    datetime.fromisoformat(c.end_date.replace("Z", "+00:00")).strftime(
+                        "%Y-%m-%dT%H:%M:%SZ"
+                    )
                     if isinstance(c.end_date, str)
                     else c.end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                 ),

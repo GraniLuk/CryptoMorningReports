@@ -48,7 +48,9 @@ def check_if_all_candles(symbol, conn):
     if all_candles:
         oldest_date_str = all_candles[0].end_date
         if isinstance(oldest_date_str, str):
-            oldest_date = datetime.fromisoformat(oldest_date_str.replace("Z", "+00:00").split("T")[0]).date()
+            oldest_date = datetime.fromisoformat(
+                oldest_date_str.replace("Z", "+00:00").split("T")[0]
+            ).date()
         else:
             oldest_date = oldest_date_str if isinstance(oldest_date_str, date) else date(2017, 1, 1)
     else:
@@ -67,7 +69,9 @@ def check_if_all_candles(symbol, conn):
                 item
                 for item in all_candles
                 if (
-                    datetime.fromisoformat(item.end_date.replace("Z", "+00:00").split("T")[0]).date()
+                    datetime.fromisoformat(
+                        item.end_date.replace("Z", "+00:00").split("T")[0]
+                    ).date()
                     if isinstance(item.end_date, str)
                     else item.end_date
                 )

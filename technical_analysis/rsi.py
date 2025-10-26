@@ -77,8 +77,8 @@ def calculate_rsi_using_RMA(series, periods=14):
         return pd.Series([float("nan")] * len(series), index=series.index)
 
     # Calculate initial SMA for the first 'periods' values
-    avg_gain.iloc[periods] = gain.iloc[1:periods + 1].mean()
-    avg_loss.iloc[periods] = loss.iloc[1:periods + 1].mean()
+    avg_gain.iloc[periods] = gain.iloc[1 : periods + 1].mean()
+    avg_loss.iloc[periods] = loss.iloc[1 : periods + 1].mean()
 
     # Use Wilder's smoothing for subsequent values
     # Formula: new_avg = (old_avg * (n-1) + current_value) / n
@@ -88,9 +88,8 @@ def calculate_rsi_using_RMA(series, periods=14):
 
     # Calculate RS and RSI
     rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
 
-    return rsi
+    return 100 - (100 / (1 + rs))
 
 
 def calculate_all_rsi_for_symbol(conn, symbol):

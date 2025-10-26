@@ -67,11 +67,11 @@ def fetch_rss_news(feed_url, source, class_name):
                     {
                         "source": source,
                         "title": entry.title,
-                    "link": entry.link,
-                    "published": entry.published,
-                    "content": full_content,
-                }
-            )
+                        "link": entry.link,
+                        "published": entry.published,
+                        "content": full_content,
+                    }
+                )
 
             MAX_NEWS_ITEMS = 10
             if len(latest_news) >= MAX_NEWS_ITEMS:

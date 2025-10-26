@@ -19,22 +19,24 @@ class TestRSICalculationMethods:
     def test_rsi_simple_increasing_sequence(self):
         """Test RSI calculation on a simple increasing sequence"""
         # Simple increasing prices should show high RSI (overbought)
-        prices = pd.Series([100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
-                           110, 111, 112, 113, 114, 115])
-        
+        prices = pd.Series(
+            [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115]
+        )
+
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # Last RSI should be 100 (all gains, no losses)
         assert rsi.iloc[-1] == 100.0
-        
+
     def test_rsi_simple_decreasing_sequence(self):
         """Test RSI calculation on a simple decreasing sequence"""
         # Simple decreasing prices should show low RSI (oversold)
-        prices = pd.Series([115, 114, 113, 112, 111, 110, 109, 108, 107, 106,
-                           105, 104, 103, 102, 101, 100])
-        
+        prices = pd.Series(
+            [115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100]
+        )
+
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # Last RSI should be 0 (no gains, all losses)
         assert rsi.iloc[-1] == 0.0
 
@@ -42,9 +44,9 @@ class TestRSICalculationMethods:
         """Test RSI calculation on stable prices"""
         # Stable prices should show RSI around 50
         prices = pd.Series([100] * 20)
-        
+
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # All values should be NaN since there's no change
         # After first diff, we get zeros, which should result in RSI=50 or NaN
         # depending on implementation
@@ -52,20 +54,40 @@ class TestRSICalculationMethods:
 
     def test_rsi_period_14_default(self):
         """Test that default period is 14"""
-        prices = pd.Series([100, 102, 101, 103, 102, 104, 103, 105, 104, 106,
-                           105, 107, 106, 108, 107, 109, 108, 110])
-        
+        prices = pd.Series(
+            [
+                100,
+                102,
+                101,
+                103,
+                102,
+                104,
+                103,
+                105,
+                104,
+                106,
+                105,
+                107,
+                106,
+                108,
+                107,
+                109,
+                108,
+                110,
+            ]
+        )
+
         rsi_default = calculate_rsi_using_RMA(prices)
         rsi_14 = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         pd.testing.assert_series_equal(rsi_default, rsi_14)
 
     def test_rsi_insufficient_data(self):
         """Test RSI with insufficient data points"""
         prices = pd.Series([100, 101, 102])
-        
+
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # Should have NaN values due to insufficient data
         assert rsi.isna().all()
 
@@ -116,13 +138,15 @@ class TestRSIAgainstTradingView:
             pytest.skip("No candle data available for VIRTUAL")
 
         # Create DataFrame from candles
-        df = pd.DataFrame([
-            {
-                "Date": candle.end_date,
-                "close": candle.close,
-            }
-            for candle in candles
-        ])
+        df = pd.DataFrame(
+            [
+                {
+                    "Date": candle.end_date,
+                    "close": candle.close,
+                }
+                for candle in candles
+            ]
+        )
         df.set_index("Date", inplace=True)
         df.sort_index(inplace=True)
 
@@ -137,14 +161,14 @@ class TestRSIAgainstTradingView:
         latest_rsi_ema = df["RSI_EMA"].iloc[-1]
         latest_price = df["close"].iloc[-1]
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"VIRTUAL RSI Verification for {target_date}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Latest Close Price: ${latest_price:,.4f}")
         print(f"RSI (RMA method): {latest_rsi_rma:.2f}")
         print(f"RSI (EMA method): {latest_rsi_ema:.2f}")
         print("TradingView RSI:  69.01")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"\nDifference (RMA): {abs(latest_rsi_rma - 69.01):.2f}")
         print(f"Difference (EMA): {abs(latest_rsi_ema - 69.01):.2f}")
 
@@ -170,13 +194,15 @@ class TestRSIAgainstTradingView:
         if not candles:
             pytest.skip("No candle data available for VIRTUAL")
 
-        df = pd.DataFrame([
-            {
-                "Date": candle.end_date,
-                "close": candle.close,
-            }
-            for candle in candles
-        ])
+        df = pd.DataFrame(
+            [
+                {
+                    "Date": candle.end_date,
+                    "close": candle.close,
+                }
+                for candle in candles
+            ]
+        )
         df.set_index("Date", inplace=True)
         df.sort_index(inplace=True)
 
@@ -195,33 +221,36 @@ class TestRSIEdgeCases:
 
     def test_rsi_with_nan_values(self):
         """Test RSI handles NaN values in price data"""
-        prices = pd.Series([100, 101, None, 103, 104, 105, 106, 107, 108, 109,
-                           110, 111, 112, 113, 114, 115])
-        
+        prices = pd.Series(
+            [100, 101, None, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115]
+        )
+
         # Should handle NaN gracefully
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # Result might have NaN but shouldn't crash
         assert isinstance(rsi, pd.Series)
 
     def test_rsi_with_negative_prices(self):
         """Test RSI with negative prices (invalid for crypto but test edge case)"""
-        prices = pd.Series([-100, -99, -98, -97, -96, -95, -94, -93, -92, -91,
-                           -90, -89, -88, -87, -86, -85])
-        
+        prices = pd.Series(
+            [-100, -99, -98, -97, -96, -95, -94, -93, -92, -91, -90, -89, -88, -87, -86, -85]
+        )
+
         # Should still calculate (mathematically valid)
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # All gains, should be 100
         assert rsi.iloc[-1] == 100.0
 
     def test_rsi_with_extreme_volatility(self):
         """Test RSI with extreme price swings"""
-        prices = pd.Series([100, 200, 50, 300, 25, 400, 10, 500, 5, 600,
-                           1, 700, 0.5, 800, 0.1, 900])
-        
+        prices = pd.Series(
+            [100, 200, 50, 300, 25, 400, 10, 500, 5, 600, 1, 700, 0.5, 800, 0.1, 900]
+        )
+
         rsi = calculate_rsi_using_RMA(prices, periods=14)
-        
+
         # Should produce valid RSI values
         assert not pd.isna(rsi.iloc[-1])
         assert 0 <= rsi.iloc[-1] <= 100
@@ -280,11 +309,30 @@ class TestRSIMethodComparison:
 
     def test_rma_vs_ema_methods(self):
         """Compare RMA and EMA RSI calculation methods"""
-        prices = pd.Series([
-            100.0, 101.5, 103.2, 102.1, 104.5, 103.8, 105.2, 106.1,
-            107.3, 106.5, 108.2, 109.1, 108.5, 110.2, 111.5, 112.3,
-            111.8, 113.2, 114.5, 113.9
-        ])
+        prices = pd.Series(
+            [
+                100.0,
+                101.5,
+                103.2,
+                102.1,
+                104.5,
+                103.8,
+                105.2,
+                106.1,
+                107.3,
+                106.5,
+                108.2,
+                109.1,
+                108.5,
+                110.2,
+                111.5,
+                112.3,
+                111.8,
+                113.2,
+                114.5,
+                113.9,
+            ]
+        )
 
         rsi_rma = calculate_rsi_using_RMA(prices, periods=14)
         rsi_ema = calculate_rsi_using_EMA(prices, period=14)
