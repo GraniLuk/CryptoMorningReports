@@ -1,4 +1,3 @@
-
 """Utility functions for news analysis."""
 
 from news.utils.candle_data import fetch_and_format_candle_data

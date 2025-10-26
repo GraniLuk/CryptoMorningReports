@@ -1,4 +1,3 @@
-
 """AI client implementations for crypto analysis."""
 
 from news.clients.base_client import AIClient

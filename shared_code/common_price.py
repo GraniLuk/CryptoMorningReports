@@ -32,4 +32,3 @@ class Candle:
         self.volume = volume
         self.volume_quote = volume_quote
         self.id = id
-
