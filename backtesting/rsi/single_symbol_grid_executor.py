@@ -28,14 +28,14 @@ def run_grid_search_for_symbol(conn, symbol):
     # Assuming you have a valid connection and symbol_id
     candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
 
-    for rsi_value, tp_value, sl_value, daysAfterToBuy in itertools.product(
+    for rsi_value, tp_value, sl_value, days_after_to_buy in itertools.product(
         rsi_range, tp_values, sl_values, days_options
     ):
         print(
-            f"\nRunning strategy for {symbol.symbol_name} with parameters: RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, daysAfterToBuy = {daysAfterToBuy}"
+            f"\nRunning strategy for {symbol.symbol_name} with parameters: RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, days_after_to_buy = {days_after_to_buy}"
         )
         results_df, ratio = run_strategy_for_symbol_internal(
-            candles_data, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
+            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy
         )
 
         if not results_df.empty:
@@ -52,7 +52,7 @@ def run_grid_search_for_symbol(conn, symbol):
                 "rsi_value": rsi_value,
                 "tp_value": tp_value,
                 "sl_value": sl_value,
-                "daysAfterToBuy": daysAfterToBuy,
+                "days_after_to_buy": days_after_to_buy,
                 "total_profit": total_profit,
                 "trades": len(results_df),
                 "TP_ratio": ratio,
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         best = grid_df.loc[grid_df["total_profit"].idxmax()]
         print(
             f"\nBest performing parameters for {symbol_to_test.symbol_name}:\n"
-            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}, "
+            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, days_after_to_buy: {best['days_after_to_buy']}, "
             f"Total Profit: {best['total_profit']}"
         )
     else:

@@ -15,7 +15,7 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     Returns connection object.
     """
     # Remove existing database if present
-    if os.path.exists(db_path):
+    if Path(db_path).exists():
         backup_path = f"{db_path}.backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
         Path(db_path).rename(backup_path)
         print(f"📦 Backed up existing database to: {backup_path}")
@@ -304,7 +304,7 @@ def create_sqlite_database(db_path="./local_crypto.db"):
 
 def verify_database(db_path="./local_crypto.db"):
     """Verify database structure and content."""
-    if not os.path.exists(db_path):
+    if not Path(db_path).exists():
         print(f"❌ Database not found: {db_path}")
         return False
 

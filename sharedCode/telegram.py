@@ -216,7 +216,7 @@ async def send_telegram_document(  # noqa: PLR0911
 
     try:
         if local_path:
-            if not os.path.exists(local_path):
+            if not Path(local_path).exists():
                 logging.error("Local file does not exist: %s", local_path)
                 return False
             file_size = Path(local_path).stat().st_size
@@ -293,7 +293,7 @@ async def send_telegram_document(  # noqa: PLR0911
         return False
 
 
-def _extend_to_close_tag(full_text: str, start_index: int, slice_: str, limit: int) -> str:
+def _extend_to_close_tag(_full_text: str, _start_index: int, slice_: str, _limit: int) -> str:
     """If the slice ends in the middle of an HTML tag (has unmatched '<'), extend until
     the closing '>' if possible within a small lookahead window. This is a heuristic to
     reduce parse errors when using HTML parse_mode."""

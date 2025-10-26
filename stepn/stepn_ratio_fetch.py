@@ -14,7 +14,7 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
         client = LogsQueryClient(credential)
 
         # Define your Application Insights workspace ID
-        workspace_id = os.environ.get("PriceAlerts_APPINSIGHTS_WORKSPACE_ID")
+        workspace_id = os.environ.get("PRICEALERTS_APPINSIGHTS_WORKSPACE_ID")
         if not workspace_id:
             app_logger.error("Workspace ID environment variable not set")
             return 0, 0, 0  # Return default values instead of None

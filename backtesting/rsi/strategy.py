@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pandas as pd
@@ -12,7 +12,7 @@ def run_backtest(
     rsi_value: int,
     tp_value: Decimal,
     sl_value: Decimal,
-    daysAfterToBuy: int,
+    days_after_to_buy: int,
     position_type: str = "LONG",  # New parameter
 ):
     if position_type not in ["LONG", "SHORT"]:
@@ -39,12 +39,12 @@ def run_backtest(
     active_trade = False
 
     for i in range(len(df)):
-        if not active_trade and df.loc[i, "signal"] and (i + daysAfterToBuy < len(df)):
+        if not active_trade and df.loc[i, "signal"] and (i + days_after_to_buy < len(df)):
             active_trade = True
             entry_date = datetime.strptime(
-                str(df.loc[i + daysAfterToBuy, "date"]), "%Y-%m-%d"
-            )
-            entry_price = Decimal(str(df.loc[i + daysAfterToBuy, "Open"]))
+                str(df.loc[i + days_after_to_buy, "date"]), "%Y-%m-%d"
+            ).replace(tzinfo=UTC)
+            entry_price = Decimal(str(df.loc[i + days_after_to_buy, "Open"]))
             print(
                 f"Started {position_type} position for {symbol_name} on date {entry_date} with entry price {entry_price}"
             )
@@ -58,10 +58,10 @@ def run_backtest(
             close_price = None
             profit = 0  # Initialize profit
 
-            for j in range(i + daysAfterToBuy, len(df)):
+            for j in range(i + days_after_to_buy, len(df)):
                 current_high = Decimal(str(df.loc[j, "High"]))
                 current_low = Decimal(str(df.loc[j, "Low"]))
-                current_date = datetime.strptime(str(df.loc[j, "date"]), "%Y-%m-%d")
+                current_date = datetime.strptime(str(df.loc[j, "date"]), "%Y-%m-%d").replace(tzinfo=UTC)
                 close_date = current_date
 
                 if position_type == "LONG":
@@ -160,7 +160,7 @@ def run_strategy_for_symbol_internal(
     rsi_value: int = 30,
     tp_value: Decimal = Decimal("1.1"),
     sl_value: Decimal = Decimal("0.9"),
-    daysAfterToBuy: int = 1,
+    days_after_to_buy: int = 1,
     position_type: str = "LONG",
 ):
     """
@@ -174,7 +174,7 @@ def run_strategy_for_symbol_internal(
         rsi_value,
         tp_value,
         sl_value,
-        daysAfterToBuy,
+        days_after_to_buy,
         position_type,
     )
 

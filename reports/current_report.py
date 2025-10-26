@@ -216,12 +216,8 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
     html_text = markdown_text
 
     # Convert headers
-    html_text = re.sub(
-        r"^### (.+)$", r"<b><u>\1</u></b>", html_text, flags=re.MULTILINE
-    )
-    html_text = re.sub(
-        r"^## (.+)$", r"<b>═══ \1 ═══</b>", html_text, flags=re.MULTILINE
-    )
+    html_text = re.sub(r"^### (.+)$", r"<b><u>\1</u></b>", html_text, flags=re.MULTILINE)
+    html_text = re.sub(r"^## (.+)$", r"<b>═══ \1 ═══</b>", html_text, flags=re.MULTILINE)
     html_text = re.sub(r"^# (.+)$", r"<b>▓▓▓ \1 ▓▓▓</b>", html_text, flags=re.MULTILINE)
 
     # Convert bold text
@@ -235,17 +231,13 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
     html_text = re.sub(r"`(.+?)`", r"<code>\1</code>", html_text)
 
     # Convert code blocks
-    html_text = re.sub(
-        r"```[\w]*\n(.*?)\n```", r"<pre>\1</pre>", html_text, flags=re.DOTALL
-    )
+    html_text = re.sub(r"```[\w]*\n(.*?)\n```", r"<pre>\1</pre>", html_text, flags=re.DOTALL)
 
     # Convert bullet points with emojis for better visibility
     html_text = re.sub(r"^\s*[-*]\s+(.+)$", r"  • \1", html_text, flags=re.MULTILINE)
 
     # Convert numbered lists
-    html_text = re.sub(
-        r"^\s*(\d+)\.\s+(.+)$", r"  \1. \2", html_text, flags=re.MULTILINE
-    )
+    html_text = re.sub(r"^\s*(\d+)\.\s+(.+)$", r"  \1. \2", html_text, flags=re.MULTILINE)
 
     # Add spacing around sections
     html_text = re.sub(r"(<b>═══.*?═══</b>)", r"\n\1\n", html_text)
@@ -296,14 +288,10 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
     # Fetch RSI data for different timeframes
     daily_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=180)
     hourly_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=2)
-    fifteen_min_rsi = get_rsi_for_symbol_timeframe(
-        symbol, conn, "fifteen_min", lookback_days=1
-    )
+    fifteen_min_rsi = get_rsi_for_symbol_timeframe(symbol, conn, "fifteen_min", lookback_days=1)
 
     # Fetch moving averages data for the symbol
-    moving_averages = fetch_moving_averages_for_symbol(
-        conn, symbol.symbol_id, lookback_days=7
-    )
+    moving_averages = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=7)
 
     # Check if we have data
     if not daily_candles or not hourly_candles or not fifteen_min_candles:
@@ -369,8 +357,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
 
         # For PerplexityClient - checking for an instance instead of a class type
         if ai_api_type == "perplexity" or (
-            hasattr(ai_client, "__class__")
-            and ai_client.__class__.__name__ == "PerplexityClient"
+            hasattr(ai_client, "__class__") and ai_client.__class__.__name__ == "PerplexityClient"
         ):
             data = {
                 "model": "sonar-pro",  # Use appropriate model
@@ -401,9 +388,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
                 if response.status_code == 200:
                     analysis = response.json()["choices"][0]["message"]["content"]
                 else:
-                    error_msg = (
-                        f"Failed: API error: {response.status_code} - {response.text}"
-                    )
+                    error_msg = f"Failed: API error: {response.status_code} - {response.text}"
                     logger.error(error_msg)
                     return error_msg
             except Exception as e:
@@ -431,9 +416,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
                     logger.error(error_msg)
                     return error_msg
             except Exception as e:
-                error_msg = (
-                    f"Failed to get crypto situation analysis from Gemini: {e!s}"
-                )
+                error_msg = f"Failed to get crypto situation analysis from Gemini: {e!s}"
                 logger.error(error_msg)
                 return error_msg
         else:
@@ -449,7 +432,9 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
 
         # Generate HTML formatted report
         report_title = f"<b>📊 {symbol_name} Situation Report</b>\n\n"
-        report_date = f"<i>🕒 Generated on: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}</i>\n\n"
+        report_date = (
+            f"<i>🕒 Generated on: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}</i>\n\n"
+        )
 
         # Get HTML formatted current data
         current_data_html = get_current_data_summary_table(symbol, conn)
@@ -492,9 +477,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
         # Convert AI analysis from markdown to HTML
         analysis_html = convert_markdown_to_telegram_html(analysis_with_emojis)
 
-        full_report = (
-            report_title + report_date + current_data_html + "\n" + analysis_html
-        )
+        full_report = report_title + report_date + current_data_html + "\n" + analysis_html
         logger.info(f"Successfully generated HTML situation report for {symbol_name}")
 
         return full_report

@@ -203,9 +203,7 @@ def get_rsi_for_symbol_timeframe(
         return None
 
 
-def create_multi_timeframe_rsi_table(
-    symbol: Symbol, conn, timeframes: list[str] | None = None
-):
+def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str] | None = None):
     """
     Creates a multi-timeframe RSI table for a symbol
 
@@ -219,7 +217,7 @@ def create_multi_timeframe_rsi_table(
     """
     if timeframes is None:
         timeframes = ["daily", "hourly", "fifteen_min"]
-    
+
     # Map of lookback days appropriate for each timeframe
     lookback_map = {
         "daily": 30,  # Look back 30 days
@@ -330,7 +328,7 @@ def create_multi_timeframe_rsi_tables(
     """
     if timeframes is None:
         timeframes = ["daily", "hourly", "fifteen_min"]
-    
+
     # Collect all RSI data
     all_symbols_data = {}
     for timeframe in timeframes:

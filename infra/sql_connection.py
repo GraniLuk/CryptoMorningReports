@@ -4,7 +4,8 @@ import sqlite3
 import struct
 import time
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pyodbc
 from azure import identity
@@ -40,7 +41,7 @@ class SQLiteRow:
                 # Try to parse as date only (YYYY-MM-DD)
                 elif len(value) == 10 and value.count("-") == 2:
                     with suppress(ValueError, AttributeError):
-                        value = datetime.strptime(value, "%Y-%m-%d").date()
+                        value = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=UTC).date()
 
             self._data.append(value)
             self._names[col_name] = idx
@@ -143,7 +144,7 @@ def connect_to_sql_sqlite(db_path=None):
     if db_path is None:
         db_path = os.getenv("SQLITE_DB_PATH", "./local_crypto.db")
 
-    if not os.path.exists(db_path):
+    if not Path(db_path).exists():
         logging.error(f"SQLite database not found: {db_path}")
         logging.error("Please run: python database/init_sqlite.py")
         raise FileNotFoundError(f"Database not found: {db_path}")
@@ -257,7 +258,7 @@ def connect_to_sql(max_retries=3):
                 time.sleep(55**attempt)  # Exponential backoff
                 continue
             app_logger.error(f"Error message: {e!s}")
-            raise RuntimeError("Failed to connect to the database after maximum retries")
+            raise RuntimeError("Failed to connect to the database after maximum retries") from e
 
     # This should never be reached, but added for type checking
     raise RuntimeError("Failed to connect to the database after maximum retries")

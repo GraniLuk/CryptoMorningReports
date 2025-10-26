@@ -66,9 +66,7 @@ def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
             metrics = fetch_binance_futures_metrics(symbol)
 
             if metrics is None:
-                app_logger.warning(
-                    f"No futures data available for {symbol.symbol_name}"
-                )
+                app_logger.warning(f"No futures data available for {symbol.symbol_name}")
                 failed += 1
                 continue
 
@@ -101,14 +99,10 @@ def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
             successful += 1
 
         except Exception as e:
-            app_logger.error(
-                f"Error processing derivatives data for {symbol.symbol_name}: {e!s}"
-            )
+            app_logger.error(f"Error processing derivatives data for {symbol.symbol_name}: {e!s}")
             failed += 1
 
-    app_logger.info(
-        f"Derivatives data fetch complete: {successful} successful, {failed} failed"
-    )
+    app_logger.info(f"Derivatives data fetch complete: {successful} successful, {failed} failed")
 
     return table
 

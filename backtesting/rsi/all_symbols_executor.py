@@ -14,7 +14,7 @@ def run_strategy_for_all_symbols(
     rsi_value: int = 30,
     tp_value: Decimal = Decimal("1.1"),
     sl_value: Decimal = Decimal("0.9"),
-    daysAfterToBuy: int = 1,
+    days_after_to_buy: int = 1,
 ):
     """
     Executes the strategy for all symbols.
@@ -32,7 +32,7 @@ def run_strategy_for_all_symbols(
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
         results_df, ratio = run_strategy_for_symbol_internal(
-            candles_data, symbol, rsi_value, tp_value, sl_value, daysAfterToBuy
+            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy
         )
         symbol_ratios[symbol.symbol_name] = ratio
         print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")

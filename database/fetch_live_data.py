@@ -7,6 +7,7 @@ import logging
 import os
 import sqlite3
 from datetime import UTC, datetime
+from pathlib import Path
 
 from binance.client import Client
 
@@ -20,7 +21,7 @@ def get_sqlite_connection(db_path=None):
     if db_path is None:
         db_path = os.getenv("SQLITE_DB_PATH", "./local_crypto.db")
 
-    if not os.path.exists(db_path):
+    if not Path(db_path).exists():
         raise FileNotFoundError(
             f"Database not found: {db_path}\nPlease run: python database/init_sqlite.py"
         )

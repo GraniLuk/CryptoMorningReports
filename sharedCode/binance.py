@@ -182,9 +182,11 @@ def fetch_close_prices_from_Binance(
 
 
 def fetch_binance_daily_kline(
-    symbol: Symbol, end_date: date = date.today()
+    symbol: Symbol, end_date: date | None = None
 ) -> Candle | None:
     """Fetch open and close prices from Binance for the last full day."""
+    if end_date is None:
+        end_date = date.today()
     client = BinanceClient()
 
     # Get yesterday's date

@@ -33,12 +33,12 @@ def _resolve_pandoc_download_dir() -> str:
     if custom_dir:
         return _normalize_custom_dir(custom_dir)
 
-    script_root = os.environ.get("AzureWebJobsScriptRoot")
+    script_root = os.environ.get("AZUREWEBJOBSSCRIPTROOT")
     if script_root:
-        return os.path.join(script_root, ".pandoc-cache")
+        return str(Path(script_root) / ".pandoc-cache")
 
     home_dir = os.environ.get("HOME") or str(Path.cwd())
-    return os.path.join(home_dir, ".pandoc-cache")
+    return str(Path(home_dir) / ".pandoc-cache")
 
 
 def _ensure_pandoc_available():
@@ -74,8 +74,8 @@ def _ensure_pandoc_available():
             _pypandoc_module = pypandoc
             return _pypandoc_module
 
-        # Only download if running in Azure (has AzureWebJobsScriptRoot)
-        if os.environ.get("AzureWebJobsScriptRoot"):
+        # Only download if running in Azure (has AZUREWEBJOBSSCRIPTROOT)
+        if os.environ.get("AZUREWEBJOBSSCRIPTROOT"):
             app_logger.info("Pandoc binary not found; downloading for Azure environment...")
             target_dir = _resolve_pandoc_download_dir()
             try:
@@ -86,7 +86,7 @@ def _ensure_pandoc_available():
 
                 # download_pandoc may return None on some platforms; construct expected path
                 if not pandoc_path:
-                    pandoc_path = os.path.join(target_dir, "pandoc")
+                    pandoc_path = str(Path(target_dir) / "pandoc")
 
                 if not Path(pandoc_path).is_file():
                     raise FileNotFoundError(

@@ -88,7 +88,7 @@ def fetch_symbols(conn) -> list[Symbol]:
         raise
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbols: {e}")
-        raise Exception(f"Database error while fetching symbols: {e}")
+        raise Exception(f"Database error while fetching symbols: {e}") from e
     except Exception as e:
         app_logger.error(f"Error fetching symbols: {e!s}")
         raise
@@ -134,7 +134,7 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
         raise
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbol {symbol_name}: {e}")
-        raise Exception(f"Database error while fetching symbol {symbol_name}: {e}")
+        raise Exception(f"Database error while fetching symbol {symbol_name}: {e}") from e
     except ConnectionError:
         # Re-raise connection errors
         raise

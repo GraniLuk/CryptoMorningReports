@@ -52,7 +52,7 @@ if __name__ == "__main__":
         print(
             f"\nBest overall strategy:\n"
             f"Symbol: {best['symbol_name']}\n"
-            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, daysAfterToBuy: {best['daysAfterToBuy']}\n"
+            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, days_after_to_buy: {best['days_after_to_buy']}\n"
             f"Total Profit: {best['total_profit']}"
         )
     else:

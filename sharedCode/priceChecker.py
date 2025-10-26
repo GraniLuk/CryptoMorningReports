@@ -24,8 +24,10 @@ _price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 
 def fetch_daily_candle(
-    symbol: Symbol, end_date: date = date.today(), conn=None
+    symbol: Symbol, end_date: date | None = None, conn=None
 ) -> Candle | None:
+    if end_date is None:
+        end_date = date.today()
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)
@@ -314,12 +316,14 @@ def fetch_fifteen_min_candles(
 
 
 def fetch_daily_candles(
-    symbol: Symbol, start_date: date, end_date: date = date.today(), conn=None
+    symbol: Symbol, start_date: date, end_date: date | None = None, conn=None
 ) -> list[Candle]:
     """
     Fetch multiple daily candles for a given symbol between start_date and end_date.
     If a database connection is provided, attempts to fetch from database first.
     """
+    if end_date is None:
+        end_date = date.today()
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)

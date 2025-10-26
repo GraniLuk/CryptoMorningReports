@@ -10,7 +10,7 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
-def calculate_rsi_for_candles(candles, timeframe="daily"):
+def calculate_rsi_for_candles(candles, _timeframe="daily"):
     """
     Calculate RSI for a list of candles
 

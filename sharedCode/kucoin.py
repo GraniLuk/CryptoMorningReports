@@ -36,8 +36,10 @@ def fetch_kucoin_price(symbol: Symbol) -> TickerPrice | None:
         return None
 
 
-def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Candle | None:
+def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date | None = None) -> Candle | None:
     """Fetch open, close, high, low prices and volume from KuCoin for the last full day."""
+    if end_date is None:
+        end_date = date.today()
     client = KucoinClient()
 
     start_time = end_date - timedelta(days=1)
