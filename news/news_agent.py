@@ -5,7 +5,7 @@ This module provides a factory function to create AI clients and maintains
 backward compatibility with legacy function interfaces.
 """
 
-from news.clients import AIClient, GeminiClient, PerplexityClient
+from news.clients import GeminiClient, PerplexityClient
 
 
 def create_ai_client(api_type, api_key):

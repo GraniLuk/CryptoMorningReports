@@ -521,7 +521,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: List, timeframe: str)
         # Calculate RSI using RMA method
         df["rsi"] = calculate_rsi_using_RMA(df["close"])
         # Save RSI values to database
-        for index, row in df.iterrows():
+        for _, row in df.iterrows():
             if not pd.isna(row["rsi"]):
                 save_rsi_by_timeframe(
                     conn, int(row["candle_id"]), float(row["rsi"]), timeframe

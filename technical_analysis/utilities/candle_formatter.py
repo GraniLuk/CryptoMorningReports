@@ -2,9 +2,8 @@
 Utility functions for formatting candle data for AI prompts
 """
 
-import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from source_repository import Symbol
 from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
@@ -125,8 +124,6 @@ def format_candle_data_for_prompt(
 
 
 if __name__ == "__main__":
-    import os
-
     from dotenv import load_dotenv
 
     from infra.sql_connection import connect_to_sql

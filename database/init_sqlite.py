@@ -5,7 +5,7 @@ This creates a local database structure compatible with the Azure SQL schema.
 
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime
 
 
 def create_sqlite_database(db_path="./local_crypto.db"):

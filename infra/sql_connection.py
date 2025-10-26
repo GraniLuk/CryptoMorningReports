@@ -3,8 +3,7 @@ import os
 import struct
 import time
 import sqlite3
-from contextlib import contextmanager
-from datetime import datetime, date
+from datetime import datetime
 
 import pyodbc
 from azure import identity

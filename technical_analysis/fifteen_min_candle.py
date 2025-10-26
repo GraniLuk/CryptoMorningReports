@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from infra.telegram_logging_handler import app_logger
 from sharedCode.commonPrice import Candle
 from sharedCode.priceChecker import fetch_fifteen_min_candles
 from source_repository import Symbol

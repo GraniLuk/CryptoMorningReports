@@ -6,7 +6,7 @@ This fetches real market data for local development without Azure SQL.
 import logging
 import os
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from binance.client import Client
 

@@ -1,7 +1,7 @@
 """Retry handler for AI API requests with fallback model support."""
 
 import logging
-from typing import Callable, List, Any, Optional
+from typing import Callable, List, Any
 
 
 def retry_with_fallback_models(

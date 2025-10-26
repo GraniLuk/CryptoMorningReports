@@ -116,8 +116,6 @@ if __name__ == "__main__":
 
     from infra.sql_connection import connect_to_sql
     from source_repository import fetch_symbols
-    from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
-    from technical_analysis.hourly_candle import fetch_hourly_candles
 
     load_dotenv()
     conn = connect_to_sql()

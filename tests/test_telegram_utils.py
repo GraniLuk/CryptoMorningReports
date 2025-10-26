@@ -1,13 +1,13 @@
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 # Ensure project root is on sys.path when running tests directly
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from sharedCode.telegram import smart_split, enforce_markdown_v2, MAX_TELEGRAM_LENGTH
+from sharedCode.telegram import enforce_markdown_v2, smart_split
 
 
 class TestTelegramUtils(unittest.TestCase):
@@ -18,9 +18,13 @@ class TestTelegramUtils(unittest.TestCase):
         self.assertEqual(chunks[0], text)
 
     def test_smart_split_paragraph_preservation(self):
-        paragraph = "Paragraph one."\
-            + "\n\n" + "Paragraph two is here."\
-            + "\n\n" + "Paragraph three."  # 3 paragraphs
+        paragraph = (
+            "Paragraph one."
+            + "\n\n"
+            + "Paragraph two is here."
+            + "\n\n"
+            + "Paragraph three."
+        )  # 3 paragraphs
         chunks = smart_split(paragraph, 25, parse_mode="HTML")
         # With limit 25 we expect splitting roughly per paragraph boundary
         self.assertGreater(len(chunks), 1)
@@ -38,19 +42,26 @@ class TestTelegramUtils(unittest.TestCase):
         expected = (len(long_para) + 1000 - 1) // 1000  # 5
         # Implementation adds delimiter '\n\n' to oversize paragraph, producing an extra tiny chunk
         self.assertIn(len(non_empty), (expected, expected + 1))
-        self.assertTrue(all(len(c) <= 1000 or i == len(non_empty)-1 for i, c in enumerate(non_empty)))
+        self.assertTrue(
+            all(
+                len(c) <= 1000 or i == len(non_empty) - 1
+                for i, c in enumerate(non_empty)
+            )
+        )
         reassembled = "".join(non_empty)
         # Remove potential trailing newlines added by splitting logic before comparison
         self.assertEqual(reassembled.rstrip(), long_para)
 
     def test_smart_split_html_tag_boundary(self):
         # Construct text likely to cut inside a tag if naive
-        core = "<b>" + ("X" * 300) + "</b>" + "\n\n" + "<a href='u'>link</a>" + ("Y" * 300)
+        core = (
+            "<b>" + ("X" * 300) + "</b>" + "\n\n" + "<a href='u'>link</a>" + ("Y" * 300)
+        )
         limit = 350  # Forces potential mid-tag splits
         chunks = smart_split(core, limit, parse_mode="HTML")
         # Ensure we never have an unmatched '<' at end of chunk
         for c in chunks:
-            if c.count('<') != c.count('>'):
+            if c.count("<") != c.count(">"):
                 # Allow if dangling due to extremely pathological input; fail otherwise
                 self.fail(f"Unbalanced tag counts in chunk: {c[-60:]}")
 

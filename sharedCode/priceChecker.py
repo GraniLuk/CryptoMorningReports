@@ -1,8 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
-import pandas as pd
-
 from sharedCode.binance import fetch_binance_daily_kline, fetch_binance_price
 from sharedCode.coingecko import fetch_coingecko_price
 from sharedCode.commonPrice import Candle, TickerPrice
