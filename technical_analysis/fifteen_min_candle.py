@@ -55,9 +55,7 @@ class FifteenMinCandles(CandleFetcher):
     def __init__(self):
         from sharedCode.priceChecker import fetch_fifteen_min_candle
 
-        super().__init__(
-            "fifteen_min", fetch_fifteen_min_candle, FifteenMinCandleRepository
-        )
+        super().__init__("fifteen_min", fetch_fifteen_min_candle, FifteenMinCandleRepository)
 
 
 if __name__ == "__main__":

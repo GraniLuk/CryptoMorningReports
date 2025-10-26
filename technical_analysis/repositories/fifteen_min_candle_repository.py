@@ -37,9 +37,7 @@ class FifteenMinCandleRepository(CandleRepository):
                     symbol.symbol_id,
                     source,
                     open_time.isoformat(),
-                    end_date.isoformat()
-                    if hasattr(end_date, "isoformat")
-                    else end_date,
+                    end_date.isoformat() if hasattr(end_date, "isoformat") else end_date,
                     candle.open,
                     candle.close,
                     candle.high,

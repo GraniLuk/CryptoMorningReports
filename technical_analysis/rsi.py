@@ -57,13 +57,8 @@ def calculate_rsi_using_RMA(series, periods=14):
 
     rs = avg_gain / avg_loss
     return (
-        100
-        if avg_loss.iloc[-1] == 0
-        else 0
-        if avg_gain.iloc[-1] == 0
-        else 100 - (100 / (1 + rs))
+        100 if avg_loss.iloc[-1] == 0 else 0 if avg_gain.iloc[-1] == 0 else 100 - (100 / (1 + rs))
     )
-
 
 
 def calculate_all_rsi_for_symbol(conn, symbol):
@@ -107,16 +102,12 @@ def calculate_all_rsi_for_symbol(conn, symbol):
             continue
 
         try:
-            save_rsi_results(
-                conn=conn, daily_candle_id=daily_candle_id, rsi=float(rsi_val)
-            )
+            save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=float(rsi_val))
             app_logger.info(
                 f"Saved RSI for {symbol.symbol_name} candle {daily_candle_id}: RSI={rsi_val:.2f}"
             )
         except Exception as e:
-            app_logger.error(
-                f"Failed to save RSI results for candle {daily_candle_id}: {e!s}"
-            )
+            app_logger.error(f"Failed to save RSI results for candle {daily_candle_id}: {e!s}")
 
 
 if __name__ == "__main__":

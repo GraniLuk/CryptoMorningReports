@@ -44,11 +44,7 @@ async def send_current_report(symbol: str):
         # Generate report
         report = await generate_crypto_situation_report(conn, symbol)
 
-        if (
-            report
-            and not report.startswith("Failed")
-            and not report.startswith("Error")
-        ):
+        if report and not report.startswith("Failed") and not report.startswith("Error"):
             print(f"✅ Report generated successfully ({len(report)} characters)")
             print("📤 Sending to Telegram...")
 

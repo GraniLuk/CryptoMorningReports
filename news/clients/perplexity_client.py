@@ -84,14 +84,10 @@ class PerplexityClient(AIClient):
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT_ANALYSIS_NEWS},
             ]
-            messages.extend(
-                {"role": "user", "content": chunk} for chunk in user_messages
-            )
+            messages.extend({"role": "user", "content": chunk} for chunk in user_messages)
             return self._make_request(model, messages)
 
-        result = retry_with_fallback_models(
-            models, request_func, "Crypto analysis with news"
-        )
+        result = retry_with_fallback_models(models, request_func, "Crypto analysis with news")
 
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
@@ -116,6 +112,4 @@ class PerplexityClient(AIClient):
             ]
             return self._make_request(model, messages)
 
-        return retry_with_fallback_models(
-            models, request_func, "Article highlighting"
-        )
+        return retry_with_fallback_models(models, request_func, "Article highlighting")

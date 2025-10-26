@@ -90,9 +90,7 @@ def fetch_full_content(url, class_name):
         article = soup.find("div", class_=class_name) or soup.find("article")
         if article:
             article_text = article.get_text()
-            return "\n".join(
-                line.strip() for line in article_text.splitlines() if line.strip()
-            )
+            return "\n".join(line.strip() for line in article_text.splitlines() if line.strip())
         return "Failed to extract full content"
     except Exception as e:
         app_logger.error(f"Error fetching full content from {url}: {e!s}")

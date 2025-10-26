@@ -34,17 +34,17 @@ def get_candle_data(
     # Process candles for each symbol
     for symbol in symbols:
         # Fetch candles from database
-        hourly_candles = fetch_hourly_candles(symbol=symbol, start_time=hourly_start_time, end_time=end_time, conn=conn)
-        fifteen_min_candles = fetch_fifteen_min_candles(symbol=symbol, start_time=fifteen_min_start_time, end_time=end_time, conn=conn)
+        hourly_candles = fetch_hourly_candles(
+            symbol=symbol, start_time=hourly_start_time, end_time=end_time, conn=conn
+        )
+        fifteen_min_candles = fetch_fifteen_min_candles(
+            symbol=symbol, start_time=fifteen_min_start_time, end_time=end_time, conn=conn
+        )
         symbol_name = symbol.symbol_name
 
         # Filter candles for this symbol
-        symbol_hourly_candles = [
-            c for c in hourly_candles if c.id == symbol.symbol_id
-        ]
-        symbol_fifteen_min_candles = [
-            c for c in fifteen_min_candles if c.id == symbol.symbol_id
-        ]
+        symbol_hourly_candles = [c for c in hourly_candles if c.id == symbol.symbol_id]
+        symbol_fifteen_min_candles = [c for c in fifteen_min_candles if c.id == symbol.symbol_id]
 
         # Format the candles
         hourly_data = [
@@ -56,9 +56,7 @@ def get_candle_data(
                 "c": c.close,
                 "v": c.volume,
             }
-            for c in sorted(symbol_hourly_candles, key=lambda x: x.end_date)[
-                -hourly_limit:
-            ]
+            for c in sorted(symbol_hourly_candles, key=lambda x: x.end_date)[-hourly_limit:]
         ]
 
         fifteen_min_data = [
@@ -70,9 +68,7 @@ def get_candle_data(
                 "c": c.close,
                 "v": c.volume,
             }
-            for c in sorted(symbol_fifteen_min_candles, key=lambda x: x.end_date)[
-                -minute_limit:
-            ]
+            for c in sorted(symbol_fifteen_min_candles, key=lambda x: x.end_date)[-minute_limit:]
         ]
 
         result[symbol_name] = {"hourly": hourly_data, "15m": fifteen_min_data}
@@ -80,9 +76,7 @@ def get_candle_data(
     return result
 
 
-def format_candle_data_for_prompt(
-    candle_data: dict, max_display_candles: int = 5
-) -> str:
+def format_candle_data_for_prompt(candle_data: dict, max_display_candles: int = 5) -> str:
     """
     Format candle data as a string for prompts
 

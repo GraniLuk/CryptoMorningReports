@@ -58,7 +58,9 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
 
                 # Handle None values that might come from the query
                 if min_value is None or max_value is None:
-                    app_logger.info("Received None values from the partial data, using default values")
+                    app_logger.info(
+                        "Received None values from the partial data, using default values"
+                    )
                     return 0, 0, 0
 
                 # Calculate range safely

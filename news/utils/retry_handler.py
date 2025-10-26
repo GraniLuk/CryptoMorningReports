@@ -8,7 +8,7 @@ from typing import Any
 def retry_with_fallback_models(
     models: list[str],
     request_func: Callable[[str], tuple[bool, Any]],
-    operation_name: str = "API request"
+    operation_name: str = "API request",
 ) -> Any:
     """
     Retry a request with a list of fallback models.

@@ -26,9 +26,7 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
 
     try:
         # Fetch base SOPR
-        response = requests.get(
-            f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10
-        )
+        response = requests.get(f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10)
 
         # Check for rate limiting or other HTTP errors
         if response.status_code == 429:
@@ -38,32 +36,22 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
             )
             return None
         if response.status_code != 200:
-            app_logger.error(
-                f"SOPR API returned status {response.status_code}: {response.text}"
-            )
+            app_logger.error(f"SOPR API returned status {response.status_code}: {response.text}")
             return None
 
         metrics["SOPR"] = response.json()[0]
 
         # Fetch STH-SOPR
-        response = requests.get(
-            f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10
-        )
+        response = requests.get(f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10)
         if response.status_code != 200:
-            app_logger.warning(
-                f"STH-SOPR API error (status {response.status_code}), skipping"
-            )
+            app_logger.warning(f"STH-SOPR API error (status {response.status_code}), skipping")
             return None
         metrics["STH-SOPR"] = response.json()[0]
 
         # Fetch LTH-SOPR
-        response = requests.get(
-            f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10
-        )
+        response = requests.get(f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10)
         if response.status_code != 200:
-            app_logger.warning(
-                f"LTH-SOPR API error (status {response.status_code}), skipping"
-            )
+            app_logger.warning(f"LTH-SOPR API error (status {response.status_code}), skipping")
             return None
         metrics["LTH-SOPR"] = response.json()[0]
 
@@ -74,9 +62,7 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
         table.align["Value"] = "r"  # Right align values
 
         for metric, data in metrics.items():
-            value = float(
-                data.get("sopr") or data.get("sthSopr") or data.get("lthSopr")
-            )
+            value = float(data.get("sopr") or data.get("sthSopr") or data.get("lthSopr"))
             table.add_row([metric, f"{value:.4f}"])
 
         # Save results to database

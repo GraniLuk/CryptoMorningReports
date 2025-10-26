@@ -30,9 +30,7 @@ def get_detailed_crypto_analysis_with_news(
     api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
 ):
     client = create_ai_client(api_type, api_key)
-    return client.get_detailed_crypto_analysis_with_news(
-        indicators_message, news_feeded, conn
-    )
+    return client.get_detailed_crypto_analysis_with_news(indicators_message, news_feeded, conn)
 
 
 def highlight_articles(api_key, user_crypto_list, news_feeded, api_type="perplexity"):

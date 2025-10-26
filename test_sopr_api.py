@@ -10,9 +10,7 @@ print("-" * 50)
 # Test base SOPR endpoint
 print("\n1. Testing /v1/sopr endpoint:")
 try:
-    response = requests.get(
-        "https://bitcoin-data.com/v1/sopr", params={"day": yesterday}
-    )
+    response = requests.get("https://bitcoin-data.com/v1/sopr", params={"day": yesterday})
     print(f"   Status Code: {response.status_code}")
     print(f"   Content-Type: {response.headers.get('Content-Type')}")
     print(f"   Response Length: {len(response.text)} chars")
@@ -39,9 +37,7 @@ except Exception as e:
 print("\n3. Testing with different date parameter names:")
 for param_name in ["date", "timestamp", "from", "start"]:
     try:
-        response = requests.get(
-            "https://bitcoin-data.com/v1/sopr", params={param_name: yesterday}
-        )
+        response = requests.get("https://bitcoin-data.com/v1/sopr", params={param_name: yesterday})
         print(
             f'   Param "{param_name}": Status {response.status_code}, Length {len(response.text)}'
         )

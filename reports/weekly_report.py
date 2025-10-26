@@ -8,9 +8,7 @@ from technical_analysis.macd_report import calculate_macd
 from technical_analysis.movingAveragesReport import calculate_indicators
 
 
-async def process_weekly_report(
-    conn, telegram_enabled, telegram_token, telegram_chat_id
-):
+async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram_chat_id):
     logger = app_logger
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for weekly report...", len(symbols))
@@ -18,18 +16,14 @@ async def process_weekly_report(
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before weekly analysis...")
     updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
-    logger.info(
-        f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed"
-    )
+    logger.info(f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed")
 
     # Calculate date range for weekly report
     end_date = datetime.now(UTC)
     start_date = end_date - timedelta(days=7)
 
     # Generate weekly specific reports
-    ma_average_table, ema_average_table = calculate_indicators(
-        symbols, conn, start_date
-    )
+    ma_average_table, ema_average_table = calculate_indicators(symbols, conn, start_date)
     macd_table = calculate_macd(symbols, conn, start_date)
 
     # Format messages

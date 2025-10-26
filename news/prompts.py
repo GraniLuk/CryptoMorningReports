@@ -70,16 +70,12 @@ def build_analysis_user_messages(
         news_articles = json.loads(news_feeded)
         if isinstance(news_articles, list):
             # Add header message
-            messages.append(
-                f"Input News / Narrative Items (Total: {len(news_articles)} articles)"
-            )
+            messages.append(f"Input News / Narrative Items (Total: {len(news_articles)} articles)")
 
             # Add each article as a separate message
             for idx, article in enumerate(news_articles, 1):
                 article_text = json.dumps(article, indent=2)
-                messages.append(
-                    f"News Article {idx}/{len(news_articles)}:\n{article_text}"
-                )
+                messages.append(f"News Article {idx}/{len(news_articles)}:\n{article_text}")
         else:
             # Fallback if not a list
             messages.append(f"Input News / Narrative Items:\n{news_feeded}")

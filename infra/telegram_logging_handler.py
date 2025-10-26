@@ -26,14 +26,10 @@ class TelegramHandler(logging.Handler):
 
 def setup_logger():
     logger = logging.getLogger("AppLogger")
-    logger.setLevel(
-        logging.INFO
-    )  # Set the logger's level to the lowest level you want to capture
+    logger.setLevel(logging.INFO)  # Set the logger's level to the lowest level you want to capture
 
     # Formatter
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # Console Handler (INFO level)
     console_handler = logging.StreamHandler()

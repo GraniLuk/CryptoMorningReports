@@ -54,9 +54,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
         api_key = os.environ.get("BSC_SCAN_API_KEY")
         if api_key:
             stepn_contract_address = "0x3019BF2a2eF8040C242C9a4c5c4BD4C81678b2A1"
-            transactions_count = get_yesterday_transaction_count(
-                stepn_contract_address, api_key
-            )
+            transactions_count = get_yesterday_transaction_count(stepn_contract_address, api_key)
             results.append(("24h Transactions", transactions_count))
     except Exception as e:
         app_logger.error(f"Error fetching transaction count: {e!s}")

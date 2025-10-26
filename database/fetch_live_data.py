@@ -127,9 +127,7 @@ def populate_fifteen_min_candles(conn, hours=24):  # 1 day
         # Calculate number of 15-min candles needed
         limit = min(hours * 4, 1000)
 
-        candles = fetch_binance_klines(
-            trading_pair, Client.KLINE_INTERVAL_15MINUTE, limit=limit
-        )
+        candles = fetch_binance_klines(trading_pair, Client.KLINE_INTERVAL_15MINUTE, limit=limit)
 
         if not candles:
             logger.warning(f"    No data for {trading_pair}")

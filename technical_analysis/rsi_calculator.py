@@ -69,9 +69,7 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
             candles = candle_fetcher(symbol, conn)
 
             if not candles:
-                app_logger.warning(
-                    f"No {timeframe} candles found for {symbol.symbol_name}"
-                )
+                app_logger.warning(f"No {timeframe} candles found for {symbol.symbol_name}")
                 continue
 
             # Calculate RSI
@@ -90,9 +88,7 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
                     )
 
         except Exception as e:
-            app_logger.error(
-                f"Error processing {timeframe} RSI for {symbol.symbol_name}: {e!s}"
-            )
+            app_logger.error(f"Error processing {timeframe} RSI for {symbol.symbol_name}: {e!s}")
 
 
 def update_daily_rsi_for_all_symbols(conn, symbols):

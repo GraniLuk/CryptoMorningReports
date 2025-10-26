@@ -74,9 +74,7 @@ async def send_email_with_epub_attachment(
             attachment_bytes,
             attachment_filename,
         )
-        app_logger.info(
-            "Sent EPUB report email to %s", ", ".join(recipient_list)
-        )
+        app_logger.info("Sent EPUB report email to %s", ", ".join(recipient_list))
         return True
     except smtplib.SMTPAuthenticationError:
         app_logger.exception("SMTP authentication failed for Gmail account %s", username)
