@@ -36,8 +36,9 @@ class DailyCandleRepository(CandleRepository):
             INSERT INTO {self.table_name} 
             (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(SymbolID, SourceID, Date) 
+            ON CONFLICT(SymbolID, Date) 
             DO UPDATE SET
+                SourceID = excluded.SourceID,
                 EndDate = excluded.EndDate,
                 [Open] = excluded.[Open],
                 [Close] = excluded.[Close],
