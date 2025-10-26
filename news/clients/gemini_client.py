@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Any
 
-import google.generativeai as genai  # type: ignore
+import google.generativeai as genai
 
 from news.clients.base_client import AIClient
 from news.prompts import (

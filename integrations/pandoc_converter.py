@@ -125,8 +125,6 @@ def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
 
     args: list[str] = []
     for key, value in merged.items():
-        if value is None:
-            continue
         args.extend(["-M", f"{key}={value}"])
     return args
 

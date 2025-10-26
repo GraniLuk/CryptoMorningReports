@@ -135,28 +135,27 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
             ma_df = fetch_moving_averages_for_symbol(
                 conn, symbol.symbol_id, lookback_days=1
             )
-            if ma_df is not None and not ma_df.empty:
-                latest_ma = ma_df.iloc[-1]
-                data["ma50"] = (
-                    float(latest_ma["MA50"])
-                    if pd.notna(latest_ma.get("MA50"))
-                    else None
-                )
-                data["ma200"] = (
-                    float(latest_ma["MA200"])
-                    if pd.notna(latest_ma.get("MA200"))
-                    else None
-                )
-                data["ema50"] = (
-                    float(latest_ma["EMA50"])
-                    if pd.notna(latest_ma.get("EMA50"))
-                    else None
-                )
-                data["ema200"] = (
-                    float(latest_ma["EMA200"])
-                    if pd.notna(latest_ma.get("EMA200"))
-                    else None
-                )
+            latest_ma = ma_df.iloc[-1]
+            data["ma50"] = (
+                float(latest_ma["MA50"])
+                if pd.notna(latest_ma.get("MA50"))
+                else None
+            )
+            data["ma200"] = (
+                float(latest_ma["MA200"])
+                if pd.notna(latest_ma.get("MA200"))
+                else None
+            )
+            data["ema50"] = (
+                float(latest_ma["EMA50"])
+                if pd.notna(latest_ma.get("EMA50"))
+                else None
+            )
+            data["ema200"] = (
+                float(latest_ma["EMA200"])
+                if pd.notna(latest_ma.get("EMA200"))
+                else None
+            )
         except Exception as ma_error:
             app_logger.warning(
                 f"Could not fetch moving averages for {symbol.symbol_name}: {ma_error}"
@@ -173,7 +172,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
                 last_candle = candles[-1]
                 high = float(last_candle.high)
                 low = float(last_candle.low)
-                if low is not None and high is not None and low > 0:
+                if low > 0:
                     rng = high - low
                     rng_pct = (rng / low) * 100.0
                     data["daily_high"] = high
@@ -188,7 +187,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
                     try:
                         c_high = float(c.high)
                         c_low = float(c.low)
-                        if c_low is not None and c_high is not None and c_low > 0:
+                        if c_low > 0:
                             c_range = c_high - c_low
                             c_range_pct = (c_range / c_low) * 100.0
                         else:
@@ -197,8 +196,8 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
                         ranges.append(
                             {
                                 "date": c.end_date.strftime("%Y-%m-%d"),
-                                "high": c_high if c_high is not None else None,
-                                "low": c_low if c_low is not None else None,
+                                "high": c_high,
+                                "low": c_low,
                                 "range": c_range,
                                 "range_pct": c_range_pct,
                             }

@@ -148,7 +148,7 @@ def fetch_close_prices_from_Binance(
         if klines:
             df = pd.DataFrame(
                 klines,
-                columns=[  # type: ignore[arg-type]
+                columns=[
                     "timestamp",
                     "open",
                     "high",
@@ -165,7 +165,7 @@ def fetch_close_prices_from_Binance(
             )
         else:
             # Return empty DataFrame with proper columns if no data
-            return pd.DataFrame(columns=["timestamp", "close"])  # type: ignore[arg-type]
+            return pd.DataFrame(columns=["timestamp", "close"])
 
         # Convert price columns to float
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
