@@ -133,6 +133,7 @@ async def process_daily_report(  # noqa: PLR0915
         ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
 
     highlight_articles_message = "Failed: Highlight articles message not generated"
+    analysis_reported_with_news = "Failed: Analysis with news not generated"
 
     if not ai_api_key:
         logger.error(f"No API key found for {ai_api_type}")
@@ -200,21 +201,6 @@ async def process_daily_report(  # noqa: PLR0915
                 content=analysis_reported_with_news,
                 folder_path="detailed_analysis_with_news",
             )
-
-            # Attempt to send the detailed analysis with news as a Telegram document for better readability
-            # Use in-memory bytes to avoid filesystem dependency; could alternatively write a temp file.
-            try:
-                await send_telegram_document(
-                    telegram_enabled,
-                    telegram_token,
-                    telegram_chat_id,
-                    file_bytes=analysis_reported_with_news.encode("utf-8"),
-                    filename=onedrive_filename_analysis_with_news,
-                    caption=f"Detailed Crypto Analysis with News {today_date}",
-                    parse_mode=None,  # treat as plain text/markdown without Telegram parsing
-                )
-            except Exception as doc_err:
-                logger.warning("Failed to send analysis with news as document: %s", doc_err)
 
             epub_filename = onedrive_filename_analysis_with_news.replace(".md", ".epub")
             try:
@@ -337,6 +323,21 @@ async def process_daily_report(  # noqa: PLR0915
             message_part3,
             parse_mode="HTML",
         )
+
+    # Send the detailed analysis with news as a Telegram document (last message)
+    if not analysis_reported_with_news.startswith("Failed"):
+        try:
+            await send_telegram_document(
+                telegram_enabled,
+                telegram_token,
+                telegram_chat_id,
+                file_bytes=analysis_reported_with_news.encode("utf-8"),
+                filename=f"CryptoAnalysisWithNews_{today_date}.md",
+                caption=f"Detailed Crypto Analysis with News {today_date}",
+                parse_mode=None,  # treat as plain text/markdown without Telegram parsing
+            )
+        except Exception as doc_err:
+            logger.warning("Failed to send analysis with news as document: %s", doc_err)
 
 
 if __name__ == "__main__":
