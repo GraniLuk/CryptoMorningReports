@@ -18,35 +18,35 @@ def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
     Calculate 24-hour price range using hourly candles from the last 24 hours.
     """
     results = []
-    
+
     # Calculate time range for last 24 hours
     end_time = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
     start_time = end_time - timedelta(hours=24)
-    
+
     for symbol in symbols:
         try:
             if not conn:
                 app_logger.warning(f"No database connection, skipping {symbol.symbol_name}")
                 continue
-                
+
             # Fetch hourly candles for the last 24 hours
             repo = HourlyCandleRepository(conn)
             candles = repo.get_candles(symbol, start_time, end_time)
-            
+
             if not candles:
                 app_logger.warning(f"No hourly candles found for {symbol.symbol_name} in last 24h")
                 continue
-            
+
             # Calculate high and low from all candles in the 24h period
             high_price = max(float(c.high) for c in candles)
             low_price = min(float(c.low) for c in candles)
 
             # Create a result object with symbol name and price range
-            price_data = type("PriceRange", (), {
-                "symbol": symbol.symbol_name,
-                "high": high_price,
-                "low": low_price
-            })()
+            price_data = type(
+                "PriceRange",
+                (),
+                {"symbol": symbol.symbol_name, "high": high_price, "low": low_price},
+            )()
 
             results.append(price_data)
 

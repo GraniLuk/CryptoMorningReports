@@ -103,7 +103,9 @@ class DailyCandleRepository(CandleRepository):
         Override get_candle for DailyCandles table to query by Date column.
         """
         # Extract date portion for comparison
-        date_value = end_date.date().isoformat() if isinstance(end_date, datetime) else str(end_date)
+        date_value = (
+            end_date.date().isoformat() if isinstance(end_date, datetime) else str(end_date)
+        )
 
         sql = f"""
         SELECT [Id]
