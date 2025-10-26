@@ -199,7 +199,7 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> C
             return None
 
         return Candle(
-            end_date=end_date,
+            end_date=end_date.isoformat() if isinstance(end_date, date) else str(end_date),
             source=SourceID.BINANCE.value,
             open=float(klines[0][1]),
             close=float(klines[0][4]),
@@ -257,7 +257,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
             return None
 
         return Candle(
-            end_date=end_time,
+            end_date=end_time.isoformat() if isinstance(end_time, datetime) else str(end_time),
             source=SourceID.BINANCE.value,
             open=float(klines[0][1]),
             close=float(klines[0][4]),
@@ -316,7 +316,7 @@ def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candl
             return None
 
         return Candle(
-            end_date=end_time,
+            end_date=end_time.isoformat() if isinstance(end_time, datetime) else str(end_time),
             source=SourceID.BINANCE.value,
             open=float(klines[0][1]),
             close=float(klines[0][4]),

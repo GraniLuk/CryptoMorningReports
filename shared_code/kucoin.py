@@ -61,7 +61,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date | None = None) -> Ca
             return None
 
         return Candle(
-            end_date=end_date,
+            end_date=end_date.isoformat() if isinstance(end_date, date) else str(end_date),
             source=SourceID.KUCOIN.value,
             open=float(klines[0][1]),
             close=float(klines[0][2]),
@@ -173,7 +173,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) 
             return None
 
         return Candle(
-            end_date=end_time,
+            end_date=end_time.isoformat() if isinstance(end_time, datetime) else str(end_time),
             source=SourceID.KUCOIN.value,
             open=float(klines[0][1]),
             close=float(klines[0][2]),
@@ -228,7 +228,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle
             return None
 
         return Candle(
-            end_date=end_time,
+            end_date=end_time.isoformat() if isinstance(end_time, datetime) else str(end_time),
             source=SourceID.KUCOIN.value,
             open=float(klines[0][1]),
             close=float(klines[0][2]),

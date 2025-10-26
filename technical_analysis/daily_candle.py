@@ -43,14 +43,38 @@ def fetch_daily_candles(
 def check_if_all_candles(symbol, conn):
     repo = DailyCandleRepository(conn)
     all_candles = repo.get_all_candles(symbol)
-    oldest_date = all_candles[0].end_date if all_candles else date(2017, 1, 1)
+
+    # Parse the oldest date from string
+    if all_candles:
+        oldest_date_str = all_candles[0].end_date
+        if isinstance(oldest_date_str, str):
+            oldest_date = datetime.fromisoformat(oldest_date_str.replace("Z", "+00:00").split("T")[0]).date()
+        else:
+            oldest_date = oldest_date_str if isinstance(oldest_date_str, date) else date(2017, 1, 1)
+    else:
+        oldest_date = date(2017, 1, 1)
+
     if oldest_date:
         print(f"Oldest candle date: {oldest_date}")
     end_date = datetime.now(UTC).date()
     current_date = oldest_date
     while current_date <= end_date:
         print(f"Fetching data for {current_date}")
-        from_db = next((item for item in all_candles if item.end_date == current_date), None)
+
+        # Compare dates properly - convert end_date string to date for comparison
+        from_db = next(
+            (
+                item
+                for item in all_candles
+                if (
+                    datetime.fromisoformat(item.end_date.replace("Z", "+00:00").split("T")[0]).date()
+                    if isinstance(item.end_date, str)
+                    else item.end_date
+                )
+                == current_date
+            ),
+            None,
+        )
         if from_db is None:
             fetch_daily_candle(symbol, current_date, conn)
             print("Fetched from API")

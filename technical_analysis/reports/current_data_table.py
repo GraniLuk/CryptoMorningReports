@@ -167,6 +167,13 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                     try:
                         c_high = float(c.high)
                         c_low = float(c.low)
+
+                        # Parse end_date string to datetime for formatting
+                        if isinstance(c.end_date, str):
+                            date_str = c.end_date.split("T")[0]  # Extract date part
+                        else:
+                            date_str = c.end_date.strftime("%Y-%m-%d")
+
                         if c_low > 0:
                             c_range = c_high - c_low
                             c_range_pct = (c_range / c_low) * 100.0
@@ -175,7 +182,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                             c_range_pct = None
                         ranges.append(
                             {
-                                "date": c.end_date.strftime("%Y-%m-%d"),
+                                "date": date_str,
                                 "high": c_high,
                                 "low": c_low,
                                 "range": c_range,

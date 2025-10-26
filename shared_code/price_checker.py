@@ -143,11 +143,15 @@ def fetch_hourly_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            # Ensure candle end_date is timezone-aware for comparison
-            if candle.end_date.tzinfo is None:
-                candle_end_date = candle.end_date.replace(tzinfo=UTC)
+            # Parse end_date string to datetime for comparison
+            if isinstance(candle.end_date, str):
+                candle_end_date = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
             else:
                 candle_end_date = candle.end_date
+
+            # Ensure candle end_date is timezone-aware for comparison
+            if candle_end_date.tzinfo is None:
+                candle_end_date = candle_end_date.replace(tzinfo=UTC)
             candle_dict[candle_end_date] = candle
 
     # Check for missing timestamps and fetch from source
@@ -273,11 +277,15 @@ def fetch_fifteen_min_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            # Ensure candle end_date is timezone-aware for comparison
-            if candle.end_date.tzinfo is None:
-                candle_end_date = candle.end_date.replace(tzinfo=UTC)
+            # Parse end_date string to datetime for comparison
+            if isinstance(candle.end_date, str):
+                candle_end_date = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
             else:
                 candle_end_date = candle.end_date
+
+            # Ensure candle end_date is timezone-aware for comparison
+            if candle_end_date.tzinfo is None:
+                candle_end_date = candle_end_date.replace(tzinfo=UTC)
             candle_dict[candle_end_date] = candle
 
     # Check for missing timestamps and fetch from source
