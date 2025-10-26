@@ -44,21 +44,53 @@ def calculate_ema(series, period):
 
 
 def calculate_rsi_using_RMA(series, periods=14):
+    """
+    Calculate RSI using Wilder's smoothing (RMA - Relative Moving Average).
+    This is the standard RSI calculation method used by TradingView and most platforms.
+
+    The calculation:
+    1. Calculate price changes (delta)
+    2. Separate into gains and losses
+    3. Use Wilder's smoothing: First average is SMA, then smooth with formula:
+       new_avg = (old_avg * (n-1) + current_value) / n
+
+    Args:
+        series: pandas Series of prices (typically close prices)
+        periods: RSI period (default 14, standard for RSI)
+
+    Returns:
+        pandas Series of RSI values (0-100)
+    """
     delta = series.diff()
 
     # Separate gains and losses
     gain = delta.where(delta > 0, 0)
     loss = -delta.where(delta < 0, 0)
 
-    alpha = 1.0 / periods
+    # Initialize series for average gain/loss
+    avg_gain = pd.Series(index=gain.index, dtype=float)
+    avg_loss = pd.Series(index=loss.index, dtype=float)
 
-    avg_gain = gain.ewm(alpha=alpha, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=alpha, adjust=False).mean()
+    # Need at least 'periods + 1' data points for RSI calculation
+    if len(series) <= periods:
+        # Return NaN series if insufficient data
+        return pd.Series([float("nan")] * len(series), index=series.index)
 
+    # Calculate initial SMA for the first 'periods' values
+    avg_gain.iloc[periods] = gain.iloc[1:periods + 1].mean()
+    avg_loss.iloc[periods] = loss.iloc[1:periods + 1].mean()
+
+    # Use Wilder's smoothing for subsequent values
+    # Formula: new_avg = (old_avg * (n-1) + current_value) / n
+    for i in range(periods + 1, len(series)):
+        avg_gain.iloc[i] = (avg_gain.iloc[i - 1] * (periods - 1) + gain.iloc[i]) / periods
+        avg_loss.iloc[i] = (avg_loss.iloc[i - 1] * (periods - 1) + loss.iloc[i]) / periods
+
+    # Calculate RS and RSI
     rs = avg_gain / avg_loss
-    return (
-        100 if avg_loss.iloc[-1] == 0 else 0 if avg_gain.iloc[-1] == 0 else 100 - (100 / (1 + rs))
-    )
+    rsi = 100 - (100 / (1 + rs))
+
+    return rsi
 
 
 def calculate_all_rsi_for_symbol(conn, symbol):

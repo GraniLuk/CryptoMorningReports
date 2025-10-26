@@ -20,8 +20,9 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
     all_values = pd.DataFrame()
 
     try:
-        # Get 15 days of data for 14-period RSI calculation
-        start_date = target_date - timedelta(days=15)
+        # Get 30 days of data for 14-period RSI calculation
+        # Need extra data for Wilder's smoothing to stabilize (14 for SMA init + 14+ for smoothing)
+        start_date = target_date - timedelta(days=30)
         candles = fetch_daily_candles(symbol, start_date, target_date, conn)
 
         if not candles:
@@ -123,8 +124,9 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
 
     for symbol in symbols:
         try:
-            # Get 15 days of data for 14-period RSI calculation
-            start_date = target_date - timedelta(days=15)
+            # Get 30 days of data for 14-period RSI calculation
+            # Need extra data for Wilder's smoothing to stabilize (14 for SMA init + 14+ for smoothing)
+            start_date = target_date - timedelta(days=30)
             candles = fetch_daily_candles(symbol, start_date, target_date, conn)
 
             if not candles:
