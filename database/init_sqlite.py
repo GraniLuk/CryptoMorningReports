@@ -6,6 +6,7 @@ This creates a local database structure compatible with the Azure SQL schema.
 import os
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 
 def create_sqlite_database(db_path="./local_crypto.db"):
@@ -16,7 +17,7 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     # Remove existing database if present
     if os.path.exists(db_path):
         backup_path = f"{db_path}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        os.rename(db_path, backup_path)
+        Path(db_path).rename(backup_path)
         print(f"📦 Backed up existing database to: {backup_path}")
 
     print(f"🗄️  Creating new SQLite database: {db_path}")

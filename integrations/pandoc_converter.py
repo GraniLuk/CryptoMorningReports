@@ -14,7 +14,7 @@ _pypandoc_module = None
 
 
 def _normalize_custom_dir(custom_dir: str) -> str:
-    expanded = os.path.expandvars(os.path.expanduser(custom_dir))
+    expanded = os.path.expandvars(str(Path(custom_dir).expanduser()))
 
     if os.name != "nt":
         windows_candidate = PureWindowsPath(expanded)
@@ -37,7 +37,7 @@ def _resolve_pandoc_download_dir() -> str:
     if script_root:
         return os.path.join(script_root, ".pandoc-cache")
 
-    home_dir = os.environ.get("HOME") or os.getcwd()
+    home_dir = os.environ.get("HOME") or str(Path.cwd())
     return os.path.join(home_dir, ".pandoc-cache")
 
 
@@ -81,7 +81,7 @@ def _ensure_pandoc_available():
             )
             target_dir = _resolve_pandoc_download_dir()
             try:
-                os.makedirs(target_dir, exist_ok=True)
+                Path(target_dir).mkdir(parents=True, exist_ok=True)
                 pandoc_path = pypandoc.download_pandoc(
                     targetfolder=target_dir, delete_installer=True
                 )
@@ -170,7 +170,7 @@ def _convert_markdown_to_epub_sync(
             if not path:
                 continue
             try:
-                os.remove(path)
+                Path(path).unlink()
             except OSError:
                 app_logger.debug("Failed to remove temp file: %s", path)
 

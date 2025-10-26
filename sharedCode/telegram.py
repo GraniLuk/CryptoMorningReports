@@ -2,6 +2,7 @@ import html
 import logging
 import re
 import time
+from pathlib import Path
 
 import requests
 
@@ -84,9 +85,7 @@ async def send_telegram_message(
     except Exception as e:
         # Avoid logging the entire large message to keep logs clean / protect data
         snippet = (message[:500] + "...<truncated>") if len(message) > 600 else message
-        logging.error(
-            "Failed to send telegram message: %s | snippet: %s", str(e), snippet
-        )
+        logging.error("Failed to send telegram message: %s | snippet: %s", str(e), snippet)
         return False
 
 
@@ -166,7 +165,7 @@ def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
     current = []
     current_len = 0
     for p in paragraphs:
-        p_block = (p + "\n\n")  # keep delimiter
+        p_block = p + "\n\n"  # keep delimiter
         if len(p_block) > limit:
             # Flush current
             if current:
@@ -222,7 +221,7 @@ async def send_telegram_document(
             if not os.path.exists(local_path):
                 logging.error("Local file does not exist: %s", local_path)
                 return False
-            file_size = os.path.getsize(local_path)
+            file_size = Path(local_path).stat().st_size
             if file_size > MAX_DOCUMENT_SIZE:
                 logging.error(
                     "File %s exceeds Telegram max size (%d > %d)",
@@ -263,9 +262,7 @@ async def send_telegram_document(
                 err_json = response.json()
             except Exception:
                 err_json = {"raw": response.text[:300]}
-            logging.error(
-                "Failed to send document (status=%s): %s", response.status_code, err_json
-            )
+            logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
             return False
         logging.info("Document %s successfully sent to Telegram", filename)
         return True

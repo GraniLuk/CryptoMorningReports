@@ -20,7 +20,7 @@ if __name__ == "__main__":
     rsi = 38
     TP = 1.2
     SL = 0.8
-    daysAfterToBuy = 2
+    days_after_to_buy = 2
     # Option 2: Execute for a single symbol (uncomment below to run for just one symbol)
     symbols = fetch_symbols(conn)
     if symbols:
@@ -40,7 +40,7 @@ if __name__ == "__main__":
             rsi,
             Decimal(TP),
             Decimal(SL),
-            daysAfterToBuy,
+            days_after_to_buy,
             "LONG",
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")

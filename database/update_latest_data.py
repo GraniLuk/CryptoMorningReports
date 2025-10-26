@@ -4,6 +4,7 @@ This module ensures that daily reports use the most recent market data.
 """
 
 import logging
+import sys
 from datetime import UTC, date, timedelta
 
 from infra.sql_connection import connect_to_sql
@@ -288,7 +289,7 @@ if __name__ == "__main__":
 
     if not conn:
         logger.error("Failed to connect to database")
-        exit(1)
+        sys.exit(1)
 
     try:
         print("\n" + "=" * 70)
