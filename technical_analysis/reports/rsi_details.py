@@ -8,9 +8,7 @@ from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
-def create_rsi_table_for_symbol(
-    symbol: Symbol, conn, target_date: date
-) -> PrettyTable | None:
+def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
     """
     Creates RSI table for a symbol using daily candles data for the last 30 days,
     identifies divergences, and checks for RSI trendline breakouts.
@@ -80,12 +78,8 @@ def create_rsi_table_for_symbol(
                 row["symbol"],
                 f"${float(row['Close']):,.2f}",
                 f"{float(row['RSI']):.2f}",
-                f"{row['rsi_daily_change']:+.2f}"
-                if pd.notna(row["rsi_daily_change"])
-                else "N/A",
-                f"{row['rsi_weekly_change']:+.2f}"
-                if pd.notna(row["rsi_weekly_change"])
-                else "N/A",
+                f"{row['rsi_daily_change']:+.2f}" if pd.notna(row["rsi_daily_change"]) else "N/A",
+                f"{row['rsi_weekly_change']:+.2f}" if pd.notna(row["rsi_weekly_change"]) else "N/A",
                 bool(row["bullish_divergence"]),
                 bool(row["bearish_divergence"]),
                 bool(row["rsi_breakout"]),
@@ -165,9 +159,7 @@ def detect_rsi_breakout(df):
 
     # Draw trendlines based on recent peaks/troughs (simple implementation)
     recent_rsis = df["RSI"].tail(5)  # Consider last 5 days of RSI values
-    resistance_level = max(
-        recent_rsis
-    )  # Resistance is the highest value in the last 5 days
+    resistance_level = max(recent_rsis)  # Resistance is the highest value in the last 5 days
     support_level = min(recent_rsis)  # Support is the lowest value in the last 5 days
 
     for i in range(len(df)):

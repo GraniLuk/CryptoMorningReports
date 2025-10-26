@@ -34,9 +34,7 @@ def fetch_daily_candles(
 
     all_candles = []
     for symbol in symbols:
-        symbol_candles = fetch_daily_candles_for_symbol(
-            symbol, start_date, end_date, conn
-        )
+        symbol_candles = fetch_daily_candles_for_symbol(symbol, start_date, end_date, conn)
         all_candles.extend(symbol_candles)
 
     return all_candles
@@ -52,9 +50,7 @@ def check_if_all_candles(symbol, conn):
     current_date = oldest_date
     while current_date <= end_date:
         print(f"Fetching data for {current_date}")
-        from_db = next(
-            (item for item in all_candles if item.end_date == current_date), None
-        )
+        from_db = next((item for item in all_candles if item.end_date == current_date), None)
         if from_db is None:
             fetch_daily_candle(symbol, current_date, conn)
             print("Fetched from API")

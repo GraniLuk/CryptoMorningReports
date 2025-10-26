@@ -122,9 +122,7 @@ def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
         raise
 
 
-def fetch_moving_averages_for_symbol(
-    conn, symbol_id: int, lookback_days: int = 7
-) -> pd.DataFrame:
+def fetch_moving_averages_for_symbol(conn, symbol_id: int, lookback_days: int = 7) -> pd.DataFrame:
     """
     Fetches moving averages records for a specific symbol for the past N days
 

@@ -32,9 +32,7 @@ def save_volume_results(conn, sorted_results):
                     VALUES (?, ?, ?)
                 """
                 for result in sorted_results:
-                    cursor.execute(
-                        query, (result["symbol_id"], result["total"], today.isoformat())
-                    )
+                    cursor.execute(query, (result["symbol_id"], result["total"], today.isoformat()))
             else:
                 # SQL Server uses MERGE
                 query = """

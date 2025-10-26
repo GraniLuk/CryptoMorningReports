@@ -122,14 +122,10 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
                         indicator_date=target_date,
                     )
                 except Exception as e:
-                    app_logger.error(
-                        f"Failed to save MACD results for {symbol.symbol_name}: {e!s}"
-                    )
+                    app_logger.error(f"Failed to save MACD results for {symbol.symbol_name}: {e!s}")
 
         except Exception as e:
-            app_logger.error(
-                "Error processing MACD for symbol %s: %s", symbol.symbol_name, str(e)
-            )
+            app_logger.error("Error processing MACD for symbol %s: %s", symbol.symbol_name, str(e))
 
     # Create MACD table
     macd_table = PrettyTable()

@@ -7,9 +7,7 @@ from sharedCode.priceChecker import fetch_daily_candles
 from source_repository import Symbol, fetch_symbols
 
 
-def fetch_price_change_report(
-    symbols: list[Symbol], conn, target_date: date
-) -> PrettyTable:
+def fetch_price_change_report(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
     target_date = target_date or datetime.now(UTC).date()
     start_date = target_date - timedelta(days=7)  # Get 7 days of data
 

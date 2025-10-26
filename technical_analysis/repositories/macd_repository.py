@@ -118,13 +118,11 @@ def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
 
             # Normalize IndicatorDate to timezone-naive datetime for consistent comparison
             if not df.empty and "IndicatorDate" in df.columns:
-                df["IndicatorDate"] = pd.to_datetime(
-                    df["IndicatorDate"], utc=True
-                ).dt.tz_localize(None)
+                df["IndicatorDate"] = pd.to_datetime(df["IndicatorDate"], utc=True).dt.tz_localize(
+                    None
+                )
 
-            app_logger.info(
-                f"Successfully fetched {len(df)} MACD records for {yesterday}"
-            )
+            app_logger.info(f"Successfully fetched {len(df)} MACD records for {yesterday}")
             return df
 
     except pyodbc.Error as e:
