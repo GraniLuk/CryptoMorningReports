@@ -120,7 +120,7 @@ def get_aggregated_data(conn):
             results = []
 
             for row in cursor.fetchall():
-                results.append(dict(zip(columns, row)))
+                results.append(dict(zip(columns, row, strict=False)))
 
             cursor.close()
             app_logger.info(
@@ -130,7 +130,7 @@ def get_aggregated_data(conn):
             return results
 
         except Exception as e:
-            app_logger.error(f"Error fetching aggregated data from SQLite: {str(e)}")
+            app_logger.error(f"Error fetching aggregated data from SQLite: {e!s}")
             raise
 
     try:
@@ -162,7 +162,7 @@ def get_aggregated_data(conn):
         results = []
 
         for row in cursor.fetchall():
-            results.append(dict(zip(columns, row)))
+            results.append(dict(zip(columns, row, strict=False)))
 
         cursor.close()
         app_logger.info("Successfully fetched symbol data")
@@ -173,5 +173,5 @@ def get_aggregated_data(conn):
         app_logger.error(f"ODBC Error while fetching symbol data: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching symbol data: {str(e)}")
+        app_logger.error(f"Error fetching symbol data: {e!s}")
         raise

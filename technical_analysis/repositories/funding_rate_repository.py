@@ -72,7 +72,7 @@ class FundingRateRepository:
             )
 
         except Exception as e:
-            app_logger.error(f"Error saving funding rate: {str(e)}")
+            app_logger.error(f"Error saving funding rate: {e!s}")
             self.conn.rollback()
             raise
 
@@ -109,5 +109,5 @@ class FundingRateRepository:
             return None
 
         except Exception as e:
-            app_logger.error(f"Error fetching funding rate: {str(e)}")
+            app_logger.error(f"Error fetching funding rate: {e!s}")
             raise

@@ -67,5 +67,5 @@ def save_sopr_results(conn, metrics: dict) -> None:
         app_logger.error(f"ODBC Error while saving SOPR metrics: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving SOPR metrics: {str(e)}")
+        app_logger.error(f"Error saving SOPR metrics: {e!s}")
         raise

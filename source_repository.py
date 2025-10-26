@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
 
 import pyodbc
 
@@ -32,27 +31,25 @@ class Symbol:
         return f"{self.symbol_name}USDT"
 
     @staticmethod
-    def get_symbol_names(symbols: List["Symbol"]) -> List[str]:
+    def get_symbol_names(symbols: list["Symbol"]) -> list[str]:
         """Convert List of Symbols to List of symbol names"""
         return [symbol.symbol_name for symbol in symbols]
 
     @staticmethod
-    def get_symbol_names_usd(symbols: List["Symbol"]) -> List[str]:
+    def get_symbol_names_usd(symbols: list["Symbol"]) -> list[str]:
         """Convert List of Symbols to List of symbol names with USD suffix"""
         return [f"{symbol.symbol_name}-USD" for symbol in symbols]
 
 
 class NoSymbolsFoundError(Exception):
     """Exception raised when no symbols are found in the database."""
-    pass
 
 
 class SymbolNotFoundError(Exception):
     """Exception raised when a specific symbol is not found in the database."""
-    pass
 
 
-def fetch_symbols(conn) -> List[Symbol]:
+def fetch_symbols(conn) -> list[Symbol]:
     """
     Fetches all symbols from the database and returns them as a list of Symbol objects.
 
@@ -93,7 +90,7 @@ def fetch_symbols(conn) -> List[Symbol]:
         app_logger.error(f"ODBC Error while fetching symbols: {e}")
         raise Exception(f"Database error while fetching symbols: {e}")
     except Exception as e:
-        app_logger.error(f"Error fetching symbols: {str(e)}")
+        app_logger.error(f"Error fetching symbols: {e!s}")
         raise
 
 
@@ -142,5 +139,5 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
         # Re-raise connection errors
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching symbol {symbol_name}: {str(e)}")
+        app_logger.error(f"Error fetching symbol {symbol_name}: {e!s}")
         raise

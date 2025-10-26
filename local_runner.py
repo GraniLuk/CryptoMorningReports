@@ -8,6 +8,7 @@ import sys
 
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv()
 
@@ -66,7 +67,7 @@ async def main():
 
     except Exception as e:
         print("=" * 60)
-        print(f"ERROR: Failed to run {report_type} report: {str(e)}")
+        print(f"ERROR: Failed to run {report_type} report: {e!s}")
         import traceback
 
         traceback.print_exc()

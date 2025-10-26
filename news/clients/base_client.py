@@ -21,7 +21,6 @@ class AIClient(ABC):
         Returns:
             str: Analysis result or error message
         """
-        pass
 
     @abstractmethod
     def highlight_articles(self, user_crypto_list, news_feeded) -> str:
@@ -35,4 +34,3 @@ class AIClient(ABC):
         Returns:
             str: Highlighted articles or error message
         """
-        pass

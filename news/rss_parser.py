@@ -1,6 +1,6 @@
 import json
 import time  # Added for struct_time type checking
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from time import mktime
 
 import feedparser
@@ -50,7 +50,7 @@ def fetch_rss_news(feed_url, source, class_name):
     try:
         feed = feedparser.parse(feed_url)
         latest_news = []
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         for entry in feed.entries:
             # Make published_time timezone-aware by adding UTC timezone
             if hasattr(entry, "published_parsed") and isinstance(
@@ -58,7 +58,7 @@ def fetch_rss_news(feed_url, source, class_name):
             ):
                 published_time = datetime.fromtimestamp(mktime(entry.published_parsed))
                 published_time = published_time.replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 )  # Add timezone info
             else:
                 # Fallback to current time if published_parsed is not valid
@@ -81,7 +81,7 @@ def fetch_rss_news(feed_url, source, class_name):
 
         return latest_news
     except Exception as e:
-        app_logger.error(f"Error fetching news from {feed_url}: {str(e)}")
+        app_logger.error(f"Error fetching news from {feed_url}: {e!s}")
         return []
 
 
@@ -97,10 +97,9 @@ def fetch_full_content(url, class_name):
                 line.strip() for line in article_text.splitlines() if line.strip()
             )
             return cleaned_text
-        else:
-            return "Failed to extract full content"
+        return "Failed to extract full content"
     except Exception as e:
-        app_logger.error(f"Error fetching full content from {url}: {str(e)}")
+        app_logger.error(f"Error fetching full content from {url}: {e!s}")
         return "Failed to fetch full content"
 
 

@@ -118,7 +118,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
             )
         except Exception as e:
             app_logger.error(
-                f"Failed to save RSI results for candle {daily_candle_id}: {str(e)}"
+                f"Failed to save RSI results for candle {daily_candle_id}: {e!s}"
             )
 
 

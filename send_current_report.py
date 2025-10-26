@@ -65,13 +65,11 @@ async def send_current_report(symbol: str):
                 print("✅ SUCCESS: Report sent to Telegram!")
                 print("📱 Check your Telegram group for the message!")
                 return True
-            else:
-                print("❌ ERROR: Failed to send report to Telegram")
-                return False
-        else:
-            error_preview = report[:200] if report else "No report"
-            print(f"❌ ERROR: Failed to generate report: {error_preview}...")
+            print("❌ ERROR: Failed to send report to Telegram")
             return False
+        error_preview = report[:200] if report else "No report"
+        print(f"❌ ERROR: Failed to generate report: {error_preview}...")
+        return False
 
     finally:
         if conn:

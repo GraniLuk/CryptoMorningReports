@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -11,7 +10,7 @@ from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 def create_rsi_table_for_symbol(
     symbol: Symbol, conn, target_date: date
-) -> Optional[PrettyTable]:
+) -> PrettyTable | None:
     """
     Creates RSI table for a symbol using daily candles data for the last 30 days,
     identifies divergences, and checks for RSI trendline breakouts.
@@ -53,7 +52,7 @@ def create_rsi_table_for_symbol(
                 df["RSI"].iloc[-1],
             )
     except Exception as e:
-        app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
+        app_logger.error(f"Error processing {symbol.symbol_name}: {e!s}")
 
     # Create PrettyTable output
     rsi_table = PrettyTable()

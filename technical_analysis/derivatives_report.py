@@ -5,12 +5,12 @@ Fetch and save derivatives market data (Open Interest and Funding Rate) for symb
 import os
 import sys
 
+
 # Add parent directory to path for imports when run standalone
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime, timezone
-from typing import List
+from datetime import UTC, datetime
 
 from prettytable import PrettyTable
 
@@ -25,7 +25,7 @@ from technical_analysis.repositories.open_interest_repository import (
 )
 
 
-def fetch_derivatives_report(symbols: List[Symbol], conn) -> PrettyTable:
+def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
     """
     Fetch Open Interest and Funding Rate for all symbols and save to database.
 
@@ -53,7 +53,7 @@ def fetch_derivatives_report(symbols: List[Symbol], conn) -> PrettyTable:
     table.align["Funding Rate (%)"] = "r"
     table.align["Next Funding"] = "l"
 
-    indicator_date = datetime.now(timezone.utc)
+    indicator_date = datetime.now(UTC)
     successful = 0
     failed = 0
 
@@ -102,7 +102,7 @@ def fetch_derivatives_report(symbols: List[Symbol], conn) -> PrettyTable:
 
         except Exception as e:
             app_logger.error(
-                f"Error processing derivatives data for {symbol.symbol_name}: {str(e)}"
+                f"Error processing derivatives data for {symbol.symbol_name}: {e!s}"
             )
             failed += 1
 

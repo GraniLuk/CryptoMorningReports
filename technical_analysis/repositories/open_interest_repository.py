@@ -72,7 +72,7 @@ class OpenInterestRepository:
             )
 
         except Exception as e:
-            app_logger.error(f"Error saving open interest: {str(e)}")
+            app_logger.error(f"Error saving open interest: {e!s}")
             self.conn.rollback()
             raise
 
@@ -109,5 +109,5 @@ class OpenInterestRepository:
             return None
 
         except Exception as e:
-            app_logger.error(f"Error fetching open interest: {str(e)}")
+            app_logger.error(f"Error fetching open interest: {e!s}")
             raise

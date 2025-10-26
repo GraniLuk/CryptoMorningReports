@@ -1,6 +1,5 @@
 import time
-from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 from kucoin import Client as KucoinClient
@@ -11,7 +10,7 @@ from sharedCode.commonPrice import Candle, TickerPrice
 from source_repository import SourceID, Symbol
 
 
-def fetch_kucoin_price(symbol: Symbol) -> Optional[TickerPrice]:
+def fetch_kucoin_price(symbol: Symbol) -> TickerPrice | None:
     """Fetch price data from Kucoin exchange."""
     # Initialize the client
     kucoin_credentials = get_kucoin_credentials()
@@ -33,11 +32,11 @@ def fetch_kucoin_price(symbol: Symbol) -> Optional[TickerPrice]:
             volume_quote=float(ticker["volValue"]),
         )
     except Exception as e:
-        app_logger.error(f"Kucoin error for {symbol}: {str(e)}")
+        app_logger.error(f"Kucoin error for {symbol}: {e!s}")
         return None
 
 
-def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Optional[Candle]:
+def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> Candle | None:
     """Fetch open, close, high, low prices and volume from KuCoin for the last full day."""
     client = KucoinClient()
 
@@ -77,7 +76,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> O
 
     except Exception as e:
         app_logger.error(
-            f"Unexpected error when fetching Kucoin daily kline for {symbol}: {str(e)}"
+            f"Unexpected error when fetching Kucoin daily kline for {symbol}: {e!s}"
         )
         return None
 
@@ -94,7 +93,7 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         # Calculate start time (limit days ago)
         end_time = int(time.time())
         start_time = int(
-            (datetime.now(timezone.utc) - timedelta(days=limit)).timestamp()
+            (datetime.now(UTC) - timedelta(days=limit)).timestamp()
         )
 
         # Get kline data with start and end time
@@ -129,14 +128,14 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         return df
 
     except Exception as e:
-        app_logger.error(f"Error fetching data from Kucoin: {str(e)}")
+        app_logger.error(f"Error fetching data from Kucoin: {e!s}")
         return pd.DataFrame()
 
 
 # Adding hourly and fifteen-minute candle fetching functions
 
 
-def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: Optional[datetime] = None) -> Optional[Candle]:
+def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) -> Candle | None:
     """
     Fetch open, close, high, low prices and volume from KuCoin for the specified hour.
 
@@ -151,12 +150,12 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: Optional[datetime] = Non
     # Handle end_time parameter
     if end_time is None:
         # Get the current time in UTC
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         # Round down to the previous full hour
         end_time = current_time.replace(minute=0, second=0, microsecond=0)
     elif end_time.tzinfo is None:
         # Convert naive datetime to timezone-aware
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
 
     # Start time is 1 hour before end time
     start_time = end_time - timedelta(hours=1)
@@ -194,12 +193,12 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: Optional[datetime] = Non
 
     except Exception as e:
         app_logger.error(
-            f"Error fetching hourly data for {symbol.symbol_name}: {str(e)}"
+            f"Error fetching hourly data for {symbol.symbol_name}: {e!s}"
         )
         return None
 
 
-def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Optional[Candle]:
+def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
     """
     Fetch open, close, high, low prices and volume from KuCoin for the specified 15-minute interval.
 
@@ -214,7 +213,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Option
 
     if end_time.tzinfo is None:
         # Convert naive datetime to timezone-aware
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
 
     # Start time is 15 minutes before end time
     start_time = end_time - timedelta(minutes=15)
@@ -252,7 +251,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Option
 
     except Exception as e:
         app_logger.error(
-            f"Error fetching 15-minute data for {symbol.symbol_name}: {str(e)}"
+            f"Error fetching 15-minute data for {symbol.symbol_name}: {e!s}"
         )
         return None
 
@@ -268,7 +267,7 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
     symbol = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"][0]
     start_date = "2025-01-11"  # Start date (YYYY-MM-DD)
-    end_date = datetime.now(timezone.utc)
+    end_date = datetime.now(UTC)
     end_date = end_date.replace(minute=0, second=0, microsecond=0)  # End date (YYYY-MM-DD)
 
     hourly_candle = fetch_kucoin_hourly_kline(symbol, end_time=end_date)
@@ -279,4 +278,4 @@ if __name__ == "__main__":
             f"Open: {hourly_candle.open}, Close: {hourly_candle.close}, Volume: {hourly_candle.volume}"
         )
     else:
-        print("Failed to fetch hourly candle data.")    
+        print("Failed to fetch hourly candle data.")

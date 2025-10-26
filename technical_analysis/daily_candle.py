@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import List, Optional
 
 from sharedCode.commonPrice import Candle
 from sharedCode.priceChecker import fetch_daily_candle
@@ -13,11 +12,11 @@ from technical_analysis.repositories.daily_candle_repository import (
 
 
 def fetch_daily_candles(
-    symbols: List[Symbol],
+    symbols: list[Symbol],
     conn,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-) -> List[Candle]:
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> list[Candle]:
     """
     Fetches daily candles for given symbols and returns a list of Candle objects
 

@@ -298,9 +298,9 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     )
 
     conn.commit()
-    print(f"✅ Database schema created successfully!")
+    print("✅ Database schema created successfully!")
     print(f"   - Symbols: {len(default_symbols)} symbols added")
-    print(f"   - Tables: Symbols, HourlyCandles, FifteenMinCandles, DailyCandles")
+    print("   - Tables: Symbols, HourlyCandles, FifteenMinCandles, DailyCandles")
 
     return conn
 
@@ -336,7 +336,7 @@ def verify_database(db_path="./local_crypto.db"):
     cursor.execute("SELECT COUNT(*) FROM DailyCandles")
     daily_count = cursor.fetchone()[0]
 
-    print(f"\n📈 Candle Data:")
+    print("\n📈 Candle Data:")
     print(f"   Hourly: {hourly_count} candles")
     print(f"   15-min: {fifteen_count} candles")
     print(f"   Daily: {daily_count} candles")
@@ -355,7 +355,7 @@ if __name__ == "__main__":
     else:
         conn = create_sqlite_database(db_path)
         conn.close()
-        print(f"\n🎉 SQLite database ready!")
-        print(f"\nNext steps:")
-        print(f"  1. Run: python database/init_sqlite.py verify")
-        print(f"  2. Populate with data: python database/fetch_live_data.py")
+        print("\n🎉 SQLite database ready!")
+        print("\nNext steps:")
+        print("  1. Run: python database/init_sqlite.py verify")
+        print("  2. Populate with data: python database/fetch_live_data.py")

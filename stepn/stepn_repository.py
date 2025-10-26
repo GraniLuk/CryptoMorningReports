@@ -1,7 +1,7 @@
 import math
 import os
 from datetime import date
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import pyodbc
 
@@ -13,7 +13,7 @@ def _is_sqlite() -> bool:
     return os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
 
-def _sanitize_float(value: Any) -> Optional[float]:
+def _sanitize_float(value: Any) -> float | None:
     """Coerce incoming numeric-like values to a finite float or return None.
 
     This defends against values that SQL Server rejects (e.g. NaN, inf, empty strings,
@@ -34,7 +34,7 @@ def _sanitize_float(value: Any) -> Optional[float]:
         return None
 
 
-def _sanitize_int(value: Any) -> Optional[int]:
+def _sanitize_int(value: Any) -> int | None:
     if value is None:
         return None
     try:
@@ -168,13 +168,13 @@ def save_stepn_results(
         app_logger.error(f"ODBC Error while saving STEPN results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving STEPN results: {str(e)}")
+        app_logger.error(f"Error saving STEPN results: {e!s}")
         raise
 
 
 def fetch_stepn_results_last_14_days(
     conn,
-) -> Optional[List[Tuple[float, float, float, date]]]:
+) -> list[tuple[float, float, float, date]] | None:
     """
     Fetches STEPN results from the last 14 days from the database.
 
@@ -214,5 +214,5 @@ def fetch_stepn_results_last_14_days(
         app_logger.error(f"ODBC Error while fetching STEPN results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching STEPN results: {str(e)}")
+        app_logger.error(f"Error fetching STEPN results: {e!s}")
         raise

@@ -1,4 +1,3 @@
-from typing import List
 
 from prettytable import PrettyTable
 
@@ -11,7 +10,7 @@ from technical_analysis.repositories.priceRangeRepository import (
 )
 
 
-def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
+def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
     results = []
     for symbol in symbols:
         try:
@@ -34,11 +33,11 @@ def fetch_range_price(symbols: List[Symbol], conn) -> PrettyTable:
                     )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save price range results for {symbol.symbol_name}: {str(e)}"
+                        f"Failed to save price range results for {symbol.symbol_name}: {e!s}"
                     )
 
         except Exception as e:
-            app_logger.error(f"Unexpected error for {symbol.symbol_name}: {str(e)}")
+            app_logger.error(f"Unexpected error for {symbol.symbol_name}: {e!s}")
 
     range_table = PrettyTable()
     range_table.field_names = ["Symbol", "24h Low", "24h High", "Range %"]

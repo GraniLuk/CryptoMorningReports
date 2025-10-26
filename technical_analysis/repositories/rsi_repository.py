@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import Optional
 
 import pyodbc
 
@@ -54,7 +53,7 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
         app_logger.error(f"ODBC Error while saving RSI results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving RSI results: {str(e)}")
+        app_logger.error(f"Error saving RSI results: {e!s}")
         raise
 
 
@@ -128,13 +127,13 @@ def save_rsi_by_timeframe(
         app_logger.error(f"ODBC Error while saving {timeframe} RSI results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving {timeframe} RSI results: {str(e)}")
+        app_logger.error(f"Error saving {timeframe} RSI results: {e!s}")
         raise
 
 
 def get_candles_with_rsi(
     conn, symbol_id: int, from_date, timeframe: str = "daily"
-) -> Optional[list]:
+) -> list | None:
     """
     Fetches candle data with RSI for a specific symbol,
     only returning records on or after the specified date.
@@ -188,7 +187,7 @@ def get_candles_with_rsi(
             columns = [column[0] for column in cursor.description]
 
             # Fetch all rows and convert to list of dictionaries
-            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            results = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
 
             cursor.close()
             app_logger.info(
@@ -202,7 +201,7 @@ def get_candles_with_rsi(
         )
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching {timeframe} candle data with RSI: {str(e)}")
+        app_logger.error(f"Error fetching {timeframe} candle data with RSI: {e!s}")
         raise
 
 
@@ -420,6 +419,6 @@ def get_historical_rsi(
         raise
     except Exception as e:
         app_logger.error(
-            f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {str(e)}"
+            f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {e!s}"
         )
         raise

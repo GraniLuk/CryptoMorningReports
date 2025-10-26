@@ -2,8 +2,7 @@
 Utility functions for formatting candle data for AI prompts
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Dict, List
+from datetime import UTC, datetime, timedelta
 
 from source_repository import Symbol
 from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
@@ -11,8 +10,8 @@ from technical_analysis.hourly_candle import fetch_hourly_candles
 
 
 def get_candle_data(
-    symbols: List[Symbol], conn, hourly_limit: int = 24, minute_limit: int = 32
-) -> Dict:
+    symbols: list[Symbol], conn, hourly_limit: int = 24, minute_limit: int = 32
+) -> dict:
     """
     Fetch hourly and 15-minute candle data for cryptocurrencies
 
@@ -28,7 +27,7 @@ def get_candle_data(
     result = {}
 
     # Get the current time for end time
-    end_time = datetime.now(timezone.utc)
+    end_time = datetime.now(UTC)
     hourly_start_time = end_time - timedelta(hours=hourly_limit)
     fifteen_min_start_time = end_time - timedelta(minutes=minute_limit)
 
@@ -82,7 +81,7 @@ def get_candle_data(
 
 
 def format_candle_data_for_prompt(
-    candle_data: Dict, max_display_candles: int = 5
+    candle_data: dict, max_display_candles: int = 5
 ) -> str:
     """
     Format candle data as a string for prompts

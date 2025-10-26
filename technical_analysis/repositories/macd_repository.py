@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import Optional
 
 import pandas as pd
 import pyodbc
@@ -88,11 +87,11 @@ def save_macd_results(
         app_logger.error(f"ODBC Error while saving MACD results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving MACD results: {str(e)}")
+        app_logger.error(f"Error saving MACD results: {e!s}")
         raise
 
 
-def fetch_yesterday_macd(conn, target_date: date) -> Optional[pd.DataFrame]:
+def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
     """
     Fetches all MACD records from yesterday
 
@@ -132,7 +131,7 @@ def fetch_yesterday_macd(conn, target_date: date) -> Optional[pd.DataFrame]:
         app_logger.error(f"ODBC Error while fetching yesterday's MACD: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching yesterday's MACD: {str(e)}")
+        app_logger.error(f"Error fetching yesterday's MACD: {e!s}")
         raise
 
 
@@ -164,7 +163,7 @@ def get_macd_with_crossover_data(self):
             results = []
 
             for row in cursor.fetchall():
-                results.append(dict(zip(columns, row)))
+                results.append(dict(zip(columns, row, strict=False)))
 
             cursor.close()
             app_logger.info("Successfully fetched MACD with crossover data")
@@ -175,5 +174,5 @@ def get_macd_with_crossover_data(self):
         app_logger.error(f"ODBC Error while fetching MACD data: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching MACD data: {str(e)}")
+        app_logger.error(f"Error fetching MACD data: {e!s}")
         raise

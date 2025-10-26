@@ -24,7 +24,7 @@ def fetch_and_format_candle_data(conn) -> str:
     """
     if not conn:
         return "No price data available (database connection not provided)."
-    
+
     try:
         symbols = fetch_symbols(conn)
         # Include all symbols for comprehensive analysis
@@ -33,5 +33,5 @@ def fetch_and_format_candle_data(conn) -> str:
         logging.info(f"Successfully fetched candle data for {len(symbols)} symbols")
         return price_data
     except Exception as e:
-        logging.error(f"Failed to fetch candle data: {str(e)}")
+        logging.error(f"Failed to fetch candle data: {e!s}")
         return "No price data available."

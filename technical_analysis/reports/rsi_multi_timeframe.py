@@ -1,5 +1,4 @@
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -24,7 +23,7 @@ from technical_analysis.rsi import calculate_rsi_using_RMA
 
 def get_rsi_for_symbol_timeframe(
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """
     Gets RSI data for a symbol in the specified timeframe.
     If RSI values are missing in the database, it calculates them only for the requested period.
@@ -132,10 +131,9 @@ def get_rsi_for_symbol_timeframe(
             # If start_timestamp is aware but different tz, convert it
             elif start_timestamp.tz != datetime_index.tz:
                 start_timestamp = start_timestamp.tz_convert(datetime_index.tz)
-        else:
-            # If df.index is naive, ensure start_timestamp is also naive
-            if start_timestamp.tz is not None:
-                start_timestamp = start_timestamp.tz_localize(None)
+        # If df.index is naive, ensure start_timestamp is also naive
+        elif start_timestamp.tz is not None:
+            start_timestamp = start_timestamp.tz_localize(None)
 
         requested_df: pd.DataFrame = df[df.index >= start_timestamp]
         rsi_series: pd.Series = requested_df["RSI"]
@@ -188,7 +186,7 @@ def get_rsi_for_symbol_timeframe(
                         )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save {timeframe} RSI for candle {candle_id}: {str(e)}"
+                        f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}"
                     )
 
             # Remove the temporary calculation column
@@ -212,13 +210,13 @@ def get_rsi_for_symbol_timeframe(
 
     except Exception as e:
         app_logger.error(
-            f"Error getting {timeframe} RSI for {symbol.symbol_name}: {str(e)}"
+            f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}"
         )
         return None
 
 
 def create_multi_timeframe_rsi_table(
-    symbol: Symbol, conn, timeframes: List[str] = ["daily", "hourly", "fifteen_min"]
+    symbol: Symbol, conn, timeframes: list[str] = ["daily", "hourly", "fifteen_min"]
 ):
     """
     Creates a multi-timeframe RSI table for a symbol
@@ -326,10 +324,10 @@ def create_multi_timeframe_rsi_table(
 
 
 def create_multi_timeframe_rsi_tables(
-    symbols: List[Symbol],
+    symbols: list[Symbol],
     conn,
-    timeframes: List[str] = ["daily", "hourly", "fifteen_min"],
-) -> Dict[str, PrettyTable]:
+    timeframes: list[str] = ["daily", "hourly", "fifteen_min"],
+) -> dict[str, PrettyTable]:
     """
     Creates multi-timeframe RSI tables for multiple symbols
 
@@ -391,7 +389,7 @@ def create_multi_timeframe_rsi_tables(
     return tables
 
 
-def create_consolidated_rsi_table(symbols: List[Symbol], conn) -> PrettyTable:
+def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
     """
     Creates a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes
 
@@ -481,16 +479,15 @@ def _get_candle_repository(conn, timeframe: str):
     timeframe_lower = timeframe.lower()
     if timeframe_lower == "daily":
         return DailyCandleRepository(conn)
-    elif timeframe_lower == "hourly":
+    if timeframe_lower == "hourly":
         return HourlyCandleRepository(conn)
-    elif timeframe_lower == "fifteen_min":
+    if timeframe_lower == "fifteen_min":
         return FifteenMinCandleRepository(conn)
-    else:
-        app_logger.error(f"Unknown timeframe: {timeframe}")
-        return None
+    app_logger.error(f"Unknown timeframe: {timeframe}")
+    return None
 
 
-def _calculate_and_save_rsi(conn, symbol: Symbol, candles: List, timeframe: str):
+def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str):
     """
     Calculate RSI for the given candles and save to database.
     Returns list of candles with RSI data in the format expected by the calling function.
@@ -549,7 +546,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: List, timeframe: str)
 
     except Exception as e:
         app_logger.error(
-            f"Error calculating RSI for {symbol.symbol_name} {timeframe}: {str(e)}"
+            f"Error calculating RSI for {symbol.symbol_name} {timeframe}: {e!s}"
         )
         return None
 

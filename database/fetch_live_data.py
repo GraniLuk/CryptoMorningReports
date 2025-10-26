@@ -6,9 +6,10 @@ This fetches real market data for local development without Azure SQL.
 import logging
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from binance.client import Client
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,8 +44,8 @@ def fetch_binance_klines(symbol, interval, limit=100):
         candles = []
         for k in klines:
             candle = {
-                "open_time": datetime.fromtimestamp(k[0] / 1000, tz=timezone.utc),
-                "end_time": datetime.fromtimestamp(k[6] / 1000, tz=timezone.utc),
+                "open_time": datetime.fromtimestamp(k[0] / 1000, tz=UTC),
+                "end_time": datetime.fromtimestamp(k[6] / 1000, tz=UTC),
                 "open": float(k[1]),
                 "high": float(k[2]),
                 "low": float(k[3]),
@@ -233,11 +234,11 @@ def populate_all_data(db_path=None):
         cursor.execute("SELECT COUNT(*) FROM DailyCandles")
         daily = cursor.fetchone()[0]
 
-        logger.info(f"\n📊 Data Summary:")
+        logger.info("\n📊 Data Summary:")
         logger.info(f"   Daily candles: {daily}")
         logger.info(f"   Hourly candles: {hourly}")
         logger.info(f"   15-min candles: {fifteen}")
-        logger.info(f"\n🎉 Ready to use! Run your reports now.")
+        logger.info("\n🎉 Ready to use! Run your reports now.")
 
     finally:
         conn.close()

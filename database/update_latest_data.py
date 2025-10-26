@@ -4,11 +4,12 @@ This module ensures that daily reports use the most recent market data.
 """
 
 import logging
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 
 from infra.sql_connection import connect_to_sql
 from sharedCode.priceChecker import fetch_daily_candle
 from source_repository import fetch_symbols
+
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ def get_last_hourly_candle_time(conn, symbol):
     Returns:
         datetime object of the last candle, or None if no candles exist
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     cursor = conn.cursor()
     cursor.execute(
@@ -162,7 +163,7 @@ def get_last_hourly_candle_time(conn, symbol):
         # If it's already a datetime object, ensure UTC timezone
         if isinstance(last_time, datetime):
             if last_time.tzinfo is None:
-                return last_time.replace(tzinfo=timezone.utc)
+                return last_time.replace(tzinfo=UTC)
             return last_time
 
         # Otherwise parse from string
@@ -171,7 +172,7 @@ def get_last_hourly_candle_time(conn, symbol):
             last_time = datetime.fromisoformat(last_time_str.replace("Z", "+00:00"))
         else:
             last_time = datetime.fromisoformat(last_time_str).replace(
-                tzinfo=timezone.utc
+                tzinfo=UTC
             )
         return last_time
 
@@ -191,14 +192,14 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
         conn: Database connection
         hours_to_update: Fallback - hours to fetch if no data exists (default 24)
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from sharedCode.priceChecker import fetch_hourly_candle
 
     logger.info("Checking database for missing hourly candles...")
 
     symbols = fetch_symbols(conn)
-    end_time = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    end_time = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
 
     total_updated = 0
     total_failed = 0

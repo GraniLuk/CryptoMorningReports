@@ -1,6 +1,5 @@
 from collections import namedtuple
 from datetime import date, timedelta
-from typing import List
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -15,7 +14,7 @@ from technical_analysis.repositories.moving_averages_repository import (
 
 
 def calculate_indicators(
-    symbols: List[Symbol], conn, target_date: date
+    symbols: list[Symbol], conn, target_date: date
 ) -> tuple[PrettyTable, PrettyTable]:
     # If no date provided, use today's date
     ma_values = []
@@ -271,7 +270,7 @@ def calculate_indicators(
                     )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save moving averages results for {symbol.symbol_name}: {str(e)}"
+                        f"Failed to save moving averages results for {symbol.symbol_name}: {e!s}"
                     )
 
         except Exception as e:
@@ -303,14 +302,13 @@ def calculate_indicators(
             decimal_idx = str_price.find(".")
             if decimal_idx == -1:
                 return str(round(price))[:6]  # No decimal point
-            else:
-                before_decimal = decimal_idx
-                allowed_after_decimal = 6 - before_decimal
-                return f"{price:.{max(0, allowed_after_decimal)}f}"
+            before_decimal = decimal_idx
+            allowed_after_decimal = 6 - before_decimal
+            return f"{price:.{max(0, allowed_after_decimal)}f}"
         return str_price
 
     # Fill both tables
-    for ma_row, ema_row in zip(ma_values, ema_values):
+    for ma_row, ema_row in zip(ma_values, ema_values, strict=False):
         ma_table.add_row(
             [
                 ma_row.symbol,

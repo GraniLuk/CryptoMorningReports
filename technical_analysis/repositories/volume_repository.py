@@ -58,7 +58,7 @@ def save_volume_results(conn, sorted_results):
         app_logger.error(f"ODBC Error while saving volume results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving volume results: {str(e)}")
+        app_logger.error(f"Error saving volume results: {e!s}")
         raise
 
 
@@ -91,7 +91,7 @@ def get_combined_market_cap_and_volume_data(self):
             results = []
 
             for row in cursor.fetchall():
-                results.append(dict(zip(columns, row)))
+                results.append(dict(zip(columns, row, strict=False)))
 
             cursor.close()
             app_logger.info("Successfully fetched combined market cap and volume data")
@@ -102,5 +102,5 @@ def get_combined_market_cap_and_volume_data(self):
         app_logger.error(f"ODBC Error while fetching combined data: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error fetching combined data: {str(e)}")
+        app_logger.error(f"Error fetching combined data: {e!s}")
         raise

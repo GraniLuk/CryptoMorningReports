@@ -59,5 +59,5 @@ def save_marketcap_results(conn, sorted_results):
         app_logger.error(f"ODBC Error while saving market cap results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving market cap results: {str(e)}")
+        app_logger.error(f"Error saving market cap results: {e!s}")
         raise

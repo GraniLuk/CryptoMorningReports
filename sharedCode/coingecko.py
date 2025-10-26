@@ -1,7 +1,8 @@
-from infra.telegram_logging_handler import app_logger
-from source_repository import SourceID, Symbol
 from pycoingecko import CoinGeckoAPI
+
+from infra.telegram_logging_handler import app_logger
 from sharedCode.commonPrice import TickerPrice
+from source_repository import SourceID, Symbol
 
 
 def fetch_coingecko_price(symbol: Symbol) -> TickerPrice:

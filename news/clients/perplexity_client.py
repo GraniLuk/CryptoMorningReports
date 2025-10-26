@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Any, List, Dict, Tuple
+from typing import Any
 
 import requests
 
@@ -19,7 +19,7 @@ from news.utils.retry_handler import retry_with_fallback_models
 
 class PerplexityClient(AIClient):
     """Client for Perplexity AI API."""
-    
+
     def __init__(self, api_key):
         """
         Initialize Perplexity client.
@@ -34,7 +34,7 @@ class PerplexityClient(AIClient):
         }
         self.url = "https://api.perplexity.ai/chat/completions"
 
-    def _make_request(self, model: str, messages: List[Dict[str, str]]) -> Tuple[bool, Any]:
+    def _make_request(self, model: str, messages: list[dict[str, str]]) -> tuple[bool, Any]:
         """
         Make a request to Perplexity API.
         
@@ -46,21 +46,20 @@ class PerplexityClient(AIClient):
             tuple[bool, any]: (success, result) where result is content on success or error message on failure
         """
         data = {"model": model, "messages": messages}
-        
+
         try:
             response = requests.post(self.url, json=data, headers=self.headers)
             logging.info(f"API Response Status: {response.status_code}")
-            
+
             if response.status_code == 200:
                 content = response.json()["choices"][0]["message"]["content"]
                 logging.info(f"Successfully processed. Length: {len(content)} chars")
                 return True, content
-            else:
-                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
-                return False, error_msg
-                
+            error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+            return False, error_msg
+
         except Exception as e:
-            error_msg = f"Request failed: {str(e)}"
+            error_msg = f"Request failed: {e!s}"
             return False, error_msg
 
     def get_detailed_crypto_analysis_with_news(
@@ -72,7 +71,7 @@ class PerplexityClient(AIClient):
         logging.debug(f"Input news articles count: {len(news_feeded)}")
 
         price_data = fetch_and_format_candle_data(conn)
-        
+
         models = ["sonar-deep-research"]
 
         def request_func(model):
@@ -89,11 +88,11 @@ class PerplexityClient(AIClient):
                 {"role": "user", "content": chunk} for chunk in user_messages
             )
             return self._make_request(model, messages)
-        
+
         result = retry_with_fallback_models(
             models, request_func, "Crypto analysis with news"
         )
-        
+
         logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
@@ -104,7 +103,7 @@ class PerplexityClient(AIClient):
         logging.debug(f"Symbol names provided: {symbol_names}")
 
         models = ["sonar-deep-research", "sonar-pro"]
-        
+
         def request_func(model):
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT_HIGHLIGHT},
@@ -116,7 +115,7 @@ class PerplexityClient(AIClient):
                 },
             ]
             return self._make_request(model, messages)
-        
+
         return retry_with_fallback_models(
             models, request_func, "Article highlighting"
         )

@@ -1,6 +1,5 @@
 from collections import namedtuple
 from datetime import date, timedelta
-from typing import List
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -15,7 +14,7 @@ from technical_analysis.repositories.macd_repository import (
 )
 
 
-def calculate_macd(symbols: List[Symbol], conn, target_date: date) -> PrettyTable:
+def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
     """
     Calculates MACD indicators for given symbols and returns a formatted table
     """
@@ -124,7 +123,7 @@ def calculate_macd(symbols: List[Symbol], conn, target_date: date) -> PrettyTabl
                     )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save MACD results for {symbol.symbol_name}: {str(e)}"
+                        f"Failed to save MACD results for {symbol.symbol_name}: {e!s}"
                     )
 
         except Exception as e:

@@ -1,9 +1,10 @@
 import html
 import logging
 import re
-import requests
 import time
-from typing import List, Optional
+
+import requests
+
 
 MAX_TELEGRAM_LENGTH = 4096
 MAX_DOCUMENT_SIZE = 50 * 1024 * 1024  # 50MB Telegram limit for standard bots
@@ -14,18 +15,18 @@ async def send_telegram_message(
     token,
     chat_id,
     message,
-    parse_mode: Optional[str] = "HTML",
+    parse_mode: str | None = "HTML",
     disable_web_page_preview: bool = False,
     disable_notification: bool = False,
     protect_content: bool = False,
 ):
     if not enabled:
         logging.info("Telegram notifications are disabled")
-        return
+        return None
 
     if message is None or len(message) == 0:
         logging.error("Empty message, skipping telegram notification")
-        return
+        return None
 
     original_parse_mode = parse_mode
 
@@ -151,7 +152,7 @@ async def try_send_report_with_HTML_or_Markdown(
     return success
 
 
-def smart_split(text: str, limit: int, parse_mode: Optional[str]) -> List[str]:
+def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
     """Split the text into <=limit sized chunks, preferring to break on double newlines
     (paragraphs). If a single paragraph exceeds the limit, fall back to hard slicing.
     For HTML parse_mode we also try not to cut inside an open tag (very naive: ensure
@@ -161,7 +162,7 @@ def smart_split(text: str, limit: int, parse_mode: Optional[str]) -> List[str]:
         return [text]
 
     paragraphs = text.split("\n\n")
-    chunks: List[str] = []
+    chunks: list[str] = []
     current = []
     current_len = 0
     for p in paragraphs:
@@ -199,8 +200,8 @@ async def send_telegram_document(
     file_bytes: bytes | None = None,
     filename: str = "report.txt",
     caption: str | None = None,
-    parse_mode: Optional[str] = None,
-    local_path: Optional[str] = None,
+    parse_mode: str | None = None,
+    local_path: str | None = None,
 ):
     """Send a document (e.g. markdown report) to Telegram.
     Either provide file_bytes OR a local_path. If both are provided local_path takes precedence.
@@ -299,8 +300,9 @@ def _extend_to_close_tag(full_text: str, start_index: int, slice_: str, limit: i
 
 if __name__ == "__main__":
     import asyncio
-    from dotenv import load_dotenv
     import os
+
+    from dotenv import load_dotenv
 
     load_dotenv()
     # Example usage

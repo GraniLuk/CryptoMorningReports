@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from database.update_latest_data import update_latest_daily_candles
 from infra.telegram_logging_handler import app_logger
@@ -23,7 +23,7 @@ async def process_weekly_report(
     )
 
     # Calculate date range for weekly report
-    end_date = datetime.now(timezone.utc)
+    end_date = datetime.now(UTC)
     start_date = end_date - timedelta(days=7)
 
     # Generate weekly specific reports

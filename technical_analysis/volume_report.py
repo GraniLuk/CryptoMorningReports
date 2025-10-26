@@ -1,11 +1,12 @@
-from technical_analysis.repositories.volume_repository import save_volume_results
-from typing import List
-from prettytable import PrettyTable
+
 import requests
+from prettytable import PrettyTable
+
 from source_repository import Symbol
+from technical_analysis.repositories.volume_repository import save_volume_results
 
 
-def fetch_volume_report(symbols: List[Symbol], conn) -> PrettyTable:
+def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
     results = []
     missing_symbols = []
 
@@ -71,9 +72,10 @@ def fetch_volume_report(symbols: List[Symbol], conn) -> PrettyTable:
 
 
 if __name__ == "__main__":
-    from source_repository import Symbol, SourceID
-    from infra.sql_connection import connect_to_sql
     from dotenv import load_dotenv
+
+    from infra.sql_connection import connect_to_sql
+    from source_repository import SourceID, Symbol
 
     load_dotenv()
     conn = connect_to_sql()

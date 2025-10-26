@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 from sharedCode.commonPrice import Candle
 from sharedCode.priceChecker import fetch_hourly_candle, fetch_hourly_candles
@@ -11,7 +10,7 @@ from technical_analysis.repositories.hourly_candle_repository import (
 from technical_analysis.rsi_calculator import update_rsi_for_all_candles
 
 
-def calculate_hourly_rsi(symbols: List[Symbol], conn):
+def calculate_hourly_rsi(symbols: list[Symbol], conn):
     """Calculate RSI for hourly candles for all symbols"""
 
     def fetch_candles_for_symbol(symbol, conn):
@@ -36,11 +35,11 @@ def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
 
 
 def fetch_hourly_candles_for_all_symbols(
-    symbols: List[Symbol],
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
+    symbols: list[Symbol],
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
     conn=None,
-) -> List[Candle]:
+) -> list[Candle]:
     """
     Fetches daily candles for given symbols and returns a list of Candle objects
 
@@ -53,7 +52,7 @@ def fetch_hourly_candles_for_all_symbols(
     Returns:
         List of Candle objects
     """
-    end_time = end_time or datetime.now(timezone.utc)
+    end_time = end_time or datetime.now(UTC)
     start_time = start_time or (end_time - timedelta(days=1))
 
     all_candles = []
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
 
     only_btc = [symbol for symbol in symbols if symbol.symbol_name == "VIRTUAL"]
-    end_time = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    end_time = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
     start_time = end_time - timedelta(hours=1)
     # Test fetching hourly candles
     fetch_hourly_candles(only_btc[0], start_time=start_time, end_time=end_time, conn=conn)

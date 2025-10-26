@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
@@ -7,6 +7,7 @@ from backtesting.rsi.excel import save_to_excel
 from backtesting.rsi.strategy import run_strategy_for_symbol_internal
 from source_repository import fetch_symbols
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
+
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
@@ -27,7 +28,7 @@ if __name__ == "__main__":
             symbol for symbol in symbols if symbol.symbol_name == symbol_to_execute
         ]
         # Calculate the date 4 years before today
-        five_years_ago = datetime.now(timezone.utc) - timedelta(days=5 * 365)
+        five_years_ago = datetime.now(UTC) - timedelta(days=5 * 365)
 
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(

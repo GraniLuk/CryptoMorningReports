@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import List
 
 from prettytable import PrettyTable
 
@@ -9,7 +8,7 @@ from source_repository import Symbol, fetch_symbols
 
 
 def fetch_price_change_report(
-    symbols: List[Symbol], conn, target_date: date
+    symbols: list[Symbol], conn, target_date: date
 ) -> PrettyTable:
     target_date = target_date or date.today()
     start_date = target_date - timedelta(days=7)  # Get 7 days of data
@@ -50,7 +49,7 @@ def fetch_price_change_report(
                 )
         except Exception as e:
             app_logger.error(
-                f"Unexpected error when processing 24change report for {symbol.symbol_name}: {str(e)}"
+                f"Unexpected error when processing 24change report for {symbol.symbol_name}: {e!s}"
             )
 
     # Sort rows based on the day_change value

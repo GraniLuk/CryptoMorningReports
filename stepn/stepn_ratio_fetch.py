@@ -1,8 +1,10 @@
-from azure.monitor.query import LogsQueryClient, LogsQueryStatus
-from azure.identity import DefaultAzureCredential
-from infra.telegram_logging_handler import app_logger
 import os
 from datetime import timedelta
+
+from azure.identity import DefaultAzureCredential
+from azure.monitor.query import LogsQueryClient, LogsQueryStatus
+
+from infra.telegram_logging_handler import app_logger
 
 
 def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
@@ -30,19 +32,19 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
         # Add timespan parameter for 24 hours
         timespan = timedelta(hours=24)
         response = client.query_workspace(workspace_id, query, timespan=timespan)
-        
+
         # Properly check response status according to Azure SDK pattern
         if response.status == LogsQueryStatus.SUCCESS:
             # Access tables directly from successful response
             if len(response.tables) > 0 and len(response.tables[0].rows) > 0:
                 min_value = response.tables[0].rows[0][0]
                 max_value = response.tables[0].rows[0][1]
-                
+
                 # Handle None values that might come from the query
                 if min_value is None or max_value is None:
                     app_logger.info("Received None values from the query, using default values")
                     return 0, 0, 0
-                    
+
                 # Calculate range safely
                 range_24h = (max_value - min_value) / min_value * 100 if min_value > 0 else 0
                 return min_value, max_value, range_24h
@@ -53,20 +55,20 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
                 # Process partial data if available
                 min_value = response.partial_data[0].rows[0][0]
                 max_value = response.partial_data[0].rows[0][1]
-                
+
                 # Handle None values that might come from the query
                 if min_value is None or max_value is None:
                     app_logger.info("Received None values from the partial data, using default values")
                     return 0, 0, 0
-                    
+
                 # Calculate range safely
                 range_24h = (max_value - min_value) / min_value * 100 if min_value > 0 else 0
                 return min_value, max_value, range_24h
-            
+
         app_logger.info("No data found in query response, using default values")
         return 0, 0, 0  # Return default values when no data
     except Exception as e:
-        app_logger.error(f"Error fetching ratio range: {str(e)}")
+        app_logger.error(f"Error fetching ratio range: {e!s}")
         return 0, 0, 0  # Return default values on error
 
 

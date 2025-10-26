@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
@@ -19,6 +19,7 @@ from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_ti
 from technical_analysis.repositories.moving_averages_repository import (
     fetch_moving_averages_for_symbol,
 )
+
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
@@ -276,7 +277,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
     symbols = [symbol]
 
     # Calculate date ranges using UTC time
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     half_year_ago = now - timedelta(days=180)
     one_day_ago = now - timedelta(days=1)
     two_days_ago = now - timedelta(days=2)
@@ -406,7 +407,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
                     logger.error(error_msg)
                     return error_msg
             except Exception as e:
-                error_msg = f"Failed to get crypto situation analysis: {str(e)}"
+                error_msg = f"Failed to get crypto situation analysis: {e!s}"
                 logger.error(error_msg)
                 return error_msg  # For GeminiClient
         elif ai_api_type == "gemini":
@@ -431,7 +432,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
                     return error_msg
             except Exception as e:
                 error_msg = (
-                    f"Failed to get crypto situation analysis from Gemini: {str(e)}"
+                    f"Failed to get crypto situation analysis from Gemini: {e!s}"
                 )
                 logger.error(error_msg)
                 return error_msg
@@ -448,7 +449,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
 
         # Generate HTML formatted report
         report_title = f"<b>📊 {symbol_name} Situation Report</b>\n\n"
-        report_date = f"<i>🕒 Generated on: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}</i>\n\n"
+        report_date = f"<i>🕒 Generated on: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}</i>\n\n"
 
         # Get HTML formatted current data
         current_data_html = get_current_data_summary_table(symbol, conn)
@@ -500,7 +501,7 @@ async def generate_crypto_situation_report(conn, symbol_name):
         return full_report
 
     except Exception as e:
-        error_msg = f"Error generating situation report for {symbol_name}: {str(e)}"
+        error_msg = f"Error generating situation report for {symbol_name}: {e!s}"
         logger.error(error_msg)
         return error_msg
 

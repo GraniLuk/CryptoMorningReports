@@ -2,11 +2,12 @@ import asyncio
 import importlib
 import os
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path, PureWindowsPath
 from threading import Lock
-from typing import Dict, Iterable, Optional
 
 from infra.telegram_logging_handler import app_logger
+
 
 _pypandoc_lock = Lock()
 _pypandoc_module = None
@@ -98,7 +99,7 @@ def _ensure_pandoc_available():
                 app_logger.info("Pandoc downloaded to %s", pandoc_path)
                 _pypandoc_module = pypandoc
                 return _pypandoc_module
-            except Exception as exc:  # noqa: BLE001 - want to bubble informative error
+            except Exception as exc:
                 app_logger.exception(
                     "Pandoc download failed; target_dir=%s", target_dir
                 )
@@ -114,7 +115,7 @@ def _ensure_pandoc_available():
             )
 
 
-def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
+def _build_metadata_args(metadata: dict[str, str] | None) -> Iterable[str]:
     # Ensure required EPUB metadata fields are present
     defaults = {
         "lang": "en-US",
@@ -130,7 +131,7 @@ def _build_metadata_args(metadata: Optional[Dict[str, str]]) -> Iterable[str]:
 
 
 def _convert_markdown_to_epub_sync(
-    markdown_text: str, metadata: Optional[Dict[str, str]] = None
+    markdown_text: str, metadata: dict[str, str] | None = None
 ) -> bytes:
     pypandoc = _ensure_pandoc_available()
 
@@ -175,13 +176,13 @@ def _convert_markdown_to_epub_sync(
 
 
 def convert_markdown_to_epub(
-    markdown_text: str, metadata: Optional[Dict[str, str]] = None
+    markdown_text: str, metadata: dict[str, str] | None = None
 ) -> bytes:
     return _convert_markdown_to_epub_sync(markdown_text, metadata)
 
 
 async def convert_markdown_to_epub_async(
-    markdown_text: str, metadata: Optional[Dict[str, str]] = None
+    markdown_text: str, metadata: dict[str, str] | None = None
 ) -> bytes:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(

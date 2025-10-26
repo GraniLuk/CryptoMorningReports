@@ -86,12 +86,12 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
                     )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save {timeframe} RSI results for candle {candle_id}: {str(e)}"
+                        f"Failed to save {timeframe} RSI results for candle {candle_id}: {e!s}"
                     )
 
         except Exception as e:
             app_logger.error(
-                f"Error processing {timeframe} RSI for {symbol.symbol_name}: {str(e)}"
+                f"Error processing {timeframe} RSI for {symbol.symbol_name}: {e!s}"
             )
 
 

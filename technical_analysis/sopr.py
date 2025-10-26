@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import requests
 from prettytable import PrettyTable
@@ -7,11 +6,12 @@ from prettytable import PrettyTable
 from infra.telegram_logging_handler import app_logger
 from technical_analysis.repositories.sopr_repository import save_sopr_results
 
+
 # Configuration
 API_BASE = "https://bitcoin-data.com/"
 
 
-def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
+def fetch_sopr_metrics(conn) -> PrettyTable | None:
     """
     Retrieves yesterday's SOPR variants from BGeometrics API and saves to database
 
@@ -22,7 +22,7 @@ def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
         PrettyTable: containing formatted table for display
     """
     metrics = {}
-    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
 
     try:
         # Fetch base SOPR
@@ -37,7 +37,7 @@ def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
                 "Skipping SOPR metrics this run."
             )
             return None
-        elif response.status_code != 200:
+        if response.status_code != 200:
             app_logger.error(
                 f"SOPR API returned status {response.status_code}: {response.text}"
             )
@@ -87,7 +87,7 @@ def fetch_sopr_metrics(conn) -> Optional[PrettyTable]:
         return table
 
     except Exception as e:
-        app_logger.error(f"Error fetching SOPR metrics: {str(e)}")
+        app_logger.error(f"Error fetching SOPR metrics: {e!s}")
         return None
 
 

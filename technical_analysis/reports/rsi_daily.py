@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import List, Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -16,7 +15,7 @@ from technical_analysis.rsi import calculate_rsi_using_RMA
 
 def create_rsi_table_for_symbol(
     symbol: Symbol, conn, target_date: date
-) -> Optional[PrettyTable]:
+) -> PrettyTable | None:
     """
     Creates RSI table for a given symbol using daily candles data
     """
@@ -89,7 +88,7 @@ def create_rsi_table_for_symbol(
                 latest_row["RSI"].iloc[-1],
             )
     except Exception as e:
-        app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
+        app_logger.error(f"Error processing {symbol.symbol_name}: {e!s}")
 
     rsi_table = PrettyTable()
     rsi_table.field_names = [
@@ -120,7 +119,7 @@ def create_rsi_table_for_symbol(
     return rsi_table
 
 
-def create_rsi_table(symbols: List[Symbol], conn, target_date: date) -> PrettyTable:
+def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
     """
     Creates RSI table for given symbols using daily candles data
     """
@@ -196,7 +195,7 @@ def create_rsi_table(symbols: List[Symbol], conn, target_date: date) -> PrettyTa
                         )
                     except Exception as e:
                         app_logger.error(
-                            f"Failed to save RSI results for {symbol.symbol_name}: {str(e)}"
+                            f"Failed to save RSI results for {symbol.symbol_name}: {e!s}"
                         )
 
                 app_logger.info(
@@ -206,7 +205,7 @@ def create_rsi_table(symbols: List[Symbol], conn, target_date: date) -> PrettyTa
                     latest_row["RSI"].iloc[-1],
                 )
         except Exception as e:
-            app_logger.error(f"Error processing {symbol.symbol_name}: {str(e)}")
+            app_logger.error(f"Error processing {symbol.symbol_name}: {e!s}")
 
     # Sort by RSI descending only if we have data
     if not all_values.empty and "RSI" in all_values.columns:
@@ -252,7 +251,7 @@ def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
         save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=rsi)
     except Exception as e:
         app_logger.error(
-            f"Failed to save RSI results for candle {daily_candle_id}: {str(e)}"
+            f"Failed to save RSI results for candle {daily_candle_id}: {e!s}"
         )
 
 

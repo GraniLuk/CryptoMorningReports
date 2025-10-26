@@ -3,8 +3,8 @@ Module for generating current data tables with latest indicators for crypto symb
 This module can be easily extended to add more indicators in the future.
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pandas as pd
 
@@ -26,8 +26,8 @@ from technical_analysis.repositories.open_interest_repository import (
 
 
 def get_latest_price_from_candles(
-    candles_df: Optional[pd.DataFrame],
-) -> Optional[float]:
+    candles_df: pd.DataFrame | None,
+) -> float | None:
     """
     Extract the latest price from candles DataFrame.
 
@@ -46,7 +46,7 @@ def get_latest_price_from_candles(
         return None
 
 
-def get_latest_rsi_from_df(rsi_df: Optional[pd.DataFrame]) -> Optional[float]:
+def get_latest_rsi_from_df(rsi_df: pd.DataFrame | None) -> float | None:
     """
     Extract the latest RSI value from RSI DataFrame.
 
@@ -69,7 +69,7 @@ def get_latest_rsi_from_df(rsi_df: Optional[pd.DataFrame]) -> Optional[float]:
     return None
 
 
-def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
+def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:
     """
     Get current data for a single symbol including latest price and RSI across timeframes.
 
@@ -102,7 +102,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         "open_interest_value": None,
         "funding_rate": None,
         "next_funding_time": None,
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "timestamp": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
 
     try:
@@ -164,7 +164,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         # Fetch daily candles (look back 7 days) to compute daily range and recent history
         try:
             daily_repo = DailyCandleRepository(conn)
-            now_utc = datetime.now(timezone.utc)
+            now_utc = datetime.now(UTC)
             start = now_utc - timedelta(days=7)
             candles = daily_repo.get_candles(symbol, start, now_utc)
             if candles:
@@ -238,13 +238,13 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
 
     except Exception as e:
         app_logger.error(
-            f"Error getting current data for {symbol.symbol_name}: {str(e)}"
+            f"Error getting current data for {symbol.symbol_name}: {e!s}"
         )
 
     return data
 
 
-def format_current_data_for_telegram_html(symbol_data: Dict[str, Any]) -> str:
+def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:
     """
     Format current data for a single symbol into HTML for Telegram.
 
@@ -268,10 +268,9 @@ def format_current_data_for_telegram_html(symbol_data: Dict[str, Any]) -> str:
         rsi_str = f"{rsi_value:.2f}"
         if rsi_value >= 70:
             return f"🔴 {rsi_str} (Overbought)"
-        elif rsi_value <= 30:
+        if rsi_value <= 30:
             return f"🟢 {rsi_str} (Oversold)"
-        else:
-            return f"🟡 {rsi_str}"
+        return f"🟡 {rsi_str}"
 
     daily_rsi = symbol_data.get("daily_rsi")
     hourly_rsi = symbol_data.get("hourly_rsi")
@@ -412,7 +411,7 @@ def get_current_data_summary_table(symbol: Symbol, conn) -> str:
 
     except Exception as e:
         app_logger.error(
-            f"Error generating current data summary for {symbol.symbol_name}: {str(e)}"
+            f"Error generating current data summary for {symbol.symbol_name}: {e!s}"
         )
         return f"<b>Error:</b> Unable to generate summary for {symbol.symbol_name}"
 
@@ -506,7 +505,7 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 
     except Exception as e:
         app_logger.error(
-            f"Error generating AI prompt data for {symbol.symbol_name}: {str(e)}"
+            f"Error generating AI prompt data for {symbol.symbol_name}: {e!s}"
         )
         return (
             f"CURRENT MARKET SNAPSHOT: Error retrieving data for {symbol.symbol_name}"

@@ -44,7 +44,14 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Run type checking
+      - name: Run Ruff linting
+        id: ruff_check
+        run: |
+          source venv/bin/activate
+          ruff check . --output-format=github
+        continue-on-error: false  # Fail the build if linting fails
+
+      - name: Run type checking with Pyright
         id: type_check
         run: |
           source venv/bin/activate
@@ -65,7 +72,7 @@ jobs:
           files: test-results.xml
 
       - name: Package app with dependencies
-        if: steps.run_tests.outcome == 'success' && steps.type_check.outcome == 'success'
+        if: steps.run_tests.outcome == 'success' && steps.type_check.outcome == 'success' && steps.ruff_check.outcome == 'success'
         run: |
           source venv/bin/activate
           mkdir -p packaged_function

@@ -1,5 +1,5 @@
 import os
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from database.update_latest_data import update_latest_daily_candles
 from infra.telegram_logging_handler import app_logger
@@ -65,7 +65,7 @@ async def process_daily_report(
     derivatives_table = fetch_derivatives_report(symbols, conn)
 
     # Format messages
-    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_date = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # --- Current Prices Section (added to indicators message) ---
     def build_current_prices_section(symbols, limit: int = 12) -> str:
@@ -96,7 +96,7 @@ async def process_daily_report(
                 lines.append(
                     f"{sym.symbol_name:<7}| {tp.last:>10.6f} | {tp.low:>10.6f} | {tp.high:>10.6f} | {pos_pct:>6.2f} | {from_low:>8.2f} | {from_high:>9.2f}"
                 )
-            except Exception as e:  # noqa: BLE001 - we want robustness here
+            except Exception as e:
                 lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")
         return (
             "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
@@ -190,7 +190,7 @@ async def process_daily_report(
                         f"{oi_val_str:>11} | "
                         f"{fr_str:>11}"
                     )
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     lines.append(f"Row format error: {e}")
             return (
                 "Aggregated Indicators:\n<pre>"

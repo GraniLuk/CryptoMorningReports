@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import requests
 
@@ -21,7 +21,7 @@ def get_yesterday_transaction_count(contract_address, api_key):
         return int(response["result"])
 
     # Calculate yesterday's timestamps
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     yesterday = now - timedelta(days=1)
     start_of_yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_yesterday = yesterday.replace(hour=23, minute=59, second=59, microsecond=0)
@@ -52,8 +52,7 @@ def get_yesterday_transaction_count(contract_address, api_key):
     if data["status"] == "1":
         transactions = data["result"]
         return len(transactions)
-    else:
-        raise Exception(f"API Error: {data['message']}")
+    raise Exception(f"API Error: {data['message']}")
 
 
 if __name__ == "__main__":
@@ -71,4 +70,4 @@ if __name__ == "__main__":
         count = get_yesterday_transaction_count(stepn_contract_address, api_key)
         print(f"Yesterday's transaction count: {count}")
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"An error occurred: {e!s}")

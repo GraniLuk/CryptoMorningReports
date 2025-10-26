@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 from infra.telegram_logging_handler import app_logger
 from sharedCode.commonPrice import Candle
@@ -24,8 +23,8 @@ class CandleFetcher:
         self.logger = app_logger
 
     def fetch_candles(
-        self, symbols: List[Symbol], conn, end_time: Optional[datetime] = None
-    ) -> List[Candle]:
+        self, symbols: list[Symbol], conn, end_time: datetime | None = None
+    ) -> list[Candle]:
         """
         Fetches candles for given symbols and returns a list of Candle objects
 
@@ -37,7 +36,7 @@ class CandleFetcher:
         Returns:
             List of Candle objects
         """
-        end_time = end_time or datetime.now(timezone.utc)
+        end_time = end_time or datetime.now(UTC)
         self.logger.info(
             f"Fetching {self.timeframe} candles for {len(symbols)} symbols"
         )
@@ -71,7 +70,7 @@ class CandleFetcher:
             days_back: Number of days to look back (default: 30)
         """
         repo = self.repository_class(conn)
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         start_time = end_time - timedelta(days=days_back)
 
         self.logger.info(
@@ -125,7 +124,7 @@ class CandleFetcher:
                 # Ensure timezone consistency for comparison
                 first_candle_date = all_candles[0].end_date
                 if first_candle_date.tzinfo is None:
-                    first_candle_date = first_candle_date.replace(tzinfo=timezone.utc)
+                    first_candle_date = first_candle_date.replace(tzinfo=UTC)
 
                 if first_candle_date > start_time:
                     self.logger.info(
@@ -151,9 +150,9 @@ class CandleFetcher:
                     next_date = next_candle.end_date
 
                     if current_date.tzinfo is None:
-                        current_date = current_date.replace(tzinfo=timezone.utc)
+                        current_date = current_date.replace(tzinfo=UTC)
                     if next_date.tzinfo is None:
-                        next_date = next_date.replace(tzinfo=timezone.utc)
+                        next_date = next_date.replace(tzinfo=UTC)
 
                     # Check if there's a gap
                     actual_diff = next_date - current_date
@@ -175,7 +174,7 @@ class CandleFetcher:
                 # Ensure timezone consistency
                 last_candle_date = all_candles[-1].end_date
                 if last_candle_date.tzinfo is None:
-                    last_candle_date = last_candle_date.replace(tzinfo=timezone.utc)
+                    last_candle_date = last_candle_date.replace(tzinfo=UTC)
 
                 if last_candle_date < end_time:
                     self.logger.info(

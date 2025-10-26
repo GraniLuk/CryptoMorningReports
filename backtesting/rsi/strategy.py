@@ -73,19 +73,18 @@ def run_backtest(
                         outcome = "SL"
                         close_price = sl_price
                         profit = -investment_value * (Decimal("1") - sl_value)
-                else:  # SHORT position
-                    if current_low <= tp_price:
-                        outcome = "TP"
-                        close_price = tp_price
-                        profit = investment_value * (
-                            Decimal("1") - (Decimal("2") - tp_value)
-                        )
-                    elif current_high >= sl_price:
-                        outcome = "SL"
-                        close_price = sl_price
-                        profit = -investment_value * (
-                            (Decimal("2") - sl_value) - Decimal("1")
-                        )
+                elif current_low <= tp_price:
+                    outcome = "TP"
+                    close_price = tp_price
+                    profit = investment_value * (
+                        Decimal("1") - (Decimal("2") - tp_value)
+                    )
+                elif current_high >= sl_price:
+                    outcome = "SL"
+                    close_price = sl_price
+                    profit = -investment_value * (
+                        (Decimal("2") - sl_value) - Decimal("1")
+                    )
 
                 if outcome:
                     days_taken = (current_date - entry_date).days

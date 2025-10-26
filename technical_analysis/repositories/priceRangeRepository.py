@@ -74,5 +74,5 @@ def save_price_range_results(
         app_logger.error(f"ODBC Error while saving price range results: {e}")
         raise
     except Exception as e:
-        app_logger.error(f"Error saving price range results: {str(e)}")
+        app_logger.error(f"Error saving price range results: {e!s}")
         raise

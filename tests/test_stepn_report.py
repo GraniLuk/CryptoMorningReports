@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import patch
-from stepn.stepn_report import fetch_stepn_report
+
 from sharedCode.commonPrice import TickerPrice
+from stepn.stepn_report import fetch_stepn_report
 
 
 class TestStepnReport(unittest.TestCase):

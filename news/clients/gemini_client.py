@@ -74,13 +74,12 @@ class GeminiClient(AIClient):
                 content = response.text
                 logging.info(f"Successfully processed. Length: {len(content)} chars")
                 return content
-            else:
-                error_msg = "Failed: No valid response from Gemini API"
-                logging.error(error_msg)
-                return error_msg
+            error_msg = "Failed: No valid response from Gemini API"
+            logging.error(error_msg)
+            return error_msg
 
         except Exception as e:
-            error_msg = f"Failed to get response from Gemini: {str(e)}"
+            error_msg = f"Failed to get response from Gemini: {e!s}"
             logging.error(error_msg)
             return error_msg
 

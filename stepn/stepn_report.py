@@ -36,7 +36,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
             ticker = fetch_current_price(symbol)
             results.append((ticker.symbol, ticker.last))
         except Exception as e:
-            app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+            app_logger.error(f"Unexpected error for {symbol}: {e!s}")
             raise
 
     # Calculate ratio
@@ -59,7 +59,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
             )
             results.append(("24h Transactions", transactions_count))
     except Exception as e:
-        app_logger.error(f"Error fetching transaction count: {str(e)}")
+        app_logger.error(f"Error fetching transaction count: {e!s}")
 
     if conn is not None:
         last_14_days_results = fetch_stepn_results_last_14_days(conn)
@@ -105,7 +105,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
                 transactions_count=transactions_count,
             )
         except Exception as e:
-            app_logger.error(f"Error saving STEPN results to database: {str(e)}")
+            app_logger.error(f"Error saving STEPN results to database: {e!s}")
 
     # Create table for display
     stepn_table = PrettyTable()

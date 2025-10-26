@@ -1,5 +1,4 @@
-from datetime import date, datetime, timedelta, timezone
-from typing import Dict, List, Optional, Tuple
+from datetime import UTC, date, datetime, timedelta
 
 from sharedCode.binance import fetch_binance_daily_kline, fetch_binance_price
 from sharedCode.coingecko import fetch_coingecko_price
@@ -19,13 +18,14 @@ from technical_analysis.repositories.hourly_candle_repository import (
     HourlyCandleRepository,
 )
 
+
 # Simple cache stores
-_price_cache: Dict[Tuple[str, SourceID], TickerPrice] = {}
+_price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 
 def fetch_daily_candle(
     symbol: Symbol, end_date: date = date.today(), conn=None
-) -> Optional[Candle]:
+) -> Candle | None:
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)
@@ -49,7 +49,7 @@ def fetch_daily_candle(
 
 def fetch_hourly_candle(
     symbol: Symbol, end_time: datetime, conn=None
-) -> Optional[Candle]:
+) -> Candle | None:
     """
     Fetch hourly candle data for a symbol at the specified end time
 
@@ -63,7 +63,7 @@ def fetch_hourly_candle(
     """
     # Ensure end_time is timezone-aware
     if end_time.tzinfo is None:
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
     # Round to the nearest hour
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
 
@@ -95,7 +95,7 @@ def fetch_hourly_candle(
 
 def fetch_hourly_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
-) -> List[Candle]:
+) -> list[Candle]:
     """
     Fetch multiple hourly candles for a given symbol between start_time and end_time.
     If a database connection is provided, attempts to fetch from database first.
@@ -112,17 +112,17 @@ def fetch_hourly_candles(
     """
 
     if not start_time:
-        start_time = datetime.now(timezone.utc) - timedelta(
+        start_time = datetime.now(UTC) - timedelta(
             days=1
         )  # Default to 1 day back
     if not end_time:
-        end_time = datetime.now(timezone.utc)
-    end_time = end_time or datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
+    end_time = end_time or datetime.now(UTC)
     # Ensure both start_time and end_time are timezone-aware
     if start_time.tzinfo is None:
-        start_time = start_time.replace(tzinfo=timezone.utc)
+        start_time = start_time.replace(tzinfo=UTC)
     if end_time.tzinfo is None:
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
 
     # Round to the nearest hour
     start_time = start_time.replace(minute=0, second=0, microsecond=0)
@@ -147,7 +147,7 @@ def fetch_hourly_candles(
         for candle in cached_candles:
             # Ensure candle end_date is timezone-aware for comparison
             if candle.end_date.tzinfo is None:
-                candle_end_date = candle.end_date.replace(tzinfo=timezone.utc)
+                candle_end_date = candle.end_date.replace(tzinfo=UTC)
             else:
                 candle_end_date = candle.end_date
             candle_dict[candle_end_date] = candle
@@ -181,7 +181,7 @@ def fetch_hourly_candles(
 
 def fetch_fifteen_min_candle(
     symbol: Symbol, end_time: datetime, conn=None
-) -> Optional[Candle]:
+) -> Candle | None:
     """
     Fetch 15-minute candle data for a symbol at the specified end time
 
@@ -193,10 +193,10 @@ def fetch_fifteen_min_candle(
     Returns:
         Candle object if successful, None otherwise
     """
-    end_time = end_time or datetime.now(timezone.utc)
+    end_time = end_time or datetime.now(UTC)
     # Ensure end_time is timezone-aware
     if end_time.tzinfo is None:
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
     # Round to nearest 15 minutes
     minutes = (end_time.minute // 15) * 15
     end_time = end_time.replace(minute=minutes, second=0, microsecond=0)
@@ -229,7 +229,7 @@ def fetch_fifteen_min_candle(
 
 def fetch_fifteen_min_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
-) -> List[Candle]:
+) -> list[Candle]:
     """
     Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
     If a database connection is provided, attempts to fetch from database first.
@@ -244,16 +244,16 @@ def fetch_fifteen_min_candles(
     Returns:
         List of Candle objects
     """
-    end_time = end_time or datetime.now(timezone.utc)
+    end_time = end_time or datetime.now(UTC)
 
     if not start_time:
         start_time = end_time - timedelta(hours=8)
 
     # Ensure both start_time and end_time are timezone-aware
     if start_time.tzinfo is None:
-        start_time = start_time.replace(tzinfo=timezone.utc)
+        start_time = start_time.replace(tzinfo=UTC)
     if end_time.tzinfo is None:
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
 
     # Round to nearest 15 minutes
     start_minutes = (start_time.minute // 15) * 15
@@ -281,7 +281,7 @@ def fetch_fifteen_min_candles(
         for candle in cached_candles:
             # Ensure candle end_date is timezone-aware for comparison
             if candle.end_date.tzinfo is None:
-                candle_end_date = candle.end_date.replace(tzinfo=timezone.utc)
+                candle_end_date = candle.end_date.replace(tzinfo=UTC)
             else:
                 candle_end_date = candle.end_date
             candle_dict[candle_end_date] = candle
@@ -324,7 +324,7 @@ def fetch_daily_candles(
     if conn:
         repo = DailyCandleRepository(conn)
         cached_candles = repo.get_candles(
-            symbol, 
+            symbol,
             datetime.combine(start_date, datetime.min.time()),
             datetime.combine(end_date, datetime.min.time())
         )
@@ -395,9 +395,9 @@ if __name__ == "__main__":
         source_id=SourceID.BINANCE,
         coingecko_name="ripple",
     )
-    
-    start_time = datetime.now(timezone.utc) - timedelta(days=1)
-    end_time = datetime.now(timezone.utc)
+
+    start_time = datetime.now(UTC) - timedelta(days=1)
+    end_time = datetime.now(UTC)
 
     daily_candles = fetch_hourly_candles(symbol, start_time=start_time, end_time=end_time, conn=conn)
     for daily_candle in daily_candles:

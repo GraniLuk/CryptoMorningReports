@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import requests
 
-yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
 print(f"Testing SOPR API for date: {yesterday}")
 print("-" * 50)
 

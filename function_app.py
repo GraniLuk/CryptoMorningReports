@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import azure.functions as func
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ from reports.current_report import generate_crypto_situation_report
 from reports.daily_report import process_daily_report
 from reports.weekly_report import process_weekly_report
 
+
 load_dotenv()
 
 app = func.FunctionApp()
@@ -19,7 +20,7 @@ app = func.FunctionApp()
 
 async def run_report(report_type="daily"):
     logging.info(
-        f"{report_type.capitalize()} report function started at {datetime.now(timezone.utc).isoformat()}"
+        f"{report_type.capitalize()} report function started at {datetime.now(UTC).isoformat()}"
     )
 
     logger = app_logger
@@ -46,7 +47,7 @@ async def run_report(report_type="daily"):
                 conn.close()
 
     except Exception as e:
-        logger.error(f"Function failed with error: {str(e)}")
+        logger.error(f"Function failed with error: {e!s}")
         raise
 
 
@@ -75,7 +76,7 @@ def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
         )
     except Exception as e:
         return func.HttpResponse(
-            f"Function execution failed: {str(e)}", status_code=500
+            f"Function execution failed: {e!s}", status_code=500
         )
 
 
@@ -132,7 +133,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if save_to_onedrive:
                 from integrations.onedrive_uploader import upload_to_onedrive
 
-                today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
+                today_date = datetime.now(UTC).strftime("%Y-%m-%d-%H-%M")
                 onedrive_filename = f"{today_date}.md"
 
                 # Use "current_situation/SYMBOL" as folder path
@@ -169,5 +170,5 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                 conn.close()
 
     except Exception as e:
-        app_logger.error(f"Error in crypto_situation function: {str(e)}")
-        return func.HttpResponse(f"An error occurred: {str(e)}", status_code=500)
+        app_logger.error(f"Error in crypto_situation function: {e!s}")
+        return func.HttpResponse(f"An error occurred: {e!s}", status_code=500)

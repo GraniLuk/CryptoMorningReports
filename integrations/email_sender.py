@@ -2,8 +2,8 @@ import asyncio
 import os
 import smtplib
 import ssl
+from collections.abc import Iterable, Sequence
 from email.message import EmailMessage
-from typing import Iterable, Sequence
 
 from infra.telegram_logging_handler import app_logger
 
@@ -81,6 +81,6 @@ async def send_email_with_epub_attachment(
         return True
     except smtplib.SMTPAuthenticationError:
         app_logger.exception("SMTP authentication failed for Gmail account %s", username)
-    except Exception:  # noqa: BLE001 - broad exception to log and continue task execution
+    except Exception:
         app_logger.exception("Failed to send EPUB report email via Gmail")
     return False

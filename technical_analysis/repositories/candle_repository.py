@@ -1,6 +1,5 @@
 from abc import ABC
 from datetime import datetime
-from typing import List, Optional
 
 from sharedCode.commonPrice import Candle
 from source_repository import Symbol
@@ -71,7 +70,7 @@ class CandleRepository(ABC):
             )
         self.conn.commit()
 
-    def get_candle(self, symbol: Symbol, end_date: datetime) -> Optional[Candle]:
+    def get_candle(self, symbol: Symbol, end_date: datetime) -> Candle | None:
         sql = f"""
         SELECT [Id]
             ,[SymbolID]
@@ -106,7 +105,7 @@ class CandleRepository(ABC):
 
     def get_candles(
         self, symbol: Symbol, start_date: datetime, end_date: datetime
-    ) -> List[Candle]:
+    ) -> list[Candle]:
         sql = f"""
         SELECT [Id]
             ,[SymbolID]
@@ -145,7 +144,7 @@ class CandleRepository(ABC):
             for row in rows
         ]
 
-    def get_min_candle_date(self) -> Optional[datetime]:
+    def get_min_candle_date(self) -> datetime | None:
         """
         Fetches the earliest date from the candles table
         Returns None if table is empty
@@ -157,7 +156,7 @@ class CandleRepository(ABC):
         row = self.conn.execute(sql).fetchone()
         return row[0] if row and row[0] else None
 
-    def get_all_candles(self, symbol: Symbol) -> List[Candle]:
+    def get_all_candles(self, symbol: Symbol) -> list[Candle]:
         sql = f"""
         SELECT [Id]
             ,[SymbolID]

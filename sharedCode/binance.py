@@ -1,5 +1,4 @@
-from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 from binance.client import Client as BinanceClient
@@ -39,7 +38,7 @@ class FuturesMetrics:
         )
 
 
-def fetch_binance_futures_metrics(symbol: Symbol) -> Optional[FuturesMetrics]:
+def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
     """
     Fetch Open Interest and Funding Rate from Binance Futures.
 
@@ -56,7 +55,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> Optional[FuturesMetrics]:
         oi_response = client.futures_open_interest(symbol=symbol.binance_name)
         open_interest = float(oi_response.get("openInterest", 0))
         oi_timestamp = datetime.fromtimestamp(
-            oi_response.get("time", 0) / 1000, tz=timezone.utc
+            oi_response.get("time", 0) / 1000, tz=UTC
         )
 
         # Fetch current price to calculate OI value
@@ -80,7 +79,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> Optional[FuturesMetrics]:
         # Get next funding time from mark price
         mark_price = client.futures_mark_price(symbol=symbol.binance_name)
         next_funding_time = datetime.fromtimestamp(
-            mark_price.get("nextFundingTime", 0) / 1000, tz=timezone.utc
+            mark_price.get("nextFundingTime", 0) / 1000, tz=UTC
         )
 
         return FuturesMetrics(
@@ -99,12 +98,12 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> Optional[FuturesMetrics]:
         return None
     except Exception as e:
         app_logger.error(
-            f"Unexpected error fetching futures metrics for {symbol.symbol_name}: {str(e)}"
+            f"Unexpected error fetching futures metrics for {symbol.symbol_name}: {e!s}"
         )
         return None
 
 
-def fetch_binance_price(symbol: Symbol) -> Optional[TickerPrice]:
+def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:
     """Fetch price data from Binance exchange."""
     # Initialize the client
     client = BinanceClient()
@@ -124,7 +123,7 @@ def fetch_binance_price(symbol: Symbol) -> Optional[TickerPrice]:
         app_logger.error(f"Error fetching {symbol}: {e.message}")
         return None
     except Exception as e:
-        app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+        app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return None
 
 
@@ -134,7 +133,7 @@ def fetch_close_prices_from_Binance(
     client = BinanceClient()
 
     try:
-        start_time = datetime.now(timezone.utc) - timedelta(days=lookback_days)
+        start_time = datetime.now(UTC) - timedelta(days=lookback_days)
 
         klines = client.get_historical_klines(
             symbol=symbol,
@@ -178,13 +177,13 @@ def fetch_close_prices_from_Binance(
         app_logger.error(f"Error fetching data for {symbol}: {e.message}")
         return pd.DataFrame()
     except Exception as e:
-        app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+        app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return pd.DataFrame()
 
 
 def fetch_binance_daily_kline(
     symbol: Symbol, end_date: date = date.today()
-) -> Optional[Candle]:
+) -> Candle | None:
     """Fetch open and close prices from Binance for the last full day."""
     client = BinanceClient()
 
@@ -225,14 +224,14 @@ def fetch_binance_daily_kline(
         app_logger.error(f"Error fetching {symbol}: {e.message}")
         return None
     except Exception as e:
-        app_logger.error(f"Unexpected error for {symbol}: {str(e)}")
+        app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return None
 
 
 # Adding hourly and fifteen-minute candle fetching functions
 
 
-def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Optional[Candle]:
+def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
     """
     Fetch open, close, high, low prices and volume from Binance for the specified hour.
 
@@ -287,14 +286,14 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Optional[C
         return None
     except Exception as e:
         app_logger.error(
-            f"Unexpected error for {symbol.symbol_name} hourly data: {str(e)}"
+            f"Unexpected error for {symbol.symbol_name} hourly data: {e!s}"
         )
         return None
 
 
 def fetch_binance_fifteen_min_kline(
     symbol: Symbol, end_time: datetime
-) -> Optional[Candle]:
+) -> Candle | None:
     """
     Fetch open, close, high, low prices and volume from Binance for the specified 15-minute interval.
 
@@ -309,7 +308,7 @@ def fetch_binance_fifteen_min_kline(
 
     if end_time.tzinfo is None:
         # Convert naive datetime to timezone-aware
-        end_time = end_time.replace(tzinfo=timezone.utc)
+        end_time = end_time.replace(tzinfo=UTC)
 
     # Start time is 15 minutes before end time
     start_time = end_time - timedelta(minutes=15)
@@ -353,7 +352,7 @@ def fetch_binance_fifteen_min_kline(
         return None
     except Exception as e:
         app_logger.error(
-            f"Unexpected error for {symbol.symbol_name} 15-minute data: {str(e)}"
+            f"Unexpected error for {symbol.symbol_name} 15-minute data: {e!s}"
         )
         return None
 
@@ -381,7 +380,7 @@ if __name__ == "__main__":
 
     # Fetch open and close prices for the last full day
     response = fetch_binance_daily_kline(
-        symbol, datetime.now(timezone.utc) - timedelta(days=1)
+        symbol, datetime.now(UTC) - timedelta(days=1)
     )
     if response is not None:
         print(f"Yesterday price: {response}")

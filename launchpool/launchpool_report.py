@@ -1,5 +1,6 @@
 import requests
 
+
 # Endpoint to fetch articles
 URL = "https://www.kucoin.com/_api/seo-content-eco-service/web/article/searchRec?keyword=gempool+burningdrop&lang=en_US"
 
