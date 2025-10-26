@@ -1,4 +1,3 @@
-# ruff: noqa: N999
 from collections import namedtuple
 
 
@@ -34,5 +33,3 @@ class Candle:
         self.volume_quote = volume_quote
         self.id = id
 
-
-# ruff: noqa: N999

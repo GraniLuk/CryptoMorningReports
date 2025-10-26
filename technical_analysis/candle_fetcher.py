@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.commonPrice import Candle
+from shared_code.common_price import Candle
 from source_repository import Symbol
 
 

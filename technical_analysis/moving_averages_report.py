@@ -1,4 +1,3 @@
-# ruff: noqa: N999
 from collections import namedtuple
 from datetime import UTC, date, datetime, timedelta
 
@@ -6,7 +5,7 @@ import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.priceChecker import fetch_daily_candles
+from shared_code.price_checker import fetch_daily_candles
 from source_repository import Symbol
 from technical_analysis.repositories.moving_averages_repository import (
     fetch_yesterday_moving_averages,

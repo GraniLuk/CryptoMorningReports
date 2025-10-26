@@ -4,7 +4,7 @@ import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.priceChecker import fetch_daily_candles
+from shared_code.price_checker import fetch_daily_candles
 from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import (
     get_historical_rsi,

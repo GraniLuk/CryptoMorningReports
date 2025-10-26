@@ -5,7 +5,7 @@ from binance.client import Client as BinanceClient
 from binance.exceptions import BinanceAPIException
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.commonPrice import Candle, TickerPrice
+from shared_code.common_price import Candle, TickerPrice
 from source_repository import SourceID, Symbol
 
 

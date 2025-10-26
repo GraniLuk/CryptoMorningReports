@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from infra.sql_connection import connect_to_sql
 from reports.current_report import generate_crypto_situation_report
-from sharedCode.telegram import send_telegram_message
+from shared_code.telegram import send_telegram_message
 
 
 async def send_current_report(symbol: str):

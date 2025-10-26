@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime, timedelta
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.priceChecker import fetch_daily_candles
+from shared_code.price_checker import fetch_daily_candles
 from source_repository import Symbol, fetch_symbols
 
 

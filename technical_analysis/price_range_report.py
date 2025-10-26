@@ -1,10 +1,8 @@
-# ruff: noqa: N999
-
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.numberFormat import format_to_6digits_withoutTrailingZeros
-from sharedCode.priceChecker import fetch_daily_candle
+from shared_code.number_format import format_to_6digits_withoutTrailingZeros
+from shared_code.price_checker import fetch_daily_candle
 from source_repository import Symbol
 from technical_analysis.repositories.priceRangeRepository import (
     save_price_range_results,

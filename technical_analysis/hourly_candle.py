@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
-from sharedCode.commonPrice import Candle
-from sharedCode.priceChecker import fetch_hourly_candle, fetch_hourly_candles
+from shared_code.common_price import Candle
+from shared_code.price_checker import fetch_hourly_candle, fetch_hourly_candles
 from source_repository import Symbol
 from technical_analysis.candle_fetcher import CandleFetcher
 from technical_analysis.repositories.hourly_candle_repository import (

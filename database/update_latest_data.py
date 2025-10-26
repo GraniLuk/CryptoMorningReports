@@ -8,7 +8,7 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 from infra.sql_connection import connect_to_sql
-from sharedCode.priceChecker import fetch_daily_candle
+from shared_code.price_checker import fetch_daily_candle
 from source_repository import fetch_symbols
 
 
@@ -191,7 +191,7 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
     """
     from datetime import datetime
 
-    from sharedCode.priceChecker import fetch_hourly_candle
+    from shared_code.price_checker import fetch_hourly_candle
 
     logger.info("Checking database for missing hourly candles...")
 

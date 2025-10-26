@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
-from sharedCode.commonPrice import Candle
-from sharedCode.priceChecker import fetch_fifteen_min_candles
+from shared_code.common_price import Candle
+from shared_code.price_checker import fetch_fifteen_min_candles
 from source_repository import Symbol
 from technical_analysis.candle_fetcher import CandleFetcher
 from technical_analysis.repositories.fifteen_min_candle_repository import (
@@ -53,7 +53,7 @@ class FifteenMinCandles(CandleFetcher):
     """Class for handling fifteen minute candles"""
 
     def __init__(self):
-        from sharedCode.priceChecker import fetch_fifteen_min_candle
+        from shared_code.price_checker import fetch_fifteen_min_candle
 
         super().__init__("fifteen_min", fetch_fifteen_min_candle, FifteenMinCandleRepository)
 

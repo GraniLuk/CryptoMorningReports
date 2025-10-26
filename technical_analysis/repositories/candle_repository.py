@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sharedCode.commonPrice import Candle
+from shared_code.common_price import Candle
 from source_repository import Symbol
 
 

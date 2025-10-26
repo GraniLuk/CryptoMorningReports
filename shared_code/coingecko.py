@@ -1,7 +1,7 @@
 from pycoingecko import CoinGeckoAPI
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.commonPrice import TickerPrice
+from shared_code.common_price import TickerPrice
 from source_repository import SourceID, Symbol
 
 

@@ -4,7 +4,7 @@ import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.priceChecker import fetch_current_price
+from shared_code.price_checker import fetch_current_price
 from source_repository import SourceID, Symbol
 from stepn.bsc_activity import get_yesterday_transaction_count
 from stepn.stepn_ratio_fetch import fetch_gstgmt_ratio_range

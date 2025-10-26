@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from sharedCode.binance import fetch_binance_futures_metrics
+from shared_code.binance import fetch_binance_futures_metrics
 from source_repository import SourceID, Symbol
 from technical_analysis.repositories.funding_rate_repository import (
     FundingRateRepository,

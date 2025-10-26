@@ -1,8 +1,8 @@
 from datetime import UTC, date, datetime, timedelta
 
-from sharedCode.commonPrice import Candle
-from sharedCode.priceChecker import fetch_daily_candle
-from sharedCode.priceChecker import (
+from shared_code.common_price import Candle
+from shared_code.price_checker import fetch_daily_candle
+from shared_code.price_checker import (
     fetch_daily_candles as fetch_daily_candles_for_symbol,
 )
 from source_repository import Symbol

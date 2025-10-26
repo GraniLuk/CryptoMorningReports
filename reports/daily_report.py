@@ -14,16 +14,16 @@ from news.news_agent import (
     highlight_articles,
 )
 from news.rss_parser import get_news
-from sharedCode.priceChecker import fetch_current_price
-from sharedCode.telegram import send_telegram_document, send_telegram_message
+from shared_code.price_checker import fetch_current_price
+from shared_code.telegram import send_telegram_document, send_telegram_message
 from source_repository import fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
-from technical_analysis.movingAveragesReport import calculate_indicators
+from technical_analysis.moving_averages_report import calculate_indicators
 from technical_analysis.price_change_report import fetch_price_change_report
-from technical_analysis.priceRangeReport import fetch_range_price
+from technical_analysis.price_range_report import fetch_range_price
 from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
 from technical_analysis.sopr import fetch_sopr_metrics

@@ -139,7 +139,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
 
             # Send to Telegram if requested
             if send_to_telegram:
-                from sharedCode.telegram import send_telegram_message
+                from shared_code.telegram import send_telegram_message
 
                 telegram_enabled = os.environ.get("TELEGRAM_ENABLED", "False").lower() == "true"
                 telegram_token = os.environ.get("TELEGRAM_TOKEN", "")
