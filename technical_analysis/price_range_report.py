@@ -1,39 +1,69 @@
+from datetime import UTC, datetime, timedelta
+
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
 from shared_code.number_format import format_to_6digits_withoutTrailingZeros
-from shared_code.price_checker import fetch_daily_candle
 from source_repository import Symbol
+from technical_analysis.repositories.hourly_candle_repository import (
+    HourlyCandleRepository,
+)
 from technical_analysis.repositories.priceRangeRepository import (
     save_price_range_results,
 )
 
 
 def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
+    """
+    Calculate 24-hour price range using hourly candles from the last 24 hours.
+    """
     results = []
+    
+    # Calculate time range for last 24 hours
+    end_time = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+    start_time = end_time - timedelta(hours=24)
+    
     for symbol in symbols:
         try:
-            price_data = fetch_daily_candle(symbol, conn=conn)
-            if price_data:
-                results.append(price_data)
+            if not conn:
+                app_logger.warning(f"No database connection, skipping {symbol.symbol_name}")
+                continue
+                
+            # Fetch hourly candles for the last 24 hours
+            repo = HourlyCandleRepository(conn)
+            candles = repo.get_candles(symbol, start_time, end_time)
+            
+            if not candles:
+                app_logger.warning(f"No hourly candles found for {symbol.symbol_name} in last 24h")
+                continue
+            
+            # Calculate high and low from all candles in the 24h period
+            high_price = max(float(c.high) for c in candles)
+            low_price = min(float(c.low) for c in candles)
 
-            # Save to database if connection is available
-            if conn and price_data:
-                try:
-                    price_range_percent = (
-                        (price_data.high - price_data.low) / price_data.low
-                    ) * 100
-                    save_price_range_results(
-                        conn=conn,
-                        symbol_id=symbol.symbol_id,
-                        low_price=price_data.low,
-                        high_price=price_data.high,
-                        range_percent=price_range_percent,
-                    )
-                except Exception as e:
-                    app_logger.error(
-                        f"Failed to save price range results for {symbol.symbol_name}: {e!s}"
-                    )
+            # Create a result object with symbol name and price range
+            price_data = type("PriceRange", (), {
+                "symbol": symbol.symbol_name,
+                "high": high_price,
+                "low": low_price
+            })()
+
+            results.append(price_data)
+
+            # Save to database
+            try:
+                price_range_percent = ((high_price - low_price) / low_price) * 100
+                save_price_range_results(
+                    conn=conn,
+                    symbol_id=symbol.symbol_id,
+                    low_price=low_price,
+                    high_price=high_price,
+                    range_percent=price_range_percent,
+                )
+            except Exception as e:
+                app_logger.error(
+                    f"Failed to save price range results for {symbol.symbol_name}: {e!s}"
+                )
 
         except Exception as e:
             app_logger.error(f"Unexpected error for {symbol.symbol_name}: {e!s}")

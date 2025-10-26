@@ -97,3 +97,42 @@ class DailyCandleRepository(CandleRepository):
                 ),
             )
         self.conn.commit()
+
+    def get_candle(self, symbol: Symbol, end_date: datetime) -> Candle | None:
+        """
+        Override get_candle for DailyCandles table to query by Date column.
+        """
+        # Extract date portion for comparison
+        date_value = end_date.date().isoformat() if isinstance(end_date, datetime) else str(end_date)
+
+        sql = f"""
+        SELECT [Id]
+            ,[SymbolID]
+            ,[SourceID]
+            ,[EndDate]
+            ,[Open]
+            ,[Close]
+            ,[High]
+            ,[Low]
+            ,[Last]
+            ,[Volume]
+            ,[VolumeQuote]
+        FROM {self.table_name}
+        WHERE SymbolID = ? AND Date = ?
+        """
+        row = self.conn.execute(sql, (symbol.symbol_id, date_value)).fetchone()
+        if row:
+            return Candle(
+                id=row[0],
+                symbol=symbol.symbol_name,
+                source=row[2],
+                end_date=row[3],
+                open=row[4],
+                close=row[5],
+                high=row[6],
+                low=row[7],
+                last=row[8],
+                volume=row[9],
+                volume_quote=row[10],
+            )
+        return None

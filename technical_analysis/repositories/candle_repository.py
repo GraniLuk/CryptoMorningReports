@@ -103,6 +103,10 @@ class CandleRepository:
         return None
 
     def get_candles(self, symbol: Symbol, start_date: datetime, end_date: datetime) -> list[Candle]:
+        # Convert datetime objects to ISO format strings for comparison since EndDate is stored as text
+        start_date_str = start_date.isoformat() if isinstance(start_date, datetime) else str(start_date)
+        end_date_str = end_date.isoformat() if isinstance(end_date, datetime) else str(end_date)
+
         sql = f"""
         SELECT [Id]
             ,[SymbolID]
@@ -121,7 +125,7 @@ class CandleRepository:
         AND EndDate <= ?
         ORDER BY EndDate
         """
-        rows = self.conn.execute(sql, (symbol.symbol_id, start_date, end_date)).fetchall()
+        rows = self.conn.execute(sql, (symbol.symbol_id, start_date_str, end_date_str)).fetchall()
         return [
             Candle(
                 id=row[0],
