@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 from prettytable import PrettyTable

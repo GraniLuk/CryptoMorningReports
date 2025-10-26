@@ -49,7 +49,7 @@ jobs:
         run: |
           source venv/bin/activate
           ruff check . --output-format=github
-        continue-on-error: true  # Allow warnings for now, will fix them gradually
+        continue-on-error: false  # Fail the build if ruff finds issues
 
       - name: Run type checking with Pyright
         id: type_check

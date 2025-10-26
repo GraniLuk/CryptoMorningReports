@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sharedCode.commonPrice import Candle
 from sharedCode.priceChecker import fetch_daily_candle

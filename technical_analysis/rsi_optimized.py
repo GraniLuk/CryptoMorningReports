@@ -2,7 +2,7 @@
 Optimized version of RSI calculation for multiple timeframes
 """
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
