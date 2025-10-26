@@ -168,7 +168,7 @@ def get_rsi_for_symbol_timeframe(
                     f"Unexpected index type: {type(idx)}"
                 )
 
-                candle_id = int(row["SymbolId"])
+                candle_id = int(row["Id"])  # Note: column name is 'Id' not 'ID'
                 try:
                     # Use loc instead of at for better type inference
                     calculated_value = df.loc[idx, "calculated_RSI"]

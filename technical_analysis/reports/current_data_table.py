@@ -9,13 +9,19 @@ from typing import Any, Dict, Optional
 import pandas as pd
 
 from infra.telegram_logging_handler import app_logger
-from source_repository import Symbol
+from source_repository import SourceID, Symbol
 from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
 from technical_analysis.repositories.daily_candle_repository import (
     DailyCandleRepository,
 )
+from technical_analysis.repositories.funding_rate_repository import (
+    FundingRateRepository,
+)
 from technical_analysis.repositories.moving_averages_repository import (
     fetch_moving_averages_for_symbol,
+)
+from technical_analysis.repositories.open_interest_repository import (
+    OpenInterestRepository,
 )
 
 
@@ -91,6 +97,11 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
         "daily_range": None,
         "daily_range_pct": None,
         "daily_ranges_7d": [],
+        # Derivatives data
+        "open_interest": None,
+        "open_interest_value": None,
+        "funding_rate": None,
+        "next_funding_time": None,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
 
@@ -200,6 +211,30 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> Dict[str, Any]:
                 f"Could not compute daily range for {symbol.symbol_name}: {inner_e}"
             )
 
+        # Fetch derivatives data (Open Interest and Funding Rate) - only for Binance symbols
+        if symbol.source_id == SourceID.BINANCE:
+            try:
+                oi_repo = OpenInterestRepository(conn)
+                fr_repo = FundingRateRepository(conn)
+
+                # Get latest Open Interest
+                oi_data = oi_repo.get_latest_open_interest(symbol.symbol_id)
+                if oi_data:
+                    data["open_interest"] = float(oi_data["open_interest"])
+                    data["open_interest_value"] = float(oi_data["open_interest_value"])
+
+                # Get latest Funding Rate
+                fr_data = fr_repo.get_latest_funding_rate(symbol.symbol_id)
+                if fr_data:
+                    data["funding_rate"] = float(fr_data["funding_rate"])
+                    if fr_data.get("funding_time"):
+                        data["next_funding_time"] = fr_data["funding_time"]
+
+            except Exception as deriv_error:
+                app_logger.warning(
+                    f"Could not fetch derivatives data for {symbol.symbol_name}: {deriv_error}"
+                )
+
         app_logger.info(f"Successfully retrieved current data for {symbol.symbol_name}")
 
     except Exception as e:
@@ -293,6 +328,44 @@ def format_current_data_for_telegram_html(symbol_data: Dict[str, Any]) -> str:
             history_html += f"{date_str}: {day_range_str} ({day_range_pct_str})\n"
         history_html += "</pre>"
 
+    # Format derivatives data (Open Interest and Funding Rate)
+    derivatives_html = ""
+    open_interest = symbol_data.get("open_interest")
+    open_interest_value = symbol_data.get("open_interest_value")
+    funding_rate = symbol_data.get("funding_rate")
+    next_funding_time = symbol_data.get("next_funding_time")
+
+    if any([open_interest, funding_rate]):
+        derivatives_html = "\n<b>📈 Derivatives Data:</b>\n"
+
+        if open_interest is not None:
+            oi_str = f"{open_interest:,.0f}"
+            derivatives_html += f"├ Open Interest: <code>{oi_str}</code>\n"
+
+        if open_interest_value is not None:
+            oi_value_str = f"${open_interest_value:,.0f}"
+            derivatives_html += f"├ OI Value: <code>{oi_value_str}</code>\n"
+
+        if funding_rate is not None:
+            fr_pct = funding_rate * 100
+            fr_str = f"{fr_pct:+.4f}%"
+            emoji = (
+                "🔴" if funding_rate > 0.01 else "🟢" if funding_rate < -0.01 else "🟡"
+            )
+            derivatives_html += f"├ Funding Rate: {emoji} <code>{fr_str}</code>\n"
+
+        if next_funding_time:
+            if isinstance(next_funding_time, datetime):
+                funding_time_str = next_funding_time.strftime("%H:%M UTC")
+            else:
+                funding_time_str = str(next_funding_time)
+            derivatives_html += f"└ Next Funding: <code>{funding_time_str}</code>\n"
+        elif funding_rate is not None:
+            # Add a closing character if we have funding rate but no time
+            derivatives_html = derivatives_html.replace(
+                "├ Funding Rate:", "└ Funding Rate:"
+            )
+
     # Create HTML formatted message
     html_message = f"""<b>📈 Current Market Data for {symbol_name}</b>
 
@@ -314,7 +387,7 @@ def format_current_data_for_telegram_html(symbol_data: Dict[str, Any]) -> str:
 ├ MA200: <code>{ma200_str}</code>
 ├ EMA50: <code>{ema50_str}</code>
 └ EMA200: <code>{ema200_str}</code>
-{history_html}
+{derivatives_html}{history_html}
 """
 
     return html_message

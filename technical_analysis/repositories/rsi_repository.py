@@ -169,6 +169,7 @@ def get_candles_with_rsi(
 
             query = f"""
                 SELECT 
+                    dc.ID,
                     dc.SymbolId,
                     dc.EndDate as date,
                     r.RSI,
@@ -181,7 +182,7 @@ def get_candles_with_rsi(
                 WHERE dc.SymbolId = ? AND dc.EndDate >= ?
                 ORDER BY dc.EndDate DESC
             """
-            cursor.execute(query, symbol_id, from_date)
+            cursor.execute(query, (symbol_id, from_date))
 
             # Fetch column names
             columns = [column[0] for column in cursor.description]
