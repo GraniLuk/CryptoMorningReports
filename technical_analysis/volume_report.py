@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import requests
 from prettytable import PrettyTable
 
@@ -17,7 +19,7 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
                 "https://api.binance.com/api/v3/ticker/24hr",
                 params={"symbol": crypto.binance_name},
             )
-            if binance_response.status_code == 200:
+            if binance_response.status_code == HTTPStatus.OK:
                 binance_data = binance_response.json()
                 binance_volume = float(binance_data.get("quoteVolume", 0))
         except Exception:
@@ -30,7 +32,7 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
                 "https://api.kucoin.com/api/v1/market/stats",
                 params={"symbol": crypto.kucoin_name},
             )
-            if kucoin_response.status_code == 200:
+            if kucoin_response.status_code == HTTPStatus.OK:
                 kucoin_data = kucoin_response.json()
                 kucoin_volume = float(kucoin_data.get("data", {}).get("volValue", 0))
         except Exception:

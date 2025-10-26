@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import requests
 from prettytable import PrettyTable
 
@@ -23,7 +25,7 @@ def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
 
     try:
         response = requests.get(url, params=params)
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             data = response.json()
 
             # Create lookup dictionary

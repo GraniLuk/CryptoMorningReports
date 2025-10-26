@@ -372,6 +372,8 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
             }
 
             try:
+                from http import HTTPStatus
+
                 import requests
 
                 # Ensure we have headers for the Perplexity client
@@ -383,7 +385,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
                     headers=headers,
                 )
 
-                if response.status_code == 200:
+                if response.status_code == HTTPStatus.OK:
                     analysis = response.json()["choices"][0]["message"]["content"]
                 else:
                     error_msg = f"Failed: API error: {response.status_code} - {response.text}"

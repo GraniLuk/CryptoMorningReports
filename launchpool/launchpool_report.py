@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import requests
 
 
@@ -12,7 +14,7 @@ def check_gempool_articles():
     response = requests.get(URL)
     new_articles = []
 
-    if response.status_code == 200:
+    if response.status_code == HTTPStatus.OK:
         data = response.json()
         if data.get("success") and "items" in data:
             new_articles = []

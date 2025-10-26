@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 
 import requests
 from prettytable import PrettyTable
@@ -29,13 +30,13 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
         response = requests.get(f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10)
 
         # Check for rate limiting or other HTTP errors
-        if response.status_code == 429:
+        if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
             app_logger.warning(
                 "SOPR API rate limit exceeded (5 requests/hour for free tier). "
                 "Skipping SOPR metrics this run."
             )
             return None
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             app_logger.error(f"SOPR API returned status {response.status_code}: {response.text}")
             return None
 
@@ -43,14 +44,14 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
 
         # Fetch STH-SOPR
         response = requests.get(f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10)
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             app_logger.warning(f"STH-SOPR API error (status {response.status_code}), skipping")
             return None
         metrics["STH-SOPR"] = response.json()[0]
 
         # Fetch LTH-SOPR
         response = requests.get(f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10)
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             app_logger.warning(f"LTH-SOPR API error (status {response.status_code}), skipping")
             return None
         metrics["LTH-SOPR"] = response.json()[0]

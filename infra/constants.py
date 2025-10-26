@@ -1,0 +1,36 @@
+"""Shared constants used across the application.
+
+For HTTP status codes, use the standard library: from http import HTTPStatus
+"""
+
+# Time constants (in seconds)
+SECONDS_IN_15_MINUTES = 900
+SECONDS_IN_HOUR = 3600
+SECONDS_IN_DAY = 86400
+
+# Telegram limits
+TELEGRAM_MAX_MESSAGE_LENGTH = 4096
+MESSAGE_TRUNCATE_THRESHOLD = 600
+
+# RSI thresholds
+RSI_OVERBOUGHT_THRESHOLD = 70
+RSI_OVERSOLD_THRESHOLD = 30
+
+# Funding rate thresholds
+FUNDING_RATE_HIGH_THRESHOLD = 0.01
+FUNDING_RATE_LOW_THRESHOLD = -0.01
+
+# Data limits
+MAX_NEWS_ITEMS = 10
+MAX_NEWS_ARTICLE_LOG_LENGTH = 10000
+MAX_DEBUG_LOG_LENGTH = 2000
+MIN_CANDLES_FOR_CALCULATION = 7
+MIN_RECOMMENDED_PERIODS = 200
+MAX_SIGNIFICANT_DIGITS = 6
+
+# Date format
+DATE_FORMAT_LENGTH = 10
+EXPECTED_DASHES = 2
+
+# Command line arguments
+MIN_ARGS_FOR_CURRENT = 3

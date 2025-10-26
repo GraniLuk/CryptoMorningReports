@@ -146,7 +146,8 @@ class GeminiClient(AIClient):
             logging.info(f"Preview: {preview}...")
 
             # For news articles, log the source and title if available
-            if "NEWS_ARTICLE" in part_type and text_length < 10000:
+            MAX_NEWS_ARTICLE_LOG_LENGTH = 10000
+            if "NEWS_ARTICLE" in part_type and text_length < MAX_NEWS_ARTICLE_LOG_LENGTH:
                 try:
                     import json
 
@@ -162,12 +163,13 @@ class GeminiClient(AIClient):
                     pass
 
             # For INDICATORS and PRICE_DATA, log full content for debugging
+            MAX_DEBUG_LOG_LENGTH = 2000
             if part_type in ["INDICATORS", "PRICE_DATA"]:
                 logging.info(f"Full {part_type} content:")
                 logging.info(text_content)
                 logging.info(f"--- End of {part_type} ---")
             # For other short parts, log full content at debug level
-            elif text_length < 2000:
+            elif text_length < MAX_DEBUG_LOG_LENGTH:
                 logging.debug(f"Full content:\n{text_content}\n")
 
         logging.info(f"\n{'=' * 80}")

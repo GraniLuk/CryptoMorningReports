@@ -92,8 +92,9 @@ def calculate_indicators(  # noqa: PLR0915
             target_EMA200 = df["EMA200"].iloc[-1]
 
             # Add warning indicator if using shorter periods
+            MIN_RECOMMENDED_PERIODS = 200
             period_warning = ""
-            if available_periods < 200:
+            if available_periods < MIN_RECOMMENDED_PERIODS:
                 period_warning = "⚠️"  # Add warning emoji for shortened periods
                 app_logger.warning(
                     f"{symbol.symbol_name} using shortened periods due to limited history: {available_periods} days"
@@ -246,10 +247,11 @@ def calculate_indicators(  # noqa: PLR0915
         str_price = f"{price:.10f}"
         # Remove trailing zeros after decimal
         str_price = str_price.rstrip("0").rstrip(".")
-        # Count total digits excluding decimal point
+        # Count total digits in the price (excluding decimal point)
         total_digits = sum(c.isdigit() for c in str_price)
 
-        if total_digits > 6:
+        MAX_SIGNIFICANT_DIGITS = 6
+        if total_digits > MAX_SIGNIFICANT_DIGITS:
             # If more than 6 digits, round to appropriate decimal places
             decimal_idx = str_price.find(".")
             if decimal_idx == -1:

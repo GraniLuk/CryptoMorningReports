@@ -67,14 +67,15 @@ def fetch_rss_news(feed_url, source, class_name):
                     {
                         "source": source,
                         "title": entry.title,
-                        "link": entry.link,
-                        "published": entry.published,
-                        "content": full_content,
-                    }
-                )
+                    "link": entry.link,
+                    "published": entry.published,
+                    "content": full_content,
+                }
+            )
 
-                if len(latest_news) >= 10:
-                    break
+            MAX_NEWS_ITEMS = 10
+            if len(latest_news) >= MAX_NEWS_ITEMS:
+                break
 
         return latest_news
     except Exception as e:

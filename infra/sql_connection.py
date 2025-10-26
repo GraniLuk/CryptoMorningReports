@@ -32,6 +32,8 @@ class SQLiteRow:
             value = row[idx]
 
             # Convert string dates to datetime objects
+            DATE_FORMAT_LENGTH = 10
+            EXPECTED_DASHES = 2
             if value is not None and isinstance(value, str):
                 # Try to parse as datetime (ISO format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS)
                 if "T" in value or " " in value:
@@ -39,7 +41,7 @@ class SQLiteRow:
                         # Handle both formats: "2025-10-23T20:00:00" and "2025-10-23 20:00:00"
                         value = datetime.fromisoformat(value.replace(" ", "T"))
                 # Try to parse as date only (YYYY-MM-DD)
-                elif len(value) == 10 and value.count("-") == 2:
+                elif len(value) == DATE_FORMAT_LENGTH and value.count("-") == EXPECTED_DASHES:
                     with suppress(ValueError, AttributeError):
                         value = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=UTC).date()
 

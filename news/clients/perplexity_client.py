@@ -2,6 +2,7 @@
 
 import logging
 import time
+from http import HTTPStatus
 from typing import Any
 
 import requests
@@ -51,7 +52,7 @@ class PerplexityClient(AIClient):
             response = requests.post(self.url, json=data, headers=self.headers)
             logging.info(f"API Response Status: {response.status_code}")
 
-            if response.status_code == 200:
+            if response.status_code == HTTPStatus.OK:
                 content = response.json()["choices"][0]["message"]["content"]
                 logging.info(f"Successfully processed. Length: {len(content)} chars")
                 return True, content
