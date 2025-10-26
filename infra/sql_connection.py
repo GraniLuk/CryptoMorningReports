@@ -3,6 +3,7 @@ import os
 import sqlite3
 import struct
 import time
+from contextlib import suppress
 from datetime import datetime
 
 import pyodbc
@@ -33,17 +34,13 @@ class SQLiteRow:
             if value is not None and isinstance(value, str):
                 # Try to parse as datetime (ISO format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS)
                 if "T" in value or " " in value:
-                    try:
+                    with suppress(ValueError, AttributeError):
                         # Handle both formats: "2025-10-23T20:00:00" and "2025-10-23 20:00:00"
                         value = datetime.fromisoformat(value.replace(" ", "T"))
-                    except (ValueError, AttributeError):
-                        pass  # Keep as string if not a valid datetime
                 # Try to parse as date only (YYYY-MM-DD)
                 elif len(value) == 10 and value.count("-") == 2:
-                    try:
+                    with suppress(ValueError, AttributeError):
                         value = datetime.strptime(value, "%Y-%m-%d").date()
-                    except (ValueError, AttributeError):
-                        pass  # Keep as string if not a valid date
 
             self._data.append(value)
             self._names[col_name] = idx

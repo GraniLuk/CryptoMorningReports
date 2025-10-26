@@ -2,13 +2,13 @@
 Fetch and save derivatives market data (Open Interest and Funding Rate) for symbols.
 """
 
-import os
 import sys
+from pathlib import Path
 
 
 # Add parent directory to path for imports when run standalone
 if __name__ == "__main__":
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 
 from datetime import UTC, datetime
 

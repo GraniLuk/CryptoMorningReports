@@ -253,7 +253,7 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
     return html_text
 
 
-async def generate_crypto_situation_report(conn, symbol_name):
+async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
     """
     Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 

@@ -192,7 +192,7 @@ def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
     return chunks
 
 
-async def send_telegram_document(
+async def send_telegram_document(  # noqa: PLR0911
     enabled: bool,
     token: str,
     chat_id: str,

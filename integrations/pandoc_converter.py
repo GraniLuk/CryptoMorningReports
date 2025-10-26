@@ -42,7 +42,7 @@ def _resolve_pandoc_download_dir() -> str:
 
 
 def _ensure_pandoc_available():
-    global _pypandoc_module
+    global _pypandoc_module  # noqa: PLW0603
     with _pypandoc_lock:
         if _pypandoc_module is not None:
             return _pypandoc_module
@@ -57,7 +57,7 @@ def _ensure_pandoc_available():
         # First try to use system-installed pandoc
         try:
             existing_path = pypandoc.get_pandoc_path()
-            if existing_path and os.path.isfile(existing_path):
+            if existing_path and Path(existing_path).is_file():
                 app_logger.info("Using system pandoc at %s", existing_path)
                 _pypandoc_module = pypandoc
                 return _pypandoc_module
@@ -88,7 +88,7 @@ def _ensure_pandoc_available():
                 if not pandoc_path:
                     pandoc_path = os.path.join(target_dir, "pandoc")
 
-                if not os.path.isfile(pandoc_path):
+                if not Path(pandoc_path).is_file():
                     raise FileNotFoundError(
                         f"Pandoc binary not found at expected location: {pandoc_path}"
                     )

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -79,7 +79,7 @@ def get_rsi_for_symbol_timeframe(
             )  # Get more historical data for RSI calculation
             # Convert date to datetime for repository call
             extended_start_datetime = datetime.combine(extended_start_date, datetime.min.time())
-            candles = repository.get_candles(symbol, extended_start_datetime, datetime.now())
+            candles = repository.get_candles(symbol, extended_start_datetime, datetime.now(UTC))
 
             if not candles:
                 app_logger.warning(f"No {timeframe} candles found for {symbol.symbol_name}")
@@ -204,7 +204,7 @@ def get_rsi_for_symbol_timeframe(
 
 
 def create_multi_timeframe_rsi_table(
-    symbol: Symbol, conn, timeframes: list[str] = ["daily", "hourly", "fifteen_min"]
+    symbol: Symbol, conn, timeframes: list[str] | None = None
 ):
     """
     Creates a multi-timeframe RSI table for a symbol
@@ -217,6 +217,9 @@ def create_multi_timeframe_rsi_table(
     Returns:
         PrettyTable: Formatted table with RSI values
     """
+    if timeframes is None:
+        timeframes = ["daily", "hourly", "fifteen_min"]
+    
     # Map of lookback days appropriate for each timeframe
     lookback_map = {
         "daily": 30,  # Look back 30 days
@@ -312,7 +315,7 @@ def create_multi_timeframe_rsi_table(
 def create_multi_timeframe_rsi_tables(
     symbols: list[Symbol],
     conn,
-    timeframes: list[str] = ["daily", "hourly", "fifteen_min"],
+    timeframes: list[str] | None = None,
 ) -> dict[str, PrettyTable]:
     """
     Creates multi-timeframe RSI tables for multiple symbols
@@ -325,6 +328,9 @@ def create_multi_timeframe_rsi_tables(
     Returns:
         Dict[str, PrettyTable]: Dictionary mapping timeframes to formatted tables with RSI values
     """
+    if timeframes is None:
+        timeframes = ["daily", "hourly", "fifteen_min"]
+    
     # Collect all RSI data
     all_symbols_data = {}
     for timeframe in timeframes:
