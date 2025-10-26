@@ -1,4 +1,5 @@
 from collections import namedtuple
+from dataclasses import dataclass
 
 
 TickerPrice = namedtuple(
@@ -6,29 +7,16 @@ TickerPrice = namedtuple(
 )
 
 
+@dataclass
 class Candle:
-    def __init__(
-        self,
-        symbol: str,
-        source: int,
-        end_date,
-        close: float,
-        high: float,
-        low: float,
-        last: float,
-        volume: float,
-        volume_quote: float,
-        open: float | None = None,  # noqa: A002
-        id: int | None = None,  # noqa: A002
-    ):
-        self.symbol = symbol
-        self.source = source
-        self.end_date = end_date
-        self.open = open
-        self.close = close
-        self.high = high
-        self.low = low
-        self.last = last
-        self.volume = volume
-        self.volume_quote = volume_quote
-        self.id = id
+    symbol: str
+    source: int
+    end_date: str
+    close: float
+    high: float
+    low: float
+    last: float
+    volume: float
+    volume_quote: float
+    open: float | None = None
+    id: int | None = None
