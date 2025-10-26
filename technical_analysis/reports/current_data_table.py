@@ -325,7 +325,13 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
         if funding_rate is not None:
             fr_pct = funding_rate * 100
             fr_str = f"{fr_pct:+.4f}%"
-            emoji = "🔴" if funding_rate > FUNDING_RATE_HIGH_THRESHOLD else "🟢" if funding_rate < FUNDING_RATE_LOW_THRESHOLD else "🟡"
+            emoji = (
+                "🔴"
+                if funding_rate > FUNDING_RATE_HIGH_THRESHOLD
+                else "🟢"
+                if funding_rate < FUNDING_RATE_LOW_THRESHOLD
+                else "🟡"
+            )
             derivatives_html += f"├ Funding Rate: {emoji} <code>{fr_str}</code>\n"
 
         if next_funding_time:

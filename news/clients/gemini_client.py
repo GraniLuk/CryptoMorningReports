@@ -77,6 +77,82 @@ class GeminiClient(AIClient):
             logging.error(error_msg)
             return error_msg
 
+    def _identify_part_type(self, idx: int, text_content: str) -> str:
+        """Identify the type of prompt part for logging purposes."""
+        if idx == 0:
+            return "SYSTEM_PROMPT"
+
+        text_preview = text_content[:200]
+
+        if "News Article" in text_content[:100]:
+            import re
+
+            match = re.search(r"News Article (\d+)/(\d+)", text_content[:100])
+            if match:
+                return f"NEWS_ARTICLE_{match.group(1)}_of_{match.group(2)}"
+            return "NEWS_ARTICLE"
+
+        if "Input News" in text_preview[:100]:
+            return "NEWS_HEADER"
+
+        if any(
+            keyword in text_preview
+            for keyword in ["Technical Indicators", "Indicators Provided", "Momentum"]
+        ):
+            return "INDICATORS"
+
+        if any(keyword in text_preview for keyword in ["Price Data", "Recent Price Data"]):
+            return "PRICE_DATA"
+
+        if "Core principles" in text_preview or "MANDATORY OUTPUT SECTIONS" in text_preview:
+            return "USER_INSTRUCTIONS"
+
+        return "OTHER"
+
+    def _log_news_article_details(self, text_content: str) -> None:
+        """Extract and log news article details if available."""
+        MAX_NEWS_ARTICLE_LOG_LENGTH = 10000
+        if len(text_content) >= MAX_NEWS_ARTICLE_LOG_LENGTH:
+            return
+
+        try:
+            import json
+
+            if "News Article" in text_content:
+                article_json_start = text_content.find("{")
+                if article_json_start > 0:
+                    article_json = text_content[article_json_start:]
+                    article_data = json.loads(article_json)
+                    logging.info(f"  Source: {article_data.get('source', 'N/A')}")
+                    logging.info(f"  Title: {article_data.get('title', 'N/A')[:100]}")
+        except Exception:
+            pass
+
+    def _log_prompt_part(self, idx: int, part: dict, part_type: str) -> None:
+        """Log details about a single prompt part."""
+        text_content = part["parts"][0]["text"]
+        text_length = len(text_content)
+
+        logging.info(f"\n--- Part {idx}: {part_type} ---")
+        logging.info(f"Role: {part['role']}")
+        logging.info(f"Length: {text_length:,} characters")
+
+        # Log preview
+        preview = text_content[:300].replace("\n", " ")
+        logging.info(f"Preview: {preview}...")
+
+        # Special handling for different part types
+        if "NEWS_ARTICLE" in part_type:
+            self._log_news_article_details(text_content)
+
+        MAX_DEBUG_LOG_LENGTH = 2000
+        if part_type in ["INDICATORS", "PRICE_DATA"]:
+            logging.info(f"Full {part_type} content:")
+            logging.info(text_content)
+            logging.info(f"--- End of {part_type} ---")
+        elif text_length < MAX_DEBUG_LOG_LENGTH:
+            logging.debug(f"Full content:\n{text_content}\n")
+
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
     ) -> str:
@@ -98,79 +174,16 @@ class GeminiClient(AIClient):
             {"role": "user", "parts": [{"text": message}]} for message in user_messages
         ]
 
-        # Log each message part separately for debugging
+        # Log request details
         logging.info("=" * 80)
         logging.info(f"GEMINI API REQUEST - Total parts: {len(prompt_parts)}")
         logging.info("=" * 80)
 
+        # Log each prompt part
         for idx, part in enumerate(prompt_parts):
             text_content = part["parts"][0]["text"]
-            text_length = len(text_content)
-
-            # Identify the part type for clearer logging
-            if idx == 0:
-                part_type = "SYSTEM_PROMPT"
-            elif "News Article" in text_content[:100]:
-                # Extract article number from the message
-                import re
-
-                match = re.search(r"News Article (\d+)/(\d+)", text_content[:100])
-                if match:
-                    part_type = f"NEWS_ARTICLE_{match.group(1)}_of_{match.group(2)}"
-                else:
-                    part_type = "NEWS_ARTICLE"
-            elif "Input News" in text_content[:100]:
-                part_type = "NEWS_HEADER"
-            elif (
-                "Technical Indicators" in text_content[:100]
-                or "Indicators Provided" in text_content[:100]
-                or "Momentum" in text_content[:100]
-            ):
-                part_type = "INDICATORS"
-            elif "Price Data" in text_content[:100] or "Recent Price Data" in text_content[:100]:
-                part_type = "PRICE_DATA"
-            elif (
-                "Core principles" in text_content[:100]
-                or "MANDATORY OUTPUT SECTIONS" in text_content[:200]
-            ):
-                part_type = "USER_INSTRUCTIONS"
-            else:
-                part_type = "OTHER"
-
-            logging.info(f"\n--- Part {idx}: {part_type} ---")
-            logging.info(f"Role: {part['role']}")
-            logging.info(f"Length: {text_length:,} characters")
-
-            # Log preview (first 300 chars)
-            preview = text_content[:300].replace("\n", " ")
-            logging.info(f"Preview: {preview}...")
-
-            # For news articles, log the source and title if available
-            MAX_NEWS_ARTICLE_LOG_LENGTH = 10000
-            if "NEWS_ARTICLE" in part_type and text_length < MAX_NEWS_ARTICLE_LOG_LENGTH:
-                try:
-                    import json
-
-                    # Try to extract article info
-                    if "News Article" in text_content:
-                        article_json_start = text_content.find("{")
-                        if article_json_start > 0:
-                            article_json = text_content[article_json_start:]
-                            article_data = json.loads(article_json)
-                            logging.info(f"  Source: {article_data.get('source', 'N/A')}")
-                            logging.info(f"  Title: {article_data.get('title', 'N/A')[:100]}")
-                except Exception:
-                    pass
-
-            # For INDICATORS and PRICE_DATA, log full content for debugging
-            MAX_DEBUG_LOG_LENGTH = 2000
-            if part_type in ["INDICATORS", "PRICE_DATA"]:
-                logging.info(f"Full {part_type} content:")
-                logging.info(text_content)
-                logging.info(f"--- End of {part_type} ---")
-            # For other short parts, log full content at debug level
-            elif text_length < MAX_DEBUG_LOG_LENGTH:
-                logging.debug(f"Full content:\n{text_content}\n")
+            part_type = self._identify_part_type(idx, text_content)
+            self._log_prompt_part(idx, part, part_type)
 
         logging.info(f"\n{'=' * 80}")
         logging.info("Sending request to Gemini API...")
