@@ -30,7 +30,7 @@ class OpenInterestRepository:
                 # SQLite: Use INSERT OR REPLACE
                 cursor.execute(
                     """
-                    INSERT OR REPLACE INTO OpenInterest 
+                    INSERT OR REPLACE INTO OpenInterest
                     (SymbolID, OpenInterest, OpenInterestValue, IndicatorDate)
                     VALUES (?, ?, ?, ?)
                     """,

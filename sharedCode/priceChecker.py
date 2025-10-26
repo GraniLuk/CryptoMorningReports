@@ -1,3 +1,4 @@
+# ruff: noqa: N999
 from datetime import UTC, date, datetime, timedelta
 
 from sharedCode.binance import fetch_binance_daily_kline, fetch_binance_price
@@ -27,7 +28,7 @@ def fetch_daily_candle(
     symbol: Symbol, end_date: date | None = None, conn=None
 ) -> Candle | None:
     if end_date is None:
-        end_date = date.today()
+        end_date = datetime.now(UTC).date()
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)
@@ -176,9 +177,8 @@ def fetch_hourly_candles(
                 candle_dict[timestamp] = candle
 
     # Convert dictionary to sorted list
-    candles = [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
+    return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
-    return candles
 
 
 def fetch_fifteen_min_candle(
@@ -310,9 +310,8 @@ def fetch_fifteen_min_candles(
                 candle_dict[timestamp] = candle
 
     # Convert dictionary to sorted list
-    candles = [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
+    return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
-    return candles
 
 
 def fetch_daily_candles(
@@ -323,7 +322,7 @@ def fetch_daily_candles(
     If a database connection is provided, attempts to fetch from database first.
     """
     if end_date is None:
-        end_date = date.today()
+        end_date = datetime.now(UTC).date()
     # If connection provided, try to get from database first
     if conn:
         repo = DailyCandleRepository(conn)

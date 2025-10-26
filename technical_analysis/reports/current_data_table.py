@@ -69,7 +69,7 @@ def get_latest_rsi_from_df(rsi_df: pd.DataFrame | None) -> float | None:
     return None
 
 
-def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:
+def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa: PLR0915
     """
     Get current data for a single symbol including latest price and RSI across timeframes.
 
@@ -244,7 +244,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:
     return data
 
 
-def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:
+def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  # noqa: PLR0915
     """
     Format current data for a single symbol into HTML for Telegram.
 
@@ -365,7 +365,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:
             )
 
     # Create HTML formatted message
-    html_message = f"""<b>📈 Current Market Data for {symbol_name}</b>
+    return f"""<b>📈 Current Market Data for {symbol_name}</b>
 
 <i>⏰ {timestamp}</i>
 
@@ -388,7 +388,6 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:
 {derivatives_html}{history_html}
 """
 
-    return html_message
 
 
 def get_current_data_summary_table(symbol: Symbol, conn) -> str:

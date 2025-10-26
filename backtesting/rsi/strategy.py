@@ -6,7 +6,7 @@ import pandas as pd
 from source_repository import Symbol
 
 
-def run_backtest(
+def run_backtest(  # noqa: PLR0915
     symbol: Symbol,
     candles_data,
     rsi_value: int,

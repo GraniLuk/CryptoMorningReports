@@ -33,7 +33,7 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
                 # SQL Server uses MERGE
                 query = """
                     MERGE INTO RSI AS target
-                    USING (SELECT ? AS DailyCandleID, ? AS RSI) 
+                    USING (SELECT ? AS DailyCandleID, ? AS RSI)
                         AS source (DailyCandleID, RSI)
                     ON target.DailyCandleID = source.DailyCandleID
                     WHEN MATCHED THEN
@@ -108,7 +108,7 @@ def save_rsi_by_timeframe(
                 # SQL Server uses MERGE
                 query = f"""
                     MERGE INTO {table_name} AS target
-                    USING (SELECT ? AS {id_column}, ? AS RSI) 
+                    USING (SELECT ? AS {id_column}, ? AS RSI)
                         AS source ({id_column}, RSI)
                     ON target.{id_column} = source.{id_column}
                     WHEN MATCHED THEN
@@ -167,7 +167,7 @@ def get_candles_with_rsi(
             )
 
             query = f"""
-                SELECT 
+                SELECT
                     dc.ID,
                     dc.SymbolId,
                     dc.EndDate as date,
@@ -205,7 +205,7 @@ def get_candles_with_rsi(
         raise
 
 
-def get_historical_rsi(
+def get_historical_rsi(  # noqa: PLR0915
     conn, symbol_id: int, date: date, timeframe: str = "daily"
 ) -> dict:
     """
@@ -276,12 +276,12 @@ def get_historical_rsi(
                     date_func_week = f"datetime(?, '-{week_interval} minutes')"
 
                 query = f"""
-                    SELECT 
+                    SELECT
                         dc.EndDate as IndicatorDate,
                         r.RSI
                     FROM {candle_table} dc
                     LEFT JOIN {rsi_table} r ON dc.Id = r.{id_column}
-                    WHERE dc.SymbolID = ? 
+                    WHERE dc.SymbolID = ?
                     AND dc.EndDate IN (
                         {date_func_prev},  -- Previous interval
                         {date_func_week}   -- Week equivalent
@@ -291,12 +291,12 @@ def get_historical_rsi(
             else:
                 # SQL Server syntax
                 query = f"""
-                    SELECT 
+                    SELECT
                         dc.EndDate as IndicatorDate,
                         r.RSI
                     FROM {candle_table} dc
                     LEFT JOIN {rsi_table} r ON dc.ID = r.{id_column}
-                    WHERE dc.SymbolID = ? 
+                    WHERE dc.SymbolID = ?
                     AND dc.EndDate IN (
                         DATEADD({interval_keyword}, -{previous_interval}, ?),  -- Previous interval
                         DATEADD({interval_keyword}, -{week_interval}, ?)   -- Week equivalent

@@ -240,12 +240,11 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
     html_text = re.sub(r"^\s*(\d+)\.\s+(.+)$", r"  \1. \2", html_text, flags=re.MULTILINE)
 
     # Add spacing around sections
-    html_text = re.sub(r"(<b>═══.*?═══</b>)", r"\n\1\n", html_text)
-
-    return html_text
+    return re.sub(r"(<b>═══.*?═══</b>)", r"\n\1\n", html_text)
 
 
-async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
+
+async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911, PLR0915
     """
     Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 
@@ -465,13 +464,12 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911
                 return header
 
             # Add emojis to markdown headers
-            text = re.sub(
+            return re.sub(
                 r"^(##+)\s*(.+)$",
                 lambda m: f"{m.group(1)} {add_emoji(m)}",
                 text,
                 flags=re.MULTILINE,
             )
-            return text
 
         analysis_with_emojis = enforce_emoji_usage(analysis)
         # Convert AI analysis from markdown to HTML

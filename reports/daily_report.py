@@ -1,5 +1,5 @@
 import os
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 
 from database.update_latest_data import update_latest_daily_candles
 from infra.telegram_logging_handler import app_logger
@@ -30,7 +30,7 @@ from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
 
 
-async def process_daily_report(
+async def process_daily_report(  # noqa: PLR0915
     conn, telegram_enabled, telegram_token, telegram_chat_id
 ):
     logger = app_logger
@@ -48,18 +48,18 @@ async def process_daily_report(
     # NOTE: fetch_daily_candles() removed - redundant with update_latest_daily_candles() above
     # Calling it causes duplicate inserts → candle IDs change → RSI becomes orphaned
 
-    rsi_table = create_rsi_table(symbols, conn, target_date=date.today())
+    rsi_table = create_rsi_table(symbols, conn, target_date=datetime.now(UTC).date())
     ma_average_table, ema_average_table = calculate_indicators(
-        symbols, conn, target_date=date.today()
+        symbols, conn, target_date=datetime.now(UTC).date()
     )
     range_table = fetch_range_price(symbols, conn)
     stepn_table = fetch_stepn_report(conn)
-    macd_table = calculate_macd(symbols, conn, target_date=date.today())
+    macd_table = calculate_macd(symbols, conn, target_date=datetime.now(UTC).date())
     launchpool_report = check_gempool_articles()
     volume_table = fetch_volume_report(symbols, conn)
     marketcap_table = fetch_marketcap_report(symbols, conn)
     pricechange_table = fetch_price_change_report(
-        symbols, conn, target_date=date.today()
+        symbols, conn, target_date=datetime.now(UTC).date()
     )
     sopr_table = fetch_sopr_metrics(conn)
     derivatives_table = fetch_derivatives_report(symbols, conn)

@@ -1,3 +1,4 @@
+# ruff: noqa: N999
 """AI client implementations for crypto analysis."""
 
 from news.clients.base_client import AIClient

@@ -1,3 +1,4 @@
+# ruff: noqa: N999
 
 from prettytable import PrettyTable
 

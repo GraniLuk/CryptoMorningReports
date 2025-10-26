@@ -12,14 +12,14 @@ def retry_with_fallback_models(
 ) -> Any:
     """
     Retry a request with a list of fallback models.
-    
+
     Args:
         models: List of model names to try in order
         request_func: Function that takes a model name and returns (success: bool, result: Any)
                      On success, result is the response content
                      On failure, result is the error message
         operation_name: Name of the operation for logging purposes
-        
+
     Returns:
         The successful response content, or an error message if all retries fail
     """

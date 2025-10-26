@@ -33,10 +33,10 @@ class DailyCandleRepository(CandleRepository):
             # SQLite: Use INSERT ... ON CONFLICT DO UPDATE to preserve row ID
             # This prevents orphaning RSI/indicator records that reference DailyCandleID
             sql = f"""
-            INSERT INTO {self.table_name} 
+            INSERT INTO {self.table_name}
             (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(SymbolID, Date) 
+            ON CONFLICT(SymbolID, Date)
             DO UPDATE SET
                 SourceID = excluded.SourceID,
                 EndDate = excluded.EndDate,
@@ -69,8 +69,8 @@ class DailyCandleRepository(CandleRepository):
             sql = f"""
             MERGE {self.table_name} AS target
             USING (SELECT ? as SymbolID, ? as SourceID, ? as Date, ? as EndDate) AS source
-            ON (target.SymbolID = source.SymbolID 
-                AND target.SourceID = source.SourceID 
+            ON (target.SymbolID = source.SymbolID
+                AND target.SourceID = source.SourceID
                 AND target.Date = source.Date)
             WHEN NOT MATCHED THEN
                 INSERT (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)

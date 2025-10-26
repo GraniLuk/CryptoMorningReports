@@ -1,5 +1,6 @@
+# ruff: noqa: N999
 from collections import namedtuple
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -13,7 +14,7 @@ from technical_analysis.repositories.moving_averages_repository import (
 )
 
 
-def calculate_indicators(
+def calculate_indicators(  # noqa: PLR0915
     symbols: list[Symbol], conn, target_date: date
 ) -> tuple[PrettyTable, PrettyTable]:
     # If no date provided, use today's date
@@ -349,4 +350,4 @@ if __name__ == "__main__":
     )
 
     symbols = [symbol]
-    calculate_indicators(symbols, conn, target_date=date.today())
+    calculate_indicators(symbols, conn, target_date=datetime.now(UTC).date())

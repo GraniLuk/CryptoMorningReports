@@ -29,7 +29,7 @@ def fetch_daily_candles(
     Returns:
         List of Candle objects
     """
-    end_date = end_date or date.today()
+    end_date = end_date or datetime.now(UTC).date()
     start_date = start_date or (end_date - timedelta(days=7))
 
     all_candles = []
@@ -48,7 +48,7 @@ def check_if_all_candles(symbol, conn):
     oldest_date = all_candles[0].end_date if all_candles else date(2017, 1, 1)
     if oldest_date:
         print(f"Oldest candle date: {oldest_date}")
-    end_date = date.today()
+    end_date = datetime.now(UTC).date()
     current_date = oldest_date
     while current_date <= end_date:
         print(f"Fetching data for {current_date}")

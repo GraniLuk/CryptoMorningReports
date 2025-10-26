@@ -1,6 +1,6 @@
 import math
 import os
-from datetime import date
+from datetime import UTC, date
 from typing import Any
 
 import pyodbc
@@ -37,8 +37,7 @@ def _sanitize_int(value: Any) -> int | None:
     if value is None:
         return None
     try:
-        i = int(value)
-        return i
+        return int(value)
     except (ValueError, TypeError):
         return None
 
@@ -94,12 +93,12 @@ def save_stepn_results(
 
             if _is_sqlite():
                 # SQLite version - use INSERT OR REPLACE
-                from datetime import date as date_type
+                from datetime import datetime
 
-                today = date_type.today().isoformat()
+                today = datetime.now(UTC).date().isoformat()
 
                 query = """
-                    INSERT OR REPLACE INTO StepNResults 
+                    INSERT OR REPLACE INTO StepNResults
                     (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """

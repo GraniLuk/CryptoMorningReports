@@ -3,7 +3,6 @@ Add StepNResults table to existing SQLite database.
 This migration adds support for STEPN token metrics tracking.
 """
 
-import os
 import sqlite3
 from pathlib import Path
 
@@ -24,7 +23,7 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
 
         # Check if table already exists
         cursor.execute("""
-            SELECT name FROM sqlite_master 
+            SELECT name FROM sqlite_master
             WHERE type='table' AND name='StepNResults'
         """)
 

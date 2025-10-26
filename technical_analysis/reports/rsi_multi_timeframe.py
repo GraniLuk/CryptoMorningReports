@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -21,7 +21,7 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
-def get_rsi_for_symbol_timeframe(
+def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ) -> pd.DataFrame | None:
     """
@@ -41,7 +41,7 @@ def get_rsi_for_symbol_timeframe(
         TypeError: If the function returns anything other than DataFrame or None
     """
     # Calculate appropriate start date based on the timeframe
-    target_date = date.today()
+    target_date = datetime.now(UTC).date()
     start_date = target_date - timedelta(days=lookback_days)
 
     # We need to pull data from an earlier start date to calculate RSI accurately

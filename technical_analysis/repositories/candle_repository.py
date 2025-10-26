@@ -18,7 +18,7 @@ class CandleRepository:
         if is_sqlite:
             # SQLite uses INSERT OR REPLACE
             sql = f"""
-            INSERT OR REPLACE INTO {self.table_name} 
+            INSERT OR REPLACE INTO {self.table_name}
             (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
@@ -42,8 +42,8 @@ class CandleRepository:
             sql = f"""
             MERGE {self.table_name} AS target
             USING (SELECT ? as SymbolID, ? as SourceID, ? as EndDate) AS source
-            ON (target.SymbolID = source.SymbolID 
-                AND target.SourceID = source.SourceID 
+            ON (target.SymbolID = source.SymbolID
+                AND target.SourceID = source.SourceID
                 AND target.EndDate = source.EndDate)
             WHEN NOT MATCHED THEN
                 INSERT (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
@@ -116,8 +116,8 @@ class CandleRepository:
             ,[Volume]
             ,[VolumeQuote]
         FROM {self.table_name}
-        WHERE SymbolID = ? 
-        AND EndDate >= ? 
+        WHERE SymbolID = ?
+        AND EndDate >= ?
         AND EndDate <= ?
         ORDER BY EndDate
         """

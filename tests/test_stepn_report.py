@@ -40,12 +40,12 @@ class TestStepnReport(unittest.TestCase):
         result_str = str(result)
 
         # Assert
-        self.assertIn("GMT", result_str)
-        self.assertIn("GST", result_str)
-        self.assertIn("GMT/GST", result_str)
-        self.assertIn("4", result_str)  # GMT price
-        self.assertIn("2", result_str)  # GST price
-        self.assertIn("2.0", result_str)  # GMT/GST ratio (0.5/0.1)
+        assert "GMT" in result_str
+        assert "GST" in result_str
+        assert "GMT/GST" in result_str
+        assert "4" in result_str  # GMT price
+        assert "2" in result_str  # GST price
+        assert "2.0" in result_str  # GMT/GST ratio (0.5/0.1)
 
 
 if __name__ == "__main__":

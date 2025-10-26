@@ -29,7 +29,7 @@ def save_macd_results(
     """
     try:
         if conn:
-            indicator_date = indicator_date or date.today()
+            indicator_date = indicator_date or datetime.now(UTC).date()
             cursor = conn.cursor()
 
             # Check if we're using SQLite or SQL Server
@@ -40,7 +40,7 @@ def save_macd_results(
             if is_sqlite:
                 # SQLite uses INSERT OR REPLACE
                 query = """
-                    INSERT OR REPLACE INTO MACD 
+                    INSERT OR REPLACE INTO MACD
                     (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """
@@ -59,8 +59,8 @@ def save_macd_results(
                 # SQL Server uses MERGE
                 query = """
                     MERGE INTO MACD AS target
-                    USING (SELECT ? AS SymbolID, ? AS IndicatorDate, 
-                                 ? AS CurrentPrice, ? AS MACD, ? AS Signal, ? AS Histogram) 
+                    USING (SELECT ? AS SymbolID, ? AS IndicatorDate,
+                                 ? AS CurrentPrice, ? AS MACD, ? AS Signal, ? AS Histogram)
                         AS source (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
                     ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
                     WHEN MATCHED THEN
@@ -70,7 +70,7 @@ def save_macd_results(
                                  Histogram = source.Histogram
                     WHEN NOT MATCHED THEN
                         INSERT (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
-                        VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
+                        VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice,
                                source.MACD, source.Signal, source.Histogram);
                 """
                 cursor.execute(
@@ -107,7 +107,7 @@ def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
             yesterday = target_date - timedelta(days=1)
 
             query = """
-                SELECT m.SymbolID, s.SymbolName, m.IndicatorDate, m.CurrentPrice, 
+                SELECT m.SymbolID, s.SymbolName, m.IndicatorDate, m.CurrentPrice,
                        m.MACD, m.Signal, m.Histogram
                 FROM MACD m
                 JOIN Symbols s ON m.SymbolID = s.SymbolID

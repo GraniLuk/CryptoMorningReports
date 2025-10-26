@@ -23,7 +23,7 @@ def save_sopr_results(conn, metrics: dict) -> None:
             if is_sqlite:
                 # SQLite uses INSERT OR REPLACE
                 query = """
-                    INSERT OR REPLACE INTO SOPR 
+                    INSERT OR REPLACE INTO SOPR
                     (IndicatorDate, SOPR, STH_SOPR, LTH_SOPR)
                     VALUES (DATE('now'), ?, ?, ?)
                 """
@@ -32,23 +32,23 @@ def save_sopr_results(conn, metrics: dict) -> None:
                 query = """
                     MERGE INTO SOPR AS target
                     USING (
-                        SELECT 
-                            CAST(GETDATE() AS DATE) AS IndicatorDate, 
-                            ? AS SOPR, 
+                        SELECT
+                            CAST(GETDATE() AS DATE) AS IndicatorDate,
+                            ? AS SOPR,
                             ? AS STH_SOPR,
                             ? AS LTH_SOPR
                     ) AS source (IndicatorDate, SOPR, STH_SOPR, LTH_SOPR)
                     ON target.IndicatorDate = source.IndicatorDate
                     WHEN MATCHED THEN
-                        UPDATE SET 
+                        UPDATE SET
                             SOPR = source.SOPR,
                             STH_SOPR = source.STH_SOPR,
                             LTH_SOPR = source.LTH_SOPR
                     WHEN NOT MATCHED THEN
                         INSERT (IndicatorDate, SOPR, STH_SOPR, LTH_SOPR)
                         VALUES (
-                            source.IndicatorDate, 
-                            source.SOPR, 
+                            source.IndicatorDate,
+                            source.SOPR,
                             source.STH_SOPR,
                             source.LTH_SOPR
                         );

@@ -30,7 +30,7 @@ class FundingRateRepository:
                 # SQLite: Use INSERT OR REPLACE
                 cursor.execute(
                     """
-                    INSERT OR REPLACE INTO FundingRate 
+                    INSERT OR REPLACE INTO FundingRate
                     (SymbolID, FundingRate, FundingTime, IndicatorDate)
                     VALUES (?, ?, ?, ?)
                     """,

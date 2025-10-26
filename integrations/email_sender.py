@@ -9,8 +9,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def _normalise_recipients(recipients: Iterable[str]) -> list[str]:
-    normalised = [addr.strip() for addr in recipients if addr and addr.strip()]
-    return normalised
+    return [addr.strip() for addr in recipients if addr and addr.strip()]
 
 
 def _send_email_sync(

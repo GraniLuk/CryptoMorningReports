@@ -15,8 +15,8 @@ class TestTelegramUtils(unittest.TestCase):
     def test_smart_split_short_message(self):
         text = "Short message"
         chunks = smart_split(text, 4096, parse_mode="HTML")
-        self.assertEqual(len(chunks), 1)
-        self.assertEqual(chunks[0], text)
+        assert len(chunks) == 1
+        assert chunks[0] == text
 
     def test_smart_split_paragraph_preservation(self):
         paragraph = (
@@ -24,12 +24,12 @@ class TestTelegramUtils(unittest.TestCase):
         )  # 3 paragraphs
         chunks = smart_split(paragraph, 25, parse_mode="HTML")
         # With limit 25 we expect splitting roughly per paragraph boundary
-        self.assertGreater(len(chunks), 1)
+        assert len(chunks) > 1
         # Ensure no chunk exceeds limit
-        self.assertTrue(all(len(c) <= 25 for c in chunks))
+        assert all(len(c) <= 25 for c in chunks)
         # Reassemble (allow trailing whitespace differences) equals original ignoring added trimming
         reassembled = "\n\n".join(s.strip() for s in chunks)
-        self.assertEqual(reassembled, paragraph)
+        assert reassembled == paragraph
 
     def test_smart_split_oversize_paragraph(self):
         long_para = "A" * 5000  # single oversized paragraph
@@ -38,13 +38,11 @@ class TestTelegramUtils(unittest.TestCase):
         non_empty = [c for c in chunks if c]
         expected = (len(long_para) + 1000 - 1) // 1000  # 5
         # Implementation adds delimiter '\n\n' to oversize paragraph, producing an extra tiny chunk
-        self.assertIn(len(non_empty), (expected, expected + 1))
-        self.assertTrue(
-            all(len(c) <= 1000 or i == len(non_empty) - 1 for i, c in enumerate(non_empty))
-        )
+        assert len(non_empty) in (expected, expected + 1)
+        assert all(len(c) <= 1000 or i == len(non_empty) - 1 for i, c in enumerate(non_empty))
         reassembled = "".join(non_empty)
         # Remove potential trailing newlines added by splitting logic before comparison
-        self.assertEqual(reassembled.rstrip(), long_para)
+        assert reassembled.rstrip() == long_para
 
     def test_smart_split_html_tag_boundary(self):
         # Construct text likely to cut inside a tag if naive
@@ -61,26 +59,26 @@ class TestTelegramUtils(unittest.TestCase):
         text = "Special _ * [ ] ( ) ~ ` > # + - = | { } . !"
         escaped = enforce_markdown_v2(text)
         # Only the segment before the unmatched backtick is escaped by design.
-        self.assertIn("Special \\_ \\* \\[ \\] \\( \\) \\~", escaped)
+        assert "Special \\_ \\* \\[ \\] \\( \\) \\~" in escaped
         # Characters after the single backtick (treated as code segment) remain unescaped
-        self.assertIn("` > # + - = | { } . !", escaped)
+        assert "` > # + - = | { } . !" in escaped
         # Ensure backtick itself present (unescaped)
-        self.assertIn("`", escaped)
+        assert "`" in escaped
 
     def test_enforce_markdown_v2_preserves_code_spans(self):
         text = "Code: `a_b` outside _italic_"
         escaped = enforce_markdown_v2(text)
         # Inside code span a_b should remain unescaped
-        self.assertIn("`a_b`", escaped)
+        assert "`a_b`" in escaped
         # Outside underscore should be escaped
-        self.assertRegex(escaped, r"outside \\_italic\\_")
+        assert re.search(r"outside \\_italic\\_", escaped)
 
     def test_enforce_markdown_v2_idempotent(self):
         text = "Heading ## Title"
         first = enforce_markdown_v2(text)
         second = enforce_markdown_v2(first)
         # Applying twice may introduce extra escaping because backslashes are themselves escapable; ensure second doesn't grow unbounded
-        self.assertLessEqual(len(second) - len(first), 2)
+        assert len(second) - len(first) <= 2
 
 
 if __name__ == "__main__":

@@ -186,7 +186,7 @@ def fetch_binance_daily_kline(
 ) -> Candle | None:
     """Fetch open and close prices from Binance for the last full day."""
     if end_date is None:
-        end_date = date.today()
+        end_date = datetime.now(UTC).date()
     client = BinanceClient()
 
     # Get yesterday's date

@@ -323,9 +323,9 @@ if __name__ == "__main__":
     telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
     telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
     message = """
-    Based on the provided search results, here's an analysis of the most insightful and detailed articles for each category:                                                                                                                                                   
-1. Bitcoin:                                                                              
-<b>Article: Bitcoin hits new all-time high above $109000 ahead of Trump's inauguration</b>                                                                                        
+    Based on the provided search results, here's an analysis of the most insightful and detailed articles for each category:
+1. Bitcoin:
+<b>Article: Bitcoin hits new all-time high above $109000 ahead of Trump's inauguration</b>
 <a href="https://economictimes.indiatimes.com/markets/cryptocurrency/bitcoin-hits-record-above-109000-awaiting-trump/articleshow/117390933.cms">Source</a>
 
 Key insights:
@@ -341,7 +341,7 @@ This article provides valuable insights into Bitcoin's price movement and its co
 <a href="https://www.tokenmetrics.com/blog/ethereum-2-0">Source</a>
 
 Key insights:
-• Ethereum 2.0 aims to address scalability, security, and energy efficiency issues.      
+• Ethereum 2.0 aims to address scalability, security, and energy efficiency issues.
 • Key technical changes include switching to Proof-of-Stake (PoS) and implementing sharding.
 • The upgrade is divided into several phases: Beacon Chain (launched December 2020), Shard Chains (expected 2023), Merging (late 2023 or early 2024), and Execution Environments (2024 or later).
 • Ethereum 2.0 is expected to significantly increase transaction speed and capacity, reduce costs, and improve energy efficiency.

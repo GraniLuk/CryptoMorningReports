@@ -127,6 +127,6 @@ For each category, prioritize articles that:
 4. Discuss cryptocurrencies with high growth potential (especially for categories 3 and 4).
 5. Explain complex market dynamics or new technological developments in the crypto space.
 
-For each highlighted article, provide a brief explanation of its key insights and include the URL. If there are no significant articles for a category, state that there's no noteworthy information to report. 
+For each highlighted article, provide a brief explanation of its key insights and include the URL. If there are no significant articles for a category, state that there's no noteworthy information to report.
 Only consider the articles provided in the input.
 """

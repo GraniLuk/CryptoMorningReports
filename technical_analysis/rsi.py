@@ -16,8 +16,7 @@ def calculate_rsi(series, window=14):
     loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
 
     rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
+    return 100 - (100 / (1 + rs))
 
 
 def calculate_rsi_using_EMA(series, period=14):
@@ -36,8 +35,7 @@ def calculate_rsi_using_EMA(series, period=14):
     rs = avg_gain / avg_loss
 
     # Calculate RSI
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
+    return 100 - (100 / (1 + rs))
 
 
 def calculate_ema(series, period):
@@ -58,7 +56,7 @@ def calculate_rsi_using_RMA(series, periods=14):
     avg_loss = loss.ewm(alpha=alpha, adjust=False).mean()
 
     rs = avg_gain / avg_loss
-    rsi = (
+    return (
         100
         if avg_loss.iloc[-1] == 0
         else 0
@@ -66,7 +64,6 @@ def calculate_rsi_using_RMA(series, periods=14):
         else 100 - (100 / (1 + rs))
     )
 
-    return rsi
 
 
 def calculate_all_rsi_for_symbol(conn, symbol):

@@ -88,7 +88,7 @@ def populate_hourly_candles(conn, hours=168):  # 7 days
         for candle in candles:
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO HourlyCandles 
+                INSERT OR REPLACE INTO HourlyCandles
                 (SymbolID, SourceID, OpenTime, EndDate, Open, High, Low, Close, Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -138,7 +138,7 @@ def populate_fifteen_min_candles(conn, hours=24):  # 1 day
         for candle in candles:
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO FifteenMinCandles 
+                INSERT OR REPLACE INTO FifteenMinCandles
                 (SymbolID, SourceID, OpenTime, EndDate, Open, High, Low, Close, Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -185,7 +185,7 @@ def populate_daily_candles(conn, days=200):  # ~6-7 months
         for candle in candles:
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO DailyCandles 
+                INSERT OR REPLACE INTO DailyCandles
                 (SymbolID, SourceID, Date, EndDate, Open, High, Low, Close, Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,

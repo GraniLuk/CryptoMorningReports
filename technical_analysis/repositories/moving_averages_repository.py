@@ -31,7 +31,7 @@ def save_moving_averages_results(
     """
     try:
         if conn:
-            indicator_date = indicator_date or date.today()
+            indicator_date = indicator_date or datetime.now(UTC).date()
             cursor = conn.cursor()
 
             # Check if we're using SQLite or SQL Server
@@ -42,7 +42,7 @@ def save_moving_averages_results(
             if is_sqlite:
                 # SQLite uses INSERT OR REPLACE
                 query = """
-                    INSERT OR REPLACE INTO MovingAverages 
+                    INSERT OR REPLACE INTO MovingAverages
                     (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """
@@ -50,8 +50,8 @@ def save_moving_averages_results(
                 # SQL Server uses MERGE
                 query = """
                     MERGE INTO MovingAverages AS target
-                    USING (SELECT ? AS SymbolID, ? AS IndicatorDate, 
-                                 ? AS CurrentPrice, ? AS MA50, ? AS MA200, ? AS EMA50, ? AS EMA200) 
+                    USING (SELECT ? AS SymbolID, ? AS IndicatorDate,
+                                 ? AS CurrentPrice, ? AS MA50, ? AS MA200, ? AS EMA50, ? AS EMA200)
                         AS source (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
                     ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
                     WHEN MATCHED THEN
@@ -62,7 +62,7 @@ def save_moving_averages_results(
                                  EMA200 = source.EMA200
                     WHEN NOT MATCHED THEN
                         INSERT (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
-                        VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice, 
+                        VALUES (source.SymbolID, source.IndicatorDate, source.CurrentPrice,
                                source.MA50, source.MA200, source.EMA50, source.EMA200);
                 """
 
@@ -97,11 +97,11 @@ def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
     """
     try:
         if conn:
-            target_date = target_date or date.today()
+            target_date = target_date or datetime.now(UTC).date()
             yesterday = target_date - timedelta(days=1)
 
             query = """
-                SELECT ma.SymbolID, s.SymbolName, ma.IndicatorDate, ma.CurrentPrice, 
+                SELECT ma.SymbolID, s.SymbolName, ma.IndicatorDate, ma.CurrentPrice,
                        ma.MA50, ma.MA200, ma.EMA50, ma.EMA200
                 FROM MovingAverages ma
                 JOIN Symbols s ON ma.SymbolID = s.SymbolID
@@ -139,11 +139,11 @@ def fetch_moving_averages_for_symbol(
     """
     try:
         if conn:
-            target_date = date.today()
+            target_date = datetime.now(UTC).date()
             start_date = target_date - timedelta(days=lookback_days)
 
             query = """
-                SELECT ma.SymbolID, s.SymbolName, ma.IndicatorDate, ma.CurrentPrice, 
+                SELECT ma.SymbolID, s.SymbolName, ma.IndicatorDate, ma.CurrentPrice,
                        ma.MA50, ma.MA200, ma.EMA50, ma.EMA200
                 FROM MovingAverages ma
                 JOIN Symbols s ON ma.SymbolID = s.SymbolID

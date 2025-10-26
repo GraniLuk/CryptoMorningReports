@@ -1,5 +1,4 @@
 import os
-from datetime import date
 
 import pyodbc
 
@@ -22,12 +21,12 @@ def save_marketcap_results(conn, sorted_results):
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             # Get current date
-            today = date.today()
+            today = datetime.now(UTC).date()
 
             if is_sqlite:
                 # SQLite uses INSERT OR REPLACE
                 query = """
-                    INSERT OR REPLACE INTO MarketCapHistory 
+                    INSERT OR REPLACE INTO MarketCapHistory
                     (SymbolID, MarketCap, IndicatorDate)
                     VALUES (?, ?, ?)
                 """
@@ -42,7 +41,7 @@ def save_marketcap_results(conn, sorted_results):
                     MERGE INTO MarketCapHistory AS target
                     USING (SELECT ? AS SymbolID, ? AS MarketCap, CAST(GETDATE() AS DATE) AS IndicatorDate)
                         AS source (SymbolID, MarketCap, IndicatorDate)
-                    ON target.SymbolID = source.SymbolID 
+                    ON target.SymbolID = source.SymbolID
                        AND target.IndicatorDate = source.IndicatorDate
                     WHEN NOT MATCHED THEN
                         INSERT (SymbolID, MarketCap, IndicatorDate)

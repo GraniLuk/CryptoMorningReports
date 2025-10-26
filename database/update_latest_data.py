@@ -5,7 +5,7 @@ This module ensures that daily reports use the most recent market data.
 
 import logging
 import sys
-from datetime import UTC, date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from infra.sql_connection import connect_to_sql
 from sharedCode.priceChecker import fetch_daily_candle
@@ -69,7 +69,7 @@ def update_latest_daily_candles(conn, days_to_update=3):
     logger.info("Checking database for missing daily candles...")
 
     symbols = fetch_symbols(conn)
-    today = date.today()
+    today = datetime.now(UTC).date()
 
     total_updated = 0
     total_failed = 0
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     """
     Run this script to manually update the latest candles.
     Intelligently fetches only missing data since last database update.
-    
+
     Usage: python -m database.update_latest_data
     """
     logging.basicConfig(

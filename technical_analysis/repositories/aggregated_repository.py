@@ -20,7 +20,7 @@ def get_aggregated_data(conn):
             # Get the latest date for each indicator to determine what to show
             # We'll use the most recent IndicatorDate across all tables
             query = """
-                SELECT 
+                SELECT
                     s.SymbolName,
                     -- RSI data (get most recent RSI for each symbol)
                     rsi_data.RSIIndicatorDate,
@@ -60,7 +60,7 @@ def get_aggregated_data(conn):
                 FROM Symbols s
                 -- Join with most recent RSI data for each symbol
                 LEFT JOIN (
-                    SELECT 
+                    SELECT
                         dc.SymbolID,
                         dc.Date as RSIIndicatorDate,
                         dc.Close as RSIClosePrice,
@@ -71,43 +71,43 @@ def get_aggregated_data(conn):
                 ) rsi_data ON s.SymbolID = rsi_data.SymbolID AND rsi_data.rn = 1
                 -- Join with latest MovingAverages
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM MovingAverages
                 ) ma ON s.SymbolID = ma.SymbolID AND ma.rn = 1
                 -- Join with latest MACD
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM MACD
                 ) macd ON s.SymbolID = macd.SymbolID AND macd.rn = 1
                 -- Join with latest PriceRange
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM PriceRange
                 ) pr ON s.SymbolID = pr.SymbolID AND pr.rn = 1
                 -- Join with latest VolumeHistory
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM VolumeHistory
                 ) vh ON s.SymbolID = vh.SymbolID AND vh.rn = 1
                 -- Join with latest MarketCapHistory
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM MarketCapHistory
                 ) mc ON s.SymbolID = mc.SymbolID AND mc.rn = 1
                 -- Join with latest OpenInterest
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM OpenInterest
                 ) oi ON s.SymbolID = oi.SymbolID AND oi.rn = 1
                 -- Join with latest FundingRate
                 LEFT JOIN (
-                    SELECT *, 
+                    SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
                     FROM FundingRate
                 ) fr ON s.SymbolID = fr.SymbolID AND fr.rn = 1

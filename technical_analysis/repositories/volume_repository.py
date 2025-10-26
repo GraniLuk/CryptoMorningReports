@@ -1,5 +1,4 @@
 import os
-from datetime import date
 
 import pyodbc
 
@@ -22,12 +21,12 @@ def save_volume_results(conn, sorted_results):
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             # Get current date
-            today = date.today()
+            today = datetime.now(UTC).date()
 
             if is_sqlite:
                 # SQLite uses INSERT OR REPLACE
                 query = """
-                    INSERT OR REPLACE INTO VolumeHistory 
+                    INSERT OR REPLACE INTO VolumeHistory
                     (SymbolID, Volume, IndicatorDate)
                     VALUES (?, ?, ?)
                 """
@@ -41,7 +40,7 @@ def save_volume_results(conn, sorted_results):
                     MERGE INTO VolumeHistory AS target
                     USING (SELECT ? AS SymbolID, ? AS Volume, CAST(GETDATE() AS DATE) AS IndicatorDate)
                         AS source (SymbolID, Volume, IndicatorDate)
-                    ON target.SymbolID = source.SymbolID 
+                    ON target.SymbolID = source.SymbolID
                        AND target.IndicatorDate = source.IndicatorDate
                     WHEN NOT MATCHED THEN
                         INSERT (SymbolID, Volume, IndicatorDate)

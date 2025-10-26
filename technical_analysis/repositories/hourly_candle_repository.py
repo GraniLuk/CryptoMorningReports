@@ -27,7 +27,7 @@ class HourlyCandleRepository(CandleRepository):
 
             # SQLite: Insert both OpenTime and EndDate
             sql = f"""
-            INSERT OR REPLACE INTO {self.table_name} 
+            INSERT OR REPLACE INTO {self.table_name}
             (SymbolID, SourceID, OpenTime, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """

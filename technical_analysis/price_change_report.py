@@ -10,7 +10,7 @@ from source_repository import Symbol, fetch_symbols
 def fetch_price_change_report(
     symbols: list[Symbol], conn, target_date: date
 ) -> PrettyTable:
-    target_date = target_date or date.today()
+    target_date = target_date or datetime.now(UTC).date()
     start_date = target_date - timedelta(days=7)  # Get 7 days of data
 
     table = PrettyTable()
@@ -72,5 +72,5 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
 
-    table = fetch_price_change_report(symbols, conn, target_date=date.today())
+    table = fetch_price_change_report(symbols, conn, target_date=datetime.now(UTC).date())
     print(table)

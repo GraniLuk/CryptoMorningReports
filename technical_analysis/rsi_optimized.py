@@ -2,7 +2,7 @@
 Optimized version of RSI calculation for multiple timeframes
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pandas as pd
 
@@ -33,7 +33,7 @@ def get_optimized_rsi_for_symbol_timeframe(
         DataFrame: DataFrame with RSI data or None if no data
     """
     # Calculate appropriate start date based on the timeframe
-    target_date = date.today()
+    target_date = datetime.now(UTC).date()
     start_date = target_date - timedelta(days=lookback_days)
 
     # We need to pull data from an earlier start date to calculate RSI accurately

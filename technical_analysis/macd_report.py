@@ -167,5 +167,5 @@ if __name__ == "__main__":
 
     symbols = [symbol]
 
-    macd_report = calculate_macd(symbols, conn=conn, target_date=date.today())
+    macd_report = calculate_macd(symbols, conn=conn, target_date=datetime.now(UTC).date())
     print(macd_report)
