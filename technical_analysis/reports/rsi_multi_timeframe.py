@@ -78,26 +78,18 @@ def get_rsi_for_symbol_timeframe(
                 days=30
             )  # Get more historical data for RSI calculation
             # Convert date to datetime for repository call
-            extended_start_datetime = datetime.combine(
-                extended_start_date, datetime.min.time()
-            )
-            candles = repository.get_candles(
-                symbol, extended_start_datetime, datetime.now()
-            )
+            extended_start_datetime = datetime.combine(extended_start_date, datetime.min.time())
+            candles = repository.get_candles(symbol, extended_start_datetime, datetime.now())
 
             if not candles:
-                app_logger.warning(
-                    f"No {timeframe} candles found for {symbol.symbol_name}"
-                )
+                app_logger.warning(f"No {timeframe} candles found for {symbol.symbol_name}")
                 return None
 
             # Calculate and save RSI for missing data
             candles_with_rsi = _calculate_and_save_rsi(conn, symbol, candles, timeframe)
 
             if not candles_with_rsi:
-                app_logger.error(
-                    f"Failed to calculate RSI for {symbol.symbol_name} {timeframe}"
-                )
+                app_logger.error(f"Failed to calculate RSI for {symbol.symbol_name} {timeframe}")
                 return None
 
         # Create DataFrame from candles
@@ -174,9 +166,7 @@ def get_rsi_for_symbol_timeframe(
 
                     if not pd.isna(calculated_rsi):
                         # Save the calculated value to the database
-                        save_rsi_by_timeframe(
-                            conn, candle_id, calculated_rsi, timeframe
-                        )
+                        save_rsi_by_timeframe(conn, candle_id, calculated_rsi, timeframe)
 
                         # Update the dataframe
                         df.loc[idx, "RSI"] = calculated_rsi
@@ -209,9 +199,7 @@ def get_rsi_for_symbol_timeframe(
         return result
 
     except Exception as e:
-        app_logger.error(
-            f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}"
-        )
+        app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
         return None
 
 
@@ -270,9 +258,7 @@ def create_multi_timeframe_rsi_table(
             latest_data[timeframe] = {
                 "date": latest_row.name,
                 "price": float(latest_row["Close"]),
-                "rsi": float(latest_row["RSI"])
-                if pd.notna(latest_row["RSI"])
-                else None,
+                "rsi": float(latest_row["RSI"]) if pd.notna(latest_row["RSI"]) else None,
             }  # Add the row to the table
     row_data = []
 
@@ -419,9 +405,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
 
             symbol_data["daily_price"] = f"{float(daily_close.iloc[-1]):.2f}"
             symbol_data["daily_rsi"] = (
-                f"{float(daily_rsi.iloc[-1]):.2f}"
-                if pd.notna(daily_rsi.iloc[-1])
-                else "N/A"
+                f"{float(daily_rsi.iloc[-1]):.2f}" if pd.notna(daily_rsi.iloc[-1]) else "N/A"
             )
 
         if hourly_df is not None and not hourly_df.empty:
@@ -431,9 +415,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
 
             symbol_data["hourly_price"] = f"{float(hourly_close.iloc[-1]):.2f}"
             symbol_data["hourly_rsi"] = (
-                f"{float(hourly_rsi.iloc[-1])::.2f}"
-                if pd.notna(hourly_rsi.iloc[-1])
-                else "N/A"
+                f"{float(hourly_rsi.iloc[-1])::.2f}" if pd.notna(hourly_rsi.iloc[-1]) else "N/A"
             )
 
         if fifteen_min_df is not None and not fifteen_min_df.empty:
@@ -443,9 +425,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
 
             symbol_data["fifteen_min_price"] = f"{float(fifteen_close.iloc[-1])::.2f}"
             symbol_data["fifteen_min_rsi"] = (
-                f"{float(fifteen_rsi.iloc[-1]):.2f}"
-                if pd.notna(fifteen_rsi.iloc[-1])
-                else "N/A"
+                f"{float(fifteen_rsi.iloc[-1]):.2f}" if pd.notna(fifteen_rsi.iloc[-1]) else "N/A"
             )
 
         data.append(symbol_data)  # Create consolidated table
@@ -520,9 +500,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
         # Save RSI values to database
         for _, row in df.iterrows():
             if not pd.isna(row["rsi"]):
-                save_rsi_by_timeframe(
-                    conn, int(row["candle_id"]), float(row["rsi"]), timeframe
-                )
+                save_rsi_by_timeframe(conn, int(row["candle_id"]), float(row["rsi"]), timeframe)
 
         # Return data in the format expected by the calling function
         # Reset index to make date a column again
@@ -545,9 +523,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
         ]
 
     except Exception as e:
-        app_logger.error(
-            f"Error calculating RSI for {symbol.symbol_name} {timeframe}: {e!s}"
-        )
+        app_logger.error(f"Error calculating RSI for {symbol.symbol_name} {timeframe}: {e!s}")
         return None
 
 

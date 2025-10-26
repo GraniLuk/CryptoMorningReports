@@ -102,9 +102,7 @@ class CandleRepository:
             )
         return None
 
-    def get_candles(
-        self, symbol: Symbol, start_date: datetime, end_date: datetime
-    ) -> list[Candle]:
+    def get_candles(self, symbol: Symbol, start_date: datetime, end_date: datetime) -> list[Candle]:
         sql = f"""
         SELECT [Id]
             ,[SymbolID]
@@ -123,9 +121,7 @@ class CandleRepository:
         AND EndDate <= ?
         ORDER BY EndDate
         """
-        rows = self.conn.execute(
-            sql, (symbol.symbol_id, start_date, end_date)
-        ).fetchall()
+        rows = self.conn.execute(sql, (symbol.symbol_id, start_date, end_date)).fetchall()
         return [
             Candle(
                 id=row[0],

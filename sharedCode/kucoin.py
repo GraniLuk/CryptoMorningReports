@@ -43,9 +43,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> C
     start_time = end_date - timedelta(days=1)
     # Get yesterday's date
     end_time_as_int = int(datetime.combine(end_date, datetime.min.time()).timestamp())
-    start_time_as_int = int(
-        datetime.combine(start_time, datetime.min.time()).timestamp()
-    )
+    start_time_as_int = int(datetime.combine(start_time, datetime.min.time()).timestamp())
 
     try:
         # Fetch 1-day Kline (candlestick) data
@@ -75,9 +73,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date = date.today()) -> C
         )
 
     except Exception as e:
-        app_logger.error(
-            f"Unexpected error when fetching Kucoin daily kline for {symbol}: {e!s}"
-        )
+        app_logger.error(f"Unexpected error when fetching Kucoin daily kline for {symbol}: {e!s}")
         return None
 
 
@@ -92,9 +88,7 @@ def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
 
         # Calculate start time (limit days ago)
         end_time = int(time.time())
-        start_time = int(
-            (datetime.now(UTC) - timedelta(days=limit)).timestamp()
-        )
+        start_time = int((datetime.now(UTC) - timedelta(days=limit)).timestamp())
 
         # Get kline data with start and end time
         klines = client.get_kline_data(symbol, "1day", start=start_time, end=end_time)
@@ -192,9 +186,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) 
         )
 
     except Exception as e:
-        app_logger.error(
-            f"Error fetching hourly data for {symbol.symbol_name}: {e!s}"
-        )
+        app_logger.error(f"Error fetching hourly data for {symbol.symbol_name}: {e!s}")
         return None
 
 
@@ -250,9 +242,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle
         )
 
     except Exception as e:
-        app_logger.error(
-            f"Error fetching 15-minute data for {symbol.symbol_name}: {e!s}"
-        )
+        app_logger.error(f"Error fetching 15-minute data for {symbol.symbol_name}: {e!s}")
         return None
 
 

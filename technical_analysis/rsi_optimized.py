@@ -1,6 +1,7 @@
 """
 Optimized version of RSI calculation for multiple timeframes
 """
+
 from datetime import date, timedelta
 
 import pandas as pd
@@ -43,10 +44,12 @@ def get_optimized_rsi_for_symbol_timeframe(
     additional_lookback = {
         "daily": rsi_periods,
         "hourly": rsi_periods // 24 + 1,  # Minimum 1 day
-        "fifteen_min": rsi_periods // (24 * 4) + 1  # Minimum 1 day
+        "fifteen_min": rsi_periods // (24 * 4) + 1,  # Minimum 1 day
     }
 
-    calculation_start_date = start_date - timedelta(days=additional_lookback.get(timeframe, rsi_periods))
+    calculation_start_date = start_date - timedelta(
+        days=additional_lookback.get(timeframe, rsi_periods)
+    )
 
     try:
         # Get candle data with RSI values from the database, using the extended date range for calculation
@@ -55,9 +58,7 @@ def get_optimized_rsi_for_symbol_timeframe(
         )
 
         if not candles_with_rsi:
-            app_logger.warning(
-                f"No {timeframe} RSI data found for {symbol.symbol_name}"
-            )
+            app_logger.warning(f"No {timeframe} RSI data found for {symbol.symbol_name}")
             return None
 
         # Create DataFrame from candles
@@ -89,12 +90,16 @@ def get_optimized_rsi_for_symbol_timeframe(
             # Find rows with missing RSI values in the requested date range
             rsi_mask: pd.Series = requested_df["RSI"].isna()
             missing_rows: pd.DataFrame = requested_df[rsi_mask]
-            app_logger.info(f"Found {len(missing_rows)} rows with missing RSI in the requested date range")
+            app_logger.info(
+                f"Found {len(missing_rows)} rows with missing RSI in the requested date range"
+            )
 
             # Update only the missing values in the database
             for idx, row in missing_rows.iterrows():
                 # Type assertion to help type checker understand idx is a valid index
-                assert isinstance(idx, pd.Timestamp | str | int), f"Unexpected index type: {type(idx)}"
+                assert isinstance(idx, pd.Timestamp | str | int), (
+                    f"Unexpected index type: {type(idx)}"
+                )
 
                 candle_id = int(row["SymbolId"])
 
@@ -123,16 +128,17 @@ def get_optimized_rsi_for_symbol_timeframe(
             # Remove the temporary calculation column
             df.drop("calculated_RSI", axis=1, inplace=True, errors="ignore")
 
-            app_logger.info(f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}")
+            app_logger.info(
+                f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}"
+            )
 
         # Return only the data for the requested date range
         return df[df.index >= pd.Timestamp(start_date)]
 
     except Exception as e:
-        app_logger.error(
-            f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}"
-        )
+        app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
         return None
+
 
 # Function to test the optimized implementation
 def test_optimized_rsi():
@@ -179,6 +185,7 @@ def test_optimized_rsi():
         print("\nSUCCESS: All RSI values are present and accounted for!")
     else:
         print("\nFAILED: There are missing RSI values")
+
 
 if __name__ == "__main__":
     test_optimized_rsi()

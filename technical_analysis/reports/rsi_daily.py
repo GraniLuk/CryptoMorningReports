@@ -13,9 +13,7 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_RMA
 
 
-def create_rsi_table_for_symbol(
-    symbol: Symbol, conn, target_date: date
-) -> PrettyTable | None:
+def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
     """
     Creates RSI table for a given symbol using daily candles data
     """
@@ -61,9 +59,7 @@ def create_rsi_table_for_symbol(
                 latest_date_for_query = latest_date
 
             # Fetch historical RSI values
-            historical_rsi = get_historical_rsi(
-                conn, symbol.symbol_id, latest_date_for_query
-            )
+            historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date_for_query)
 
             # Calculate RSI changes
             rsi_value = float(latest_row["RSI"].iloc[-1])
@@ -166,9 +162,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                     latest_date_for_query = latest_date
 
                 # Fetch historical RSI values
-                historical_rsi = get_historical_rsi(
-                    conn, symbol.symbol_id, latest_date_for_query
-                )
+                historical_rsi = get_historical_rsi(conn, symbol.symbol_id, latest_date_for_query)
 
                 # Calculate RSI changes
                 rsi_value = float(latest_row["RSI"].iloc[-1])
@@ -250,9 +244,7 @@ def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
     try:
         save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=rsi)
     except Exception as e:
-        app_logger.error(
-            f"Failed to save RSI results for candle {daily_candle_id}: {e!s}"
-        )
+        app_logger.error(f"Failed to save RSI results for candle {daily_candle_id}: {e!s}")
 
 
 if __name__ == "__main__":

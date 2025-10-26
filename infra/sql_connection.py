@@ -20,6 +20,7 @@ class SQLiteRow:
     Custom row class that mimics pyodbc.Row behavior.
     Supports both index and name-based access, and converts date strings to datetime objects.
     """
+
     def __init__(self, cursor, row):
         self._data = []
         self._names = {}
@@ -78,6 +79,7 @@ class SQLiteConnectionWrapper:
     Also supports direct execute() calls like pyodbc.
     Automatically converts date strings to datetime objects.
     """
+
     def __init__(self, sqlite_conn):
         self._conn = sqlite_conn
         # Use custom row factory that converts dates and supports column access by name
@@ -121,6 +123,7 @@ class SQLiteConnectionWrapper:
 
 class SQLiteCursorWrapper:
     """Wrapper for SQLite cursor to support context manager protocol."""
+
     def __init__(self, cursor):
         self._cursor = cursor
 
@@ -154,7 +157,7 @@ def connect_to_sql_sqlite(db_path=None):
     sqlite_conn = sqlite3.connect(
         db_path,
         timeout=30.0,  # Increase timeout to 30 seconds (default is 5)
-        check_same_thread=False  # Allow connection to be used across threads
+        check_same_thread=False,  # Allow connection to be used across threads
     )
 
     # Enable WAL mode for better concurrency
@@ -203,19 +206,17 @@ def connect_to_sql(max_retries=3):
                     credential = identity.DefaultAzureCredential(
                         exclude_interactive_browser_credential=False
                     )
-                    token = credential.get_token(
-                        "https://database.windows.net/.default"
-                    ).token
+                    token = credential.get_token("https://database.windows.net/.default").token
                     logging.info(f"Access token: {token}")
                     token_bytes = token.encode("UTF-16-LE")
                     token_struct = struct.pack(
                         f"<I{len(token_bytes)}s", len(token_bytes), token_bytes
                     )
-                    SQL_COPT_SS_ACCESS_TOKEN = 1256  # This connection option is defined by microsoft in msodbcsql.h
-
-                    logging.info(
-                        f"Azure connection string (without token): {connection_string}"
+                    SQL_COPT_SS_ACCESS_TOKEN = (
+                        1256  # This connection option is defined by microsoft in msodbcsql.h
                     )
+
+                    logging.info(f"Azure connection string (without token): {connection_string}")
                     conn = pyodbc.connect(
                         connection_string,
                         attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct},
@@ -240,9 +241,7 @@ def connect_to_sql(max_retries=3):
                         "Encrypt=yes;"
                         "TrustServerCertificate=no"
                     )
-                    logging.info(
-                        f"Local connection string (without password): {connection_string}"
-                    )
+                    logging.info(f"Local connection string (without password): {connection_string}")
                     conn = pyodbc.connect(connection_string + f";PWD={password}")
                     logging.info("Successfully connected to the database.")
                     return conn
@@ -261,9 +260,7 @@ def connect_to_sql(max_retries=3):
                 time.sleep(55**attempt)  # Exponential backoff
                 continue
             app_logger.error(f"Error message: {e!s}")
-            raise RuntimeError(
-                "Failed to connect to the database after maximum retries"
-            )
+            raise RuntimeError("Failed to connect to the database after maximum retries")
 
     # This should never be reached, but added for type checking
     raise RuntimeError("Failed to connect to the database after maximum retries")

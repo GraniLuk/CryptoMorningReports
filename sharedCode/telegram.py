@@ -228,7 +228,7 @@ async def send_telegram_document(
                     MAX_DOCUMENT_SIZE,
                 )
                 return False
-            
+
             # Use context manager for file handling
             with open(local_path, "rb") as file_handle:
                 url = f"https://api.telegram.org/bot{token}/sendDocument"
@@ -247,7 +247,9 @@ async def send_telegram_document(
                         err_json = response.json()
                     except Exception:
                         err_json = {"raw": response.text[:300]}
-                    logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
+                    logging.error(
+                        "Failed to send document (status=%s): %s", response.status_code, err_json
+                    )
                     return False
                 logging.info("Document %s successfully sent to Telegram", filename)
                 return True
@@ -262,7 +264,7 @@ async def send_telegram_document(
                     MAX_DOCUMENT_SIZE,
                 )
                 return False
-            
+
             # Handle bytes directly (no file to close)
             url = f"https://api.telegram.org/bot{token}/sendDocument"
             files = {
@@ -280,7 +282,9 @@ async def send_telegram_document(
                     err_json = response.json()
                 except Exception:
                     err_json = {"raw": response.text[:300]}
-                logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
+                logging.error(
+                    "Failed to send document (status=%s): %s", response.status_code, err_json
+                )
                 return False
             logging.info("Document %s successfully sent to Telegram", filename)
             return True

@@ -35,9 +35,7 @@ async def run_report(report_type="daily"):
         conn = connect_to_sql()
         try:
             if report_type == "daily":
-                await process_daily_report(
-                    conn, telegram_enabled, telegram_token, telegram_chat_id
-                )
+                await process_daily_report(conn, telegram_enabled, telegram_token, telegram_chat_id)
             elif report_type == "weekly":
                 await process_weekly_report(
                     conn, telegram_enabled, telegram_token, telegram_chat_id
@@ -65,9 +63,7 @@ def WeeklyReport(weeklyTimer: func.TimerRequest) -> None:
 def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
     report_type = req.params.get("type", "daily")
     if report_type not in ["daily", "weekly"]:
-        return func.HttpResponse(
-            "Invalid report type. Use 'daily' or 'weekly'.", status_code=400
-        )
+        return func.HttpResponse("Invalid report type. Use 'daily' or 'weekly'.", status_code=400)
 
     try:
         asyncio.run(run_report(report_type))
@@ -75,9 +71,7 @@ def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
             f"{report_type.capitalize()} report executed successfully", status_code=200
         )
     except Exception as e:
-        return func.HttpResponse(
-            f"Function execution failed: {e!s}", status_code=500
-        )
+        return func.HttpResponse(f"Function execution failed: {e!s}", status_code=500)
 
 
 @app.route(route="crypto-situation")
@@ -147,9 +141,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if send_to_telegram:
                 from sharedCode.telegram import send_telegram_message
 
-                telegram_enabled = (
-                    os.environ.get("TELEGRAM_ENABLED", "False").lower() == "true"
-                )
+                telegram_enabled = os.environ.get("TELEGRAM_ENABLED", "False").lower() == "true"
                 telegram_token = os.environ.get("TELEGRAM_TOKEN", "")
                 telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
 
