@@ -7,7 +7,7 @@ from technical_analysis.repositories.daily_candle_repository import (
 from technical_analysis.repositories.rsi_repository import (
     save_rsi_by_timeframe,
 )
-from technical_analysis.rsi import calculate_rsi_using_RMA
+from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def calculate_rsi_for_candles(candles, _timeframe="daily"):
@@ -41,7 +41,7 @@ def calculate_rsi_for_candles(candles, _timeframe="daily"):
     df.sort_index(inplace=True)
 
     # Calculate RSI for the entire series
-    df["RSI"] = calculate_rsi_using_RMA(df["close"])
+    df["RSI"] = calculate_rsi_using_rma(df["close"])
 
     # Create dictionary mapping candle_id to RSI value
     rsi_results = {}

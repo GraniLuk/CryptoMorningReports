@@ -9,7 +9,7 @@ from source_repository import SourceID, Symbol
 from stepn.bsc_activity import get_yesterday_transaction_count
 from stepn.stepn_ratio_fetch import fetch_gstgmt_ratio_range
 from stepn.stepn_repository import fetch_stepn_results_last_14_days, save_stepn_results
-from technical_analysis.rsi import calculate_rsi_using_EMA
+from technical_analysis.rsi import calculate_rsi_using_ema
 
 
 def fetch_stepn_report(conn) -> PrettyTable:
@@ -82,7 +82,7 @@ def fetch_stepn_report(conn) -> PrettyTable:
         df_ratios["Ratio"] = df_ratios["Ratio"].astype(float)
 
         # Then pass the Series to your RSI calculation function
-        rsi_results = calculate_rsi_using_EMA(df_ratios["Ratio"])
+        rsi_results = calculate_rsi_using_ema(df_ratios["Ratio"])
         results.append(("RSI", rsi_results.iloc[-1] if not rsi_results.empty else None))
 
         # Save results to database

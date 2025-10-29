@@ -78,7 +78,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date | None = None) -> Ca
         return None
 
 
-def fetch_close_prices_from_Kucoin(symbol: str, limit: int = 14) -> pd.DataFrame:
+def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame:
     try:
         # Initialize Kucoin client
         kucoin_credentials = get_kucoin_credentials()

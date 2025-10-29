@@ -135,7 +135,7 @@ def sanitize_html(message):
     return tag_regex.sub(replace_tag, message)
 
 
-async def try_send_report_with_HTML_or_Markdown(
+async def try_send_report_with_html_or_markdown(
     telegram_enabled, telegram_token, telegram_chat_id, message
 ):
     # Try HTML first

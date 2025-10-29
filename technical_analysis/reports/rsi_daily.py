@@ -10,7 +10,7 @@ from technical_analysis.repositories.rsi_repository import (
     get_historical_rsi,
     save_rsi_results,
 )
-from technical_analysis.rsi import calculate_rsi_using_RMA
+from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
@@ -47,7 +47,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
         df.sort_index(inplace=True)
 
         if not df.empty:
-            df["RSI"] = calculate_rsi_using_RMA(df["close"])
+            df["RSI"] = calculate_rsi_using_rma(df["close"])
             # Create a proper copy of the latest row
             latest_row = df.iloc[[-1]].copy()
             # Get the date from the index
@@ -151,7 +151,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
             df.sort_index(inplace=True)
 
             if not df.empty:
-                df["RSI"] = calculate_rsi_using_RMA(df["close"])
+                df["RSI"] = calculate_rsi_using_rma(df["close"])
                 # Create a proper copy of the latest row
                 latest_row = df.iloc[[-1]].copy()
                 # Get the date from the index

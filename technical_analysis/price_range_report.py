@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from shared_code.number_format import format_to_6digits_withoutTrailingZeros
+from shared_code.number_format import format_to_6digits_without_trailing_zeros
 from shared_code.price_checker import fetch_hourly_candles
 from source_repository import Symbol
 from technical_analysis.repositories.priceRangeRepository import (
@@ -78,8 +78,8 @@ def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
     range_rows = []
     for result in sorted_results:
         symbol_name = result.symbol
-        high = format_to_6digits_withoutTrailingZeros(result.high)
-        low = format_to_6digits_withoutTrailingZeros(result.low)
+        high = format_to_6digits_without_trailing_zeros(result.high)
+        low = format_to_6digits_without_trailing_zeros(result.low)
         price_range = ((result.high - result.low) / result.low) * 100
         price_range_percent = f"{price_range:.2f}%"
         range_rows.append((symbol_name, low, high, price_range_percent))

@@ -18,7 +18,7 @@ from technical_analysis.repositories.rsi_repository import (
     get_candles_with_rsi,
     save_rsi_by_timeframe,
 )
-from technical_analysis.rsi import calculate_rsi_using_RMA
+from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
@@ -140,10 +140,10 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
             from technical_analysis.repositories.rsi_repository import (
                 save_rsi_by_timeframe,
             )
-            from technical_analysis.rsi import calculate_rsi_using_RMA
+            from technical_analysis.rsi import calculate_rsi_using_rma
 
             # Calculate RSI for the entire dataframe (to ensure accurate values)
-            df["calculated_RSI"] = calculate_rsi_using_RMA(df["Close"])
+            df["calculated_RSI"] = calculate_rsi_using_rma(df["Close"])
 
             # Find rows with missing RSI values in the requested date range
             missing_mask: pd.Series = requested_df["RSI"].isna()
@@ -500,7 +500,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
         df.sort_index(inplace=True)
 
         # Calculate RSI using RMA method
-        df["rsi"] = calculate_rsi_using_RMA(df["close"])
+        df["rsi"] = calculate_rsi_using_rma(df["close"])
         # Save RSI values to database
         for _, row in df.iterrows():
             if not pd.isna(row["rsi"]):

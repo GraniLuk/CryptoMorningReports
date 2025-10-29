@@ -5,7 +5,7 @@ import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from shared_code.number_format import format_to_6digits_withoutTrailingZeros
+from shared_code.number_format import format_to_6digits_without_trailing_zeros
 from shared_code.price_checker import fetch_daily_candles
 from source_repository import SourceID, Symbol
 from technical_analysis.repositories.macd_repository import (
@@ -136,9 +136,9 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
         macd_table.add_row(
             [
                 row.symbol,
-                format_to_6digits_withoutTrailingZeros(row.current_price),
-                format_to_6digits_withoutTrailingZeros(row.macd),
-                f"{format_to_6digits_withoutTrailingZeros(row.histogram)} {row.status}",
+                format_to_6digits_without_trailing_zeros(row.current_price),
+                format_to_6digits_without_trailing_zeros(row.macd),
+                f"{format_to_6digits_without_trailing_zeros(row.histogram)} {row.status}",
             ]
         )
 

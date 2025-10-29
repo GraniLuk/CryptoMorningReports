@@ -121,7 +121,7 @@ def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:
         return None
 
 
-def fetch_close_prices_from_Binance(symbol: str, lookback_days: int = 14) -> pd.DataFrame:
+def fetch_close_prices_from_binance(symbol: str, lookback_days: int = 14) -> pd.DataFrame:
     client = BinanceClient()
 
     try:

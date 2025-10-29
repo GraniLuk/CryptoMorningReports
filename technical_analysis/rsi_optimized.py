@@ -12,7 +12,7 @@ from technical_analysis.repositories.rsi_repository import (
     get_candles_with_rsi,
     save_rsi_by_timeframe,
 )
-from technical_analysis.rsi import calculate_rsi_using_RMA
+from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def get_optimized_rsi_for_symbol_timeframe(
@@ -84,7 +84,7 @@ def get_optimized_rsi_for_symbol_timeframe(
             )
 
             # Calculate RSI for the entire dataframe (to ensure accurate values)
-            calculated_rsi = calculate_rsi_using_RMA(df["Close"])
+            calculated_rsi = calculate_rsi_using_rma(df["Close"])
             df["calculated_RSI"] = calculated_rsi
 
             # Find rows with missing RSI values in the requested date range

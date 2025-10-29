@@ -50,12 +50,12 @@ async def run_report(report_type="daily"):
 
 
 @app.timer_trigger(schedule="0 4 * * *", arg_name="dailyTimer", use_monitor=False)
-def DailyReport(_daily_timer: func.TimerRequest) -> None:
+def daily_report(_daily_timer: func.TimerRequest) -> None:
     asyncio.run(run_report("daily"))
 
 
 @app.timer_trigger(schedule="0 3 * * 0", arg_name="weeklyTimer", use_monitor=False)
-def WeeklyReport(_weekly_timer: func.TimerRequest) -> None:
+def weekly_report(_weekly_timer: func.TimerRequest) -> None:
     asyncio.run(run_report("weekly"))
 
 
