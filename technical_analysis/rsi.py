@@ -98,8 +98,8 @@ def calculate_all_rsi_for_symbol(conn, symbol):
     for the given symbol and save the results using save_rsi_results.
     """
     # Fetch all daily candles for the symbol
-    dailyCandleRepository = DailyCandleRepository(conn)
-    all_daily_candles = dailyCandleRepository.get_all_candles(symbol)
+    daily_candle_repository = DailyCandleRepository(conn)
+    all_daily_candles = daily_candle_repository.get_all_candles(symbol)
 
     if not all_daily_candles:
         app_logger.error(f"No daily candles found for {symbol.symbol_name}")

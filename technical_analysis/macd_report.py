@@ -25,7 +25,7 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
     )
 
     # Fetch previous day's values
-    yesterdayValues = fetch_yesterday_macd(conn, target_date)
+    yesterday_values = fetch_yesterday_macd(conn, target_date)
 
     for symbol in symbols:
         try:
@@ -82,9 +82,9 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
             # Determine status
             status = "🟢" if histogram > 0 else "🔴"
             # Check for crossovers
-            if yesterdayValues is not None and not yesterdayValues.empty:
-                yesterday_data = yesterdayValues[
-                    yesterdayValues["SymbolName"] == symbol.symbol_name
+            if yesterday_values is not None and not yesterday_values.empty:
+                yesterday_data = yesterday_values[
+                    yesterday_values["SymbolName"] == symbol.symbol_name
                 ]
                 if not yesterday_data.empty:
                     # Extract series with explicit type annotation to help type checker

@@ -45,7 +45,7 @@ def calculate_indicators(  # noqa: PLR0915
     )
 
     # Fetch previous day's values (relative to target_date)
-    yesterdayValues = fetch_yesterday_moving_averages(conn, target_date)
+    yesterday_values = fetch_yesterday_moving_averages(conn, target_date)
 
     for symbol in symbols:
         try:
@@ -86,15 +86,15 @@ def calculate_indicators(  # noqa: PLR0915
 
             # Get values for target date (last row of filtered DataFrame)
             target_price = df["Close"].iloc[-1]
-            target_MA50 = df["MA50"].iloc[-1]
-            target_MA200 = df["MA200"].iloc[-1]
-            target_EMA50 = df["EMA50"].iloc[-1]
-            target_EMA200 = df["EMA200"].iloc[-1]
+            target_ma50 = df["MA50"].iloc[-1]
+            target_ma200 = df["MA200"].iloc[-1]
+            target_ema50 = df["EMA50"].iloc[-1]
+            target_ema200 = df["EMA200"].iloc[-1]
 
             # Add warning indicator if using shorter periods
-            MIN_RECOMMENDED_PERIODS = 200
+            min_recommended_periods = 200
             period_warning = ""
-            if available_periods < MIN_RECOMMENDED_PERIODS:
+            if available_periods < min_recommended_periods:
                 period_warning = "⚠️"  # Add warning emoji for shortened periods
                 app_logger.warning(
                     f"{symbol.symbol_name} using shortened periods due to limited history: {available_periods} days"
@@ -102,16 +102,16 @@ def calculate_indicators(  # noqa: PLR0915
 
             # Initialize status indicators
             ma50_status = (
-                f"🟢{period_warning}" if target_price > target_MA50 else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_ma50 else f"🔴{period_warning}"
             )
             ma200_status = (
-                f"🟢{period_warning}" if target_price > target_MA200 else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_ma200 else f"🔴{period_warning}"
             )
             ema50_status = (
-                f"🟢{period_warning}" if target_price > target_EMA50 else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_ema50 else f"🔴{period_warning}"
             )
             ema200_status = (
-                f"🟢{period_warning}" if target_price > target_EMA200 else f"🔴{period_warning}"
+                f"🟢{period_warning}" if target_price > target_ema200 else f"🔴{period_warning}"
             )
 
             # Initialize cross status
@@ -119,9 +119,9 @@ def calculate_indicators(  # noqa: PLR0915
             ema_cross_status = ""
 
             # Check for crossovers if we have previous day's data
-            if not yesterdayValues.empty:
-                yesterday_data = yesterdayValues[
-                    yesterdayValues["SymbolName"] == symbol.symbol_name
+            if not yesterday_values.empty:
+                yesterday_data = yesterday_values[
+                    yesterday_values["SymbolName"] == symbol.symbol_name
                 ]
                 if not yesterday_data.empty:
                     # Extract series with explicit type annotations to help type checker
@@ -138,48 +138,48 @@ def calculate_indicators(  # noqa: PLR0915
                     yesterday_ema200 = ema200_series.iloc[0]
 
                     # MA Crossovers
-                    if yesterday_price < yesterday_ma50 and target_price > target_MA50:
+                    if yesterday_price < yesterday_ma50 and target_price > target_ma50:
                         ma50_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above MA50")
-                    elif yesterday_price > yesterday_ma50 and target_price < target_MA50:
+                    elif yesterday_price > yesterday_ma50 and target_price < target_ma50:
                         ma50_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA50")
 
-                    if yesterday_price < yesterday_ma200 and target_price > target_MA200:
+                    if yesterday_price < yesterday_ma200 and target_price > target_ma200:
                         ma200_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above MA200")
-                    elif yesterday_price > yesterday_ma200 and target_price < target_MA200:
+                    elif yesterday_price > yesterday_ma200 and target_price < target_ma200:
                         ma200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below MA200")
 
                     # EMA Crossovers
-                    if yesterday_price < yesterday_ema50 and target_price > target_EMA50:
+                    if yesterday_price < yesterday_ema50 and target_price > target_ema50:
                         ema50_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above EMA50")
-                    elif yesterday_price > yesterday_ema50 and target_price < target_EMA50:
+                    elif yesterday_price > yesterday_ema50 and target_price < target_ema50:
                         ema50_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below EMA50")
 
-                    if yesterday_price < yesterday_ema200 and target_price > target_EMA200:
+                    if yesterday_price < yesterday_ema200 and target_price > target_ema200:
                         ema200_status = "🚨🟢"
                         app_logger.info(f"{symbol.symbol_name} crossed above EMA200")
-                    elif yesterday_price > yesterday_ema200 and target_price < target_EMA200:
+                    elif yesterday_price > yesterday_ema200 and target_price < target_ema200:
                         ema200_status = "🚨🔴"
                         app_logger.info(f"{symbol.symbol_name} crossed below EMA200")
 
                     # Add Golden/Death Cross detection for MA
-                    if yesterday_ma50 < yesterday_ma200 and target_MA50 > target_MA200:
+                    if yesterday_ma50 < yesterday_ma200 and target_ma50 > target_ma200:
                         ma_cross_status = "⚡️🟡"  # Golden Cross
                         app_logger.info(f"{symbol.symbol_name} MA Golden Cross detected")
-                    elif yesterday_ma50 > yesterday_ma200 and target_MA50 < target_MA200:
+                    elif yesterday_ma50 > yesterday_ma200 and target_ma50 < target_ma200:
                         ma_cross_status = "💀"  # Death Cross
                         app_logger.info(f"{symbol.symbol_name} MA Death Cross detected")
 
                     # Add Golden/Death Cross detection for EMA
-                    if yesterday_ema50 < yesterday_ema200 and target_EMA50 > target_EMA200:
+                    if yesterday_ema50 < yesterday_ema200 and target_ema50 > target_ema200:
                         ema_cross_status = "⚡️🟡"  # Golden Cross
                         app_logger.info(f"{symbol.symbol_name} EMA Golden Cross detected")
-                    elif yesterday_ema50 > yesterday_ema200 and target_EMA50 < target_EMA200:
+                    elif yesterday_ema50 > yesterday_ema200 and target_ema50 < target_ema200:
                         ema_cross_status = "💀"  # Death Cross
                         app_logger.info(f"{symbol.symbol_name} EMA Death Cross detected")
 
@@ -188,8 +188,8 @@ def calculate_indicators(  # noqa: PLR0915
                 MAData(
                     symbol=symbol.symbol_name,
                     current_price=target_price,
-                    ma50=target_MA50,
-                    ma200=target_MA200,
+                    ma50=target_ma50,
+                    ma200=target_ma200,
                     ma50_status=ma50_status,
                     ma200_status=ma200_status,
                     cross_status=ma_cross_status,
@@ -200,8 +200,8 @@ def calculate_indicators(  # noqa: PLR0915
                 EMAData(
                     symbol=symbol.symbol_name,
                     current_price=target_price,
-                    ema50=target_EMA50,
-                    ema200=target_EMA200,
+                    ema50=target_ema50,
+                    ema200=target_ema200,
                     ema50_status=ema50_status,
                     ema200_status=ema200_status,
                     cross_status=ema_cross_status,
@@ -215,10 +215,10 @@ def calculate_indicators(  # noqa: PLR0915
                         conn=conn,
                         symbol_id=symbol.symbol_id,
                         current_price=target_price,
-                        ma50=target_MA50,
-                        ma200=target_MA200,
-                        ema50=target_EMA50,
-                        ema200=target_EMA200,
+                        ma50=target_ma50,
+                        ma200=target_ma200,
+                        ema50=target_ema50,
+                        ema200=target_ema200,
                         indicator_date=target_date,
                     )
                 except Exception as e:
@@ -250,8 +250,8 @@ def calculate_indicators(  # noqa: PLR0915
         # Count total digits in the price (excluding decimal point)
         total_digits = sum(c.isdigit() for c in str_price)
 
-        MAX_SIGNIFICANT_DIGITS = 6
-        if total_digits > MAX_SIGNIFICANT_DIGITS:
+        max_significant_digits = 6
+        if total_digits > max_significant_digits:
             # If more than 6 digits, round to appropriate decimal places
             decimal_idx = str_price.find(".")
             if decimal_idx == -1:
@@ -304,3 +304,4 @@ if __name__ == "__main__":
 
     symbols = [symbol]
     calculate_indicators(symbols, conn, target_date=datetime.now(UTC).date())
+

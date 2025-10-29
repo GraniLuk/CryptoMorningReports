@@ -348,35 +348,35 @@ def get_historical_rsi(  # noqa: PLR0915
                         # Convert date to datetime for comparison
                         row_date = dt.combine(row_date, dt.min.time())
 
-                    SECONDS_IN_DAY = 86400
-                    SECONDS_IN_HOUR = 3600
-                    SECONDS_IN_15_MINUTES = 900
+                    seconds_in_day = 86400
+                    seconds_in_hour = 3600
+                    seconds_in_15_minutes = 900
                     if timeframe.lower() == "daily":
                         if (
                             abs((row_date - (compare_date - timedelta(days=1))).total_seconds())
-                            < SECONDS_IN_DAY
+                            < seconds_in_day
                         ):
                             results[interval_description] = float(row[1])
                         elif (
                             abs((row_date - (compare_date - timedelta(days=7))).total_seconds())
-                            < SECONDS_IN_DAY
+                            < seconds_in_day
                         ):
                             results[week_description] = float(row[1])
                     elif timeframe.lower() == "hourly":
                         if (
                             abs((row_date - (compare_date - timedelta(hours=1))).total_seconds())
-                            < SECONDS_IN_HOUR
+                            < seconds_in_hour
                         ):
                             results[interval_description] = float(row[1])
                         elif (
                             abs((row_date - (compare_date - timedelta(hours=24))).total_seconds())
-                            < SECONDS_IN_HOUR
+                            < seconds_in_hour
                         ):
                             results[week_description] = float(row[1])
                     elif timeframe.lower() == "fifteen_min":
                         if (
                             abs((row_date - (compare_date - timedelta(minutes=15))).total_seconds())
-                            < SECONDS_IN_15_MINUTES
+                            < seconds_in_15_minutes
                         ):
                             results[interval_description] = float(row[1])
                         elif (
@@ -385,7 +385,7 @@ def get_historical_rsi(  # noqa: PLR0915
                                     row_date - (compare_date - timedelta(minutes=24 * 15))
                                 ).total_seconds()
                             )
-                            < SECONDS_IN_15_MINUTES
+                            < seconds_in_15_minutes
                         ):
                             results[week_description] = float(row[1])
 
@@ -401,3 +401,4 @@ def get_historical_rsi(  # noqa: PLR0915
     except Exception as e:
         app_logger.error(f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {e!s}")
         raise
+

@@ -246,14 +246,14 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
 
     # Format RSI values with emojis
     def format_rsi_with_emoji(rsi_value):
-        RSI_OVERBOUGHT_THRESHOLD = 70
-        RSI_OVERSOLD_THRESHOLD = 30
+        rsi_overbought_threshold = 70
+        rsi_oversold_threshold = 30
         if rsi_value is None:
             return "N/A"
         rsi_str = f"{rsi_value:.2f}"
-        if rsi_value >= RSI_OVERBOUGHT_THRESHOLD:
+        if rsi_value >= rsi_overbought_threshold:
             return f"🔴 {rsi_str} (Overbought)"
-        if rsi_value <= RSI_OVERSOLD_THRESHOLD:
+        if rsi_value <= rsi_oversold_threshold:
             return f"🟢 {rsi_str} (Oversold)"
         return f"🟡 {rsi_str}"
 
@@ -327,16 +327,16 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
             oi_value_str = f"${open_interest_value:,.0f}"
             derivatives_html += f"├ OI Value: <code>{oi_value_str}</code>\n"
 
-        FUNDING_RATE_HIGH_THRESHOLD = 0.01
-        FUNDING_RATE_LOW_THRESHOLD = -0.01
+        funding_rate_high_threshold = 0.01
+        funding_rate_low_threshold = -0.01
         if funding_rate is not None:
             fr_pct = funding_rate * 100
             fr_str = f"{fr_pct:+.4f}%"
             emoji = (
                 "🔴"
-                if funding_rate > FUNDING_RATE_HIGH_THRESHOLD
+                if funding_rate > funding_rate_high_threshold
                 else "🟢"
-                if funding_rate < FUNDING_RATE_LOW_THRESHOLD
+                if funding_rate < funding_rate_low_threshold
                 else "🟡"
             )
             derivatives_html += f"├ Funding Rate: {emoji} <code>{fr_str}</code>\n"

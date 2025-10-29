@@ -19,11 +19,11 @@ def fetch_price_change_report(symbols: list[Symbol], conn, target_date: date) ->
     # Create a list to store rows with their sorting values
     rows_with_sort_values = []
 
-    MIN_CANDLES_FOR_CALCULATION = 7
+    min_candles_for_calculation = 7
     for symbol in symbols:
         try:
             candles = fetch_daily_candles(symbol, start_date, target_date, conn)
-            if len(candles) >= MIN_CANDLES_FOR_CALCULATION:  # Ensure we have enough data
+            if len(candles) >= min_candles_for_calculation:  # Ensure we have enough data
                 # Convert candles to list of closing prices
                 closes = [candle.close for candle in candles]
 

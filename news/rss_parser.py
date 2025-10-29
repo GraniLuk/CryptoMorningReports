@@ -73,8 +73,8 @@ def fetch_rss_news(feed_url, source, class_name):
                     }
                 )
 
-            MAX_NEWS_ITEMS = 10
-            if len(latest_news) >= MAX_NEWS_ITEMS:
+            max_news_items = 10
+            if len(latest_news) >= max_news_items:
                 break
 
         return latest_news

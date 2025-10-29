@@ -101,8 +101,8 @@ def update_daily_rsi_for_all_symbols(conn, symbols):
     """
 
     def fetch_all_daily_candles(symbol, conn):
-        dailyCandleRepository = DailyCandleRepository(conn)
-        return dailyCandleRepository.get_all_candles(symbol)
+        daily_candle_repository = DailyCandleRepository(conn)
+        return daily_candle_repository.get_all_candles(symbol)
 
     update_rsi_for_all_candles(conn, symbols, fetch_all_daily_candles, "daily")
 

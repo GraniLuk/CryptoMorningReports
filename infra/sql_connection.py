@@ -32,8 +32,8 @@ class SQLiteRow:
             value = row[idx]
 
             # Convert string dates to datetime objects
-            DATE_FORMAT_LENGTH = 10
-            EXPECTED_DASHES = 2
+            date_format_length = 10
+            expected_dashes = 2
             if value is not None and isinstance(value, str):
                 # Try to parse as datetime (ISO format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS)
                 if "T" in value or " " in value:
@@ -41,7 +41,7 @@ class SQLiteRow:
                         # Handle both formats: "2025-10-23T20:00:00" and "2025-10-23 20:00:00"
                         value = datetime.fromisoformat(value.replace(" ", "T"))
                 # Try to parse as date only (YYYY-MM-DD)
-                elif len(value) == DATE_FORMAT_LENGTH and value.count("-") == EXPECTED_DASHES:
+                elif len(value) == date_format_length and value.count("-") == expected_dashes:
                     with suppress(ValueError, AttributeError):
                         value = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=UTC).date()
 
@@ -212,14 +212,14 @@ def connect_to_sql(max_retries=3):
                     token_struct = struct.pack(
                         f"<I{len(token_bytes)}s", len(token_bytes), token_bytes
                     )
-                    SQL_COPT_SS_ACCESS_TOKEN = (
+                    sql_copt_ss_access_token = (
                         1256  # This connection option is defined by microsoft in msodbcsql.h
                     )
 
                     logging.info(f"Azure connection string (without token): {connection_string}")
                     conn = pyodbc.connect(
                         connection_string,
-                        attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct},
+                        attrs_before={sql_copt_ss_access_token: token_struct},
                     )
                     logging.info("Successfully connected to the database.")
                     return conn

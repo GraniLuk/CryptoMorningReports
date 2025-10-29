@@ -37,8 +37,8 @@ async def main():
             from infra.sql_connection import connect_to_sql
             from reports.current_report import generate_crypto_situation_report
 
-            MIN_ARGS_FOR_CURRENT = 3
-            if len(sys.argv) < MIN_ARGS_FOR_CURRENT:
+            min_args_for_current = 3
+            if len(sys.argv) < min_args_for_current:
                 print("❌ Error: Symbol required for current situation report")
                 print("Usage: python local_runner.py current BTC")
                 sys.exit(1)

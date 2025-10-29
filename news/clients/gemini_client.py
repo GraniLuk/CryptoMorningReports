@@ -111,8 +111,8 @@ class GeminiClient(AIClient):
 
     def _log_news_article_details(self, text_content: str) -> None:
         """Extract and log news article details if available."""
-        MAX_NEWS_ARTICLE_LOG_LENGTH = 10000
-        if len(text_content) >= MAX_NEWS_ARTICLE_LOG_LENGTH:
+        max_news_article_log_length = 10000
+        if len(text_content) >= max_news_article_log_length:
             return
 
         try:
@@ -145,12 +145,12 @@ class GeminiClient(AIClient):
         if "NEWS_ARTICLE" in part_type:
             self._log_news_article_details(text_content)
 
-        MAX_DEBUG_LOG_LENGTH = 2000
+        max_debug_log_length = 2000
         if part_type in ["INDICATORS", "PRICE_DATA"]:
             logging.info(f"Full {part_type} content:")
             logging.info(text_content)
             logging.info(f"--- End of {part_type} ---")
-        elif text_length < MAX_DEBUG_LOG_LENGTH:
+        elif text_length < max_debug_log_length:
             logging.debug(f"Full content:\n{text_content}\n")
 
     def get_detailed_crypto_analysis_with_news(

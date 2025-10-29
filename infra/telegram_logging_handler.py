@@ -15,11 +15,11 @@ class TelegramHandler(logging.Handler):
         self.send_telegram_message(log_entry)
 
     def send_telegram_message(self, message):
-        TELEGRAM_MAX_MESSAGE_LENGTH = 4096
+        telegram_max_message_length = 4096
         if message is None or len(message) == 0:
             return
-        if len(message) > TELEGRAM_MAX_MESSAGE_LENGTH:
-            message = message[:TELEGRAM_MAX_MESSAGE_LENGTH]
+        if len(message) > telegram_max_message_length:
+            message = message[:telegram_max_message_length]
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
         payload = {"chat_id": self.chat_id, "text": message, "parse_mode": None}
         requests.post(url, json=payload)

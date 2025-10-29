@@ -84,10 +84,10 @@ async def send_telegram_message(
 
     except Exception as e:
         # Avoid logging the entire large message to keep logs clean / protect data
-        MESSAGE_TRUNCATE_THRESHOLD = 600
+        message_truncate_threshold = 600
         snippet = (
             (message[:500] + "...<truncated>")
-            if len(message) > MESSAGE_TRUNCATE_THRESHOLD
+            if len(message) > message_truncate_threshold
             else message
         )
         logging.error("Failed to send telegram message: %s | snippet: %s", str(e), snippet)
