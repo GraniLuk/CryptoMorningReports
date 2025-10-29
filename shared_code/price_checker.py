@@ -96,6 +96,15 @@ def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle
     return candle
 
 
+def _fetch_hourly_candle_from_source(symbol: Symbol, timestamp: datetime) -> Candle | None:
+    """Fetch a single hourly candle from the appropriate source."""
+    if symbol.source_id == SourceID.KUCOIN:
+        return fetch_kucoin_hourly_kline(symbol, timestamp)
+    if symbol.source_id == SourceID.BINANCE:
+        return fetch_binance_hourly_kline(symbol, timestamp)
+    return None
+
+
 def fetch_hourly_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> list[Candle]:
@@ -160,11 +169,7 @@ def fetch_hourly_candles(
     # Check for missing timestamps and fetch from source
     for timestamp in expected_timestamps:
         if timestamp not in candle_dict:
-            candle = None
-            if symbol.source_id == SourceID.KUCOIN:
-                candle = fetch_kucoin_hourly_kline(symbol, timestamp)
-            if symbol.source_id == SourceID.BINANCE:
-                candle = fetch_binance_hourly_kline(symbol, timestamp)
+            candle = _fetch_hourly_candle_from_source(symbol, timestamp)
 
             # Save to database if connection provided and candle fetched
             if conn and candle:

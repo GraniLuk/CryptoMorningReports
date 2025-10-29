@@ -30,6 +30,150 @@ from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
 
 
+def _configure_ai_api():
+    """Configure AI API settings and return api_type and api_key."""
+    ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
+    ai_api_key = ""
+
+    if ai_api_type == "perplexity":
+        ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
+        app_logger.info("Using Perplexity API for analysis")
+    elif ai_api_type == "gemini":
+        ai_api_key = os.environ.get("GEMINI_API_KEY", "")
+        app_logger.info("Using Gemini API for analysis")
+    else:
+        app_logger.warning(f"Unknown AI API type: {ai_api_type}, defaulting to Perplexity")
+        ai_api_type = "perplexity"
+        ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
+
+    if not ai_api_key:
+        app_logger.error(f"No API key found for {ai_api_type}")
+
+    return ai_api_type, ai_api_key
+
+
+async def _process_ai_analysis(
+    ai_api_key, ai_api_type, symbols, current_prices_section, conn, today_date, logger
+):
+    """Process AI analysis with news and handle uploads/email."""
+    analysis_reported_with_news = "Failed: Analysis with news not generated"
+
+    if not ai_api_key:
+        logger.error(f"No API key found for {ai_api_type}")
+        return analysis_reported_with_news
+
+    # Process and send news reports
+    fetched_news = get_news()
+    aggregated_data = get_aggregated_data(conn)
+
+    # Reuse current_prices_section also for the news-enhanced analysis by prepending it to aggregated indicators
+    def format_aggregated(agg_list) -> str:
+        if not agg_list:
+            return "No aggregated indicator data available.\n"
+        header = (
+            "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | Range% | OI | OI Value | Fund Rate\n"
+            "-------|-----|-------|------|-------|------|--------|-----|------|--------|----|-----------|-----------\n"
+        )
+        lines = []
+        for row in agg_list:
+            try:
+                # Format Open Interest and Funding Rate with proper handling of None values
+                oi_str = f"{row.get('OpenInterest', 0):,.0f}" if row.get("OpenInterest") else "N/A"
+                oi_val_str = (
+                    f"${row.get('OpenInterestValue', 0):,.0f}"
+                    if row.get("OpenInterestValue")
+                    else "N/A"
+                )
+                fr_str = f"{row.get('FundingRate', 0):.4f}%" if row.get("FundingRate") else "N/A"
+
+                lines.append(
+                    f"{row.get('SymbolName', ''):>6} | "
+                    f"{row.get('RSI', '')!s:>4} | "
+                    f"{row.get('RSIClosePrice', ''):>6} | "
+                    f"{row.get('MA50', ''):>5} | "
+                    f"{row.get('MA200', ''):>6} | "
+                    f"{row.get('EMA50', ''):>6} | "
+                    f"{row.get('EMA200', ''):>7} | "
+                    f"{row.get('LowPrice', ''):>5} | "
+                    f"{row.get('HighPrice', ''):>6} | "
+                    f"{row.get('RangePercent', ''):>6} | "
+                    f"{oi_str:>10} | "
+                    f"{oi_val_str:>11} | "
+                    f"{fr_str:>11}"
+                )
+            except Exception as e:
+                lines.append(f"Row format error: {e}")
+        return "Aggregated Indicators:\n<pre>" + header + "\n".join(lines) + "</pre>\n\n"
+
+    aggregated_formatted = format_aggregated(aggregated_data)
+    aggregated_with_prices = current_prices_section + aggregated_formatted
+    analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
+        ai_api_key, aggregated_with_prices, fetched_news, ai_api_type, conn
+    )
+    highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
+
+    # --- OneDrive Uploads ---
+    if not analysis_reported_with_news.startswith("Failed"):
+        onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}.md"
+        await upload_to_onedrive(
+            filename=onedrive_filename_analysis_with_news,
+            content=analysis_reported_with_news,
+            folder_path="detailed_analysis_with_news",
+        )
+
+        epub_filename = onedrive_filename_analysis_with_news.replace(".md", ".epub")
+        try:
+            epub_bytes = await convert_markdown_to_epub_async(
+                analysis_reported_with_news,
+                metadata={
+                    "title": f"Crypto Analysis with News {today_date}",
+                    "author": "Crypto Morning Reports Bot",
+                    "date": today_date,
+                },
+            )
+        except RuntimeError as convert_err:
+            logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
+        else:
+            recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
+            recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
+
+            if not recipients:
+                logger.info(
+                    "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; skipping email dispatch."
+                )
+            else:
+                email_body = (
+                    "Hi,\n\n"
+                    "Please find attached the EPUB version of today's detailed crypto analysis with news.\n\n"
+                    "Regards,\n"
+                    "Crypto Morning Reports Bot"
+                )
+                email_sent = await send_email_with_epub_attachment(
+                    subject=f"Crypto Analysis with News {today_date}",
+                    body=email_body,
+                    attachment_bytes=epub_bytes,
+                    attachment_filename=epub_filename,
+                    recipients=recipients,
+                )
+                if not email_sent:
+                    logger.warning("Failed to send EPUB analysis report via email.")
+
+        # Save highlighted articles in "news" subfolder
+        if not highlight_articles_message.startswith("Failed"):
+            onedrive_filename_highlights = f"HighlightedNews_{today_date}.md"
+            highlights_saved_to_onedrive = await upload_to_onedrive(
+                filename=onedrive_filename_highlights,
+                content=highlight_articles_message,
+                folder_path="news",
+            )
+            if highlights_saved_to_onedrive:
+                logger.info(f"Highlighted articles for {today_date} saved to OneDrive news folder.")
+            else:
+                logger.warning(f"Failed to save highlighted articles for {today_date} to OneDrive.")
+
+    return analysis_reported_with_news
+
+
 async def process_daily_report(  # noqa: PLR0915
     conn, telegram_enabled, telegram_token, telegram_chat_id
 ):
@@ -117,147 +261,13 @@ async def process_daily_report(  # noqa: PLR0915
         f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
     )
 
-    # Determine which API to use (Perplexity or Gemini)
-    ai_api_type = os.environ.get("AI_API_TYPE", "perplexity").lower()
-    ai_api_key = ""
+    # Configure AI API settings
+    ai_api_type, ai_api_key = _configure_ai_api()
 
-    if ai_api_type == "perplexity":
-        ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
-        logger.info("Using Perplexity API for analysis")
-    elif ai_api_type == "gemini":
-        ai_api_key = os.environ.get("GEMINI_API_KEY", "")
-        logger.info("Using Gemini API for analysis")
-    else:
-        logger.warning(f"Unknown AI API type: {ai_api_type}, defaulting to Perplexity")
-        ai_api_type = "perplexity"
-        ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
-
-    highlight_articles_message = "Failed: Highlight articles message not generated"
-    analysis_reported_with_news = "Failed: Analysis with news not generated"
-
-    if not ai_api_key:
-        logger.error(f"No API key found for {ai_api_type}")
-    else:
-        # Process and send news reports
-        fetched_news = get_news()
-        aggregated_data = get_aggregated_data(conn)
-
-        # Reuse current_prices_section also for the news-enhanced analysis by prepending it to aggregated indicators
-        def format_aggregated(agg_list) -> str:
-            if not agg_list:
-                return "No aggregated indicator data available.\n"
-            header = (
-                "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | Range% | OI | OI Value | Fund Rate\n"
-                "-------|-----|-------|------|-------|------|--------|-----|------|--------|----|-----------|-----------\n"
-            )
-            lines = []
-            for row in agg_list:
-                try:
-                    # Format Open Interest and Funding Rate with proper handling of None values
-                    oi_str = (
-                        f"{row.get('OpenInterest', 0):,.0f}" if row.get("OpenInterest") else "N/A"
-                    )
-                    oi_val_str = (
-                        f"${row.get('OpenInterestValue', 0):,.0f}"
-                        if row.get("OpenInterestValue")
-                        else "N/A"
-                    )
-                    fr_str = (
-                        f"{row.get('FundingRate', 0):.4f}%" if row.get("FundingRate") else "N/A"
-                    )
-
-                    lines.append(
-                        f"{row.get('SymbolName', ''):>6} | "
-                        f"{row.get('RSI', '')!s:>4} | "
-                        f"{row.get('RSIClosePrice', ''):>6} | "
-                        f"{row.get('MA50', ''):>5} | "
-                        f"{row.get('MA200', ''):>6} | "
-                        f"{row.get('EMA50', ''):>6} | "
-                        f"{row.get('EMA200', ''):>7} | "
-                        f"{row.get('LowPrice', ''):>5} | "
-                        f"{row.get('HighPrice', ''):>6} | "
-                        f"{row.get('RangePercent', ''):>6} | "
-                        f"{oi_str:>10} | "
-                        f"{oi_val_str:>11} | "
-                        f"{fr_str:>11}"
-                    )
-                except Exception as e:
-                    lines.append(f"Row format error: {e}")
-            return "Aggregated Indicators:\n<pre>" + header + "\n".join(lines) + "</pre>\n\n"
-
-        aggregated_formatted = format_aggregated(aggregated_data)
-        aggregated_with_prices = current_prices_section + aggregated_formatted
-        analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
-            ai_api_key, aggregated_with_prices, fetched_news, ai_api_type, conn
-        )
-        highlight_articles_message = highlight_articles(
-            ai_api_key, symbols, fetched_news, ai_api_type
-        )
-        # --- OneDrive Uploads ---
-        if not analysis_reported_with_news.startswith("Failed"):
-            onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}.md"
-            await upload_to_onedrive(
-                filename=onedrive_filename_analysis_with_news,
-                content=analysis_reported_with_news,
-                folder_path="detailed_analysis_with_news",
-            )
-
-            epub_filename = onedrive_filename_analysis_with_news.replace(".md", ".epub")
-            try:
-                epub_bytes = await convert_markdown_to_epub_async(
-                    analysis_reported_with_news,
-                    metadata={
-                        "title": f"Crypto Analysis with News {today_date}",
-                        "author": "Crypto Morning Reports Bot",
-                        "date": today_date,
-                    },
-                )
-            except RuntimeError as convert_err:
-                logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
-            else:
-                recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
-                recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
-
-                if not recipients:
-                    logger.info(
-                        "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; skipping email dispatch."
-                    )
-                else:
-                    email_body = (
-                        "Hi,\n\n"
-                        "Please find attached the EPUB version of today's detailed crypto analysis with news.\n\n"
-                        "Regards,\n"
-                        "Crypto Morning Reports Bot"
-                    )
-                    email_sent = await send_email_with_epub_attachment(
-                        subject=f"Crypto Analysis with News {today_date}",
-                        body=email_body,
-                        attachment_bytes=epub_bytes,
-                        attachment_filename=epub_filename,
-                        recipients=recipients,
-                    )
-                    if not email_sent:
-                        logger.warning("Failed to send EPUB analysis report via email.")
-
-            # Save highlighted articles in "news" subfolder
-            if not highlight_articles_message.startswith("Failed"):
-                onedrive_filename_highlights = f"HighlightedNews_{today_date}.md"
-                highlights_saved_to_onedrive = await upload_to_onedrive(
-                    filename=onedrive_filename_highlights,
-                    content=highlight_articles_message,
-                    folder_path="news",
-                )
-                if highlights_saved_to_onedrive:
-                    logger.info(
-                        f"Highlighted articles for {today_date} saved to OneDrive news folder."
-                    )
-                else:
-                    logger.warning(
-                        f"Failed to save highlighted articles for {today_date} to OneDrive."
-                    )
-        else:
-            pass
-        # --- End OneDrive Uploads ---
+    # Process AI analysis with news
+    analysis_reported_with_news = await _process_ai_analysis(
+        ai_api_key, ai_api_type, symbols, current_prices_section, conn, today_date, logger
+    )
 
     # Send all messages
     await send_telegram_message(

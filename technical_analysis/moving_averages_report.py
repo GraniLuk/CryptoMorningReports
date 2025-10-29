@@ -13,6 +13,49 @@ from technical_analysis.repositories.moving_averages_repository import (
 )
 
 
+def _calculate_status_indicators(target_price: float, target_ma: float, period_warning: str) -> str:
+    """Calculate status indicator for a moving average."""
+    return f"🟢{period_warning}" if target_price > target_ma else f"🔴{period_warning}"
+
+
+def _detect_crossover(
+    yesterday_price: float,
+    target_price: float,
+    yesterday_ma: float,
+    target_ma: float,
+    symbol_name: str,
+    logger,
+) -> str:
+    """Detect crossover and return updated status."""
+    if yesterday_price < yesterday_ma and target_price > target_ma:
+        logger.info(f"{symbol_name} crossed above MA")
+        return "🚨🟢"
+    if yesterday_price > yesterday_ma and target_price < target_ma:
+        logger.info(f"{symbol_name} crossed below MA")
+        return "🚨🔴"
+
+    return "🟢" if target_price > target_ma else "🔴"
+
+
+def _detect_golden_death_cross(
+    yesterday_short: float,
+    target_short: float,
+    yesterday_long: float,
+    target_long: float,
+    symbol_name: str,
+    indicator_type: str,
+    logger,
+) -> str:
+    """Detect golden or death cross."""
+    if yesterday_short < yesterday_long and target_short > target_long:
+        logger.info(f"{symbol_name} {indicator_type} Golden Cross detected")
+        return "⚡️🟡"  # Golden Cross
+    if yesterday_short > yesterday_long and target_short < target_long:
+        logger.info(f"{symbol_name} {indicator_type} Death Cross detected")
+        return "💀"  # Death Cross
+    return ""
+
+
 def calculate_indicators(  # noqa: PLR0915
     symbols: list[Symbol], conn, target_date: date
 ) -> tuple[PrettyTable, PrettyTable]:
@@ -137,51 +180,61 @@ def calculate_indicators(  # noqa: PLR0915
                     yesterday_ema50 = ema50_series.iloc[0]
                     yesterday_ema200 = ema200_series.iloc[0]
 
-                    # MA Crossovers
-                    if yesterday_price < yesterday_ma50 and target_price > target_ma50:
-                        ma50_status = "🚨🟢"
-                        app_logger.info(f"{symbol.symbol_name} crossed above MA50")
-                    elif yesterday_price > yesterday_ma50 and target_price < target_ma50:
-                        ma50_status = "🚨🔴"
-                        app_logger.info(f"{symbol.symbol_name} crossed below MA50")
+                    # MA Crossovers using helper functions
+                    ma50_status = _detect_crossover(
+                        yesterday_price,
+                        target_price,
+                        yesterday_ma50,
+                        target_ma50,
+                        symbol.symbol_name,
+                        app_logger,
+                    )
+                    ma200_status = _detect_crossover(
+                        yesterday_price,
+                        target_price,
+                        yesterday_ma200,
+                        target_ma200,
+                        symbol.symbol_name,
+                        app_logger,
+                    )
 
-                    if yesterday_price < yesterday_ma200 and target_price > target_ma200:
-                        ma200_status = "🚨🟢"
-                        app_logger.info(f"{symbol.symbol_name} crossed above MA200")
-                    elif yesterday_price > yesterday_ma200 and target_price < target_ma200:
-                        ma200_status = "🚨🔴"
-                        app_logger.info(f"{symbol.symbol_name} crossed below MA200")
+                    # EMA Crossovers using helper functions
+                    ema50_status = _detect_crossover(
+                        yesterday_price,
+                        target_price,
+                        yesterday_ema50,
+                        target_ema50,
+                        symbol.symbol_name,
+                        app_logger,
+                    )
+                    ema200_status = _detect_crossover(
+                        yesterday_price,
+                        target_price,
+                        yesterday_ema200,
+                        target_ema200,
+                        symbol.symbol_name,
+                        app_logger,
+                    )
 
-                    # EMA Crossovers
-                    if yesterday_price < yesterday_ema50 and target_price > target_ema50:
-                        ema50_status = "🚨🟢"
-                        app_logger.info(f"{symbol.symbol_name} crossed above EMA50")
-                    elif yesterday_price > yesterday_ema50 and target_price < target_ema50:
-                        ema50_status = "🚨🔴"
-                        app_logger.info(f"{symbol.symbol_name} crossed below EMA50")
-
-                    if yesterday_price < yesterday_ema200 and target_price > target_ema200:
-                        ema200_status = "🚨🟢"
-                        app_logger.info(f"{symbol.symbol_name} crossed above EMA200")
-                    elif yesterday_price > yesterday_ema200 and target_price < target_ema200:
-                        ema200_status = "🚨🔴"
-                        app_logger.info(f"{symbol.symbol_name} crossed below EMA200")
-
-                    # Add Golden/Death Cross detection for MA
-                    if yesterday_ma50 < yesterday_ma200 and target_ma50 > target_ma200:
-                        ma_cross_status = "⚡️🟡"  # Golden Cross
-                        app_logger.info(f"{symbol.symbol_name} MA Golden Cross detected")
-                    elif yesterday_ma50 > yesterday_ma200 and target_ma50 < target_ma200:
-                        ma_cross_status = "💀"  # Death Cross
-                        app_logger.info(f"{symbol.symbol_name} MA Death Cross detected")
-
-                    # Add Golden/Death Cross detection for EMA
-                    if yesterday_ema50 < yesterday_ema200 and target_ema50 > target_ema200:
-                        ema_cross_status = "⚡️🟡"  # Golden Cross
-                        app_logger.info(f"{symbol.symbol_name} EMA Golden Cross detected")
-                    elif yesterday_ema50 > yesterday_ema200 and target_ema50 < target_ema200:
-                        ema_cross_status = "💀"  # Death Cross
-                        app_logger.info(f"{symbol.symbol_name} EMA Death Cross detected")
+                    # Add Golden/Death Cross detection for MA and EMA
+                    ma_cross_status = _detect_golden_death_cross(
+                        yesterday_ma50,
+                        target_ma50,
+                        yesterday_ma200,
+                        target_ma200,
+                        symbol.symbol_name,
+                        "MA",
+                        app_logger,
+                    )
+                    ema_cross_status = _detect_golden_death_cross(
+                        yesterday_ema50,
+                        target_ema50,
+                        yesterday_ema200,
+                        target_ema200,
+                        symbol.symbol_name,
+                        "EMA",
+                        app_logger,
+                    )
 
             # Store the results
             ma_values.append(

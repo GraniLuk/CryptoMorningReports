@@ -197,6 +197,47 @@ def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
     return chunks
 
 
+def _validate_telegram_params(enabled: bool, token: str, chat_id: str) -> bool:
+    """Validate basic Telegram parameters."""
+    if not enabled:
+        logging.info("Telegram notifications are disabled")
+        return False
+
+    if not token or not chat_id:
+        logging.error("Missing token or chat_id for send_telegram_document")
+        return False
+
+    return True
+
+
+def _check_file_size(size: int, filename: str) -> bool:
+    """Check if file size exceeds Telegram limits."""
+    if size > MAX_DOCUMENT_SIZE:
+        logging.error(
+            "File %s exceeds Telegram max size (%d > %d)",
+            filename,
+            size,
+            MAX_DOCUMENT_SIZE,
+        )
+        return False
+    return True
+
+
+def _send_document_request(token: str, files: dict, data: dict, filename: str) -> bool:
+    """Send document request to Telegram API."""
+    url = f"https://api.telegram.org/bot{token}/sendDocument"
+    response = requests.post(url, data=data, files=files)
+    if not response.ok:
+        try:
+            err_json = response.json()
+        except Exception:
+            err_json = {"raw": response.text[:300]}
+        logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
+        return False
+    logging.info("Document %s successfully sent to Telegram", filename)
+    return True
+
+
 async def send_telegram_document(  # noqa: PLR0911
     enabled: bool,
     token: str,
@@ -211,12 +252,7 @@ async def send_telegram_document(  # noqa: PLR0911
     Either provide file_bytes OR a local_path. If both are provided local_path takes precedence.
     Returns True on success, False otherwise.
     """
-    if not enabled:
-        logging.info("Telegram notifications are disabled")
-        return False
-
-    if not token or not chat_id:
-        logging.error("Missing token or chat_id for send_telegram_document")
+    if not _validate_telegram_params(enabled, token, chat_id):
         return False
 
     try:
@@ -225,18 +261,11 @@ async def send_telegram_document(  # noqa: PLR0911
                 logging.error("Local file does not exist: %s", local_path)
                 return False
             file_size = Path(local_path).stat().st_size
-            if file_size > MAX_DOCUMENT_SIZE:
-                logging.error(
-                    "File %s exceeds Telegram max size (%d > %d)",
-                    local_path,
-                    file_size,
-                    MAX_DOCUMENT_SIZE,
-                )
+            if not _check_file_size(file_size, local_path):
                 return False
 
             # Use context manager for file handling
             with Path(local_path).open("rb") as file_handle:
-                url = f"https://api.telegram.org/bot{token}/sendDocument"
                 files = {
                     "document": (filename, file_handle, "application/octet-stream"),
                 }
@@ -246,32 +275,15 @@ async def send_telegram_document(  # noqa: PLR0911
                 if parse_mode:
                     data["parse_mode"] = parse_mode
 
-                response = requests.post(url, data=data, files=files)
-                if not response.ok:
-                    try:
-                        err_json = response.json()
-                    except Exception:
-                        err_json = {"raw": response.text[:300]}
-                    logging.error(
-                        "Failed to send document (status=%s): %s", response.status_code, err_json
-                    )
-                    return False
-                logging.info("Document %s successfully sent to Telegram", filename)
-                return True
+                return _send_document_request(token, files, data, filename)
         else:
             if file_bytes is None:
                 logging.error("Neither file_bytes nor local_path provided for document")
                 return False
-            if len(file_bytes) > MAX_DOCUMENT_SIZE:
-                logging.error(
-                    "In-memory file exceeds Telegram max size (%d > %d)",
-                    len(file_bytes),
-                    MAX_DOCUMENT_SIZE,
-                )
+            if not _check_file_size(len(file_bytes), filename):
                 return False
 
             # Handle bytes directly (no file to close)
-            url = f"https://api.telegram.org/bot{token}/sendDocument"
             files = {
                 "document": (filename, file_bytes, "application/octet-stream"),
             }
@@ -281,18 +293,7 @@ async def send_telegram_document(  # noqa: PLR0911
             if parse_mode:
                 data["parse_mode"] = parse_mode
 
-            response = requests.post(url, data=data, files=files)
-            if not response.ok:
-                try:
-                    err_json = response.json()
-                except Exception:
-                    err_json = {"raw": response.text[:300]}
-                logging.error(
-                    "Failed to send document (status=%s): %s", response.status_code, err_json
-                )
-                return False
-            logging.info("Document %s successfully sent to Telegram", filename)
-            return True
+            return _send_document_request(token, files, data, filename)
     except Exception as e:
         logging.error("Exception while sending document: %s", e)
         return False

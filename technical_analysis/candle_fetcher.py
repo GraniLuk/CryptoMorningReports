@@ -53,6 +53,83 @@ class CandleFetcher:
         self.logger.info(f"Successfully fetched {len(candles)} {self.timeframe} candles")
         return candles
 
+    def _get_expected_time_diff(self) -> timedelta:
+        """Get the expected time difference based on timeframe."""
+        if self.timeframe == "daily":
+            return timedelta(days=1)
+        if self.timeframe == "hourly":
+            return timedelta(hours=1)
+        if self.timeframe == "15min":
+            return timedelta(minutes=15)
+        return timedelta(hours=1)  # Default
+
+    def _ensure_timezone(self, dt: datetime) -> datetime:
+        """Ensure datetime has UTC timezone."""
+        return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
+
+    def _fill_gaps_in_range(
+        self, symbol, start_time: datetime, end_time: datetime, conn, gap_type: str
+    ):
+        """Fill gaps in a specific time range."""
+        self.logger.info(
+            f"Found {gap_type} gap: {self.timeframe} candles for {symbol.symbol_name} missing from {start_time} to {end_time}"
+        )
+        expected_diff = self._get_expected_time_diff()
+        current_time = start_time
+        while current_time <= end_time:
+            self.logger.debug(
+                f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
+            )
+            self.fetch_function(symbol, current_time, conn)
+            current_time += expected_diff
+
+    def _check_beginning_gap(self, symbol, all_candles, start_time: datetime, conn):
+        """Check and fill gaps at the beginning of the range."""
+        if all_candles:
+            first_candle_date = self._ensure_timezone(all_candles[0].end_date)
+            if first_candle_date > start_time:
+                self._fill_gaps_in_range(
+                    symbol,
+                    start_time,
+                    first_candle_date - self._get_expected_time_diff(),
+                    conn,
+                    "beginning",
+                )
+
+    def _check_middle_gaps(self, symbol, all_candles, conn):
+        """Check and fill gaps between existing candles."""
+        if len(all_candles) > 1:
+            expected_diff = self._get_expected_time_diff()
+            for i in range(len(all_candles) - 1):
+                current_candle = all_candles[i]
+                next_candle = all_candles[i + 1]
+
+                current_date = self._ensure_timezone(current_candle.end_date)
+                next_date = self._ensure_timezone(next_candle.end_date)
+
+                actual_diff = next_date - current_date
+                if actual_diff > expected_diff:
+                    self.logger.info(
+                        f"Found gap in {self.timeframe} candles for {symbol.symbol_name} between {current_date} and {next_date}"
+                    )
+                    # Fetch missing candles
+                    current_time = current_date + expected_diff
+                    while current_time < next_date:
+                        self.logger.debug(
+                            f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
+                        )
+                        self.fetch_function(symbol, current_time, conn)
+                        current_time += expected_diff
+
+    def _check_end_gap(self, symbol, all_candles, end_time: datetime, conn):
+        """Check and fill gaps at the end of the range."""
+        if all_candles:
+            last_candle_date = self._ensure_timezone(all_candles[-1].end_date)
+            if last_candle_date < end_time:
+                self._fill_gaps_in_range(
+                    symbol, last_candle_date + self._get_expected_time_diff(), end_time, conn, "end"
+                )
+
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):  # noqa: PLR0915
         """
         Checks if all candles for the symbol are available in the database,
@@ -79,105 +156,22 @@ class CandleFetcher:
                 f"No {self.timeframe} candles found in DB for {symbol.symbol_name}, fetching all"
             )
             current_time = start_time
+            expected_diff = self._get_expected_time_diff()
             while current_time <= end_time:
                 self.logger.debug(
                     f"Fetching {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
                 )
                 self.fetch_function(symbol, current_time, conn)
-
-                # Increment based on timeframe
-                if self.timeframe == "daily":
-                    current_time += timedelta(days=1)
-                elif self.timeframe == "hourly":
-                    current_time += timedelta(hours=1)
-                elif self.timeframe == "15min":
-                    current_time += timedelta(minutes=15)
-                else:
-                    current_time += timedelta(hours=1)  # Default increment
+                current_time += expected_diff
         else:
             self.logger.info(
                 f"Found {len(all_candles)} {self.timeframe} candles in DB for {symbol.symbol_name}"
             )
 
-            # Define the expected time difference based on timeframe
-            expected_diff = None
-            if self.timeframe == "daily":
-                expected_diff = timedelta(days=1)
-            elif self.timeframe == "hourly":
-                expected_diff = timedelta(hours=1)
-            elif self.timeframe == "15min":
-                expected_diff = timedelta(minutes=15)
-            else:
-                expected_diff = timedelta(hours=1)  # Default
-
             # Sort candles by end_date
             all_candles.sort(key=lambda x: x.end_date)
 
-            # Check for missing candles at the beginning of the range
-            if all_candles:
-                # Ensure timezone consistency for comparison
-                first_candle_date = all_candles[0].end_date
-                if first_candle_date.tzinfo is None:
-                    first_candle_date = first_candle_date.replace(tzinfo=UTC)
-
-                if first_candle_date > start_time:
-                    self.logger.info(
-                        f"Found gap at beginning: {self.timeframe} candles for {symbol.symbol_name} missing from {start_time} to {first_candle_date}"
-                    )
-                    current_time = start_time
-                    while current_time < first_candle_date:
-                        self.logger.debug(
-                            f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
-                        )
-                        self.fetch_function(symbol, current_time, conn)
-                        current_time += expected_diff
-
-            # Check for gaps in the data
-            if len(all_candles) > 1:
-                # Check for missing candles between existing ones
-                for i in range(len(all_candles) - 1):
-                    current_candle = all_candles[i]
-                    next_candle = all_candles[i + 1]
-
-                    # Ensure timezone consistency
-                    current_date = current_candle.end_date
-                    next_date = next_candle.end_date
-
-                    if current_date.tzinfo is None:
-                        current_date = current_date.replace(tzinfo=UTC)
-                    if next_date.tzinfo is None:
-                        next_date = next_date.replace(tzinfo=UTC)
-
-                    # Check if there's a gap
-                    actual_diff = next_date - current_date
-                    if actual_diff > expected_diff:
-                        self.logger.info(
-                            f"Found gap in {self.timeframe} candles for {symbol.symbol_name} between {current_date} and {next_date}"
-                        )
-                        # Fetch missing candles
-                        current_time = current_date + expected_diff
-                        while current_time < next_date:
-                            self.logger.debug(
-                                f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
-                            )
-                            self.fetch_function(symbol, current_time, conn)
-                            current_time += expected_diff
-
-            # Check for missing candles at the end of the range
-            if all_candles:
-                # Ensure timezone consistency
-                last_candle_date = all_candles[-1].end_date
-                if last_candle_date.tzinfo is None:
-                    last_candle_date = last_candle_date.replace(tzinfo=UTC)
-
-                if last_candle_date < end_time:
-                    self.logger.info(
-                        f"Found gap at end: {self.timeframe} candles for {symbol.symbol_name} missing from {last_candle_date} to {end_time}"
-                    )
-                    current_time = last_candle_date + expected_diff
-                    while current_time <= end_time:
-                        self.logger.debug(
-                            f"Fetching missing {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
-                        )
-                        self.fetch_function(symbol, current_time, conn)
-                        current_time += expected_diff
+            # Check for gaps at different positions
+            self._check_beginning_gap(symbol, all_candles, start_time, conn)
+            self._check_middle_gaps(symbol, all_candles, conn)
+            self._check_end_gap(symbol, all_candles, end_time, conn)

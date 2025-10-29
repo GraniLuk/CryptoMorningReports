@@ -244,7 +244,88 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
     return re.sub(r"(<b>═══.*?═══</b>)", r"\n\1\n", html_text)
 
 
-async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911, PLR0915
+async def _generate_ai_analysis(
+    ai_api_type: str, ai_api_key: str, formatted_prompt: str, logger
+) -> str:
+    """
+    Generate AI analysis using the specified API type.
+
+    Args:
+        ai_api_type: Type of AI API ('perplexity' or 'gemini')
+        ai_api_key: API key for the AI service
+        formatted_prompt: Formatted prompt for analysis
+        logger: Logger instance
+
+    Returns:
+        Analysis text or error message
+    """
+    # Create AI client
+    ai_client = create_ai_client(ai_api_type, ai_api_key)
+
+    if ai_api_type == "perplexity" or (
+        hasattr(ai_client, "__class__") and ai_client.__class__.__name__ == "PerplexityClient"
+    ):
+        data = {
+            "model": "sonar-pro",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT_SITUATION,
+                },
+                {
+                    "role": "user",
+                    "content": formatted_prompt,
+                },
+            ],
+        }
+
+        try:
+            headers = getattr(ai_client, "headers", {})
+            response = requests.post(
+                "https://api.perplexity.ai/chat/completions",
+                json=data,
+                headers=headers,
+            )
+
+            if response.status_code == HTTPStatus.OK:
+                return response.json()["choices"][0]["message"]["content"]
+            else:
+                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+                logger.error(error_msg)
+                return error_msg
+        except Exception as e:
+            error_msg = f"Failed to get crypto situation analysis: {e!s}"
+            logger.error(error_msg)
+            return error_msg
+
+    elif ai_api_type == "gemini":
+        try:
+            if isinstance(ai_client, GeminiClient):
+                prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
+                response = ai_client.model.generate_content(prompt)
+
+                if response.candidates and len(response.candidates) > 0:
+                    return response.text
+                else:
+                    error_msg = "Failed: No valid response from Gemini API"
+                    logger.error(error_msg)
+                    return error_msg
+            else:
+                error_msg = "Failed: Invalid Gemini client configuration"
+                logger.error(error_msg)
+                return error_msg
+        except Exception as e:
+            error_msg = f"Failed to get crypto situation analysis from Gemini: {e!s}"
+            logger.error(error_msg)
+            return error_msg
+
+    else:
+        error_msg = f"Failed: Unsupported AI client type: {ai_api_type}"
+        logger.error(error_msg)
+        return error_msg
+
+
+async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
     """
     Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 
@@ -337,8 +418,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
         return error_msg
 
     try:
-        # Create AI client and generate analysis
-        ai_client = create_ai_client(ai_api_type, ai_api_key)  # Prepare prompt content
+        # Prepare prompt content
         formatted_prompt = USER_PROMPT_SITUATION.format(
             symbol_name=symbol_name,
             current_data_snapshot=current_data_snapshot,
@@ -351,73 +431,8 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
             moving_averages=moving_averages_formatted,
         )
 
-        # Initialize analysis to handle potential cases where no condition matches
-        analysis = ""
-
-        # For PerplexityClient - checking for an instance instead of a class type
-        if ai_api_type == "perplexity" or (
-            hasattr(ai_client, "__class__") and ai_client.__class__.__name__ == "PerplexityClient"
-        ):
-            data = {
-                "model": "sonar-pro",  # Use appropriate model
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT_SITUATION,
-                    },
-                    {
-                        "role": "user",
-                        "content": formatted_prompt,
-                    },
-                ],
-            }
-
-            try:
-                # Ensure we have headers for the Perplexity client
-                headers = getattr(ai_client, "headers", {})
-
-                response = requests.post(
-                    "https://api.perplexity.ai/chat/completions",
-                    json=data,
-                    headers=headers,
-                )
-
-                if response.status_code == HTTPStatus.OK:
-                    analysis = response.json()["choices"][0]["message"]["content"]
-                else:
-                    error_msg = f"Failed: API error: {response.status_code} - {response.text}"
-                    logger.error(error_msg)
-                    return error_msg
-            except Exception as e:
-                error_msg = f"Failed to get crypto situation analysis: {e!s}"
-                logger.error(error_msg)
-                return error_msg  # For GeminiClient
-        elif ai_api_type == "gemini":
-            try:  # Import GeminiClient to check the client type
-                # Check if it's a GeminiClient
-                if isinstance(ai_client, GeminiClient):
-                    prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
-                    # Direct call (GeminiClient now guarantees model is always initialized with real or dummy)
-                    response = ai_client.model.generate_content(prompt)
-
-                    if response.candidates and len(response.candidates) > 0:
-                        analysis = response.text
-                    else:
-                        error_msg = "Failed: No valid response from Gemini API"
-                        logger.error(error_msg)
-                        return error_msg
-                else:
-                    error_msg = "Failed: Invalid Gemini client configuration"
-                    logger.error(error_msg)
-                    return error_msg
-            except Exception as e:
-                error_msg = f"Failed to get crypto situation analysis from Gemini: {e!s}"
-                logger.error(error_msg)
-                return error_msg
-        else:
-            error_msg = f"Failed: Unsupported AI client type: {ai_api_type}"
-            logger.error(error_msg)
-            return error_msg
+        # Generate AI analysis using helper function
+        analysis = await _generate_ai_analysis(ai_api_type, ai_api_key, formatted_prompt, logger)
 
         # Check if we got a valid analysis
         if not analysis:

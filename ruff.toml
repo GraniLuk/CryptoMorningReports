@@ -42,7 +42,6 @@ select = [
 
 ignore = [
     "E501",   # Line too long (handled by formatter)
-    "PLR0912", # Too many branches
 ]
 
 # Allow unused variables when underscore-prefixed

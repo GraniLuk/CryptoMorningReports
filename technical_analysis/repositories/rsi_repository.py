@@ -204,6 +204,197 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
         raise
 
 
+def _get_timeframe_config(timeframe: str) -> tuple[str, str, str, int, int]:
+    """Get timeframe configuration for database queries."""
+    table_map = {
+        "daily": ("DailyCandles", "RSI", "DailyCandleID", 1, 7),
+        "hourly": ("HourlyCandles", "HourlyRSI", "HourlyCandleID", 1, 24),
+        "fifteen_min": (
+            "FifteenMinCandles",
+            "FifteenMinRSI",
+            "FifteenMinCandleID",
+            4,
+            4 * 24,
+        ),
+    }
+    return table_map.get(timeframe.lower(), table_map["daily"])
+
+
+def _get_interval_settings(
+    timeframe: str, previous_interval: int, week_interval: int
+) -> tuple[str, int, int]:
+    """Get interval keyword and adjusted intervals."""
+    interval_keyword = (
+        "day"
+        if timeframe.lower() == "daily"
+        else "hour"
+        if timeframe.lower() == "hourly"
+        else "minute"
+    )
+
+    # Adjust multiplier for fifteen_min (as we need to multiply by 15)
+    if timeframe.lower() == "fifteen_min":
+        previous_interval *= 15
+        week_interval *= 15
+
+    return interval_keyword, previous_interval, week_interval
+
+
+def _build_query(
+    is_sqlite: bool,
+    candle_table: str,
+    rsi_table: str,
+    id_column: str,
+    interval_keyword: str,
+    previous_interval: int,
+    week_interval: int,
+) -> str:
+    """Build the appropriate query for SQLite or SQL Server."""
+    if is_sqlite:
+        # SQLite syntax: datetime(date, '-X days/hours/minutes')
+        if interval_keyword == "day":
+            date_func_prev = f"datetime(?, '-{previous_interval} days')"
+            date_func_week = f"datetime(?, '-{week_interval} days')"
+        elif interval_keyword == "hour":
+            date_func_prev = f"datetime(?, '-{previous_interval} hours')"
+            date_func_week = f"datetime(?, '-{week_interval} hours')"
+        else:  # minute
+            date_func_prev = f"datetime(?, '-{previous_interval} minutes')"
+            date_func_week = f"datetime(?, '-{week_interval} minutes')"
+
+        query = f"""
+            SELECT
+                dc.EndDate as IndicatorDate,
+                r.RSI
+            FROM {candle_table} dc
+            LEFT JOIN {rsi_table} r ON dc.Id = r.{id_column}
+            WHERE dc.SymbolID = ?
+            AND dc.EndDate IN (
+                {date_func_prev},  -- Previous interval
+                {date_func_week}   -- Week equivalent
+            )
+            ORDER BY dc.EndDate DESC
+        """
+    else:
+        # SQL Server syntax
+        query = f"""
+            SELECT
+                dc.EndDate as IndicatorDate,
+                r.RSI
+            FROM {candle_table} dc
+            LEFT JOIN {rsi_table} r ON dc.ID = r.{id_column}
+            WHERE dc.SymbolID = ?
+            AND dc.EndDate IN (
+                DATEADD({interval_keyword}, -{previous_interval}, ?),  -- Previous interval
+                DATEADD({interval_keyword}, -{week_interval}, ?)   -- Week equivalent
+            )
+            ORDER BY dc.EndDate DESC
+        """
+    return query
+
+
+def _process_rsi_results(rows, current_date: date, timeframe: str) -> dict:
+    """Process query results into RSI dictionary."""
+    results = {}
+
+    # Convert date to datetime for comparison if it's a date object
+    if isinstance(current_date, datetime):
+        compare_date = current_date
+    elif hasattr(current_date, "to_pydatetime"):  # pandas Timestamp
+        compare_date = current_date.to_pydatetime()  # type: ignore
+    elif isinstance(current_date, date):  # date object (not datetime)
+        compare_date = datetime.combine(current_date, datetime.min.time())
+    else:
+        # Fallback for any other type
+        compare_date = datetime.combine(current_date, datetime.min.time())
+
+    for row in rows:
+        # Handle case where RSI might be None
+        if row[1] is not None:
+            interval_description = "yesterday" if timeframe.lower() == "daily" else "previous"
+            week_description = "week_ago" if timeframe.lower() == "daily" else "period_ago"
+
+            # Get the row date and ensure it's datetime for comparison
+            row_date = row[0]
+            if isinstance(row_date, str):
+                row_date = datetime.fromisoformat(row_date.replace("Z", "+00:00"))
+            elif hasattr(row_date, "to_pydatetime"):
+                row_date = row_date.to_pydatetime()
+            elif not isinstance(row_date, datetime):
+                # Convert date to datetime for comparison
+                row_date = datetime.combine(row_date, datetime.min.time())
+
+            # Timeframe-specific date matching
+            if timeframe.lower() == "daily":
+                _match_daily_rsi(
+                    row_date, compare_date, row[1], interval_description, week_description, results
+                )
+            elif timeframe.lower() == "hourly":
+                _match_hourly_rsi(
+                    row_date, compare_date, row[1], interval_description, week_description, results
+                )
+            elif timeframe.lower() == "fifteen_min":
+                _match_fifteen_min_rsi(
+                    row_date, compare_date, row[1], interval_description, week_description, results
+                )
+
+    return results
+
+
+def _match_daily_rsi(
+    row_date: datetime,
+    compare_date: datetime,
+    rsi_value: float,
+    interval_desc: str,
+    week_desc: str,
+    results: dict,
+) -> None:
+    """Match daily RSI values."""
+    seconds_in_day = 86400
+    if abs((row_date - (compare_date - timedelta(days=1))).total_seconds()) < seconds_in_day:
+        results[interval_desc] = float(rsi_value)
+    elif abs((row_date - (compare_date - timedelta(days=7))).total_seconds()) < seconds_in_day:
+        results[week_desc] = float(rsi_value)
+
+
+def _match_hourly_rsi(
+    row_date: datetime,
+    compare_date: datetime,
+    rsi_value: float,
+    interval_desc: str,
+    week_desc: str,
+    results: dict,
+) -> None:
+    """Match hourly RSI values."""
+    seconds_in_hour = 3600
+    if abs((row_date - (compare_date - timedelta(hours=1))).total_seconds()) < seconds_in_hour:
+        results[interval_desc] = float(rsi_value)
+    elif abs((row_date - (compare_date - timedelta(hours=24))).total_seconds()) < seconds_in_hour:
+        results[week_desc] = float(rsi_value)
+
+
+def _match_fifteen_min_rsi(
+    row_date: datetime,
+    compare_date: datetime,
+    rsi_value: float,
+    interval_desc: str,
+    week_desc: str,
+    results: dict,
+) -> None:
+    """Match fifteen minute RSI values."""
+    seconds_in_15_minutes = 900
+    if (
+        abs((row_date - (compare_date - timedelta(minutes=15))).total_seconds())
+        < seconds_in_15_minutes
+    ):
+        results[interval_desc] = float(rsi_value)
+    elif (
+        abs((row_date - (compare_date - timedelta(minutes=24 * 15))).total_seconds())
+        < seconds_in_15_minutes
+    ):
+        results[week_desc] = float(rsi_value)
+
+
 def get_historical_rsi(  # noqa: PLR0915
     conn, symbol_id: int, current_date: date, timeframe: str = "daily"
 ) -> dict:
@@ -225,83 +416,31 @@ def get_historical_rsi(  # noqa: PLR0915
         if conn:
             cursor = conn.cursor()
 
-            # Map timeframe to the correct tables and time intervals
-            table_map = {
-                "daily": ("DailyCandles", "RSI", "DailyCandleID", 1, 7),
-                "hourly": ("HourlyCandles", "HourlyRSI", "HourlyCandleID", 1, 24),
-                "fifteen_min": (
-                    "FifteenMinCandles",
-                    "FifteenMinRSI",
-                    "FifteenMinCandleID",
-                    4,
-                    4 * 24,
-                ),
-            }
-
-            candle_table, rsi_table, id_column, previous_interval, week_interval = table_map.get(
-                timeframe.lower(), table_map["daily"]
+            # Get timeframe configuration
+            candle_table, rsi_table, id_column, previous_interval, week_interval = (
+                _get_timeframe_config(timeframe)
             )
 
-            # Adjust interval keywords based on timeframe
-            interval_keyword = (
-                "day"
-                if timeframe.lower() == "daily"
-                else "hour"
-                if timeframe.lower() == "hourly"
-                else "minute"
+            # Get interval settings
+            interval_keyword, previous_interval, week_interval = _get_interval_settings(
+                timeframe, previous_interval, week_interval
             )
-
-            # Adjust multiplier for fifteen_min (as we need to multiply by 15)
-            if timeframe.lower() == "fifteen_min":
-                previous_interval *= 15
-                week_interval *= 15
 
             # Check if we're using SQLite or SQL Server
-            # SQLite uses datetime() function, SQL Server uses DATEADD()
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
-            if is_sqlite:
-                # SQLite syntax: datetime(date, '-X days/hours/minutes')
-                if interval_keyword == "day":
-                    date_func_prev = f"datetime(?, '-{previous_interval} days')"
-                    date_func_week = f"datetime(?, '-{week_interval} days')"
-                elif interval_keyword == "hour":
-                    date_func_prev = f"datetime(?, '-{previous_interval} hours')"
-                    date_func_week = f"datetime(?, '-{week_interval} hours')"
-                else:  # minute
-                    date_func_prev = f"datetime(?, '-{previous_interval} minutes')"
-                    date_func_week = f"datetime(?, '-{week_interval} minutes')"
+            # Build the appropriate query
+            query = _build_query(
+                is_sqlite,
+                candle_table,
+                rsi_table,
+                id_column,
+                interval_keyword,
+                previous_interval,
+                week_interval,
+            )
 
-                query = f"""
-                    SELECT
-                        dc.EndDate as IndicatorDate,
-                        r.RSI
-                    FROM {candle_table} dc
-                    LEFT JOIN {rsi_table} r ON dc.Id = r.{id_column}
-                    WHERE dc.SymbolID = ?
-                    AND dc.EndDate IN (
-                        {date_func_prev},  -- Previous interval
-                        {date_func_week}   -- Week equivalent
-                    )
-                    ORDER BY dc.EndDate DESC
-                """
-            else:
-                # SQL Server syntax
-                query = f"""
-                    SELECT
-                        dc.EndDate as IndicatorDate,
-                        r.RSI
-                    FROM {candle_table} dc
-                    LEFT JOIN {rsi_table} r ON dc.ID = r.{id_column}
-                    WHERE dc.SymbolID = ?
-                    AND dc.EndDate IN (
-                        DATEADD({interval_keyword}, -{previous_interval}, ?),  -- Previous interval
-                        DATEADD({interval_keyword}, -{week_interval}, ?)   -- Week equivalent
-                    )
-                    ORDER BY dc.EndDate DESC
-                """
-
-            # Convert date to string for SQLite (it stores dates as strings)
+            # Execute query with appropriate parameters
             if is_sqlite:
                 # Convert datetime/Timestamp to ISO format string
                 date_param = (
@@ -313,75 +452,9 @@ def get_historical_rsi(  # noqa: PLR0915
             else:
                 cursor.execute(query, (symbol_id, current_date, current_date))
 
-            # Convert date to datetime for comparison if it's a date object
-            if isinstance(current_date, datetime):
-                compare_date = current_date
-            elif hasattr(current_date, "to_pydatetime"):  # pandas Timestamp
-                compare_date = current_date.to_pydatetime()  # type: ignore
-            elif isinstance(current_date, date):  # date object (not datetime)
-                compare_date = datetime.combine(current_date, datetime.min.time())
-            else:
-                # Fallback for any other type
-                compare_date = datetime.combine(current_date, datetime.min.time())
-
-            for row in cursor.fetchall():
-                # Handle case where RSI might be None
-                if row[1] is not None:
-                    interval_description = (
-                        "yesterday" if timeframe.lower() == "daily" else "previous"
-                    )
-                    week_description = "week_ago" if timeframe.lower() == "daily" else "period_ago"
-
-                    # Get the row date and ensure it's datetime for comparison
-                    row_date = row[0]
-                    if isinstance(row_date, str):
-                        row_date = datetime.fromisoformat(row_date.replace("Z", "+00:00"))
-                    elif hasattr(row_date, "to_pydatetime"):
-                        row_date = row_date.to_pydatetime()
-                    elif not isinstance(row_date, datetime):
-                        # Convert date to datetime for comparison
-                        row_date = datetime.combine(row_date, datetime.min.time())
-
-                    seconds_in_day = 86400
-                    seconds_in_hour = 3600
-                    seconds_in_15_minutes = 900
-                    if timeframe.lower() == "daily":
-                        if (
-                            abs((row_date - (compare_date - timedelta(days=1))).total_seconds())
-                            < seconds_in_day
-                        ):
-                            results[interval_description] = float(row[1])
-                        elif (
-                            abs((row_date - (compare_date - timedelta(days=7))).total_seconds())
-                            < seconds_in_day
-                        ):
-                            results[week_description] = float(row[1])
-                    elif timeframe.lower() == "hourly":
-                        if (
-                            abs((row_date - (compare_date - timedelta(hours=1))).total_seconds())
-                            < seconds_in_hour
-                        ):
-                            results[interval_description] = float(row[1])
-                        elif (
-                            abs((row_date - (compare_date - timedelta(hours=24))).total_seconds())
-                            < seconds_in_hour
-                        ):
-                            results[week_description] = float(row[1])
-                    elif timeframe.lower() == "fifteen_min":
-                        if (
-                            abs((row_date - (compare_date - timedelta(minutes=15))).total_seconds())
-                            < seconds_in_15_minutes
-                        ):
-                            results[interval_description] = float(row[1])
-                        elif (
-                            abs(
-                                (
-                                    row_date - (compare_date - timedelta(minutes=24 * 15))
-                                ).total_seconds()
-                            )
-                            < seconds_in_15_minutes
-                        ):
-                            results[week_description] = float(row[1])
+            # Process results
+            rows = cursor.fetchall()
+            results = _process_rsi_results(rows, current_date, timeframe)
 
             cursor.close()
 

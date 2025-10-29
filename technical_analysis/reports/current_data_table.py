@@ -69,6 +69,33 @@ def get_latest_rsi_from_df(rsi_df: pd.DataFrame | None) -> float | None:
     return None
 
 
+def _extract_latest_price(daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df) -> float | None:
+    """Extract latest price from RSI dataframes, preferring higher timeframes."""
+    if fifteen_min_rsi_df is not None and not fifteen_min_rsi_df.empty:
+        return get_latest_price_from_candles(fifteen_min_rsi_df)
+    if hourly_rsi_df is not None and not hourly_rsi_df.empty:
+        return get_latest_price_from_candles(hourly_rsi_df)
+    if daily_rsi_df is not None and not daily_rsi_df.empty:
+        return get_latest_price_from_candles(daily_rsi_df)
+    return None
+
+
+def _extract_moving_averages(conn, symbol_id: int) -> dict[str, float | None]:
+    """Extract latest moving averages for a symbol."""
+    ma_data: dict[str, float | None] = {"ma50": None, "ma200": None, "ema50": None, "ema200": None}
+    try:
+        ma_df = fetch_moving_averages_for_symbol(conn, symbol_id, lookback_days=1)
+        if not ma_df.empty:
+            latest_ma = ma_df.iloc[-1]
+            ma_data["ma50"] = float(latest_ma["MA50"]) if pd.notna(latest_ma.get("MA50")) else None
+            ma_data["ma200"] = float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
+            ma_data["ema50"] = float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
+            ma_data["ema200"] = float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
+    except Exception as ma_error:
+        app_logger.warning(f"Could not fetch moving averages for symbol_id {symbol_id}: {ma_error}")
+    return ma_data
+
+
 def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa: PLR0915
     """
     Get current data for a single symbol including latest price and RSI across timeframes.
@@ -80,7 +107,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
     Returns:
         Dictionary containing current data for the symbol
     """
-    data = {
+    data: dict[str, Any] = {
         "symbol": symbol.symbol_name,
         "latest_price": None,
         "daily_rsi": None,
@@ -114,12 +141,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
         )
 
         # Extract latest price (prefer 15min, then hourly, then daily)
-        if fifteen_min_rsi_df is not None and not fifteen_min_rsi_df.empty:
-            data["latest_price"] = get_latest_price_from_candles(fifteen_min_rsi_df)
-        elif hourly_rsi_df is not None and not hourly_rsi_df.empty:
-            data["latest_price"] = get_latest_price_from_candles(hourly_rsi_df)
-        elif daily_rsi_df is not None and not daily_rsi_df.empty:
-            data["latest_price"] = get_latest_price_from_candles(daily_rsi_df)
+        data["latest_price"] = _extract_latest_price(daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df)
 
         # Extract RSI values for each timeframe
         data["daily_rsi"] = get_latest_rsi_from_df(daily_rsi_df)
@@ -127,19 +149,8 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
         data["fifteen_min_rsi"] = get_latest_rsi_from_df(fifteen_min_rsi_df)
 
         # Fetch moving averages data (latest values)
-        try:
-            ma_df = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=1)
-            latest_ma = ma_df.iloc[-1]
-            data["ma50"] = float(latest_ma["MA50"]) if pd.notna(latest_ma.get("MA50")) else None
-            data["ma200"] = float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
-            data["ema50"] = float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
-            data["ema200"] = (
-                float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
-            )
-        except Exception as ma_error:
-            app_logger.warning(
-                f"Could not fetch moving averages for {symbol.symbol_name}: {ma_error}"
-            )
+        ma_data = _extract_moving_averages(conn, symbol.symbol_id)
+        data.update(ma_data)
 
         # Fetch daily candles (look back 7 days) to compute daily range and recent history
         try:
