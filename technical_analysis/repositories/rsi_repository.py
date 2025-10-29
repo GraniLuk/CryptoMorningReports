@@ -205,7 +205,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
 
 
 def get_historical_rsi(  # noqa: PLR0915
-    conn, symbol_id: int, date: date, timeframe: str = "daily"
+    conn, symbol_id: int, current_date: date, timeframe: str = "daily"
 ) -> dict:
     """
     Fetches RSI values for current date, yesterday, and week ago for a symbol
@@ -304,21 +304,25 @@ def get_historical_rsi(  # noqa: PLR0915
             # Convert date to string for SQLite (it stores dates as strings)
             if is_sqlite:
                 # Convert datetime/Timestamp to ISO format string
-                date_param = date.isoformat() if hasattr(date, "isoformat") else str(date)
+                date_param = (
+                    current_date.isoformat()
+                    if hasattr(current_date, "isoformat")
+                    else str(current_date)
+                )
                 cursor.execute(query, (symbol_id, date_param, date_param))
             else:
-                cursor.execute(query, (symbol_id, date, date))
+                cursor.execute(query, (symbol_id, current_date, current_date))
 
             # Convert date to datetime for comparison if it's a date object
-            if isinstance(date, datetime):
-                compare_date = date
-            elif hasattr(date, "to_pydatetime"):  # pandas Timestamp
-                compare_date = date.to_pydatetime()  # type: ignore
-            elif isinstance(date, date):  # date object (not datetime)
-                compare_date = datetime.combine(date, datetime.min.time())
+            if isinstance(current_date, datetime):
+                compare_date = current_date
+            elif hasattr(current_date, "to_pydatetime"):  # pandas Timestamp
+                compare_date = current_date.to_pydatetime()  # type: ignore
+            elif isinstance(current_date, date):  # date object (not datetime)
+                compare_date = datetime.combine(current_date, datetime.min.time())
             else:
                 # Fallback for any other type
-                compare_date = datetime.combine(date, datetime.min.time())
+                compare_date = datetime.combine(current_date, datetime.min.time())
 
             for row in cursor.fetchall():
                 # Handle case where RSI might be None
