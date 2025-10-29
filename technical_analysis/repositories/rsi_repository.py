@@ -309,10 +309,7 @@ def get_historical_rsi(  # noqa: PLR0915
             # Convert date to string for SQLite (it stores dates as strings)
             if is_sqlite:
                 # Convert datetime/Timestamp to ISO format string
-                if hasattr(date, "isoformat"):
-                    date_param = date.isoformat()
-                else:
-                    date_param = str(date)
+                date_param = date.isoformat() if hasattr(date, "isoformat") else str(date)
                 cursor.execute(query, (symbol_id, date_param, date_param))
             else:
                 cursor.execute(query, (symbol_id, date, date))

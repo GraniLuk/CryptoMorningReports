@@ -40,10 +40,7 @@ if __name__ == "__main__":
             "LONG",
         )
         print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
-        if not result_df.empty:
-            total_profit = result_df["profit"].sum()
-        else:
-            total_profit = 0.0
+        total_profit = result_df["profit"].sum() if not result_df.empty else 0.0
 
         if not result_df.empty:
             save_to_excel(result_df, "strategy_results", filtered_symbols[0].symbol_name)

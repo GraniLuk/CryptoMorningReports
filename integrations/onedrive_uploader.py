@@ -27,10 +27,7 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str):
     base_folder = "/Brain/Personal/Projects/CryptoMorningReports/Analysis"
 
     # If a specific folder path is provided, append it to the base folder
-    if folder_path:
-        full_path = f"{base_folder}/{folder_path}"
-    else:
-        full_path = f"{base_folder}"
+    full_path = f"{base_folder}/{folder_path}" if folder_path else f"{base_folder}"
 
     payload = {
         "filename": filename,
