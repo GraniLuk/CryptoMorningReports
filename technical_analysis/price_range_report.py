@@ -4,10 +4,8 @@ from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
 from shared_code.number_format import format_to_6digits_withoutTrailingZeros
+from shared_code.price_checker import fetch_hourly_candles
 from source_repository import Symbol
-from technical_analysis.repositories.hourly_candle_repository import (
-    HourlyCandleRepository,
-)
 from technical_analysis.repositories.priceRangeRepository import (
     save_price_range_results,
 )
@@ -15,12 +13,15 @@ from technical_analysis.repositories.priceRangeRepository import (
 
 def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
     """
-    Calculate 24-hour price range using hourly candles from the last 24 hours.
+    Calculate 24-hour price range using hourly candles.
+
+    Fetches hourly candles for the last 24 hours. If hourly data is missing from the database,
+    it will automatically fetch from the exchange API (Binance/KuCoin).
     """
     results = []
 
-    # Calculate time range for last 24 hours
-    end_time = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+    # Calculate 24 hours ago from now
+    end_time = datetime.now(UTC)
     start_time = end_time - timedelta(hours=24)
 
     for symbol in symbols:
@@ -30,14 +31,14 @@ def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
                 continue
 
             # Fetch hourly candles for the last 24 hours
-            repo = HourlyCandleRepository(conn)
-            candles = repo.get_candles(symbol, start_time, end_time)
+            # This will fetch from DB if available, or from API if missing
+            candles = fetch_hourly_candles(symbol, start_time, end_time, conn)
 
             if not candles:
-                app_logger.warning(f"No hourly candles found for {symbol.symbol_name} in last 24h")
+                app_logger.warning(f"No hourly candles found for {symbol.symbol_name}")
                 continue
 
-            # Calculate high and low from all candles in the 24h period
+            # Calculate high and low from all hourly candles in the 24-hour period
             high_price = max(float(c.high) for c in candles)
             low_price = min(float(c.low) for c in candles)
 
