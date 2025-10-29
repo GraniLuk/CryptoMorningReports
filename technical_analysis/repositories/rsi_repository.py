@@ -396,9 +396,7 @@ def _match_fifteen_min_rsi(
         results[week_desc] = float(rsi_value)
 
 
-def get_historical_rsi(
-    conn, symbol_id: int, current_date: date, timeframe: str = "daily"
-) -> dict:
+def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str = "daily") -> dict:
     """
     Fetches RSI values for current date, yesterday, and week ago for a symbol
 
