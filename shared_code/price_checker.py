@@ -1,10 +1,17 @@
 from datetime import UTC, date, datetime, timedelta
 
-from shared_code.binance import fetch_binance_daily_kline, fetch_binance_price
+from shared_code.binance import (
+    fetch_binance_daily_kline,
+    fetch_binance_fifteen_min_kline,
+    fetch_binance_hourly_kline,
+    fetch_binance_price,
+)
 from shared_code.coingecko import fetch_coingecko_price
 from shared_code.common_price import Candle, TickerPrice
 from shared_code.kucoin import (
     fetch_kucoin_daily_kline,
+    fetch_kucoin_fifteen_min_kline,
+    fetch_kucoin_hourly_kline,
     fetch_kucoin_price,
 )
 from source_repository import SourceID, Symbol
@@ -77,12 +84,8 @@ def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle
     # Fetch from source if not in database
     candle = None
     if symbol.source_id == SourceID.KUCOIN:
-        from shared_code.kucoin import fetch_kucoin_hourly_kline
-
         candle = fetch_kucoin_hourly_kline(symbol, end_time)
     if symbol.source_id == SourceID.BINANCE:
-        from shared_code.binance import fetch_binance_hourly_kline
-
         candle = fetch_binance_hourly_kline(symbol, end_time)
 
     # Save to database if connection provided and candle fetched
@@ -159,12 +162,8 @@ def fetch_hourly_candles(
         if timestamp not in candle_dict:
             candle = None
             if symbol.source_id == SourceID.KUCOIN:
-                from shared_code.kucoin import fetch_kucoin_hourly_kline
-
                 candle = fetch_kucoin_hourly_kline(symbol, timestamp)
             if symbol.source_id == SourceID.BINANCE:
-                from shared_code.binance import fetch_binance_hourly_kline
-
                 candle = fetch_binance_hourly_kline(symbol, timestamp)
 
             # Save to database if connection provided and candle fetched
@@ -209,12 +208,8 @@ def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> C
     # Fetch from source if not in database
     candle = None
     if symbol.source_id == SourceID.KUCOIN:
-        from shared_code.kucoin import fetch_kucoin_fifteen_min_kline
-
         candle = fetch_kucoin_fifteen_min_kline(symbol, end_time)
     if symbol.source_id == SourceID.BINANCE:
-        from shared_code.binance import fetch_binance_fifteen_min_kline
-
         candle = fetch_binance_fifteen_min_kline(symbol, end_time)
 
     # Save to database if connection provided and candle fetched
@@ -293,12 +288,8 @@ def fetch_fifteen_min_candles(
         if timestamp not in candle_dict:
             candle = None
             if symbol.source_id == SourceID.KUCOIN:
-                from shared_code.kucoin import fetch_kucoin_fifteen_min_kline
-
                 candle = fetch_kucoin_fifteen_min_kline(symbol, timestamp)
             if symbol.source_id == SourceID.BINANCE:
-                from shared_code.binance import fetch_binance_fifteen_min_kline
-
                 candle = fetch_binance_fifteen_min_kline(symbol, timestamp)
 
             # Save to database if connection provided and candle fetched

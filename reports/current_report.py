@@ -1,10 +1,13 @@
 import os
+import re
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 
 import pandas as pd
+import requests
 
 from infra.telegram_logging_handler import app_logger
-from news.news_agent import create_ai_client
+from news.news_agent import GeminiClient, create_ai_client
 from source_repository import fetch_symbol_by_name
 from technical_analysis.daily_candle import fetch_daily_candles
 from technical_analysis.fifteen_min_candle import (
@@ -210,8 +213,6 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
     Returns:
         HTML formatted text compatible with Telegram
     """
-    import re
-
     # Escape HTML special characters except those in tags we'll create
     html_text = markdown_text
 
@@ -372,10 +373,6 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
             }
 
             try:
-                from http import HTTPStatus
-
-                import requests
-
                 # Ensure we have headers for the Perplexity client
                 headers = getattr(ai_client, "headers", {})
 
@@ -397,8 +394,6 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
                 return error_msg  # For GeminiClient
         elif ai_api_type == "gemini":
             try:  # Import GeminiClient to check the client type
-                from news.news_agent import GeminiClient
-
                 # Check if it's a GeminiClient
                 if isinstance(ai_client, GeminiClient):
                     prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
@@ -442,8 +437,6 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0911,
         # Ensure consistent emoji usage in analysis
         def enforce_emoji_usage(text):
             # Add emojis to section headers if missing
-            import re
-
             emoji_map = {
                 "Trend": "📈",
                 "Price": "💰",

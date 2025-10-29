@@ -1,3 +1,4 @@
+import os
 from datetime import date, datetime, timedelta
 
 import pyodbc
@@ -19,8 +20,6 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
             cursor = conn.cursor()
 
             # Check if we're using SQLite or SQL Server
-            import os
-
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             if is_sqlite:
@@ -93,8 +92,6 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
                 raise ValueError(msg)
 
             # Check if we're using SQLite or SQL Server
-            import os
-
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             if is_sqlite:
@@ -261,8 +258,6 @@ def get_historical_rsi(  # noqa: PLR0915
 
             # Check if we're using SQLite or SQL Server
             # SQLite uses datetime() function, SQL Server uses DATEADD()
-            import os
-
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             if is_sqlite:
@@ -315,18 +310,15 @@ def get_historical_rsi(  # noqa: PLR0915
                 cursor.execute(query, (symbol_id, date, date))
 
             # Convert date to datetime for comparison if it's a date object
-            from datetime import date as date_type
-            from datetime import datetime as dt
-
-            if isinstance(date, dt):
+            if isinstance(date, datetime):
                 compare_date = date
             elif hasattr(date, "to_pydatetime"):  # pandas Timestamp
                 compare_date = date.to_pydatetime()  # type: ignore
-            elif isinstance(date, date_type):  # date object (not datetime)
-                compare_date = dt.combine(date, dt.min.time())
+            elif isinstance(date, date):  # date object (not datetime)
+                compare_date = datetime.combine(date, datetime.min.time())
             else:
                 # Fallback for any other type
-                compare_date = dt.combine(date, dt.min.time())
+                compare_date = datetime.combine(date, datetime.min.time())
 
             for row in cursor.fetchall():
                 # Handle case where RSI might be None
@@ -339,12 +331,12 @@ def get_historical_rsi(  # noqa: PLR0915
                     # Get the row date and ensure it's datetime for comparison
                     row_date = row[0]
                     if isinstance(row_date, str):
-                        row_date = dt.fromisoformat(row_date.replace("Z", "+00:00"))
+                        row_date = datetime.fromisoformat(row_date.replace("Z", "+00:00"))
                     elif hasattr(row_date, "to_pydatetime"):
                         row_date = row_date.to_pydatetime()
-                    elif not isinstance(row_date, dt):
+                    elif not isinstance(row_date, datetime):
                         # Convert date to datetime for comparison
-                        row_date = dt.combine(row_date, dt.min.time())
+                        row_date = datetime.combine(row_date, datetime.min.time())
 
                     seconds_in_day = 86400
                     seconds_in_hour = 3600

@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import os
+import shutil
 import tempfile
 from collections.abc import Iterable
 from pathlib import Path, PureWindowsPath
@@ -64,8 +65,6 @@ def _ensure_pandoc_available():
             pass  # System pandoc not found, will try other methods
 
         # For local development, try to find pandoc in PATH
-        import shutil
-
         pandoc_in_path = shutil.which("pandoc")
         if pandoc_in_path:
             app_logger.info("Using pandoc from PATH at %s", pandoc_in_path)

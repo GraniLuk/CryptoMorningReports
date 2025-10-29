@@ -5,8 +5,13 @@ Run this script to test your functions locally without Azure Functions Core Tool
 
 import asyncio
 import sys
+import traceback
 
 from dotenv import load_dotenv
+
+from function_app import run_report
+from infra.sql_connection import connect_to_sql
+from reports.current_report import generate_crypto_situation_report
 
 
 # Load environment variables
@@ -34,9 +39,6 @@ async def main():
     try:
         if report_type == "current":
             # Current situation report
-            from infra.sql_connection import connect_to_sql
-            from reports.current_report import generate_crypto_situation_report
-
             min_args_for_current = 3
             if len(sys.argv) < min_args_for_current:
                 print("❌ Error: Symbol required for current situation report")
@@ -59,8 +61,6 @@ async def main():
 
         else:
             # Daily/weekly report
-            from function_app import run_report
-
             await run_report(report_type)
 
         print("=" * 60)
@@ -69,8 +69,6 @@ async def main():
     except Exception as e:
         print("=" * 60)
         print(f"ERROR: Failed to run {report_type} report: {e!s}")
-        import traceback
-
         traceback.print_exc()
         sys.exit(1)
 

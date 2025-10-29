@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from shared_code.common_price import Candle
@@ -14,8 +15,6 @@ class DailyCandleRepository(CandleRepository):
         Override save_candle for DailyCandles table which has both Date and EndDate columns.
         Date is the date portion only, EndDate is the full datetime.
         """
-        import os
-
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
         # Extract date portion from end_date

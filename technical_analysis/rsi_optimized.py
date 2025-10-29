@@ -5,9 +5,11 @@ Optimized version of RSI calculation for multiple timeframes
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd
+from dotenv import load_dotenv
 
+from infra.sql_connection import connect_to_sql
 from infra.telegram_logging_handler import app_logger
-from source_repository import Symbol
+from source_repository import Symbol, fetch_symbols
 from technical_analysis.repositories.rsi_repository import (
     get_candles_with_rsi,
     save_rsi_by_timeframe,
@@ -143,10 +145,6 @@ def get_optimized_rsi_for_symbol_timeframe(
 # Function to test the optimized implementation
 def test_optimized_rsi():
     """Test the optimized RSI calculation"""
-    from dotenv import load_dotenv
-
-    from infra.sql_connection import connect_to_sql
-    from source_repository import fetch_symbols
 
     # Load environment and connect to database
     load_dotenv()

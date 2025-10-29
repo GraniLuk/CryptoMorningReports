@@ -8,9 +8,11 @@ from dotenv import load_dotenv
 
 from infra.sql_connection import connect_to_sql
 from infra.telegram_logging_handler import app_logger
+from integrations.onedrive_uploader import upload_to_onedrive
 from reports.current_report import generate_crypto_situation_report
 from reports.daily_report import process_daily_report
 from reports.weekly_report import process_weekly_report
+from shared_code.telegram import send_telegram_message
 
 
 load_dotenv()
@@ -125,8 +127,6 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                     f"Error generating report: {report}", status_code=500
                 )  # Save to OneDrive if requested
             if save_to_onedrive:
-                from integrations.onedrive_uploader import upload_to_onedrive
-
                 today_date = datetime.now(UTC).strftime("%Y-%m-%d-%H-%M")
                 onedrive_filename = f"{today_date}.md"
 
@@ -139,8 +139,6 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
 
             # Send to Telegram if requested
             if send_to_telegram:
-                from shared_code.telegram import send_telegram_message
-
                 telegram_enabled = os.environ.get("TELEGRAM_ENABLED", "False").lower() == "true"
                 telegram_token = os.environ.get("TELEGRAM_TOKEN", "")
                 telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")

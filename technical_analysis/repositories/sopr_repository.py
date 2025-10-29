@@ -1,3 +1,5 @@
+import os
+
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
@@ -16,8 +18,6 @@ def save_sopr_results(conn, metrics: dict) -> None:
             cursor = conn.cursor()
 
             # Check if we're using SQLite or SQL Server
-            import os
-
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             if is_sqlite:

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from shared_code.common_price import Candle
@@ -11,8 +12,6 @@ class CandleRepository:
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
         # Check if we're using SQLite or SQL Server
-        import os
-
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
         if is_sqlite:

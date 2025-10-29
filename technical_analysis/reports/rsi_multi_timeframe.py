@@ -136,12 +136,6 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
                 f"Found missing {timeframe} RSI values for {symbol.symbol_name}, calculating them now..."
             )
 
-            # Import calculation functions inline to avoid circular imports
-            from technical_analysis.repositories.rsi_repository import (
-                save_rsi_by_timeframe,
-            )
-            from technical_analysis.rsi import calculate_rsi_using_rma
-
             # Calculate RSI for the entire dataframe (to ensure accurate values)
             df["calculated_RSI"] = calculate_rsi_using_rma(df["Close"])
 

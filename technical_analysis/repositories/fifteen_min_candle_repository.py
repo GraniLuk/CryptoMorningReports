@@ -1,4 +1,5 @@
-from datetime import timedelta
+import os
+from datetime import datetime, timedelta
 
 from shared_code.common_price import Candle
 from source_repository import Symbol
@@ -11,16 +12,12 @@ class FifteenMinCandleRepository(CandleRepository):
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
         """Override to handle OpenTime column for SQLite"""
-        import os
-
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
         if is_sqlite:
             # Calculate OpenTime as 15 minutes before EndDate
             end_date = candle.end_date
             if isinstance(end_date, str):
-                from datetime import datetime
-
                 end_date = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
 
             open_time = end_date - timedelta(minutes=15)

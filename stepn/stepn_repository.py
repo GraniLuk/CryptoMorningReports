@@ -1,6 +1,6 @@
 import math
 import os
-from datetime import UTC, date
+from datetime import UTC, date, datetime
 from typing import Any
 
 import pyodbc
@@ -93,8 +93,6 @@ def save_stepn_results(
 
             if _is_sqlite():
                 # SQLite version - use INSERT OR REPLACE
-                from datetime import datetime
-
                 today = datetime.now(UTC).date().isoformat()
 
                 query = """

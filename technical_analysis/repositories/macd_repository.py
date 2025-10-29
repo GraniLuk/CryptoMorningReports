@@ -1,3 +1,4 @@
+import os
 from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
@@ -33,8 +34,6 @@ def save_macd_results(
             cursor = conn.cursor()
 
             # Check if we're using SQLite or SQL Server
-            import os
-
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
             if is_sqlite:

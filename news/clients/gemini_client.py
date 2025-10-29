@@ -1,6 +1,8 @@
 """Gemini AI client implementation."""
 
+import json
 import logging
+import re
 import time
 from typing import Any
 
@@ -89,8 +91,6 @@ class GeminiClient(AIClient):
         text_preview = text_content[:200]
 
         if "News Article" in text_content[:100]:
-            import re
-
             match = re.search(r"News Article (\d+)/(\d+)", text_content[:100])
             if match:
                 return f"NEWS_ARTICLE_{match.group(1)}_of_{match.group(2)}"
@@ -120,8 +120,6 @@ class GeminiClient(AIClient):
             return
 
         try:
-            import json
-
             if "News Article" in text_content:
                 article_json_start = text_content.find("{")
                 if article_json_start > 0:

@@ -8,7 +8,7 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 from infra.sql_connection import connect_to_sql
-from shared_code.price_checker import fetch_daily_candle
+from shared_code.price_checker import fetch_daily_candle, fetch_hourly_candle
 from source_repository import fetch_symbols
 
 
@@ -143,8 +143,6 @@ def get_last_hourly_candle_time(conn, symbol):
     Returns:
         datetime object of the last candle, or None if no candles exist
     """
-    from datetime import datetime
-
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -189,10 +187,6 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
         conn: Database connection
         hours_to_update: Fallback - hours to fetch if no data exists (default 24)
     """
-    from datetime import datetime
-
-    from shared_code.price_checker import fetch_hourly_candle
-
     logger.info("Checking database for missing hourly candles...")
 
     symbols = fetch_symbols(conn)

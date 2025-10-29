@@ -9,7 +9,12 @@ from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 import pytest
+from dotenv import load_dotenv
 
+from infra.sql_connection import connect_to_sql
+from shared_code.price_checker import fetch_daily_candles
+from source_repository import fetch_symbols
+from technical_analysis.reports.rsi_daily import create_rsi_table_for_symbol
 from technical_analysis.rsi import calculate_rsi_using_ema, calculate_rsi_using_rma
 
 
@@ -98,12 +103,6 @@ class TestRSIAgainstTradingView:
     @pytest.fixture
     def get_virtual_data(self):
         """Fixture to fetch VIRTUAL symbol data from database"""
-        from dotenv import load_dotenv
-
-        from infra.sql_connection import connect_to_sql
-        from shared_code.price_checker import fetch_daily_candles
-        from source_repository import fetch_symbols
-
         load_dotenv()
         conn = connect_to_sql()
         symbols = fetch_symbols(conn)
@@ -261,14 +260,6 @@ class TestRSIDataRequirements:
 
     def test_rsi_requires_sufficient_data(self):
         """Test that RSI with insufficient data differs from RSI with sufficient data"""
-        from datetime import UTC, datetime, timedelta
-
-        from dotenv import load_dotenv
-
-        from infra.sql_connection import connect_to_sql
-        from shared_code.price_checker import fetch_daily_candles
-        from source_repository import fetch_symbols
-
         load_dotenv()
         conn = connect_to_sql()
         symbols = fetch_symbols(conn)
@@ -350,12 +341,6 @@ class TestRSIMethodComparison:
 
 def test_rsi_integration_with_database():
     """Integration test: Verify RSI calculation and storage workflow"""
-    from dotenv import load_dotenv
-
-    from infra.sql_connection import connect_to_sql
-    from source_repository import fetch_symbols
-    from technical_analysis.reports.rsi_daily import create_rsi_table_for_symbol
-
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)

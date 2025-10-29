@@ -1,3 +1,5 @@
+import os
+
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
@@ -8,8 +10,6 @@ def get_aggregated_data(conn):
     Fetch data from SymbolDataView (SQL Server) or construct from tables (SQLite)
     Returns: List of dictionaries containing aggregated symbol data with all indicators
     """
-    import os
-
     is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
     if is_sqlite:

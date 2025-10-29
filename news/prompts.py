@@ -5,6 +5,9 @@ This module contains all system and user prompts used by AI clients
 for analyzing cryptocurrency markets and highlighting relevant articles.
 """
 
+import json
+
+
 # Analysis with news prompts
 SYSTEM_PROMPT_ANALYSIS_NEWS = """\
 You are a professional intraday crypto derivatives strategist producing an execution-ready briefing for a futures trader using 5-10x leverage aiming for consistent asymmetric R-multiple outcomes (not forced % gains).
@@ -61,8 +64,6 @@ def build_analysis_user_messages(
 
     Each news article is returned as a separate message for better context handling.
     """
-    import json
-
     messages = []
 
     # Try to parse news as JSON array and send each article separately
