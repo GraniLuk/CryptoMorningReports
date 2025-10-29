@@ -304,4 +304,3 @@ if __name__ == "__main__":
 
     symbols = [symbol]
     calculate_indicators(symbols, conn, target_date=datetime.now(UTC).date())
-

@@ -401,4 +401,3 @@ def get_historical_rsi(  # noqa: PLR0915
     except Exception as e:
         app_logger.error(f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {e!s}")
         raise
-
