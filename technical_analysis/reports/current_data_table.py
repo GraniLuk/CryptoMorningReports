@@ -88,9 +88,15 @@ def _extract_moving_averages(conn, symbol_id: int) -> dict[str, float | None]:
         if not ma_df.empty:
             latest_ma = ma_df.iloc[-1]
             ma_data["ma50"] = float(latest_ma["MA50"]) if pd.notna(latest_ma.get("MA50")) else None
-            ma_data["ma200"] = float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
-            ma_data["ema50"] = float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
-            ma_data["ema200"] = float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
+            ma_data["ma200"] = (
+                float(latest_ma["MA200"]) if pd.notna(latest_ma.get("MA200")) else None
+            )
+            ma_data["ema50"] = (
+                float(latest_ma["EMA50"]) if pd.notna(latest_ma.get("EMA50")) else None
+            )
+            ma_data["ema200"] = (
+                float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
+            )
     except Exception as ma_error:
         app_logger.warning(f"Could not fetch moving averages for symbol_id {symbol_id}: {ma_error}")
     return ma_data
@@ -141,7 +147,9 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
         )
 
         # Extract latest price (prefer 15min, then hourly, then daily)
-        data["latest_price"] = _extract_latest_price(daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df)
+        data["latest_price"] = _extract_latest_price(
+            daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df
+        )
 
         # Extract RSI values for each timeframe
         data["daily_rsi"] = get_latest_rsi_from_df(daily_rsi_df)
