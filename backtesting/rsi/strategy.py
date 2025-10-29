@@ -16,7 +16,8 @@ def run_backtest(  # noqa: PLR0915
     position_type: str = "LONG",  # New parameter
 ):
     if position_type not in ["LONG", "SHORT"]:
-        raise ValueError("position_type must be either 'LONG' or 'SHORT'")
+        msg = "position_type must be either 'LONG' or 'SHORT'"
+        raise ValueError(msg)
 
     symbol_id = symbol.symbol_id
     symbol_name = symbol.symbol_name

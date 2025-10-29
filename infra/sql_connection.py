@@ -260,7 +260,9 @@ def connect_to_sql(max_retries=3):
                 time.sleep(55**attempt)  # Exponential backoff
                 continue
             app_logger.error(f"Error message: {e!s}")
-            raise RuntimeError("Failed to connect to the database after maximum retries") from e
+            msg = "Failed to connect to the database after maximum retries"
+            raise RuntimeError(msg) from e
 
     # This should never be reached, but added for type checking
-    raise RuntimeError("Failed to connect to the database after maximum retries")
+    msg = "Failed to connect to the database after maximum retries"
+    raise RuntimeError(msg)

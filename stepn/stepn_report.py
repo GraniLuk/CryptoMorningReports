@@ -63,7 +63,8 @@ def fetch_stepn_report(conn) -> PrettyTable:
         last_14_days_results = fetch_stepn_results_last_14_days(conn)
         if last_14_days_results is None:
             app_logger.error("No data found for the last 14 days")
-            raise ValueError("No data found for the last 14 days")
+            msg = "No data found for the last 14 days"
+            raise ValueError(msg)
         ratios = [record[2] for record in last_14_days_results]
         ratios.append(gmt_gst_ratio)
 

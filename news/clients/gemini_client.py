@@ -34,17 +34,20 @@ class GeminiClient(AIClient):
         logging.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
 
         if not self.api_key:
-            raise ValueError("GeminiClient initialization failed: API key missing")
+            msg = "GeminiClient initialization failed: API key missing"
+            raise ValueError(msg)
 
         try:
             configure_fn = getattr(genai, "configure", None)
             if not callable(configure_fn):
-                raise RuntimeError("genai.configure not available in google.generativeai module")
+                msg = "genai.configure not available in google.generativeai module"
+                raise RuntimeError(msg)
             configure_fn(api_key=self.api_key)
 
             generative_cls = getattr(genai, "GenerativeModel", None)
             if generative_cls is None:
-                raise RuntimeError("GenerativeModel not available in google.generativeai module")
+                msg = "GenerativeModel not available in google.generativeai module"
+                raise RuntimeError(msg)
             self.model: Any = generative_cls("gemini-2.5-flash-preview-09-2025")
             logging.info("GeminiClient [__init__]: Gemini model initialized.")
         except Exception as e:

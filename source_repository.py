@@ -63,7 +63,8 @@ def fetch_symbols(conn) -> list[Symbol]:
     symbols = []
     try:
         if not conn:
-            raise ConnectionError("Database connection was not established.")
+            msg = "Database connection was not established."
+            raise ConnectionError(msg)
 
         query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE IsActive = 1"
 
@@ -80,7 +81,8 @@ def fetch_symbols(conn) -> list[Symbol]:
 
         if not symbols:
             app_logger.error("No active symbols found in the database")
-            raise NoSymbolsFoundError("No active symbols found in the database")
+            msg = "No active symbols found in the database"
+            raise NoSymbolsFoundError(msg)
 
         return symbols
     except NoSymbolsFoundError:
@@ -112,7 +114,8 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
     """
     try:
         if not conn:
-            raise ConnectionError("Database connection was not established.")
+            msg = "Database connection was not established."
+            raise ConnectionError(msg)
 
         query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
 

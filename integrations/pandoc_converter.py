@@ -50,9 +50,8 @@ def _ensure_pandoc_available():
         try:
             pypandoc = importlib.import_module("pypandoc")
         except ImportError as exc:  # pragma: no cover - defensive guard
-            raise RuntimeError(
-                "pypandoc is not installed. Please install it via requirements.txt."
-            ) from exc
+            msg = "pypandoc is not installed. Please install it via requirements.txt."
+            raise RuntimeError(msg) from exc
 
         # First try to use system-installed pandoc
         try:
@@ -99,16 +98,18 @@ def _ensure_pandoc_available():
                 return _pypandoc_module
             except Exception as exc:
                 app_logger.exception("Pandoc download failed; target_dir=%s", target_dir)
-                raise RuntimeError(
+                msg = (
                     "Failed to download Pandoc automatically. "
                     "Ensure the Function App has outbound internet access and a writable storage location."
-                ) from exc
+                )
+                raise RuntimeError(msg) from exc
         else:
             # Local environment but pandoc not found
-            raise RuntimeError(
+            msg = (
                 "Pandoc not found. For local development, please install pandoc: "
                 "https://pandoc.org/installing.html"
             )
+            raise RuntimeError(msg)
 
 
 def _build_metadata_args(metadata: dict[str, str] | None) -> Iterable[str]:
@@ -158,9 +159,8 @@ def _convert_markdown_to_epub_sync(
         with open(tmp_epub_path, "rb") as epub_file:
             return epub_file.read()
     except OSError as exc:  # pragma: no cover - depends on system pandoc install
-        raise RuntimeError(
-            "Pandoc executable not found. Install Pandoc and ensure it is on the PATH."
-        ) from exc
+        msg = "Pandoc executable not found. Install Pandoc and ensure it is on the PATH."
+        raise RuntimeError(msg) from exc
     finally:
         for path in (tmp_md_path, tmp_epub_path):
             if not path:
