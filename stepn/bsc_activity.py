@@ -17,7 +17,8 @@ def get_yesterday_transaction_count(contract_address, api_key):
             },
         ).json()
         if response["status"] != "1":
-            raise Exception(f"Block API Error: {response['message']}")
+            msg = f"Block API Error: {response['message']}"
+            raise Exception(msg)
         return int(response["result"])
 
     # Calculate yesterday's timestamps
@@ -52,7 +53,8 @@ def get_yesterday_transaction_count(contract_address, api_key):
     if data["status"] == "1":
         transactions = data["result"]
         return len(transactions)
-    raise Exception(f"API Error: {data['message']}")
+    msg = f"API Error: {data['message']}"
+    raise Exception(msg)
 
 
 if __name__ == "__main__":

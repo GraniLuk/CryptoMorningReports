@@ -90,7 +90,8 @@ def fetch_symbols(conn) -> list[Symbol]:
         raise
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbols: {e}")
-        raise Exception(f"Database error while fetching symbols: {e}") from e
+        msg = f"Database error while fetching symbols: {e}"
+        raise Exception(msg) from e
     except Exception as e:
         app_logger.error(f"Error fetching symbols: {e!s}")
         raise
@@ -122,7 +123,8 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
         with conn.cursor() as cursor:
             row = cursor.execute(query, (symbol_name,)).fetchone()
             if row is None:
-                raise SymbolNotFoundError(f"Symbol '{symbol_name}' not found in the database")
+                msg = f"Symbol '{symbol_name}' not found in the database"
+                raise SymbolNotFoundError(msg)
 
         return Symbol(
             symbol_id=row[0],
@@ -137,7 +139,8 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
         raise
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbol {symbol_name}: {e}")
-        raise Exception(f"Database error while fetching symbol {symbol_name}: {e}") from e
+        msg = f"Database error while fetching symbol {symbol_name}: {e}"
+        raise Exception(msg) from e
     except ConnectionError:
         # Re-raise connection errors
         raise

@@ -22,9 +22,8 @@ def get_sqlite_connection(db_path=None):
         db_path = os.getenv("SQLITE_DB_PATH", "./local_crypto.db")
 
     if not Path(db_path).exists():
-        raise FileNotFoundError(
-            f"Database not found: {db_path}\nPlease run: python database/init_sqlite.py"
-        )
+        msg = f"Database not found: {db_path}\nPlease run: python database/init_sqlite.py"
+        raise FileNotFoundError(msg)
 
     return sqlite3.connect(db_path)
 

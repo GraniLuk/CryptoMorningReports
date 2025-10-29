@@ -88,9 +88,8 @@ def _ensure_pandoc_available():
                     pandoc_path = str(Path(target_dir) / "pandoc")
 
                 if not Path(pandoc_path).is_file():
-                    raise FileNotFoundError(
-                        f"Pandoc binary not found at expected location: {pandoc_path}"
-                    )
+                    msg = f"Pandoc binary not found at expected location: {pandoc_path}"
+                    raise FileNotFoundError(msg)
 
                 os.environ["PYPANDOC_PANDOC"] = pandoc_path
                 app_logger.info("Pandoc downloaded to %s", pandoc_path)

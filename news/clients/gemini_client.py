@@ -51,7 +51,8 @@ class GeminiClient(AIClient):
             self.model: Any = generative_cls("gemini-2.5-flash-preview-09-2025")
             logging.info("GeminiClient [__init__]: Gemini model initialized.")
         except Exception as e:
-            raise RuntimeError(f"GeminiClient initialization failed: {e}") from e
+            msg = f"GeminiClient initialization failed: {e}"
+            raise RuntimeError(msg) from e
 
     def _generate_content(self, prompt: Any) -> str:
         """

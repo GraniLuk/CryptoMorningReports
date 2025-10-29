@@ -149,7 +149,8 @@ def connect_to_sql_sqlite(db_path=None):
     if not Path(db_path).exists():
         logging.error(f"SQLite database not found: {db_path}")
         logging.error("Please run: python database/init_sqlite.py")
-        raise FileNotFoundError(f"Database not found: {db_path}")
+        msg = f"Database not found: {db_path}"
+        raise FileNotFoundError(msg)
 
     logging.info(f"Connecting to SQLite database: {db_path}")
 

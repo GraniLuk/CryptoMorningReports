@@ -23,7 +23,8 @@ def create_ai_client(api_type, api_key):
         return PerplexityClient(api_key)
     if api_type.lower() == "gemini":
         return GeminiClient(api_key)
-    raise ValueError(f"Unsupported AI API type: {api_type}")
+    msg = f"Unsupported AI API type: {api_type}"
+    raise ValueError(msg)
 
 
 def get_detailed_crypto_analysis_with_news(

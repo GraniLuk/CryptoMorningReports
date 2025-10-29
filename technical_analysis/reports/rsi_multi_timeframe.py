@@ -191,10 +191,11 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
 
         # Validate that we're returning a DataFrame
         if not isinstance(result, pd.DataFrame):
-            raise TypeError(
+            msg = (
                 f"get_rsi_for_symbol_timeframe must return DataFrame or None, "
                 f"but got {type(result).__name__} for {symbol.symbol_name}"
             )
+            raise TypeError(msg)
 
         return result
 

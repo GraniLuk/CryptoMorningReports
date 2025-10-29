@@ -89,7 +89,8 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
             id_column = id_column_map.get(timeframe.lower())
 
             if not table_name or not id_column:
-                raise ValueError(f"Invalid timeframe: {timeframe}")
+                msg = f"Invalid timeframe: {timeframe}"
+                raise ValueError(msg)
 
             # Check if we're using SQLite or SQL Server
             import os

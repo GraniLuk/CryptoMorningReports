@@ -44,7 +44,6 @@ ignore = [
     "E501",   # Line too long (handled by formatter)
     "PLR0912", # Too many branches
     "PLC0415", # Import should be at top-level (lazy imports are intentional)
-    "EM102",  # Exception must not use an f-string literal (too strict for now)
     "TID252", # Relative imports are banned
     "ARG002", # Unused function argument (common in Azure Functions)
     "PTH123", # Path.open() should be used instead of built-in open()

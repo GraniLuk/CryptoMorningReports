@@ -363,7 +363,8 @@ def fetch_current_price(symbol: Symbol) -> TickerPrice:
 
     # Update cache
     if price is None:
-        raise ValueError(f"Failed to fetch price for {symbol.symbol_name} from {symbol.source_id}")
+        msg = f"Failed to fetch price for {symbol.symbol_name} from {symbol.source_id}"
+        raise ValueError(msg)
     _price_cache[cache_key] = price
     return price
 
