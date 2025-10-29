@@ -44,7 +44,6 @@ ignore = [
     "E501",   # Line too long (handled by formatter)
     "PLR0912", # Too many branches
     "PLC0415", # Import should be at top-level (lazy imports are intentional)
-    "TID252", # Relative imports are banned
 ]
 
 # Allow unused variables when underscore-prefixed
