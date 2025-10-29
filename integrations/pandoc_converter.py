@@ -155,7 +155,7 @@ def _convert_markdown_to_epub_sync(
             extra_args=metadata_args,
         )
 
-        with open(tmp_epub_path, "rb") as epub_file:
+        with Path(tmp_epub_path).open("rb") as epub_file:
             return epub_file.read()
     except OSError as exc:  # pragma: no cover - depends on system pandoc install
         msg = "Pandoc executable not found. Install Pandoc and ensure it is on the PATH."

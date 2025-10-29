@@ -45,7 +45,6 @@ ignore = [
     "PLR0912", # Too many branches
     "PLC0415", # Import should be at top-level (lazy imports are intentional)
     "TID252", # Relative imports are banned
-    "PTH123", # Path.open() should be used instead of built-in open()
     "SIM108", # Use ternary operator instead of if-else (readability preference)
 ]
 

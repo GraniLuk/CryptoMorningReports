@@ -235,7 +235,7 @@ async def send_telegram_document(  # noqa: PLR0911
                 return False
 
             # Use context manager for file handling
-            with open(local_path, "rb") as file_handle:
+            with Path(local_path).open("rb") as file_handle:
                 url = f"https://api.telegram.org/bot{token}/sendDocument"
                 files = {
                     "document": (filename, file_handle, "application/octet-stream"),
