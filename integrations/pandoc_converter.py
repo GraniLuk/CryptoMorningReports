@@ -98,7 +98,8 @@ def _ensure_pandoc_available():
                 app_logger.exception("Pandoc download failed; target_dir=%s", target_dir)
                 msg = (
                     "Failed to download Pandoc automatically. "
-                    "Ensure the Function App has outbound internet access and a writable storage location."
+                    "Ensure the Function App has outbound internet access and "
+                    "a writable storage location."
                 )
                 raise RuntimeError(msg) from exc
         else:

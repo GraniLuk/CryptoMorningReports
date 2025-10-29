@@ -279,7 +279,8 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
 
 def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
     """
-    Fetch open, close, high, low prices and volume from Binance for the specified 15-minute interval.
+    Fetch open, close, high, low prices and volume from Binance for the
+    specified 15-minute interval.
 
     Args:
         symbol: Symbol object with binance_name property

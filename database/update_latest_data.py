@@ -206,7 +206,8 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
             # We have data - only fetch missing hours
             if last_time >= end_time:
                 logger.info(
-                    f"✓ {symbol.symbol_name}: Already up-to-date (last: {last_time.strftime('%Y-%m-%d %H:%M')})"
+                    f"✓ {symbol.symbol_name}: Already up-to-date "
+                    f"(last: {last_time.strftime('%Y-%m-%d %H:%M')})"
                 )
                 total_skipped += 1
                 continue

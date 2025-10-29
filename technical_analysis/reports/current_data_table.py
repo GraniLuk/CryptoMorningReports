@@ -506,7 +506,8 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 
 # Future extension functions can be added here:
 #
-# def add_moving_averages_to_data(symbol_data: Dict[str, Any], symbol: Symbol, conn) -> Dict[str, Any]:
+# def add_moving_averages_to_data(symbol_data: Dict[str, Any],
+#                                  symbol: Symbol, conn) -> Dict[str, Any]:
 #     """Add moving averages data to symbol data dictionary."""
 #     pass
 #
@@ -514,7 +515,8 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 #     """Add volume indicators to symbol data dictionary."""
 #     pass
 #
-# def add_momentum_indicators_to_data(symbol_data: Dict[str, Any], symbol: Symbol, conn) -> Dict[str, Any]:
+# def add_momentum_indicators_to_data(symbol_data: Dict[str, Any],
+#                                     symbol: Symbol, conn) -> Dict[str, Any]:
 #     """Add MACD, Stochastic, etc. to symbol data dictionary."""
 #     pass
 

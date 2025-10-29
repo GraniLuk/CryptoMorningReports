@@ -47,7 +47,8 @@ class OpenInterestRepository:
                     """
                     MERGE INTO OpenInterest AS target
                     USING (SELECT ? AS SymbolID, ? AS IndicatorDate) AS source
-                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate
+                       = source.IndicatorDate
                     WHEN MATCHED THEN
                         UPDATE SET OpenInterest = ?, OpenInterestValue = ?
                     WHEN NOT MATCHED THEN
@@ -68,7 +69,8 @@ class OpenInterestRepository:
 
             self.conn.commit()
             app_logger.info(
-                f"Saved Open Interest for SymbolID {symbol_id}: OI={open_interest}, Value=${open_interest_value:,.0f}"
+                f"Saved Open Interest for SymbolID {symbol_id}: OI={open_interest}, "
+                f"Value=${open_interest_value:,.0f}"
             )
 
         except Exception as e:

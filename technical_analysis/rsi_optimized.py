@@ -54,7 +54,8 @@ def get_optimized_rsi_for_symbol_timeframe(
     )
 
     try:
-        # Get candle data with RSI values from the database, using the extended date range for calculation
+        # Get candle data with RSI values from the database, using the
+        # extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
             conn, symbol.symbol_id, calculation_start_date, timeframe
         )
@@ -82,7 +83,8 @@ def get_optimized_rsi_for_symbol_timeframe(
 
         if missing_rsi:
             app_logger.info(
-                f"Found missing {timeframe} RSI values for {symbol.symbol_name}, calculating them now..."
+                f"Found missing {timeframe} RSI values for "
+                f"{symbol.symbol_name}, calculating them now..."
             )
 
             # Calculate RSI for the entire dataframe (to ensure accurate values)
@@ -120,7 +122,8 @@ def get_optimized_rsi_for_symbol_timeframe(
                         df.loc[idx, "RSI"] = calculated_rsi_value
 
                         app_logger.info(
-                            f"Saved {timeframe} RSI for {symbol.symbol_name} candle {candle_id}: RSI={calculated_rsi_value:.2f}"
+                            f"Saved {timeframe} RSI for {symbol.symbol_name} "
+                            f"candle {candle_id}: RSI={calculated_rsi_value:.2f}"
                         )
                     except Exception as e:
                         app_logger.error(

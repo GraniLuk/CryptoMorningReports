@@ -26,7 +26,10 @@ from technical_analysis.repositories.moving_averages_repository import (
 
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
-You are an expert cryptocurrency technical analyst performing in-depth market analysis. Drawing strictly from the provided price and volume data across multiple timeframes, deliver a comprehensive technical assessment with no fundamental analysis, news, or external factors.
+You are an expert cryptocurrency technical analyst performing in-depth market
+analysis. Drawing strictly from the provided price and volume data across multiple
+timeframes, deliver a comprehensive technical assessment with no fundamental
+analysis, news, or external factors.
 
 Analysis Requirements:
 1. Price Action Analysis
@@ -57,7 +60,8 @@ Present your analysis in clear Markdown formatting with:
 - Bullet points for key findings
 - Use **bold** for critical alerts and important levels
 - Price values to 2 decimal places
-- Use emojis to make sections more readable (📈 for trends, 💰 for prices, 🎯 for targets, ⚠️ for risks, etc.)
+- Use emojis to make sections more readable (📈 for trends, 💰 for prices, 🎯
+  for targets, ⚠️ for risks, etc.)
 """
 
 USER_PROMPT_SITUATION = """
@@ -129,7 +133,10 @@ def format_candle_data(candles):
 
     for candle in candles:
         date_str = candle.end_date.strftime("%Y-%m-%d %H:%M")
-        formatted += f"{date_str} | {candle.open:.4f} | {candle.high:.4f} | {candle.low:.4f} | {candle.close:.4f} | {candle.volume:.2f}\n"
+        formatted += (
+            f"{date_str} | {candle.open:.4f} | {candle.high:.4f} | "
+            f"{candle.low:.4f} | {candle.close:.4f} | {candle.volume:.2f}\n"
+        )
 
     return formatted
 
@@ -150,7 +157,10 @@ def format_rsi_data(rsi_df):
         if pd.notna(close_price) and pd.notna(rsi_value):
             formatted += f"{date_str} | {close_price:.4f} | {rsi_value:.2f}\n"
         else:
-            formatted += f"{date_str} | {close_price if pd.notna(close_price) else 'N/A'} | {rsi_value if pd.notna(rsi_value) else 'N/A'}\n"
+            formatted += (
+                f"{date_str} | {close_price if pd.notna(close_price) else 'N/A'} | "
+                f"{rsi_value if pd.notna(rsi_value) else 'N/A'}\n"
+            )
 
     return formatted
 
@@ -172,7 +182,10 @@ def format_moving_averages_data(ma_df):
         ema200 = row.get("EMA200", "N/A")
 
         if all(pd.notna(x) for x in [price, ma50, ma200, ema50, ema200]):
-            formatted += f"{date_str} | {price:.4f} | {ma50:.4f} | {ma200:.4f} | {ema50:.4f} | {ema200:.4f}\n"
+            formatted += (
+                f"{date_str} | {price:.4f} | {ma50:.4f} | {ma200:.4f} | "
+                f"{ema50:.4f} | {ema200:.4f}\n"
+            )
         else:
             values = [
                 price if pd.notna(price) else "N/A",
@@ -181,7 +194,10 @@ def format_moving_averages_data(ma_df):
                 ema50 if pd.notna(ema50) else "N/A",
                 ema200 if pd.notna(ema200) else "N/A",
             ]
-            formatted += f"{date_str} | {values[0]} | {values[1]} | {values[2]} | {values[3]} | {values[4]}\n"
+            formatted += (
+                f"{date_str} | {values[0]} | {values[1]} | {values[2]} | "
+                f"{values[3]} | {values[4]}\n"
+            )
 
     return formatted
 
@@ -289,10 +305,9 @@ async def _generate_ai_analysis(
 
             if response.status_code == HTTPStatus.OK:
                 return response.json()["choices"][0]["message"]["content"]
-            else:
-                error_msg = f"Failed: API error: {response.status_code} - {response.text}"
-                logger.error(error_msg)
-                return error_msg
+            error_msg = f"Failed: API error: {response.status_code} - {response.text}"
+            logger.error(error_msg)
+            return error_msg
         except Exception as e:
             error_msg = f"Failed to get crypto situation analysis: {e!s}"
             logger.error(error_msg)
@@ -306,14 +321,12 @@ async def _generate_ai_analysis(
 
                 if response.candidates and len(response.candidates) > 0:
                     return response.text
-                else:
-                    error_msg = "Failed: No valid response from Gemini API"
-                    logger.error(error_msg)
-                    return error_msg
-            else:
-                error_msg = "Failed: Invalid Gemini client configuration"
+                error_msg = "Failed: No valid response from Gemini API"
                 logger.error(error_msg)
                 return error_msg
+            error_msg = "Failed: Invalid Gemini client configuration"
+            logger.error(error_msg)
+            return error_msg
         except Exception as e:
             error_msg = f"Failed to get crypto situation analysis from Gemini: {e!s}"
             logger.error(error_msg)

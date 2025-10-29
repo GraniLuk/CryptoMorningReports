@@ -59,14 +59,16 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
         days=additional_lookback.get(timeframe, rsi_periods)
     )
 
-    try:  # Get candle data with RSI values from the database, using the extended date range for calculation
+    try:  # Get candle data with RSI values from the database, using the
+        # extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
             conn, symbol.symbol_id, calculation_start_date.isoformat(), timeframe
         )
 
         if not candles_with_rsi:
             app_logger.warning(
-                f"No {timeframe} RSI data found for {symbol.symbol_name}, attempting to calculate RSI"
+                f"No {timeframe} RSI data found for {symbol.symbol_name}, "
+                f"attempting to calculate RSI"
             )
 
             # Attempt to fetch candles directly and calculate RSI
@@ -114,7 +116,8 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
         start_timestamp = pd.Timestamp(start_date)
 
         # Now, compare df.index with start_timestamp.
-        # If df.index is timezone-aware, start_timestamp must also be made aware or comparison might fail/behave unexpectedly.
+        # If df.index is timezone-aware, start_timestamp must also be made
+        # aware or comparison might fail/behave unexpectedly.
         # If df.index is naive, start_timestamp should also be naive.
         if datetime_index.tz is not None:
             # If start_timestamp is naive, localize it to df.index.tz
@@ -133,7 +136,8 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
 
         if missing_rsi:
             app_logger.info(
-                f"Found missing {timeframe} RSI values for {symbol.symbol_name}, calculating them now..."
+                f"Found missing {timeframe} RSI values for "
+                f"{symbol.symbol_name}, calculating them now..."
             )
 
             # Calculate RSI for the entire dataframe (to ensure accurate values)
@@ -166,7 +170,8 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
                         df.loc[idx, "RSI"] = calculated_rsi
 
                         app_logger.info(
-                            f"Saved {timeframe} RSI for {symbol.symbol_name} candle {candle_id}: RSI={calculated_rsi:.2f}"
+                            f"Saved {timeframe} RSI for {symbol.symbol_name} "
+                            f"candle {candle_id}: RSI={calculated_rsi:.2f}"
                         )
                 except Exception as e:
                     app_logger.error(

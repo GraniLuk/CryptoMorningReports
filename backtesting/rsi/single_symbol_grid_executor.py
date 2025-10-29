@@ -32,7 +32,9 @@ def run_grid_search_for_symbol(conn, symbol):
         rsi_range, tp_values, sl_values, days_options
     ):
         print(
-            f"\nRunning strategy for {symbol.symbol_name} with parameters: RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, days_after_to_buy = {days_after_to_buy}"
+            f"\nRunning strategy for {symbol.symbol_name} with parameters: "
+            f"RSI = {rsi_value}, TP = {tp_value}, SL = {sl_value}, "
+            f"days_after_to_buy = {days_after_to_buy}"
         )
         results_df, ratio = run_strategy_for_symbol_internal(
             candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy
@@ -85,7 +87,8 @@ if __name__ == "__main__":
         # Run grid search for the selected symbol
         grid_results = run_grid_search_for_symbol(conn, symbol_to_test)
 
-        # Convert grid results into a DataFrame to ease the analysis and print the best parameter set based on total profit.
+        # Convert grid results into a DataFrame to ease the analysis and print
+        # the best parameter set based on total profit.
         grid_df = pd.DataFrame(grid_results)
         print("\nGrid Search Summary (sorted by total profit):")
         print(grid_df.sort_values("total_profit", ascending=False))
@@ -94,7 +97,8 @@ if __name__ == "__main__":
         best = grid_df.loc[grid_df["total_profit"].idxmax()]
         print(
             f"\nBest performing parameters for {symbol_to_test.symbol_name}:\n"
-            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, days_after_to_buy: {best['days_after_to_buy']}, "
+            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, "
+            f"SL: {best['sl_value']}, days_after_to_buy: {best['days_after_to_buy']}, "
             f"Total Profit: {best['total_profit']}"
         )
     else:

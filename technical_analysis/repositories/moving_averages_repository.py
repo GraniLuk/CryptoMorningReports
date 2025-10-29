@@ -50,9 +50,12 @@ def save_moving_averages_results(
                 query = """
                     MERGE INTO MovingAverages AS target
                     USING (SELECT ? AS SymbolID, ? AS IndicatorDate,
-                                 ? AS CurrentPrice, ? AS MA50, ? AS MA200, ? AS EMA50, ? AS EMA200)
-                        AS source (SymbolID, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200)
-                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                                 ? AS CurrentPrice, ? AS MA50, ? AS MA200,
+                                 ? AS EMA50, ? AS EMA200)
+                        AS source (SymbolID, IndicatorDate, CurrentPrice,
+                                   MA50, MA200, EMA50, EMA200)
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate
+                       = source.IndicatorDate
                     WHEN MATCHED THEN
                         UPDATE SET CurrentPrice = source.CurrentPrice,
                                  MA50 = source.MA50,
@@ -131,8 +134,9 @@ def fetch_moving_averages_for_symbol(conn, symbol_id: int, lookback_days: int = 
         lookback_days (int): Number of days to look back for data
 
     Returns:
-        pd.DataFrame: DataFrame containing moving averages data for the specified symbol with columns:
-            SymbolID, SymbolName, IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200
+        pd.DataFrame: DataFrame containing moving averages data for the specified
+            symbol with columns: SymbolID, SymbolName, IndicatorDate, CurrentPrice,
+            MA50, MA200, EMA50, EMA200
     """
     try:
         if conn:

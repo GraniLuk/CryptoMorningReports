@@ -192,7 +192,8 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
 
             cursor.close()
             app_logger.info(
-                f"Successfully fetched {timeframe} candle data with RSI for symbol_id {symbol_id} starting from {from_date}"
+                f"Successfully fetched {timeframe} candle data with RSI for "
+                f"symbol_id {symbol_id} starting from {from_date}"
             )
             return results
 
@@ -395,7 +396,7 @@ def _match_fifteen_min_rsi(
         results[week_desc] = float(rsi_value)
 
 
-def get_historical_rsi(  # noqa: PLR0915
+def get_historical_rsi(
     conn, symbol_id: int, current_date: date, timeframe: str = "daily"
 ) -> dict:
     """

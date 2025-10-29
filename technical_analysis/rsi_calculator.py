@@ -80,7 +80,8 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
                 try:
                     save_rsi_by_timeframe(conn, candle_id, rsi_value, timeframe)
                     app_logger.info(
-                        f"Saved {timeframe} RSI for {symbol.symbol_name} candle {candle_id}: RSI={rsi_value:.2f}"
+                        f"Saved {timeframe} RSI for {symbol.symbol_name} "
+                        f"candle {candle_id}: RSI={rsi_value:.2f}"
                     )
                 except Exception as e:
                     app_logger.error(

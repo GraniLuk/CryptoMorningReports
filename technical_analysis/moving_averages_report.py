@@ -140,7 +140,8 @@ def calculate_indicators(  # noqa: PLR0915
             if available_periods < min_recommended_periods:
                 period_warning = "⚠️"  # Add warning emoji for shortened periods
                 app_logger.warning(
-                    f"{symbol.symbol_name} using shortened periods due to limited history: {available_periods} days"
+                    f"{symbol.symbol_name} using shortened periods due to "
+                    f"limited history: {available_periods} days"
                 )
 
             # Initialize status indicators

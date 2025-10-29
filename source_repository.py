@@ -66,7 +66,10 @@ def fetch_symbols(conn) -> list[Symbol]:
             msg = "Database connection was not established."
             raise ConnectionError(msg)
 
-        query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE IsActive = 1"
+        query = (
+            "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName "
+            "FROM Symbols WHERE IsActive = 1"
+        )
 
         with conn.cursor() as cursor:
             for row in cursor.execute(query):
@@ -118,7 +121,10 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
             msg = "Database connection was not established."
             raise ConnectionError(msg)
 
-        query = "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
+        query = (
+            "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName "
+            "FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
+        )
 
         with conn.cursor() as cursor:
             row = cursor.execute(query, (symbol_name,)).fetchone()

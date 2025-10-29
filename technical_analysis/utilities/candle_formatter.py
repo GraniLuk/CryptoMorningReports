@@ -114,18 +114,32 @@ def format_candle_data_for_prompt(candle_data: dict, max_display_candles: int = 
         # Format hourly candles
         if hourly_candles:
             total_hourly = len(hourly_candles)
-            formatted_text += f"- Last {total_hourly} hourly candles (showing last {min(max_display_candles, total_hourly)}):\n"
+            formatted_text += (
+                f"- Last {total_hourly} hourly candles "
+                f"(showing last {min(max_display_candles, total_hourly)}):\n"
+            )
             for candle in hourly_candles[-max_display_candles:]:
-                formatted_text += f"  - Time: {candle['time']}, Open: {candle['o']}, High: {candle['h']}, Low: {candle['l']}, Close: {candle['c']}, Volume: {candle['v']}\n"
+                formatted_text += (
+                    f"  - Time: {candle['time']}, Open: {candle['o']}, "
+                    f"High: {candle['h']}, Low: {candle['l']}, "
+                    f"Close: {candle['c']}, Volume: {candle['v']}\n"
+                )
         else:
             formatted_text += "- No hourly candles available\n"
 
         # Format 15-minute candles
         if fifteen_min_candles:
             total_fifteen = len(fifteen_min_candles)
-            formatted_text += f"- Last {total_fifteen} fifteen-minute candles (showing last {min(max_display_candles, total_fifteen)}):\n"
+            formatted_text += (
+                f"- Last {total_fifteen} fifteen-minute candles "
+                f"(showing last {min(max_display_candles, total_fifteen)}):\n"
+            )
             for candle in fifteen_min_candles[-max_display_candles:]:
-                formatted_text += f"  - Time: {candle['time']}, Open: {candle['o']}, High: {candle['h']}, Low: {candle['l']}, Close: {candle['c']}, Volume: {candle['v']}\n"
+                formatted_text += (
+                    f"  - Time: {candle['time']}, Open: {candle['o']}, "
+                    f"High: {candle['h']}, Low: {candle['l']}, "
+                    f"Close: {candle['c']}, Volume: {candle['v']}\n"
+                )
         else:
             formatted_text += "- No fifteen-minute candles available\n"
 

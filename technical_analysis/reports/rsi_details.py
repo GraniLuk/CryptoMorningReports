@@ -153,7 +153,8 @@ def detect_bearish_divergence(df):
 
 def detect_rsi_breakout(df):
     """
-    Detects RSI trendline breakout by checking if the current RSI value breaks above/below key levels.
+    Detects RSI trendline breakout by checking if the current RSI value
+    breaks above/below key levels.
     """
     breakout_flags = []
 

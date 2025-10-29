@@ -44,7 +44,8 @@ class PerplexityClient(AIClient):
             messages (list): List of message dictionaries
 
         Returns:
-            tuple[bool, any]: (success, result) where result is content on success or error message on failure
+            tuple[bool, any]: (success, result) where result is content on
+                success or error message on failure
         """
         data = {"model": model, "messages": messages}
 

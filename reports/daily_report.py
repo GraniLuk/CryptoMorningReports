@@ -66,13 +66,16 @@ async def _process_ai_analysis(
     fetched_news = get_news()
     aggregated_data = get_aggregated_data(conn)
 
-    # Reuse current_prices_section also for the news-enhanced analysis by prepending it to aggregated indicators
+    # Reuse current_prices_section also for the news-enhanced analysis by
+    # prepending it to aggregated indicators
     def format_aggregated(agg_list) -> str:
         if not agg_list:
             return "No aggregated indicator data available.\n"
         header = (
-            "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | Range% | OI | OI Value | Fund Rate\n"
-            "-------|-----|-------|------|-------|------|--------|-----|------|--------|----|-----------|-----------\n"
+            "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | "
+            "Range% | OI | OI Value | Fund Rate\n"
+            "-------|-----|-------|------|-------|------|--------|-----|------|"
+            "--------|----|-----------|-----------\n"
         )
         lines = []
         for row in agg_list:
@@ -139,12 +142,14 @@ async def _process_ai_analysis(
 
             if not recipients:
                 logger.info(
-                    "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; skipping email dispatch."
+                    "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; "
+                    "skipping email dispatch."
                 )
             else:
                 email_body = (
                     "Hi,\n\n"
-                    "Please find attached the EPUB version of today's detailed crypto analysis with news.\n\n"
+                    "Please find attached the EPUB version of today's detailed "
+                    "crypto analysis with news.\n\n"
                     "Regards,\n"
                     "Crypto Morning Reports Bot"
                 )
@@ -236,7 +241,9 @@ async def process_daily_report(  # noqa: PLR0915
                 from_low = ((tp.last - tp.low) / tp.low * 100) if tp.low else 0
                 from_high = ((tp.high - tp.last) / tp.high * 100) if tp.high else 0
                 lines.append(
-                    f"{sym.symbol_name:<7}| {tp.last:>10.6f} | {tp.low:>10.6f} | {tp.high:>10.6f} | {pos_pct:>6.2f} | {from_low:>8.2f} | {from_high:>9.2f}"
+                    f"{sym.symbol_name:<7}| {tp.last:>10.6f} | {tp.low:>10.6f} | "
+                    f"{tp.high:>10.6f} | {pos_pct:>6.2f} | {from_low:>8.2f} | "
+                    f"{from_high:>9.2f}"
                 )
             except Exception as e:
                 lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")

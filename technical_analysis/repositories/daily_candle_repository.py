@@ -33,7 +33,8 @@ class DailyCandleRepository(CandleRepository):
             # This prevents orphaning RSI/indicator records that reference DailyCandleID
             sql = f"""
             INSERT INTO {self.table_name}
-            (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
+            (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low,
+             Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(SymbolID, Date)
             DO UPDATE SET
@@ -72,7 +73,8 @@ class DailyCandleRepository(CandleRepository):
                 AND target.SourceID = source.SourceID
                 AND target.Date = source.Date)
             WHEN NOT MATCHED THEN
-                INSERT (SymbolID, SourceID, Date, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
+                INSERT (SymbolID, SourceID, Date, EndDate, [Open], [Close],
+                        High, Low, Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
             self.conn.execute(

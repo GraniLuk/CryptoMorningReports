@@ -27,7 +27,10 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
     macd_table = calculate_macd(symbols, conn, start_date)
 
     # Format messages
-    message = f"Weekly Crypto Report: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}\n\n"
+    message = (
+        f"Weekly Crypto Report: {start_date.strftime('%Y-%m-%d')} to "
+        f"{end_date.strftime('%Y-%m-%d')}\n\n"
+    )
     message += f"Weekly Moving Average Report: <pre>{ma_average_table}</pre>\n\n"
     message += f"Weekly EMA Report: <pre>{ema_average_table}</pre>\n\n"
     message += f"Weekly MACD Report: <pre>{macd_table}</pre>\n\n"

@@ -45,7 +45,8 @@ class CandleRepository:
                 AND target.SourceID = source.SourceID
                 AND target.EndDate = source.EndDate)
             WHEN NOT MATCHED THEN
-                INSERT (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
+                INSERT (SymbolID, SourceID, EndDate, [Open], [Close], High, Low,
+                        Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
             self.conn.execute(
@@ -102,7 +103,8 @@ class CandleRepository:
         return None
 
     def get_candles(self, symbol: Symbol, start_date: datetime, end_date: datetime) -> list[Candle]:
-        # Convert datetime objects to ISO format strings for comparison since EndDate is stored as text
+        # Convert datetime objects to ISO format strings for comparison since
+        # EndDate is stored as text
         start_date_str = (
             start_date.isoformat() if isinstance(start_date, datetime) else str(start_date)
         )

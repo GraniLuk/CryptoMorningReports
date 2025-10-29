@@ -18,7 +18,8 @@ def run_strategy_for_all_symbols(
 ):
     """
     Executes the strategy for all symbols.
-    Returns a dictionary with each symbol name and its TP ratio, and a combined DataFrame of all trades.
+    Returns a dictionary with each symbol name and its TP ratio, and a combined
+    DataFrame of all trades.
     """
     symbol_ratios = {}
     all_trades_df = pd.DataFrame()  # Create empty DataFrame to store all results

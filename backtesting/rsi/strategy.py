@@ -47,7 +47,8 @@ def run_backtest(  # noqa: PLR0915
             ).replace(tzinfo=UTC)
             entry_price = Decimal(str(df.loc[i + days_after_to_buy, "Open"]))
             print(
-                f"Started {position_type} position for {symbol_name} on date {entry_date} with entry price {entry_price}"
+                f"Started {position_type} position for {symbol_name} on date "
+                f"{entry_date} with entry price {entry_price}"
             )
 
             tp_price = entry_price * tp_value
@@ -90,8 +91,9 @@ def run_backtest(  # noqa: PLR0915
                     emoji = "❤️" if outcome == "TP" else "💀"
                     profit_str = "profit" if profit > 0 else "loss"
                     print(
-                        f"Closed {position_type} position {emoji} for {symbol_name} at date {current_date} "
-                        f"with price {close_price} and {profit_str} of {abs(profit):.2f}"
+                        f"Closed {position_type} position {emoji} for {symbol_name} "
+                        f"at date {current_date} with price {close_price} and "
+                        f"{profit_str} of {abs(profit):.2f}"
                     )
                     active_trade = False  # Reset flag when trade is closed
                     break

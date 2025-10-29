@@ -260,14 +260,17 @@ def create_sqlite_database(db_path="./local_crypto.db"):
         "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)"
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_volume_symbol_date ON VolumeHistory(SymbolID, IndicatorDate)"
+        "CREATE INDEX IF NOT EXISTS idx_volume_symbol_date ON "
+        "VolumeHistory(SymbolID, IndicatorDate)"
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sopr_date ON SOPR(IndicatorDate)")
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_pricerange_symbol_date ON PriceRange(SymbolID, IndicatorDate)"
+        "CREATE INDEX IF NOT EXISTS idx_pricerange_symbol_date ON "
+        "PriceRange(SymbolID, IndicatorDate)"
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_marketcap_symbol_date ON MarketCapHistory(SymbolID, IndicatorDate)"
+        "CREATE INDEX IF NOT EXISTS idx_marketcap_symbol_date ON "
+        "MarketCapHistory(SymbolID, IndicatorDate)"
     )
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)"
@@ -290,7 +293,8 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     ]
 
     cursor.executemany(
-        "INSERT OR IGNORE INTO Symbols (SymbolName, FullName, SourceID, CoinGeckoName) VALUES (?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO Symbols (SymbolName, FullName, SourceID, "
+        "CoinGeckoName) VALUES (?, ?, ?, ?)",
         default_symbols,
     )
 

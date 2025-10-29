@@ -47,7 +47,8 @@ class FundingRateRepository:
                     """
                     MERGE INTO FundingRate AS target
                     USING (SELECT ? AS SymbolID, ? AS IndicatorDate) AS source
-                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate
+                       = source.IndicatorDate
                     WHEN MATCHED THEN
                         UPDATE SET FundingRate = ?, FundingTime = ?
                     WHEN NOT MATCHED THEN
@@ -68,7 +69,8 @@ class FundingRateRepository:
 
             self.conn.commit()
             app_logger.info(
-                f"Saved Funding Rate for SymbolID {symbol_id}: {funding_rate:.6f}%, Next: {funding_time}"
+                f"Saved Funding Rate for SymbolID {symbol_id}: "
+                f"{funding_rate:.6f}%, Next: {funding_time}"
             )
 
         except Exception as e:

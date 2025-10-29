@@ -40,10 +40,6 @@ select = [
     "RUF",    # ruff-specific rules
 ]
 
-ignore = [
-    "E501",   # Line too long (handled by formatter)
-]
-
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 

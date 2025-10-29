@@ -61,7 +61,8 @@ def save_macd_results(
                     USING (SELECT ? AS SymbolID, ? AS IndicatorDate,
                                  ? AS CurrentPrice, ? AS MACD, ? AS Signal, ? AS Histogram)
                         AS source (SymbolID, IndicatorDate, CurrentPrice, MACD, Signal, Histogram)
-                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate
+                       = source.IndicatorDate
                     WHEN MATCHED THEN
                         UPDATE SET CurrentPrice = source.CurrentPrice,
                                  MACD = source.MACD,

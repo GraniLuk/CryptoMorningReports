@@ -40,7 +40,8 @@ def save_marketcap_results(conn, sorted_results):
                 # SQL Server uses MERGE
                 query = """
                     MERGE INTO MarketCapHistory AS target
-                    USING (SELECT ? AS SymbolID, ? AS MarketCap, CAST(GETDATE() AS DATE) AS IndicatorDate)
+                    USING (SELECT ? AS SymbolID, ? AS MarketCap,
+                           CAST(GETDATE() AS DATE) AS IndicatorDate)
                         AS source (SymbolID, MarketCap, IndicatorDate)
                     ON target.SymbolID = source.SymbolID
                        AND target.IndicatorDate = source.IndicatorDate

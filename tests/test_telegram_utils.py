@@ -78,7 +78,8 @@ class TestTelegramUtils(unittest.TestCase):
         text = "Heading ## Title"
         first = enforce_markdown_v2(text)
         second = enforce_markdown_v2(first)
-        # Applying twice may introduce extra escaping because backslashes are themselves escapable; ensure second doesn't grow unbounded
+        # Applying twice may introduce extra escaping because backslashes are
+        # themselves escapable; ensure second doesn't grow unbounded
         assert len(second) - len(first) <= 2
 
 

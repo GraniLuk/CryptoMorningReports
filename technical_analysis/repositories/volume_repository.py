@@ -37,7 +37,8 @@ def save_volume_results(conn, sorted_results):
                 # SQL Server uses MERGE
                 query = """
                     MERGE INTO VolumeHistory AS target
-                    USING (SELECT ? AS SymbolID, ? AS Volume, CAST(GETDATE() AS DATE) AS IndicatorDate)
+                    USING (SELECT ? AS SymbolID, ? AS Volume,
+                           CAST(GETDATE() AS DATE) AS IndicatorDate)
                         AS source (SymbolID, Volume, IndicatorDate)
                     ON target.SymbolID = source.SymbolID
                        AND target.IndicatorDate = source.IndicatorDate

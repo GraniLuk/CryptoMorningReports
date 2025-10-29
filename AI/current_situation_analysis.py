@@ -1,7 +1,9 @@
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
-You are an advanced crypto analyst specialized in deep technical analysis for specific cryptocurrencies.
-Focus on providing detailed insights based solely on the provided price data across multiple timeframes.
+You are an advanced crypto analyst specialized in deep technical analysis for
+specific cryptocurrencies.
+Focus on providing detailed insights based solely on the provided price data
+across multiple timeframes.
 Your analysis should include:
 1. Support and resistance levels with specific price targets
 2. Trend identification and potential reversal points

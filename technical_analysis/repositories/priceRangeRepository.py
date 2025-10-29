@@ -53,7 +53,8 @@ def save_price_range_results(
                     USING (SELECT ? AS SymbolID, CAST(GETDATE() AS DATE) AS IndicatorDate,
                                  ? AS LowPrice, ? AS HighPrice, ? AS RangePercent)
                         AS source (SymbolID, IndicatorDate, LowPrice, HighPrice, RangePercent)
-                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate = source.IndicatorDate
+                    ON target.SymbolID = source.SymbolID AND target.IndicatorDate
+                       = source.IndicatorDate
                     WHEN MATCHED THEN
                         UPDATE SET LowPrice = source.LowPrice,
                                  HighPrice = source.HighPrice,

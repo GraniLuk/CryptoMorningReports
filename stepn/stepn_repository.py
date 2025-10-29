@@ -97,7 +97,8 @@ def save_stepn_results(
 
                 query = """
                     INSERT OR REPLACE INTO StepNResults
-                    (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
+                    (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value,
+                     Max24Value, Range24, RSI, TransactionsCount)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 cursor.execute(
@@ -124,7 +125,8 @@ def save_stepn_results(
                                CAST(GETDATE() AS DATE) AS Date, ? AS EMA14,
                                ? AS Min24Value, ? AS Max24Value, ? AS Range24,
                                ? AS RSI, ? AS TransactionsCount
-                    ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
+                    ) AS source (GMTPrice, GSTPrice, Ratio, Date, EMA14,
+                                Min24Value, Max24Value, Range24, RSI, TransactionsCount)
                     ON target.Date = source.Date
                     WHEN MATCHED THEN
                         UPDATE SET
@@ -138,9 +140,12 @@ def save_stepn_results(
                             RSI = source.RSI,
                             TransactionsCount = source.TransactionsCount
                     WHEN NOT MATCHED THEN
-                        INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14, Min24Value, Max24Value, Range24, RSI, TransactionsCount)
-                        VALUES (source.GMTPrice, source.GSTPrice, source.Ratio, source.Date,
-                                source.EMA14, source.Min24Value, source.Max24Value, source.Range24, source.RSI, source.TransactionsCount);
+                        INSERT (GMTPrice, GSTPrice, Ratio, Date, EMA14,
+                                Min24Value, Max24Value, Range24, RSI, TransactionsCount)
+                        VALUES (source.GMTPrice, source.GSTPrice, source.Ratio,
+                                source.Date,
+                                source.EMA14, source.Min24Value, source.Max24Value,
+                                source.Range24, source.RSI, source.TransactionsCount);
                 """
                 cursor.execute(
                     query,

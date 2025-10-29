@@ -125,7 +125,8 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
     for symbol in symbols:
         try:
             # Get 30 days of data for 14-period RSI calculation
-            # Need extra data for Wilder's smoothing to stabilize (14 for SMA init + 14+ for smoothing)
+            # Need extra data for Wilder's smoothing to stabilize
+            # (14 for SMA init + 14+ for smoothing)
             start_date = target_date - timedelta(days=30)
             candles = fetch_daily_candles(symbol, start_date, target_date, conn)
 
@@ -145,7 +146,8 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
             )
             df.set_index("Date", inplace=True)
 
-            # Normalize index to timezone-naive date objects (handle mixed datetime/date/timezone types)
+            # Normalize index to timezone-naive date objects
+            # (handle mixed datetime/date/timezone types)
             df.index = pd.to_datetime(df.index, utc=True).tz_localize(None).date
 
             df.sort_index(inplace=True)
@@ -186,9 +188,11 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                     if candles[-1].id is None:
                         # This should never happen after our fixes, but we check defensively
                         app_logger.error(
-                            f"Critical data integrity error: Candle for {symbol.symbol_name} "
-                            f"on {target_date} is missing database ID. RSI results cannot be saved. "
-                            f"Check fetch_daily_candle() and repository.get_candle() implementation."
+                            f"Critical data integrity error: Candle for "
+                            f"{symbol.symbol_name} on {target_date} is missing "
+                            f"database ID. RSI results cannot be saved. Check "
+                            f"fetch_daily_candle() and repository.get_candle() "
+                            f"implementation."
                         )
                     else:
                         try:
