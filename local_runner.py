@@ -1,5 +1,5 @@
 """Local runner for Azure Functions
-Run this script to test your functions locally without Azure Functions Core Tools
+Run this script to test your functions locally without Azure Functions Core Tools.
 """
 
 import asyncio
@@ -18,7 +18,7 @@ load_dotenv()
 
 
 async def main():
-    """Run the function locally"""
+    """Run the function locally."""
     # Check command line arguments
     report_type = "daily"  # default
 

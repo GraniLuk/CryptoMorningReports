@@ -11,7 +11,7 @@ class FifteenMinCandleRepository(CandleRepository):
         super().__init__(conn, table_name="FifteenMinCandles")
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
-        """Override to handle OpenTime column for SQLite"""
+        """Override to handle OpenTime column for SQLite."""
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
         if is_sqlite:

@@ -32,12 +32,12 @@ class Symbol:
 
     @staticmethod
     def get_symbol_names(symbols: list["Symbol"]) -> list[str]:
-        """Convert List of Symbols to List of symbol names"""
+        """Convert List of Symbols to List of symbol names."""
         return [symbol.symbol_name for symbol in symbols]
 
     @staticmethod
     def get_symbol_names_usd(symbols: list["Symbol"]) -> list[str]:
-        """Convert List of Symbols to List of symbol names with USD suffix"""
+        """Convert List of Symbols to List of symbol names with USD suffix."""
         return [f"{symbol.symbol_name}-USD" for symbol in symbols]
 
 
@@ -101,7 +101,7 @@ def fetch_symbols(conn) -> list[Symbol]:
 
 
 def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
-    """Fetches a specific symbol by name from the database
+    """Fetches a specific symbol by name from the database.
 
     Args:
         conn: Database connection

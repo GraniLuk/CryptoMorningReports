@@ -7,7 +7,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
-    """Saves RSI results to the database
+    """Saves RSI results to the database.
 
     Args:
         conn: Database connection
@@ -57,7 +57,7 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
 
 
 def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "daily") -> None:
-    """Saves RSI results to the database for different timeframes
+    """Saves RSI results to the database for different timeframes.
 
     Args:
         conn: Database connection
@@ -397,7 +397,7 @@ def _match_fifteen_min_rsi(
 
 
 def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str = "daily") -> dict:
-    """Fetches RSI values for current date, yesterday, and week ago for a symbol
+    """Fetches RSI values for current date, yesterday, and week ago for a symbol.
 
     Args:
         conn: Database connection

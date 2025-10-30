@@ -6,10 +6,10 @@ from source_repository import Symbol
 
 
 class CandleFetcher:
-    """Base class for fetching candles of different timeframes"""
+    """Base class for fetching candles of different timeframes."""
 
     def __init__(self, timeframe: str, fetch_function, repository_class):
-        """Initialize the candle fetcher
+        """Initialize the candle fetcher.
 
         Args:
             timeframe: String description of the timeframe (e.g., 'daily', 'hourly', '15min')
@@ -25,7 +25,7 @@ class CandleFetcher:
     def fetch_candles(
         self, symbols: list[Symbol], conn, end_time: datetime | None = None
     ) -> list[Candle]:
-        """Fetches candles for given symbols and returns a list of Candle objects
+        """Fetches candles for given symbols and returns a list of Candle objects.
 
         Args:
             symbols: List of Symbol objects
@@ -136,7 +136,7 @@ class CandleFetcher:
 
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):
         """Checks if all candles for the symbol are available in the database,
-        fetches missing ones from API
+        fetches missing ones from API.
 
         Args:
             symbol: Symbol object

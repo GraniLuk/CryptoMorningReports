@@ -19,7 +19,7 @@ def fetch_fifteen_minutes_candles_for_all_symbols(
     end_time: datetime | None = None,
     conn=None,
 ) -> list[Candle]:
-    """Fetches daily candles for given symbols and returns a list of Candle objects
+    """Fetches daily candles for given symbols and returns a list of Candle objects.
 
     Args:
         symbols: List of Symbol objects
@@ -43,7 +43,7 @@ def fetch_fifteen_minutes_candles_for_all_symbols(
 
 
 def calculate_fifteen_min_rsi(symbols: list[Symbol], conn):
-    """Calculate RSI for fifteen minute candles for all symbols"""
+    """Calculate RSI for fifteen minute candles for all symbols."""
 
     def fetch_candles_for_symbol(symbol, conn):
         repository = FifteenMinCandleRepository(conn)
@@ -53,7 +53,7 @@ def calculate_fifteen_min_rsi(symbols: list[Symbol], conn):
 
 
 class FifteenMinCandles(CandleFetcher):
-    """Class for handling fifteen minute candles"""
+    """Class for handling fifteen minute candles."""
 
     def __init__(self):
         super().__init__("fifteen_min", fetch_fifteen_min_candle, FifteenMinCandleRepository)

@@ -6,7 +6,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_sopr_results(conn, metrics: dict) -> None:
-    """Saves SOPR metrics to the database
+    """Saves SOPR metrics to the database.
 
     Args:
         conn: Database connection

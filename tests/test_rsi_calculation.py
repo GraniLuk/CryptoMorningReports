@@ -18,10 +18,10 @@ from technical_analysis.rsi import calculate_rsi_using_ema, calculate_rsi_using_
 
 
 class TestRSICalculationMethods:
-    """Test different RSI calculation methods"""
+    """Test different RSI calculation methods."""
 
     def test_rsi_simple_increasing_sequence(self):
-        """Test RSI calculation on a simple increasing sequence"""
+        """Test RSI calculation on a simple increasing sequence."""
         # Simple increasing prices should show high RSI (overbought)
         prices = pd.Series(
             [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115]
@@ -33,7 +33,7 @@ class TestRSICalculationMethods:
         assert rsi.iloc[-1] == 100.0
 
     def test_rsi_simple_decreasing_sequence(self):
-        """Test RSI calculation on a simple decreasing sequence"""
+        """Test RSI calculation on a simple decreasing sequence."""
         # Simple decreasing prices should show low RSI (oversold)
         prices = pd.Series(
             [115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100]
@@ -45,7 +45,7 @@ class TestRSICalculationMethods:
         assert rsi.iloc[-1] == 0.0
 
     def test_rsi_stable_prices(self):
-        """Test RSI calculation on stable prices"""
+        """Test RSI calculation on stable prices."""
         # Stable prices should show RSI around 50
         prices = pd.Series([100] * 20)
 
@@ -57,7 +57,7 @@ class TestRSICalculationMethods:
         assert pd.isna(rsi.iloc[-1]) or abs(rsi.iloc[-1] - 50) < 1
 
     def test_rsi_period_14_default(self):
-        """Test that default period is 14"""
+        """Test that default period is 14."""
         prices = pd.Series(
             [
                 100,
@@ -87,7 +87,7 @@ class TestRSICalculationMethods:
         pd.testing.assert_series_equal(rsi_default, rsi_14)
 
     def test_rsi_insufficient_data(self):
-        """Test RSI with insufficient data points"""
+        """Test RSI with insufficient data points."""
         prices = pd.Series([100, 101, 102])
 
         rsi = calculate_rsi_using_rma(prices, periods=14)
@@ -97,11 +97,11 @@ class TestRSICalculationMethods:
 
 
 class TestRSIAgainstTradingView:
-    """Test RSI calculations against TradingView reference values"""
+    """Test RSI calculations against TradingView reference values."""
 
     @pytest.fixture
     def get_virtual_data(self):
-        """Fixture to fetch VIRTUAL symbol data from database"""
+        """Fixture to fetch VIRTUAL symbol data from database."""
         load_dotenv()
         conn = connect_to_sql()
         symbols = fetch_symbols(conn)
@@ -185,7 +185,7 @@ class TestRSIAgainstTradingView:
         )
 
     def test_rsi_calculation_consistency(self, get_virtual_data):
-        """Test that RSI calculation is consistent across multiple runs"""
+        """Test that RSI calculation is consistent across multiple runs."""
         candles, _symbol, _target_date = get_virtual_data
 
         if not candles:
@@ -214,10 +214,10 @@ class TestRSIAgainstTradingView:
 
 
 class TestRSIEdgeCases:
-    """Test RSI calculation edge cases"""
+    """Test RSI calculation edge cases."""
 
     def test_rsi_with_nan_values(self):
-        """Test RSI handles NaN values in price data"""
+        """Test RSI handles NaN values in price data."""
         prices = pd.Series(
             [100, 101, None, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115]
         )
@@ -229,7 +229,7 @@ class TestRSIEdgeCases:
         assert isinstance(rsi, pd.Series)
 
     def test_rsi_with_negative_prices(self):
-        """Test RSI with negative prices (invalid for crypto but test edge case)"""
+        """Test RSI with negative prices (invalid for crypto but test edge case)."""
         prices = pd.Series(
             [-100, -99, -98, -97, -96, -95, -94, -93, -92, -91, -90, -89, -88, -87, -86, -85]
         )
@@ -241,7 +241,7 @@ class TestRSIEdgeCases:
         assert rsi.iloc[-1] == 100.0
 
     def test_rsi_with_extreme_volatility(self):
-        """Test RSI with extreme price swings"""
+        """Test RSI with extreme price swings."""
         prices = pd.Series(
             [100, 200, 50, 300, 25, 400, 10, 500, 5, 600, 1, 700, 0.5, 800, 0.1, 900]
         )
@@ -254,10 +254,10 @@ class TestRSIEdgeCases:
 
 
 class TestRSIDataRequirements:
-    """Test that RSI calculations use sufficient data for accuracy"""
+    """Test that RSI calculations use sufficient data for accuracy."""
 
     def test_rsi_requires_sufficient_data(self):
-        """Test that RSI with insufficient data differs from RSI with sufficient data"""
+        """Test that RSI with insufficient data differs from RSI with sufficient data."""
         load_dotenv()
         conn = connect_to_sql()
         symbols = fetch_symbols(conn)
@@ -294,10 +294,10 @@ class TestRSIDataRequirements:
 
 
 class TestRSIMethodComparison:
-    """Compare different RSI calculation methods"""
+    """Compare different RSI calculation methods."""
 
     def test_rma_vs_ema_methods(self):
-        """Compare RMA and EMA RSI calculation methods"""
+        """Compare RMA and EMA RSI calculation methods."""
         prices = pd.Series(
             [
                 100.0,

@@ -7,7 +7,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_volume_results(conn, sorted_results):
-    """Saves volume results to the database once per day
+    """Saves volume results to the database once per day.
 
     Args:
         conn: Database connection
@@ -63,7 +63,7 @@ def save_volume_results(conn, sorted_results):
 
 def get_combined_market_cap_and_volume_data(self):
     """Fetch data from CombinedMarketCapAndVolumeView
-    Returns: List of dictionaries containing market cap and volume data
+    Returns: List of dictionaries containing market cap and volume data.
     """
     try:
         with pyodbc.connect(self.connection_string) as conn:

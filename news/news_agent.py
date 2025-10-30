@@ -8,7 +8,7 @@ from news.clients import GeminiClient, PerplexityClient
 
 
 def create_ai_client(api_type, api_key):
-    """Factory function to create appropriate AI client based on type
+    """Factory function to create appropriate AI client based on type.
 
     Args:
         api_type (str): "perplexity" or "gemini"

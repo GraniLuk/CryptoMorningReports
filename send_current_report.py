@@ -1,5 +1,4 @@
-"""Send current situation report for a specific symbol to Telegram
-"""
+"""Send current situation report for a specific symbol to Telegram."""
 
 import asyncio
 import os
@@ -13,7 +12,7 @@ from shared_code.telegram import send_telegram_message
 
 
 async def send_current_report(symbol: str):
-    """Generate and send current situation report to Telegram"""
+    """Generate and send current situation report to Telegram."""
     load_dotenv()
 
     # Check if Telegram is enabled

@@ -9,7 +9,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def _is_sqlite() -> bool:
-    """Check if we're using SQLite database"""
+    """Check if we're using SQLite database."""
     return os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
 
@@ -54,7 +54,7 @@ def save_stepn_results(
     rsi: float,
     transactions_count: int,
 ) -> None:
-    """Saves STEPN results to the database
+    """Saves STEPN results to the database.
 
     Args:
         conn: Database connection

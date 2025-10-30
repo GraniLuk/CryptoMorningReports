@@ -99,8 +99,7 @@ class DailyCandleRepository(CandleRepository):
         self.conn.commit()
 
     def get_candle(self, symbol: Symbol, end_date: datetime) -> Candle | None:
-        """Override get_candle for DailyCandles table to query by Date column.
-        """
+        """Override get_candle for DailyCandles table to query by Date column."""
         # Extract date portion for comparison
         date_value = (
             end_date.date().isoformat() if isinstance(end_date, datetime) else str(end_date)

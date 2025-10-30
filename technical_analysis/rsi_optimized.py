@@ -1,5 +1,4 @@
-"""Optimized version of RSI calculation for multiple timeframes
-"""
+"""Optimized version of RSI calculation for multiple timeframes."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -146,7 +145,7 @@ def get_optimized_rsi_for_symbol_timeframe(
 
 # Function to test the optimized implementation
 def test_optimized_rsi():
-    """Test the optimized RSI calculation"""
+    """Test the optimized RSI calculation."""
     # Load environment and connect to database
     load_dotenv()
     conn = connect_to_sql()

@@ -1,5 +1,4 @@
-"""Fetch and save derivatives market data (Open Interest and Funding Rate) for symbols.
-"""
+"""Fetch and save derivatives market data (Open Interest and Funding Rate) for symbols."""
 
 import sys
 from pathlib import Path

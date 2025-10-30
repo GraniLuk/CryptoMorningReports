@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 
 def save_to_excel(df, prefix, symbol_name=None):
-    """Helper function to save DataFrame to Excel with consistent naming"""
+    """Helper function to save DataFrame to Excel with consistent naming."""
     current_date = datetime.now(UTC).strftime("%Y%m%d")
     if symbol_name:
         filename = f"{prefix}_{symbol_name}_{current_date}.xlsx"

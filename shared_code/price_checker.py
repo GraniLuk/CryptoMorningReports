@@ -57,7 +57,7 @@ def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) 
 
 
 def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
-    """Fetch hourly candle data for a symbol at the specified end time
+    """Fetch hourly candle data for a symbol at the specified end time.
 
     Args:
         symbol: Symbol object
@@ -183,7 +183,7 @@ def fetch_hourly_candles(
 
 
 def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
-    """Fetch 15-minute candle data for a symbol at the specified end time
+    """Fetch 15-minute candle data for a symbol at the specified end time.
 
     Args:
         symbol: Symbol object

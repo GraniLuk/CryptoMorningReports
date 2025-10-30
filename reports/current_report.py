@@ -124,7 +124,7 @@ Specify timeframes for all predictions (in hours/days).
 
 
 def format_candle_data(candles):
-    """Format candle data for AI prompt"""
+    """Format candle data for AI prompt."""
     if not candles:
         return "No data available"
 
@@ -142,7 +142,7 @@ def format_candle_data(candles):
 
 
 def format_rsi_data(rsi_df):
-    """Format RSI data for AI prompt"""
+    """Format RSI data for AI prompt."""
     if rsi_df is None or rsi_df.empty:
         return "No RSI data available"
 
@@ -166,7 +166,7 @@ def format_rsi_data(rsi_df):
 
 
 def format_moving_averages_data(ma_df):
-    """Format moving averages data for AI prompt"""
+    """Format moving averages data for AI prompt."""
     if ma_df is None or ma_df.empty:
         return "No moving averages data available"
 

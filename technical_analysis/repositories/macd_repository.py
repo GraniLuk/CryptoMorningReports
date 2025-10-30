@@ -16,7 +16,7 @@ def save_macd_results(
     histogram: float,
     indicator_date: date,
 ) -> None:
-    """Saves MACD results to the database
+    """Saves MACD results to the database.
 
     Args:
         conn: Database connection
@@ -92,7 +92,7 @@ def save_macd_results(
 
 
 def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
-    """Fetches all MACD records from yesterday
+    """Fetches all MACD records from yesterday.
 
     Args:
         conn: Database connection
@@ -135,7 +135,7 @@ def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
 
 def get_macd_with_crossover_data(self):
     """Fetch data from MACDWithCrossoverView
-    Returns: List of dictionaries containing MACD data with crossover signals
+    Returns: List of dictionaries containing MACD data with crossover signals.
     """
     try:
         with pyodbc.connect(self.connection_string) as conn:

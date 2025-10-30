@@ -148,7 +148,7 @@ class CandleRepository:
 
     def get_min_candle_date(self) -> datetime | None:
         """Fetches the earliest date from the candles table
-        Returns None if table is empty
+        Returns None if table is empty.
         """
         sql = f"""
         SELECT MIN(EndDate)

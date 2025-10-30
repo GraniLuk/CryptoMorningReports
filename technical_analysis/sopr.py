@@ -13,7 +13,7 @@ API_BASE = "https://bitcoin-data.com/"
 
 
 def fetch_sopr_metrics(conn) -> PrettyTable | None:
-    """Retrieves yesterday's SOPR variants from BGeometrics API and saves to database
+    """Retrieves yesterday's SOPR variants from BGeometrics API and saves to database.
 
     Args:
         conn: Database connection
