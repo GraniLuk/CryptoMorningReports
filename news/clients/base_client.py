@@ -10,8 +10,7 @@ class AIClient(ABC):
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
     ) -> str:
-        """
-        Get detailed crypto analysis with news context.
+        """Get detailed crypto analysis with news context.
 
         Args:
             indicators_message (str): Indicators message for analysis
@@ -20,12 +19,12 @@ class AIClient(ABC):
 
         Returns:
             str: Analysis result or error message
+
         """
 
     @abstractmethod
     def highlight_articles(self, user_crypto_list, news_feeded) -> str:
-        """
-        Highlight relevant articles based on user crypto list.
+        """Highlight relevant articles based on user crypto list.
 
         Args:
             user_crypto_list (list): List of user crypto symbols
@@ -33,4 +32,5 @@ class AIClient(ABC):
 
         Returns:
             str: Highlighted articles or error message
+
         """

@@ -1,5 +1,4 @@
-"""
-Fetch and save derivatives market data (Open Interest and Funding Rate) for symbols.
+"""Fetch and save derivatives market data (Open Interest and Funding Rate) for symbols.
 """
 
 import sys
@@ -26,8 +25,7 @@ from technical_analysis.repositories.open_interest_repository import (
 
 
 def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
-    """
-    Fetch Open Interest and Funding Rate for all symbols and save to database.
+    """Fetch Open Interest and Funding Rate for all symbols and save to database.
 
     Args:
         symbols: List of Symbol objects to fetch data for
@@ -35,6 +33,7 @@ def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
 
     Returns:
         PrettyTable with derivatives data
+
     """
     oi_repo = OpenInterestRepository(conn)
     fr_repo = FundingRateRepository(conn)

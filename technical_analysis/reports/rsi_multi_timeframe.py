@@ -24,8 +24,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ) -> pd.DataFrame | None:
-    """
-    Gets RSI data for a symbol in the specified timeframe.
+    """Gets RSI data for a symbol in the specified timeframe.
     If RSI values are missing in the database, it calculates them only for the requested period.
 
     Args:
@@ -39,6 +38,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
 
     Raises:
         TypeError: If the function returns anything other than DataFrame or None
+
     """
     # Calculate appropriate start date based on the timeframe
     target_date = datetime.now(UTC).date()
@@ -204,8 +204,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
 
 
 def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str] | None = None):
-    """
-    Creates a multi-timeframe RSI table for a symbol
+    """Creates a multi-timeframe RSI table for a symbol
 
     Args:
         symbol: Symbol object
@@ -214,6 +213,7 @@ def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str]
 
     Returns:
         PrettyTable: Formatted table with RSI values
+
     """
     if timeframes is None:
         timeframes = ["daily", "hourly", "fifteen_min"]
@@ -315,8 +315,7 @@ def create_multi_timeframe_rsi_tables(
     conn,
     timeframes: list[str] | None = None,
 ) -> dict[str, PrettyTable]:
-    """
-    Creates multi-timeframe RSI tables for multiple symbols
+    """Creates multi-timeframe RSI tables for multiple symbols
 
     Args:
         symbols: List of Symbol objects
@@ -325,6 +324,7 @@ def create_multi_timeframe_rsi_tables(
 
     Returns:
         Dict[str, PrettyTable]: Dictionary mapping timeframes to formatted tables with RSI values
+
     """
     if timeframes is None:
         timeframes = ["daily", "hourly", "fifteen_min"]
@@ -380,8 +380,7 @@ def create_multi_timeframe_rsi_tables(
 
 
 def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
-    """
-    Creates a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes
+    """Creates a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes
 
     Args:
         symbols: List of Symbol objects
@@ -389,6 +388,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
 
     Returns:
         PrettyTable: Consolidated table with RSI values across timeframes
+
     """
     # Get the most recent data for each symbol and timeframe
     data = []
@@ -457,8 +457,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
 
 
 def _get_candle_repository(conn, timeframe: str):
-    """
-    Returns the appropriate candle repository based on timeframe.
+    """Returns the appropriate candle repository based on timeframe.
     """
     timeframe_lower = timeframe.lower()
     if timeframe_lower == "daily":
@@ -472,8 +471,7 @@ def _get_candle_repository(conn, timeframe: str):
 
 
 def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str):
-    """
-    Calculate RSI for the given candles and save to database.
+    """Calculate RSI for the given candles and save to database.
     Returns list of candles with RSI data in the format expected by the calling function.
     """
     if not candles:

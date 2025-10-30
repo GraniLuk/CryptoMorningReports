@@ -1,5 +1,4 @@
-"""
-Update latest daily candles to ensure fresh data for technical analysis.
+"""Update latest daily candles to ensure fresh data for technical analysis.
 This module ensures that daily reports use the most recent market data.
 """
 
@@ -16,8 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_last_candle_date(conn, symbol):
-    """
-    Get the most recent date in DailyCandles table for a specific symbol.
+    """Get the most recent date in DailyCandles table for a specific symbol.
 
     Args:
         conn: Database connection
@@ -25,6 +23,7 @@ def get_last_candle_date(conn, symbol):
 
     Returns:
         date object of the last candle, or None if no candles exist
+
     """
     cursor = conn.cursor()
     cursor.execute(
@@ -48,8 +47,7 @@ def get_last_candle_date(conn, symbol):
 
 
 def update_latest_daily_candles(conn, days_to_update=3):
-    """
-    Update missing daily candles for all symbols up to today.
+    """Update missing daily candles for all symbols up to today.
 
     Intelligently fetches only missing data:
     - Checks database for last available date per symbol
@@ -65,6 +63,7 @@ def update_latest_daily_candles(conn, days_to_update=3):
     Args:
         conn: Database connection
         days_to_update: Fallback - days to fetch if no data exists (default 3)
+
     """
     logger.info("Checking database for missing daily candles...")
 
@@ -133,8 +132,7 @@ def update_latest_daily_candles(conn, days_to_update=3):
 
 
 def get_last_hourly_candle_time(conn, symbol):
-    """
-    Get the most recent timestamp in HourlyCandles table for a specific symbol.
+    """Get the most recent timestamp in HourlyCandles table for a specific symbol.
 
     Args:
         conn: Database connection
@@ -142,6 +140,7 @@ def get_last_hourly_candle_time(conn, symbol):
 
     Returns:
         datetime object of the last candle, or None if no candles exist
+
     """
     cursor = conn.cursor()
     cursor.execute(
@@ -175,8 +174,7 @@ def get_last_hourly_candle_time(conn, symbol):
 
 
 def update_latest_hourly_candles(conn, hours_to_update=24):
-    """
-    Update missing hourly candles for all symbols up to current hour.
+    """Update missing hourly candles for all symbols up to current hour.
 
     Intelligently fetches only missing data:
     - Checks database for last available hour per symbol
@@ -186,6 +184,7 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
     Args:
         conn: Database connection
         hours_to_update: Fallback - hours to fetch if no data exists (default 24)
+
     """
     logger.info("Checking database for missing hourly candles...")
 

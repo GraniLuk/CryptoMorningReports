@@ -1,5 +1,4 @@
-"""
-Prompt templates for crypto analysis and article curation.
+"""Prompt templates for crypto analysis and article curation.
 
 This module contains all system and user prompts used by AI clients
 for analyzing cryptocurrency markets and highlighting relevant articles.

@@ -1,5 +1,4 @@
-"""
-Test RSI calculation accuracy against TradingView values.
+"""Test RSI calculation accuracy against TradingView values.
 
 This module tests RSI calculations using different methods (RMA/EMA) and compares
 results with known TradingView values to ensure accuracy.
@@ -120,8 +119,7 @@ class TestRSIAgainstTradingView:
         return candles, virtual, target_date
 
     def test_virtual_rsi_against_tradingview(self, get_virtual_data):
-        """
-        Test VIRTUAL RSI calculation against TradingView value.
+        """Test VIRTUAL RSI calculation against TradingView value.
 
         TradingView shows RSI = 69.01 for today's candle
         Settings: RSI length 14, source close, Type RMA (default)
@@ -340,7 +338,7 @@ class TestRSIMethodComparison:
 
 
 def test_rsi_integration_with_database():
-    """Integration test: Verify RSI calculation and storage workflow"""
+    """Integration test: Verify RSI calculation and storage workflow."""
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)

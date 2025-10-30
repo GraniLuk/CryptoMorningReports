@@ -22,11 +22,11 @@ class PerplexityClient(AIClient):
     """Client for Perplexity AI API."""
 
     def __init__(self, api_key):
-        """
-        Initialize Perplexity client.
+        """Initialize Perplexity client.
 
         Args:
             api_key (str): Perplexity API key
+
         """
         self.api_key = api_key
         self.headers = {
@@ -36,8 +36,7 @@ class PerplexityClient(AIClient):
         self.url = "https://api.perplexity.ai/chat/completions"
 
     def _make_request(self, model: str, messages: list[dict[str, str]]) -> tuple[bool, Any]:
-        """
-        Make a request to Perplexity API.
+        """Make a request to Perplexity API.
 
         Args:
             model (str): Model name to use
@@ -46,6 +45,7 @@ class PerplexityClient(AIClient):
         Returns:
             tuple[bool, any]: (success, result) where result is content on
                 success or error message on failure
+
         """
         data = {"model": model, "messages": messages}
 

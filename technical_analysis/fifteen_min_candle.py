@@ -19,8 +19,7 @@ def fetch_fifteen_minutes_candles_for_all_symbols(
     end_time: datetime | None = None,
     conn=None,
 ) -> list[Candle]:
-    """
-    Fetches daily candles for given symbols and returns a list of Candle objects
+    """Fetches daily candles for given symbols and returns a list of Candle objects
 
     Args:
         symbols: List of Symbol objects
@@ -30,6 +29,7 @@ def fetch_fifteen_minutes_candles_for_all_symbols(
 
     Returns:
         List of Candle objects
+
     """
     end_time = end_time or datetime.now(UTC)
     start_time = start_time or (end_time - timedelta(days=1))

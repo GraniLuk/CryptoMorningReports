@@ -1,5 +1,4 @@
-"""
-Fetch live cryptocurrency data from Binance and populate local SQLite database.
+"""Fetch live cryptocurrency data from Binance and populate local SQLite database.
 This fetches real market data for local development without Azure SQL.
 """
 
@@ -29,13 +28,13 @@ def get_sqlite_connection(db_path=None):
 
 
 def fetch_binance_klines(symbol, interval, limit=100):
-    """
-    Fetch candle data from Binance.
+    """Fetch candle data from Binance.
 
     Args:
         symbol: Trading pair (e.g., "BTCUSDT")
         interval: Candle interval (e.g., Client.KLINE_INTERVAL_1HOUR)
         limit: Number of candles to fetch
+
     """
     try:
         client = Client()  # No API key needed for public data

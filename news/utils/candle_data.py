@@ -10,8 +10,7 @@ from technical_analysis.utilities.candle_formatter import (
 
 
 def fetch_and_format_candle_data(conn) -> str:
-    """
-    Fetch and format recent intraday candle data for all tracked symbols.
+    """Fetch and format recent intraday candle data for all tracked symbols.
 
     This provides recent price action for intraday momentum analysis,
     complementing the longer-term indicators already provided.
@@ -21,6 +20,7 @@ def fetch_and_format_candle_data(conn) -> str:
 
     Returns:
         str: Formatted candle data string for AI prompts, or error message.
+
     """
     if not conn:
         return "No price data available (database connection not provided)."

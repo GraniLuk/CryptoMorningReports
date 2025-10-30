@@ -18,8 +18,7 @@ load_dotenv()  # Load environment variables from .env file
 
 
 class SQLiteRow:
-    """
-    Custom row class that mimics pyodbc.Row behavior.
+    """Custom row class that mimics pyodbc.Row behavior.
     Supports both index and name-based access, and converts date strings to datetime objects.
     """
 
@@ -73,8 +72,7 @@ def dict_factory(cursor, row):
 
 
 class SQLiteConnectionWrapper:
-    """
-    Wrapper for SQLite connection to make it compatible with pyodbc-style code.
+    """Wrapper for SQLite connection to make it compatible with pyodbc-style code.
     Provides a cursor() method that supports context manager protocol.
     Also supports direct execute() calls like pyodbc.
     Automatically converts date strings to datetime objects.
@@ -90,8 +88,7 @@ class SQLiteConnectionWrapper:
         return SQLiteCursorWrapper(self._conn.cursor())
 
     def execute(self, sql, params=None):
-        """
-        Execute SQL directly on the connection (pyodbc compatibility).
+        """Execute SQL directly on the connection (pyodbc compatibility).
         Returns a cursor with the results.
         """
         cursor = self._conn.cursor()
@@ -139,8 +136,7 @@ class SQLiteCursorWrapper:
 
 
 def connect_to_sql_sqlite(db_path=None):
-    """
-    Connect to local SQLite database.
+    """Connect to local SQLite database.
     Returns a connection compatible with the existing codebase.
     """
     if db_path is None:
@@ -176,8 +172,7 @@ def connect_to_sql_sqlite(db_path=None):
 
 
 def connect_to_sql(max_retries=3):
-    """
-    Connect to database based on DATABASE_TYPE environment variable.
+    """Connect to database based on DATABASE_TYPE environment variable.
     Supports both SQLite (local) and Azure SQL (cloud).
     """
     database_type = os.getenv("DATABASE_TYPE", "azuresql").lower()

@@ -1,5 +1,4 @@
-"""
-Add StepNResults table to existing SQLite database.
+"""Add StepNResults table to existing SQLite database.
 This migration adds support for STEPN token metrics tracking.
 """
 
@@ -9,7 +8,6 @@ from pathlib import Path
 
 def migrate_add_stepn_table(db_path="./local_crypto.db"):
     """Add StepNResults table to existing database"""
-
     if not Path(db_path).exists():
         print(f"❌ Database not found: {db_path}")
         print("   Please run: python -m database.init_sqlite")

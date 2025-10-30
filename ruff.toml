@@ -38,6 +38,7 @@ select = [
     "PTH",    # flake8-use-pathlib
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    "D",      # pydocstyle - docstring conventions
 ]
 
 # Allow unused variables when underscore-prefixed

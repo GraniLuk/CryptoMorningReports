@@ -39,14 +39,14 @@ class FuturesMetrics:
 
 
 def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
-    """
-    Fetch Open Interest and Funding Rate from Binance Futures.
+    """Fetch Open Interest and Funding Rate from Binance Futures.
 
     Args:
         symbol: Symbol object with binance_name property
 
     Returns:
         FuturesMetrics object if successful, None otherwise
+
     """
     client = BinanceClient()
 
@@ -223,8 +223,7 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> C
 
 
 def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
-    """
-    Fetch open, close, high, low prices and volume from Binance for the specified hour.
+    """Fetch open, close, high, low prices and volume from Binance for the specified hour.
 
     Args:
         symbol: Symbol object with binance_name property
@@ -232,6 +231,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
 
     Returns:
         Candle object if successful, None otherwise
+
     """
     client = BinanceClient()
 
@@ -278,8 +278,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
 
 
 def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
-    """
-    Fetch open, close, high, low prices and volume from Binance for the
+    """Fetch open, close, high, low prices and volume from Binance for the
     specified 15-minute interval.
 
     Args:
@@ -288,6 +287,7 @@ def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candl
 
     Returns:
         Candle object if successful, None otherwise
+
     """
     client = BinanceClient()
 

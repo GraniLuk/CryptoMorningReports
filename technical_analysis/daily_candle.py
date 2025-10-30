@@ -17,8 +17,7 @@ def fetch_daily_candles(
     start_date: date | None = None,
     end_date: date | None = None,
 ) -> list[Candle]:
-    """
-    Fetches daily candles for given symbols and returns a list of Candle objects
+    """Fetches daily candles for given symbols and returns a list of Candle objects
 
     Args:
         symbols: List of Symbol objects
@@ -28,6 +27,7 @@ def fetch_daily_candles(
 
     Returns:
         List of Candle objects
+
     """
     end_date = end_date or datetime.now(UTC).date()
     start_date = start_date or (end_date - timedelta(days=7))

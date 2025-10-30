@@ -131,8 +131,7 @@ def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
 
 
 def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) -> Candle | None:
-    """
-    Fetch open, close, high, low prices and volume from KuCoin for the specified hour.
+    """Fetch open, close, high, low prices and volume from KuCoin for the specified hour.
 
     Args:
         symbol: Symbol object with kucoin_name property
@@ -140,6 +139,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) 
 
     Returns:
         Candle object if successful, None otherwise
+
     """
     client = KucoinClient()
     # Handle end_time parameter
@@ -191,8 +191,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) 
 
 
 def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
-    """
-    Fetch open, close, high, low prices and volume from KuCoin for the specified 15-minute interval.
+    """Fetch open, close, high, low prices and volume from KuCoin for the specified 15-minute interval.
 
     Args:
         symbol: Symbol object with kucoin_name property
@@ -200,6 +199,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle
 
     Returns:
         Candle object if successful, None otherwise
+
     """
     client = KucoinClient()
 

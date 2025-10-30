@@ -1,5 +1,4 @@
-"""
-AI client orchestrator for crypto analysis.
+"""AI client orchestrator for crypto analysis.
 
 This module provides a factory function to create AI clients and maintains
 backward compatibility with legacy function interfaces.
@@ -9,8 +8,7 @@ from news.clients import GeminiClient, PerplexityClient
 
 
 def create_ai_client(api_type, api_key):
-    """
-    Factory function to create appropriate AI client based on type
+    """Factory function to create appropriate AI client based on type
 
     Args:
         api_type (str): "perplexity" or "gemini"
@@ -18,6 +16,7 @@ def create_ai_client(api_type, api_key):
 
     Returns:
         AIClient: An instance of the appropriate AI client
+
     """
     if api_type.lower() == "perplexity":
         return PerplexityClient(api_key)

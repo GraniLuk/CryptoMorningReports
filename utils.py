@@ -8,6 +8,7 @@ def clean_symbol(symbol: str) -> str:
         symbol (str): Trading symbol like 'BTCUSDT'
     Returns:
         str: Cleaned symbol string
+
     """
     if not symbol:
         return ""

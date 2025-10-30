@@ -57,8 +57,7 @@ def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) 
 
 
 def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
-    """
-    Fetch hourly candle data for a symbol at the specified end time
+    """Fetch hourly candle data for a symbol at the specified end time
 
     Args:
         symbol: Symbol object
@@ -67,6 +66,7 @@ def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle
 
     Returns:
         Candle object if successful, None otherwise
+
     """
     # Ensure end_time is timezone-aware
     if end_time.tzinfo is None:
@@ -108,8 +108,7 @@ def _fetch_hourly_candle_from_source(symbol: Symbol, timestamp: datetime) -> Can
 def fetch_hourly_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> list[Candle]:
-    """
-    Fetch multiple hourly candles for a given symbol between start_time and end_time.
+    """Fetch multiple hourly candles for a given symbol between start_time and end_time.
     If a database connection is provided, attempts to fetch from database first.
     Will check if all expected candles are available and fetch missing ones.
 
@@ -121,8 +120,8 @@ def fetch_hourly_candles(
 
     Returns:
         List of Candle objects
-    """
 
+    """
     if not start_time:
         start_time = datetime.now(UTC) - timedelta(days=1)  # Default to 1 day back
     if not end_time:
@@ -184,8 +183,7 @@ def fetch_hourly_candles(
 
 
 def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
-    """
-    Fetch 15-minute candle data for a symbol at the specified end time
+    """Fetch 15-minute candle data for a symbol at the specified end time
 
     Args:
         symbol: Symbol object
@@ -194,6 +192,7 @@ def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> C
 
     Returns:
         Candle object if successful, None otherwise
+
     """
     end_time = end_time or datetime.now(UTC)
     # Ensure end_time is timezone-aware
@@ -228,8 +227,7 @@ def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> C
 def fetch_fifteen_min_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> list[Candle]:
-    """
-    Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
+    """Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
     If a database connection is provided, attempts to fetch from database first.
     Will check if all expected candles are available and fetch missing ones.
 
@@ -241,6 +239,7 @@ def fetch_fifteen_min_candles(
 
     Returns:
         List of Candle objects
+
     """
     end_time = end_time or datetime.now(UTC)
 
@@ -312,8 +311,7 @@ def fetch_fifteen_min_candles(
 def fetch_daily_candles(
     symbol: Symbol, start_date: date, end_date: date | None = None, conn=None
 ) -> list[Candle]:
-    """
-    Fetch multiple daily candles for a given symbol between start_date and end_date.
+    """Fetch multiple daily candles for a given symbol between start_date and end_date.
     If a database connection is provided, attempts to fetch from database first.
     """
     if end_date is None:

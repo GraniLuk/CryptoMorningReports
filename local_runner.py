@@ -1,5 +1,4 @@
-"""
-Local runner for Azure Functions
+"""Local runner for Azure Functions
 Run this script to test your functions locally without Azure Functions Core Tools
 """
 

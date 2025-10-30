@@ -11,8 +11,7 @@ class DailyCandleRepository(CandleRepository):
         super().__init__(conn, table_name="DailyCandles")
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
-        """
-        Override save_candle for DailyCandles table which has both Date and EndDate columns.
+        """Override save_candle for DailyCandles table which has both Date and EndDate columns.
         Date is the date portion only, EndDate is the full datetime.
         """
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
@@ -100,8 +99,7 @@ class DailyCandleRepository(CandleRepository):
         self.conn.commit()
 
     def get_candle(self, symbol: Symbol, end_date: datetime) -> Candle | None:
-        """
-        Override get_candle for DailyCandles table to query by Date column.
+        """Override get_candle for DailyCandles table to query by Date column.
         """
         # Extract date portion for comparison
         date_value = (

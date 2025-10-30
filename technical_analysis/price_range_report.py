@@ -12,8 +12,7 @@ from technical_analysis.repositories.priceRangeRepository import (
 
 
 def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
-    """
-    Calculate 24-hour price range using hourly candles.
+    """Calculate 24-hour price range using hourly candles.
 
     Fetches hourly candles for the last 24 hours. If hourly data is missing from the database,
     it will automatically fetch from the exchange API (Binance/KuCoin).

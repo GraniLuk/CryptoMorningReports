@@ -54,8 +54,7 @@ def save_stepn_results(
     rsi: float,
     transactions_count: int,
 ) -> None:
-    """
-    Saves STEPN results to the database
+    """Saves STEPN results to the database
 
     Args:
         conn: Database connection
@@ -68,6 +67,7 @@ def save_stepn_results(
         range_24h (float, optional): Range in the last 24 hours
         rsi (float, optional): RSI calculated based on EMA
         transactions_count (int, optional): Number of transactions from previous day
+
     """
     try:
         if conn:
@@ -176,14 +176,14 @@ def save_stepn_results(
 def fetch_stepn_results_last_14_days(
     conn,
 ) -> list[tuple[float, float, float, date]] | None:
-    """
-    Fetches STEPN results from the last 14 days from the database.
+    """Fetches STEPN results from the last 14 days from the database.
 
     Args:
         conn: Database connection
 
     Returns:
         list of tuples: Each tuple contains the columns from the StepNResults table.
+
     """
     try:
         if conn:

@@ -1,5 +1,4 @@
-"""
-Utility functions for formatting candle data for AI prompts
+"""Utility functions for formatting candle data for AI prompts
 """
 
 from datetime import UTC, datetime, timedelta
@@ -12,8 +11,7 @@ from technical_analysis.hourly_candle import fetch_hourly_candles
 def get_candle_data(
     symbols: list[Symbol], conn, hourly_limit: int = 24, minute_limit: int = 32
 ) -> dict:
-    """
-    Fetch hourly and 15-minute candle data for cryptocurrencies
+    """Fetch hourly and 15-minute candle data for cryptocurrencies
 
     Args:
         symbols: List of Symbol objects
@@ -23,6 +21,7 @@ def get_candle_data(
 
     Returns:
         dict: Dictionary containing formatted candle data for each symbol
+
     """
     result = {}
 
@@ -93,8 +92,7 @@ def get_candle_data(
 
 
 def format_candle_data_for_prompt(candle_data: dict, max_display_candles: int = 5) -> str:
-    """
-    Format candle data as a string for prompts
+    """Format candle data as a string for prompts
 
     Args:
         candle_data: Dictionary of candle data by symbol
@@ -102,6 +100,7 @@ def format_candle_data_for_prompt(candle_data: dict, max_display_candles: int = 
 
     Returns:
         str: Formatted string for prompt
+
     """
     formatted_text = ""
 

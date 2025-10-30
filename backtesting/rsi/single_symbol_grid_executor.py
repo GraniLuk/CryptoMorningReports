@@ -11,8 +11,7 @@ from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def run_grid_search_for_symbol(conn, symbol):
-    """
-    Execute the strategy for a single symbol over a range of parameter combinations.
+    """Execute the strategy for a single symbol over a range of parameter combinations.
     Returns a list of dictionaries containing the parameters and the corresponding total profit.
     """
     results = []

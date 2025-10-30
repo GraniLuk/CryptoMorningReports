@@ -1,5 +1,4 @@
-"""
-Repository for managing Funding Rate data in the database.
+"""Repository for managing Funding Rate data in the database.
 """
 
 import os

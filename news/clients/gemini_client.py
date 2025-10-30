@@ -22,8 +22,7 @@ class GeminiClient(AIClient):
     """Client for Google Gemini AI API."""
 
     def __init__(self, api_key):
-        """
-        Initialize Gemini client.
+        """Initialize Gemini client.
 
         Args:
             api_key (str): Google Gemini API key
@@ -31,6 +30,7 @@ class GeminiClient(AIClient):
         Raises:
             ValueError: If API key is missing
             RuntimeError: If Gemini SDK initialization fails
+
         """
         self.api_key = api_key
         logging.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
@@ -57,8 +57,7 @@ class GeminiClient(AIClient):
             raise RuntimeError(msg) from e
 
     def _generate_content(self, prompt: Any) -> str:
-        """
-        Generate content using Gemini API.
+        """Generate content using Gemini API.
 
         Args:
             prompt: Combined system and user prompt; can be a single string or
@@ -66,6 +65,7 @@ class GeminiClient(AIClient):
 
         Returns:
             str: Generated content or error message
+
         """
         try:
             response = self.model.generate_content(prompt)

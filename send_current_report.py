@@ -1,5 +1,4 @@
-"""
-Send current situation report for a specific symbol to Telegram
+"""Send current situation report for a specific symbol to Telegram
 """
 
 import asyncio

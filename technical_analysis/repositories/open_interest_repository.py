@@ -1,5 +1,4 @@
-"""
-Repository for managing Open Interest data in the database.
+"""Repository for managing Open Interest data in the database.
 """
 
 import os

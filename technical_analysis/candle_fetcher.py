@@ -9,13 +9,13 @@ class CandleFetcher:
     """Base class for fetching candles of different timeframes"""
 
     def __init__(self, timeframe: str, fetch_function, repository_class):
-        """
-        Initialize the candle fetcher
+        """Initialize the candle fetcher
 
         Args:
             timeframe: String description of the timeframe (e.g., 'daily', 'hourly', '15min')
             fetch_function: Function to fetch a single candle from API
             repository_class: Repository class to use for database operations
+
         """
         self.timeframe = timeframe
         self.fetch_function = fetch_function
@@ -25,8 +25,7 @@ class CandleFetcher:
     def fetch_candles(
         self, symbols: list[Symbol], conn, end_time: datetime | None = None
     ) -> list[Candle]:
-        """
-        Fetches candles for given symbols and returns a list of Candle objects
+        """Fetches candles for given symbols and returns a list of Candle objects
 
         Args:
             symbols: List of Symbol objects
@@ -35,6 +34,7 @@ class CandleFetcher:
 
         Returns:
             List of Candle objects
+
         """
         end_time = end_time or datetime.now(UTC)
         self.logger.info(f"Fetching {self.timeframe} candles for {len(symbols)} symbols")
@@ -135,14 +135,14 @@ class CandleFetcher:
                 )
 
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):
-        """
-        Checks if all candles for the symbol are available in the database,
+        """Checks if all candles for the symbol are available in the database,
         fetches missing ones from API
 
         Args:
             symbol: Symbol object
             conn: Database connection
             days_back: Number of days to look back (default: 30)
+
         """
         repo = self.repository_class(conn)
         end_time = datetime.now(UTC)

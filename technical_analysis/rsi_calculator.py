@@ -11,8 +11,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def calculate_rsi_for_candles(candles, _timeframe="daily"):
-    """
-    Calculate RSI for a list of candles
+    """Calculate RSI for a list of candles
 
     Args:
         candles (list): List of candle objects
@@ -20,6 +19,7 @@ def calculate_rsi_for_candles(candles, _timeframe="daily"):
 
     Returns:
         dict: Dictionary with candle_id as keys and RSI values as values
+
     """
     if not candles:
         return {}
@@ -53,16 +53,15 @@ def calculate_rsi_for_candles(candles, _timeframe="daily"):
 
 
 def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily"):
-    """
-    Calculate and update RSI for all candles of multiple symbols
+    """Calculate and update RSI for all candles of multiple symbols
 
     Args:
         conn: Database connection
         symbols (list): List of Symbol objects
         candle_fetcher (function): Function to fetch candles for a symbol
         timeframe (str): The timeframe of the candles ("daily", "hourly", "fifteen_min")
-    """
 
+    """
     for symbol in symbols:
         try:
             # Fetch candles for the symbol
@@ -93,12 +92,12 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
 
 
 def update_daily_rsi_for_all_symbols(conn, symbols):
-    """
-    Calculate and update RSI for all daily candles of multiple symbols
+    """Calculate and update RSI for all daily candles of multiple symbols
 
     Args:
         conn: Database connection
         symbols (list): List of Symbol objects
+
     """
 
     def fetch_all_daily_candles(symbol, conn):

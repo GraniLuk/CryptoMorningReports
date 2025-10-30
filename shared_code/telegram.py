@@ -112,8 +112,7 @@ def enforce_markdown_v2(text: str) -> str:
 
 
 def sanitize_html(message):
-    """
-    Escapes any HTML-like substrings that are not valid Telegram allowed tags.
+    """Escapes any HTML-like substrings that are not valid Telegram allowed tags.
     Allowed tags: b, i, u, s, code, pre, a (opening/closing, with optional attributes for <a>).
     """
     # List the allowed tag names. For the <a> tag, we allow attributes.
@@ -303,7 +302,8 @@ async def send_telegram_document(
 def _extend_to_close_tag(_full_text: str, _start_index: int, slice_: str, _limit: int) -> str:
     """If the slice ends in the middle of an HTML tag (has unmatched '<'), extend until
     the closing '>' if possible within a small lookahead window. This is a heuristic to
-    reduce parse errors when using HTML parse_mode."""
+    reduce parse errors when using HTML parse_mode.
+    """
     if slice_.count("<") == slice_.count(">"):
         return slice_
     # Look ahead up to 200 chars beyond limit (Telegram still enforces limit, so we must respect it)

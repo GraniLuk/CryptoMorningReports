@@ -1,5 +1,4 @@
-"""
-Module for generating current data tables with latest indicators for crypto symbols.
+"""Module for generating current data tables with latest indicators for crypto symbols.
 This module can be easily extended to add more indicators in the future.
 """
 
@@ -28,14 +27,14 @@ from technical_analysis.repositories.open_interest_repository import (
 def get_latest_price_from_candles(
     candles_df: pd.DataFrame | None,
 ) -> float | None:
-    """
-    Extract the latest price from candles DataFrame.
+    """Extract the latest price from candles DataFrame.
 
     Args:
         candles_df: DataFrame with candle data or None
 
     Returns:
         Latest close price or None if no data
+
     """
     if candles_df is None or candles_df.empty:
         return None
@@ -47,14 +46,14 @@ def get_latest_price_from_candles(
 
 
 def get_latest_rsi_from_df(rsi_df: pd.DataFrame | None) -> float | None:
-    """
-    Extract the latest RSI value from RSI DataFrame.
+    """Extract the latest RSI value from RSI DataFrame.
 
     Args:
         rsi_df: DataFrame with RSI data or None
 
     Returns:
         Latest RSI value or None if no data
+
     """
     if rsi_df is None or rsi_df.empty:
         return None
@@ -103,8 +102,7 @@ def _extract_moving_averages(conn, symbol_id: int) -> dict[str, float | None]:
 
 
 def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa: PLR0915
-    """
-    Get current data for a single symbol including latest price and RSI across timeframes.
+    """Get current data for a single symbol including latest price and RSI across timeframes.
 
     Args:
         symbol: Symbol object
@@ -112,6 +110,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
 
     Returns:
         Dictionary containing current data for the symbol
+
     """
     data: dict[str, Any] = {
         "symbol": symbol.symbol_name,
@@ -247,14 +246,14 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
 
 
 def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  # noqa: PLR0915
-    """
-    Format current data for a single symbol into HTML for Telegram.
+    """Format current data for a single symbol into HTML for Telegram.
 
     Args:
         symbol_data: Dictionary containing current data for the symbol
 
     Returns:
         HTML formatted string for Telegram
+
     """
     symbol_name = symbol_data.get("symbol", "Unknown")
     timestamp = symbol_data.get("timestamp", "Unknown")
@@ -396,8 +395,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
 
 
 def get_current_data_summary_table(symbol: Symbol, conn) -> str:
-    """
-    Generate a summary table of current data for a symbol in HTML format for Telegram.
+    """Generate a summary table of current data for a symbol in HTML format for Telegram.
 
     Args:
         symbol: Symbol object
@@ -405,6 +403,7 @@ def get_current_data_summary_table(symbol: Symbol, conn) -> str:
 
     Returns:
         HTML formatted table with current data for Telegram
+
     """
     try:
         # Get current data
@@ -419,8 +418,7 @@ def get_current_data_summary_table(symbol: Symbol, conn) -> str:
 
 
 def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
-    """
-    Generate current data in a format suitable for AI prompts.
+    """Generate current data in a format suitable for AI prompts.
 
     Args:
         symbol: Symbol object
@@ -428,6 +426,7 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
 
     Returns:
         Formatted string for AI prompt
+
     """
     try:
         # Get current data

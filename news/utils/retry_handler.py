@@ -10,8 +10,7 @@ def retry_with_fallback_models(
     request_func: Callable[[str], tuple[bool, Any]],
     operation_name: str = "API request",
 ) -> Any:
-    """
-    Retry a request with a list of fallback models.
+    """Retry a request with a list of fallback models.
 
     Args:
         models: List of model names to try in order
@@ -22,6 +21,7 @@ def retry_with_fallback_models(
 
     Returns:
         The successful response content, or an error message if all retries fail
+
     """
     max_retries = len(models)
     current_try = 0

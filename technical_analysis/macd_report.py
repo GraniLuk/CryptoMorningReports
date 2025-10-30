@@ -15,10 +15,8 @@ from technical_analysis.repositories.macd_repository import (
 
 
 def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
+    """Calculates MACD indicators for given symbols and returns a formatted table
     """
-    Calculates MACD indicators for given symbols and returns a formatted table
-    """
-
     macd_values = []
     MACDData = namedtuple(
         "MACDData", ["symbol", "current_price", "macd", "signal", "histogram", "status"]

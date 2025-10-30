@@ -126,14 +126,14 @@ def fetch_stepn_report(conn) -> PrettyTable:
 
 
 def calculate_ema14(ratios):
-    """
-    Calculates the 14-day Exponential Moving Average (EMA) for the ratio column using pandas.
+    """Calculates the 14-day Exponential Moving Average (EMA) for the ratio column using pandas.
 
     Args:
         ratios (list of float): List of ratio values.
 
     Returns:
         list: EMA14 values for the provided ratios.
+
     """
     if not ratios:
         return []

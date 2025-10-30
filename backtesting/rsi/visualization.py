@@ -9,13 +9,13 @@ def create_trading_visualization(
     symbol_name: str,
     rsi_value: int,
 ):
-    """
-    Create an interactive visualization of trading strategy with candlesticks, RSI, and signals.
+    """Create an interactive visualization of trading strategy with candlesticks, RSI, and signals.
 
     Args:
         candles_data: DataFrame with OHLC and RSI data
         results_df: DataFrame with trading results
         symbol_name: Name of the trading symbol
+
     """
     # Create figure with secondary y-axis
     fig = make_subplots(

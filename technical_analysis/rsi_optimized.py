@@ -1,5 +1,4 @@
-"""
-Optimized version of RSI calculation for multiple timeframes
+"""Optimized version of RSI calculation for multiple timeframes
 """
 
 from datetime import UTC, datetime, timedelta
@@ -20,8 +19,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 def get_optimized_rsi_for_symbol_timeframe(
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ):
-    """
-    Gets RSI data for a symbol in the specified timeframe.
+    """Gets RSI data for a symbol in the specified timeframe.
     If RSI values are missing in the database, it calculates them only for the requested period.
     Optimized version that doesn't recalculate all historical data.
 
@@ -33,6 +31,7 @@ def get_optimized_rsi_for_symbol_timeframe(
 
     Returns:
         DataFrame: DataFrame with RSI data or None if no data
+
     """
     # Calculate appropriate start date based on the timeframe
     target_date = datetime.now(UTC).date()
@@ -148,7 +147,6 @@ def get_optimized_rsi_for_symbol_timeframe(
 # Function to test the optimized implementation
 def test_optimized_rsi():
     """Test the optimized RSI calculation"""
-
     # Load environment and connect to database
     load_dotenv()
     conn = connect_to_sql()

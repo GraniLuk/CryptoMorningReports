@@ -7,13 +7,13 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
-    """
-    Saves RSI results to the database
+    """Saves RSI results to the database
 
     Args:
         conn: Database connection
         daily_candle_id (int): DailyCandle ID from DailyCandles table
         rsi (float): Calculated RSI value
+
     """
     try:
         if conn:
@@ -57,14 +57,14 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
 
 
 def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "daily") -> None:
-    """
-    Saves RSI results to the database for different timeframes
+    """Saves RSI results to the database for different timeframes
 
     Args:
         conn: Database connection
         candle_id (int): Candle ID from the respective candles table
         rsi (float): Calculated RSI value
         timeframe (str): Timeframe type ("daily", "hourly", "fifteen_min")
+
     """
     try:
         if conn:
@@ -128,8 +128,7 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
 
 
 def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "daily") -> list | None:
-    """
-    Fetches candle data with RSI for a specific symbol,
+    """Fetches candle data with RSI for a specific symbol,
     only returning records on or after the specified date.
 
     Args:
@@ -140,6 +139,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
 
     Returns:
         list: List of dictionaries containing the candle and RSI data
+
     """
     try:
         if conn:
@@ -397,8 +397,7 @@ def _match_fifteen_min_rsi(
 
 
 def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str = "daily") -> dict:
-    """
-    Fetches RSI values for current date, yesterday, and week ago for a symbol
+    """Fetches RSI values for current date, yesterday, and week ago for a symbol
 
     Args:
         conn: Database connection
@@ -408,6 +407,7 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
 
     Returns:
         dict: Dictionary containing current, yesterday and week ago RSI values
+
     """
     results = {}  # Initialize empty results dictionary
 

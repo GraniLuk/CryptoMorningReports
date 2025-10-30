@@ -14,8 +14,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
-    """
-    Creates RSI table for a given symbol using daily candles data
+    """Creates RSI table for a given symbol using daily candles data
     """
     all_values = pd.DataFrame()
 
@@ -117,8 +116,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
 
 
 def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
-    """
-    Creates RSI table for given symbols using daily candles data
+    """Creates RSI table for given symbols using daily candles data
     """
     all_values = pd.DataFrame()
 

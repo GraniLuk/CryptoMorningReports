@@ -78,8 +78,7 @@ def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="crypto-situation")
 async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    HTTP trigger function to generate a situation report for a specific cryptocurrency.
+    """HTTP trigger function to generate a situation report for a specific cryptocurrency.
 
     Query parameters:
     - symbol: Cryptocurrency symbol (e.g., "BTC", "ETH") [required]
@@ -91,6 +90,7 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
     - HTTP 400 if symbol parameter is missing
     - HTTP 404 if symbol is not found in the database
     - HTTP 500 if an error occurs during report generation
+
     """
     try:
         # Get required parameters

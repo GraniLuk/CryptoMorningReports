@@ -50,8 +50,7 @@ class SymbolNotFoundError(Exception):
 
 
 def fetch_symbols(conn) -> list[Symbol]:
-    """
-    Fetches all symbols from the database and returns them as a list of Symbol objects.
+    """Fetches all symbols from the database and returns them as a list of Symbol objects.
 
     Raises:
         NoSymbolsFoundError: If no active symbols are found in the database
@@ -59,6 +58,7 @@ def fetch_symbols(conn) -> list[Symbol]:
 
     Returns:
         List[Symbol]: List of cryptocurrency symbols
+
     """
     symbols = []
     try:
@@ -101,8 +101,7 @@ def fetch_symbols(conn) -> list[Symbol]:
 
 
 def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
-    """
-    Fetches a specific symbol by name from the database
+    """Fetches a specific symbol by name from the database
 
     Args:
         conn: Database connection
@@ -115,6 +114,7 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
 
     Returns:
         Symbol: The symbol object
+
     """
     try:
         if not conn:

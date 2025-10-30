@@ -7,12 +7,12 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_marketcap_results(conn, sorted_results):
-    """
-    Saves market cap results to the database once per day
+    """Saves market cap results to the database once per day
 
     Args:
         conn: Database connection
         sorted_results: List of dictionaries containing market cap data
+
     """
     try:
         if conn:

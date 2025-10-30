@@ -44,8 +44,7 @@ def calculate_ema(series, period):
 
 
 def calculate_rsi_using_rma(series, periods=14):
-    """
-    Calculate RSI using Wilder's smoothing (RMA - Relative Moving Average).
+    """Calculate RSI using Wilder's smoothing (RMA - Relative Moving Average).
     This is the standard RSI calculation method used by TradingView and most platforms.
 
     The calculation:
@@ -60,6 +59,7 @@ def calculate_rsi_using_rma(series, periods=14):
 
     Returns:
         pandas Series of RSI values (0-100)
+
     """
     delta = series.diff()
 
@@ -93,8 +93,7 @@ def calculate_rsi_using_rma(series, periods=14):
 
 
 def calculate_all_rsi_for_symbol(conn, symbol):
-    """
-    Calculate RSI using calculate_rsi_using_ema for all days in the current year
+    """Calculate RSI using calculate_rsi_using_ema for all days in the current year
     for the given symbol and save the results using save_rsi_results.
     """
     # Fetch all daily candles for the symbol

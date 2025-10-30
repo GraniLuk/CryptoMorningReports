@@ -203,8 +203,7 @@ def format_moving_averages_data(ma_df):
 
 
 def convert_markdown_to_telegram_html(markdown_text: str) -> str:
-    """
-    Convert markdown text to Telegram-compatible HTML.
+    """Convert markdown text to Telegram-compatible HTML.
 
     Supported Markdown Features:
         - Headers: #, ##, ### converted to styled <b> and <u> HTML tags.
@@ -228,6 +227,7 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
 
     Returns:
         HTML formatted text compatible with Telegram
+
     """
     # Escape HTML special characters except those in tags we'll create
     html_text = markdown_text
@@ -263,8 +263,7 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
 async def _generate_ai_analysis(
     ai_api_type: str, ai_api_key: str, formatted_prompt: str, logger
 ) -> str:
-    """
-    Generate AI analysis using the specified API type.
+    """Generate AI analysis using the specified API type.
 
     Args:
         ai_api_type: Type of AI API ('perplexity' or 'gemini')
@@ -274,6 +273,7 @@ async def _generate_ai_analysis(
 
     Returns:
         Analysis text or error message
+
     """
     # Create AI client
     ai_client = create_ai_client(ai_api_type, ai_api_key)
@@ -339,8 +339,7 @@ async def _generate_ai_analysis(
 
 
 async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
-    """
-    Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
+    """Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 
     Args:
         conn: Database connection
@@ -348,6 +347,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
 
     Returns:
         HTML formatted situation report for Telegram
+
     """
     logger = app_logger
     logger.info(f"Generating situation report for {symbol_name}")
