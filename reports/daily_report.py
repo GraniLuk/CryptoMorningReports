@@ -106,7 +106,12 @@ async def _process_ai_analysis(
                 )
             except Exception as e:
                 lines.append(f"Row format error: {e}")
-        return "Aggregated Indicators:\n<pre>" + header + "\n".join(lines) + "</pre>\n\n"
+        note = (
+            "Aggregated Indicators "
+            "(showing most recent values from last 7 days of data for trend analysis)"
+        )
+        newline = "\n"
+        return f"{note}:{newline}<pre>{header}{newline.join(lines)}</pre>{newline}{newline}"
 
     aggregated_formatted = format_aggregated(aggregated_data)
     aggregated_with_prices = current_prices_section + aggregated_formatted

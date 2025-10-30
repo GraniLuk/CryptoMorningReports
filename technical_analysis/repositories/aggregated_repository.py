@@ -20,105 +20,112 @@ def get_aggregated_data(conn):
             # Get the latest date for each indicator to determine what to show
             # We'll use the most recent IndicatorDate across all tables
             query = """
-                SELECT
-                    s.SymbolName,
-                    -- RSI data (get most recent RSI for each symbol)
-                    rsi_data.RSIIndicatorDate,
-                    rsi_data.RSIClosePrice,
-                    rsi_data.RSI,
-                    -- Moving Averages data
-                    ma.CurrentPrice as MACurrentPrice,
-                    ma.MA50,
-                    ma.MA200,
-                    ma.EMA50,
-                    ma.EMA200,
-                    ma.IndicatorDate as MAIndicatorDate,
-                    -- MACD data
-                    macd.MACD,
-                    macd.Signal as MACDSignal,
-                    macd.Histogram as MACDHistogram,
-                    macd.IndicatorDate as MACDIndicatorDate,
-                    -- Price Range data
-                    pr.LowPrice,
-                    pr.HighPrice,
-                    pr.RangePercent,
-                    pr.IndicatorDate as PriceRangeDate,
-                    -- Volume data
-                    vh.Volume,
-                    vh.IndicatorDate as VolumeDate,
-                    -- Market Cap data
-                    mc.MarketCap,
-                    mc.IndicatorDate as MarketCapDate,
-                    -- Open Interest data
-                    oi.OpenInterest,
-                    oi.OpenInterestValue,
-                    oi.IndicatorDate as OpenInterestDate,
-                    -- Funding Rate data
-                    fr.FundingRate,
-                    fr.FundingTime,
-                    fr.IndicatorDate as FundingRateDate
-                FROM Symbols s
-                -- Join with most recent RSI data for each symbol
-                LEFT JOIN (
-                    SELECT
-                        dc.SymbolID,
-                        dc.Date as RSIIndicatorDate,
-                        dc.Close as RSIClosePrice,
-                        r.RSI,
-                        ROW_NUMBER() OVER (PARTITION BY dc.SymbolID ORDER BY dc.Date DESC) as rn
-                    FROM RSI r
-                    JOIN DailyCandles dc ON r.DailyCandleID = dc.Id
-                ) rsi_data ON s.SymbolID = rsi_data.SymbolID AND rsi_data.rn = 1
-                -- Join with latest MovingAverages
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM MovingAverages
-                ) ma ON s.SymbolID = ma.SymbolID AND ma.rn = 1
-                -- Join with latest MACD
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM MACD
-                ) macd ON s.SymbolID = macd.SymbolID AND macd.rn = 1
-                -- Join with latest PriceRange
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM PriceRange
-                ) pr ON s.SymbolID = pr.SymbolID AND pr.rn = 1
-                -- Join with latest VolumeHistory
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM VolumeHistory
-                ) vh ON s.SymbolID = vh.SymbolID AND vh.rn = 1
-                -- Join with latest MarketCapHistory
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM MarketCapHistory
-                ) mc ON s.SymbolID = mc.SymbolID AND mc.rn = 1
-                -- Join with latest OpenInterest
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM OpenInterest
-                ) oi ON s.SymbolID = oi.SymbolID AND oi.rn = 1
-                -- Join with latest FundingRate
-                LEFT JOIN (
-                    SELECT *,
-                           ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
-                                              IndicatorDate DESC) as rn
-                    FROM FundingRate
-                ) fr ON s.SymbolID = fr.SymbolID AND fr.rn = 1
-                ORDER BY s.SymbolName
+                WITH AllIndicatorDates AS (
+    SELECT DISTINCT 
+        SymbolID,
+        DATE(IndicatorDate) as IndicatorDate
+    FROM (
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM MovingAverages
+        UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM MACD
+        UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM PriceRange
+        UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM VolumeHistory
+        UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM MarketCapHistory
+        UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM OpenInterest
+        UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM FundingRate
+        UNION
+        SELECT dc.SymbolID, DATE(dc.Date) as IndicatorDate 
+        FROM DailyCandles dc
+    ) AS all_dates
+),
+Last7Dates AS (
+    SELECT 
+        SymbolID,
+        IndicatorDate,
+        ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY IndicatorDate DESC) as rn
+    FROM AllIndicatorDates
+    WHERE IndicatorDate <= DATE('now')
+),
+LatestMA AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, CurrentPrice, MA50, MA200, EMA50, EMA200,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM MovingAverages
+),
+LatestMACD AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, MACD, Signal, Histogram,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM MACD
+),
+LatestPriceRange AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, LowPrice, HighPrice, RangePercent,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM PriceRange
+),
+LatestVolume AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, Volume,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM VolumeHistory
+),
+LatestMarketCap AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, MarketCap,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM MarketCapHistory
+),
+LatestOpenInterest AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, OpenInterest, OpenInterestValue,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM OpenInterest
+),
+LatestFundingRate AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, FundingRate, FundingTime,
+           ROW_NUMBER() OVER (PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC) as rn
+    FROM FundingRate
+),
+LatestDailyCandles AS (
+    SELECT dc.SymbolID, DATE(dc.Date) as IndicatorDate, dc.Close, dc.Id as CandleId,
+           ROW_NUMBER() OVER (PARTITION BY dc.SymbolID, DATE(dc.Date) ORDER BY dc.Date DESC) as rn
+    FROM DailyCandles dc
+)
+SELECT
+    s.SymbolName,
+    d.IndicatorDate,
+    dc.Close as RSIClosePrice,
+    rsi.RSI,
+    ma.CurrentPrice as MACurrentPrice,
+    ma.MA50,
+    ma.MA200,
+    ma.EMA50,
+    ma.EMA200,
+    macd.MACD,
+    macd.Signal as MACDSignal,
+    macd.Histogram as MACDHistogram,
+    pr.LowPrice,
+    pr.HighPrice,
+    pr.RangePercent,
+    vh.Volume,
+    mc.MarketCap,
+    oi.OpenInterest,
+    oi.OpenInterestValue,
+    fr.FundingRate,
+    fr.FundingTime
+FROM Symbols s
+INNER JOIN Last7Dates d ON s.SymbolID = d.SymbolID AND d.rn <= 7
+LEFT JOIN LatestDailyCandles dc ON s.SymbolID = dc.SymbolID AND dc.IndicatorDate = d.IndicatorDate AND dc.rn = 1
+LEFT JOIN RSI rsi ON dc.CandleId = rsi.DailyCandleID
+LEFT JOIN LatestMA ma ON s.SymbolID = ma.SymbolID AND ma.IndicatorDate = d.IndicatorDate AND ma.rn = 1
+LEFT JOIN LatestMACD macd ON s.SymbolID = macd.SymbolID AND macd.IndicatorDate = d.IndicatorDate AND macd.rn = 1
+LEFT JOIN LatestPriceRange pr ON s.SymbolID = pr.SymbolID AND pr.IndicatorDate = d.IndicatorDate AND pr.rn = 1
+LEFT JOIN LatestVolume vh ON s.SymbolID = vh.SymbolID AND vh.IndicatorDate = d.IndicatorDate AND vh.rn = 1
+LEFT JOIN LatestMarketCap mc ON s.SymbolID = mc.SymbolID AND mc.IndicatorDate = d.IndicatorDate AND mc.rn = 1
+LEFT JOIN LatestOpenInterest oi ON s.SymbolID = oi.SymbolID AND oi.IndicatorDate = d.IndicatorDate AND oi.rn = 1
+LEFT JOIN LatestFundingRate fr ON s.SymbolID = fr.SymbolID AND fr.IndicatorDate = d.IndicatorDate AND fr.rn = 1
+ORDER BY s.SymbolName, d.IndicatorDate DESC
+
             """
 
             cursor.execute(query)
