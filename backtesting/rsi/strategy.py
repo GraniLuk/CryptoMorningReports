@@ -164,7 +164,7 @@ def run_strategy_for_symbol_internal(
     days_after_to_buy: int = 1,
     position_type: str = "LONG",
 ):
-    """Internal function that executes the strategy for a single symbol.
+    """Execute the strategy for a single symbol.
     Returns the results DataFrame and the TP ratio.
     """
     # Run backtest

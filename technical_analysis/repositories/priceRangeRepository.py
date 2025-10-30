@@ -11,7 +11,7 @@ from infra.telegram_logging_handler import app_logger
 def save_price_range_results(
     conn, symbol_id: int, low_price: float, high_price: float, range_percent: float
 ) -> None:
-    """Saves price range results to the database.
+    """Save price range results to the database.
 
     Args:
         conn: Database connection

@@ -19,7 +19,7 @@ def fetch_daily_candles(
     start_date: date | None = None,
     end_date: date | None = None,
 ) -> list[Candle]:
-    """Fetches daily candles for given symbols and returns a list of Candle objects.
+    """Fetch daily candles for given symbols and return a list of Candle objects.
 
     Args:
         symbols: List of Symbol objects

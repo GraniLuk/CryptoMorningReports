@@ -18,7 +18,7 @@ def run_strategy_for_all_symbols(
     sl_value: Decimal = Decimal("0.9"),
     days_after_to_buy: int = 1,
 ):
-    """Executes the strategy for all symbols.
+    """Execute the strategy for all symbols.
     Returns a dictionary with each symbol name and its TP ratio, and a combined
     DataFrame of all trades.
     """

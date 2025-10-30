@@ -23,7 +23,7 @@ def calculate_hourly_rsi(symbols: list[Symbol], conn):
 
 
 def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
-    """Checks if all hourly candles for the symbol are available in the database for the past days,
+    """Check if all hourly candles for the symbol are available in the database for the past days,
     fetches missing ones from API.
 
     Args:
@@ -42,7 +42,7 @@ def fetch_hourly_candles_for_all_symbols(
     end_time: datetime | None = None,
     conn=None,
 ) -> list[Candle]:
-    """Fetches daily candles for given symbols and returns a list of Candle objects.
+    """Fetch daily candles for given symbols and return a list of Candle objects.
 
     Args:
         symbols: List of Symbol objects

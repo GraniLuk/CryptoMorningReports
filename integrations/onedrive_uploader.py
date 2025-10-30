@@ -9,7 +9,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 async def upload_to_onedrive(filename: str, content: str, folder_path: str):
-    """Sends content to an Azure Logic App to be saved in OneDrive.
+    """Send content to an Azure Logic App to be saved in OneDrive.
 
     Args:
         filename (str): The name for the file.

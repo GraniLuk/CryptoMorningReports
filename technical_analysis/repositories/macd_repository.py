@@ -18,7 +18,7 @@ def save_macd_results(
     histogram: float,
     indicator_date: date,
 ) -> None:
-    """Saves MACD results to the database.
+    """Save MACD results to the database.
 
     Args:
         conn: Database connection
@@ -94,7 +94,7 @@ def save_macd_results(
 
 
 def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
-    """Fetches all MACD records from yesterday.
+    """Fetch all MACD records from yesterday.
 
     Args:
         conn: Database connection

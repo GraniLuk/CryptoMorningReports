@@ -9,7 +9,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_volume_results(conn, sorted_results):
-    """Saves volume results to the database once per day.
+    """Save volume results to the database once per day.
 
     Args:
         conn: Database connection

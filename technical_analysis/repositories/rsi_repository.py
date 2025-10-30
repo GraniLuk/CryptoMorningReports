@@ -9,7 +9,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
-    """Saves RSI results to the database.
+    """Save RSI results to the database.
 
     Args:
         conn: Database connection
@@ -59,7 +59,7 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
 
 
 def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "daily") -> None:
-    """Saves RSI results to the database for different timeframes.
+    """Save RSI results to the database for different timeframes.
 
     Args:
         conn: Database connection
@@ -130,7 +130,7 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
 
 
 def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "daily") -> list | None:
-    """Fetches candle data with RSI for a specific symbol,
+    """Fetch candle data with RSI for a specific symbol,
     only returning records on or after the specified date.
 
     Args:
@@ -399,7 +399,7 @@ def _match_fifteen_min_rsi(
 
 
 def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str = "daily") -> dict:
-    """Fetches RSI values for current date, yesterday, and week ago for a symbol.
+    """Fetch RSI values for current date, yesterday, and week ago for a symbol.
 
     Args:
         conn: Database connection

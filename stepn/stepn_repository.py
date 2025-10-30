@@ -56,7 +56,7 @@ def save_stepn_results(
     rsi: float,
     transactions_count: int,
 ) -> None:
-    """Saves STEPN results to the database.
+    """Save STEPN results to the database.
 
     Args:
         conn: Database connection
@@ -178,7 +178,7 @@ def save_stepn_results(
 def fetch_stepn_results_last_14_days(
     conn,
 ) -> list[tuple[float, float, float, date]] | None:
-    """Fetches STEPN results from the last 14 days from the database.
+    """Fetch STEPN results from the last 14 days from the database.
 
     Args:
         conn: Database connection

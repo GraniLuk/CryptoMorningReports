@@ -52,7 +52,7 @@ class SymbolNotFoundError(Exception):
 
 
 def fetch_symbols(conn) -> list[Symbol]:
-    """Fetches all symbols from the database and returns them as a list of Symbol objects.
+    """Fetch all symbols from the database and return them as a list of Symbol objects.
 
     Raises:
         NoSymbolsFoundError: If no active symbols are found in the database
@@ -103,7 +103,7 @@ def fetch_symbols(conn) -> list[Symbol]:
 
 
 def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
-    """Fetches a specific symbol by name from the database.
+    """Fetch a specific symbol by name from the database.
 
     Args:
         conn: Database connection

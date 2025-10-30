@@ -19,7 +19,7 @@ def save_moving_averages_results(
     ema200: float,
     indicator_date: date,
 ) -> None:
-    """Saves moving averages results to the database.
+    """Save moving averages results to the database.
 
     Args:
         conn: Database connection
@@ -88,7 +88,7 @@ def save_moving_averages_results(
 
 
 def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
-    """Fetches all moving averages records from yesterday.
+    """Fetch all moving averages records from yesterday.
 
     Args:
         conn: Database connection
@@ -127,7 +127,7 @@ def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
 
 
 def fetch_moving_averages_for_symbol(conn, symbol_id: int, lookback_days: int = 7) -> pd.DataFrame:
-    """Fetches moving averages records for a specific symbol for the past N days.
+    """Fetch moving averages records for a specific symbol for the past N days.
 
     Args:
         conn: Database connection

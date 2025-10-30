@@ -27,7 +27,7 @@ class CandleFetcher:
     def fetch_candles(
         self, symbols: list[Symbol], conn, end_time: datetime | None = None
     ) -> list[Candle]:
-        """Fetches candles for given symbols and returns a list of Candle objects.
+        """Fetch candles for given symbols and return a list of Candle objects.
 
         Args:
             symbols: List of Symbol objects
@@ -137,7 +137,7 @@ class CandleFetcher:
                 )
 
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):
-        """Checks if all candles for the symbol are available in the database,
+        """Check if all candles for the symbol are available in the database,
         fetches missing ones from API.
 
         Args:

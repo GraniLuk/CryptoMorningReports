@@ -18,7 +18,8 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 def get_optimized_rsi_for_symbol_timeframe(
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ):
-    """Gets RSI data for a symbol in the specified timeframe.
+    """Get RSI data for a symbol in the specified timeframe.
+
     If RSI values are missing in the database, it calculates them only for the requested period.
     Optimized version that doesn't recalculate all historical data.
 

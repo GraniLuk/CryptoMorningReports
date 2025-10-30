@@ -26,7 +26,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ) -> pd.DataFrame | None:
-    """Gets RSI data for a symbol in the specified timeframe.
+    """Get RSI data for a symbol in the specified timeframe.
     If RSI values are missing in the database, it calculates them only for the requested period.
 
     Args:
@@ -206,7 +206,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
 
 
 def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str] | None = None):
-    """Creates a multi-timeframe RSI table for a symbol.
+    """Create a multi-timeframe RSI table for a symbol.
 
     Args:
         symbol: Symbol object
@@ -317,7 +317,7 @@ def create_multi_timeframe_rsi_tables(
     conn,
     timeframes: list[str] | None = None,
 ) -> dict[str, PrettyTable]:
-    """Creates multi-timeframe RSI tables for multiple symbols.
+    """Create multi-timeframe RSI tables for multiple symbols.
 
     Args:
         symbols: List of Symbol objects
@@ -382,7 +382,7 @@ def create_multi_timeframe_rsi_tables(
 
 
 def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
-    """Creates a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes.
+    """Create a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes.
 
     Args:
         symbols: List of Symbol objects
@@ -459,7 +459,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
 
 
 def _get_candle_repository(conn, timeframe: str):
-    """Returns the appropriate candle repository based on timeframe."""
+    """Return the appropriate candle repository based on timeframe."""
     timeframe_lower = timeframe.lower()
     if timeframe_lower == "daily":
         return DailyCandleRepository(conn)
