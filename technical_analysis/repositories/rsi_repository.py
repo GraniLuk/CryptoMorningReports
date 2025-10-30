@@ -1,3 +1,5 @@
+"""RSI data repository for cryptocurrency markets."""
+
 import os
 from datetime import date, datetime, timedelta
 

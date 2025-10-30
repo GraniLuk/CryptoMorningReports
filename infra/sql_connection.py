@@ -1,3 +1,5 @@
+"""Database connection management for SQL Server and SQLite."""
+
 import logging
 import os
 import sqlite3

@@ -1,3 +1,5 @@
+"""Market capitalization data repository for cryptocurrency markets."""
+
 import os
 from datetime import UTC, datetime
 

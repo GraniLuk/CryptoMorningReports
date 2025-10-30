@@ -1,3 +1,5 @@
+"""Unit tests for STEPN ecosystem reporting functionality."""
+
 import unittest
 from unittest.mock import patch
 

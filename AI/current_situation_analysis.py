@@ -1,3 +1,5 @@
+"""AI-powered current situation analysis for cryptocurrency markets."""
+
 # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
 You are an advanced crypto analyst specialized in deep technical analysis for

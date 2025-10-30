@@ -1,3 +1,5 @@
+"""Price range analysis and reporting for cryptocurrency markets."""
+
 from datetime import UTC, datetime, timedelta
 
 from prettytable import PrettyTable

@@ -1,3 +1,5 @@
+"""Configuration management and environment variable handling."""
+
 import os
 
 from dotenv import load_dotenv

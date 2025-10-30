@@ -1,3 +1,5 @@
+"""Unit tests for Telegram messaging utilities."""
+
 import re
 import sys
 import unittest

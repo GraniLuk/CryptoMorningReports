@@ -1,3 +1,5 @@
+"""Repository for managing candle data in the database."""
+
 import os
 from datetime import datetime
 
@@ -6,11 +8,28 @@ from source_repository import Symbol
 
 
 class CandleRepository:
+    """Repository for managing candle data operations."""
+
     def __init__(self, conn, table_name: str):
+        """Initialize the candle repository.
+
+        Args:
+            conn: Database connection
+            table_name: Name of the table to operate on
+
+        """
         self.conn = conn
         self.table_name = table_name
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
+        """Save a candle to the database.
+
+        Args:
+            symbol: Symbol object
+            candle: Candle data to save
+            source: Source identifier
+
+        """
         # Check if we're using SQLite or SQL Server
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 

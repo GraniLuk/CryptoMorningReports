@@ -1,3 +1,5 @@
+"""Telegram messaging utilities and formatting functions."""
+
 import html
 import logging
 import re

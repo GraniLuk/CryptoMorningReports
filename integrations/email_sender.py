@@ -1,3 +1,5 @@
+"""Email sending functionality for report distribution."""
+
 import asyncio
 import os
 import smtplib

@@ -1,3 +1,5 @@
+"""Multi-timeframe RSI analysis and reporting for cryptocurrency markets."""
+
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd

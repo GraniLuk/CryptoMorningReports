@@ -1,3 +1,5 @@
+"""Hourly candle data repository for cryptocurrency markets."""
+
 import os
 from datetime import datetime, timedelta
 

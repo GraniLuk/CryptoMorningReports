@@ -1,3 +1,5 @@
+"""Moving averages data repository for cryptocurrency markets."""
+
 import os
 from datetime import UTC, date, datetime, timedelta
 

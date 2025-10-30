@@ -1,3 +1,5 @@
+"""KuCoin API integration for cryptocurrency data fetching."""
+
 import time
 from datetime import UTC, date, datetime, timedelta
 

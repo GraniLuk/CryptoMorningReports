@@ -1,3 +1,5 @@
+"""RSI backtesting executor for all cryptocurrency symbols."""
+
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 

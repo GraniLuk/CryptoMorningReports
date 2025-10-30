@@ -1,3 +1,5 @@
+"""RSS feed parsing and news article extraction."""
+
 import json
 import time  # Added for struct_time type checking
 from datetime import UTC, datetime, timedelta

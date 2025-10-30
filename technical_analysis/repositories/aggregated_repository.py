@@ -1,3 +1,5 @@
+"""Aggregated data repository for cryptocurrency market indicators."""
+
 import os
 
 import pyodbc

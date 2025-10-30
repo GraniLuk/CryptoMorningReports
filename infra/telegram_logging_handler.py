@@ -1,3 +1,5 @@
+"""Telegram logging handler for sending log messages via Telegram."""
+
 import logging
 import os
 

@@ -1,3 +1,5 @@
+"""Current market report generation with news and analysis."""
+
 import os
 import re
 from datetime import UTC, datetime, timedelta

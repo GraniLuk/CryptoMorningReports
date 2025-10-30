@@ -1,3 +1,5 @@
+"""Candle data fetching utilities for different timeframes."""
+
 from datetime import UTC, datetime, timedelta
 
 from infra.telegram_logging_handler import app_logger

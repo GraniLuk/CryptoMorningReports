@@ -1,3 +1,5 @@
+"""SOPR data repository for cryptocurrency markets."""
+
 import os
 
 import pyodbc

@@ -1,3 +1,5 @@
+"""STEPN data repository for database operations."""
+
 import math
 import os
 from datetime import UTC, date, datetime

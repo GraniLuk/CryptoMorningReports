@@ -1,3 +1,5 @@
+"""RSI grid search backtesting executor for single cryptocurrency symbols."""
+
 import itertools
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal

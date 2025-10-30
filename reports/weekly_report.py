@@ -1,3 +1,5 @@
+"""Weekly cryptocurrency market report generation."""
+
 from datetime import UTC, datetime, timedelta
 
 from database.update_latest_data import update_latest_daily_candles

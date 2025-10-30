@@ -1,3 +1,5 @@
+"""CoinGecko API integration for cryptocurrency price data."""
+
 from pycoingecko import CoinGeckoAPI
 
 from infra.telegram_logging_handler import app_logger

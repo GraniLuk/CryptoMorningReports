@@ -1,3 +1,5 @@
+"""Data models and source definitions for the Crypto Morning Reports application."""
+
 from dataclasses import dataclass
 from enum import Enum
 

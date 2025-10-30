@@ -1,3 +1,5 @@
+"""RSI grid search backtesting executor for all cryptocurrency symbols."""
+
 import pandas as pd
 
 from backtesting.rsi.excel import save_to_excel

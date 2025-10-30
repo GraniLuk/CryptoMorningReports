@@ -1,3 +1,5 @@
+"""Common data structures for cryptocurrency price and candle data."""
+
 from collections import namedtuple
 from dataclasses import dataclass
 

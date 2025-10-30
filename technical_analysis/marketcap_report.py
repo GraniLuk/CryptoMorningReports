@@ -1,3 +1,5 @@
+"""Market capitalization analysis and reporting for cryptocurrency markets."""
+
 from http import HTTPStatus
 
 import requests

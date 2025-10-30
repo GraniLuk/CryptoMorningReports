@@ -1,3 +1,5 @@
+"""Price checking and validation utilities for cryptocurrency data."""
+
 from datetime import UTC, date, datetime, timedelta
 
 from shared_code.binance import (

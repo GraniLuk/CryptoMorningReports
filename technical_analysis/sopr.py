@@ -1,3 +1,5 @@
+"""SOPR (Spent Output Profit Ratio) analysis and data fetching."""
+
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
@@ -13,7 +15,7 @@ API_BASE = "https://bitcoin-data.com/"
 
 
 def fetch_sopr_metrics(conn) -> PrettyTable | None:
-    """Retrieves yesterday's SOPR variants from BGeometrics API and saves to database.
+    """Retrieve yesterday's SOPR variants from BGeometrics API and saves to database.
 
     Args:
         conn: Database connection

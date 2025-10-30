@@ -1,3 +1,5 @@
+"""BSC blockchain activity monitoring for STEPN contracts."""
+
 from datetime import UTC, datetime, timedelta
 
 import requests

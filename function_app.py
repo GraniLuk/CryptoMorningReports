@@ -1,3 +1,5 @@
+"""Azure Functions app for Crypto Morning Reports."""
+
 import asyncio
 import logging
 import os

@@ -1,3 +1,5 @@
+"""Daily candle data processing and analysis for cryptocurrency markets."""
+
 from datetime import UTC, date, datetime, timedelta
 
 from shared_code.common_price import Candle

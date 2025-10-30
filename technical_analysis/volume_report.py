@@ -1,3 +1,5 @@
+"""Volume analysis and reporting utilities."""
+
 from http import HTTPStatus
 
 import requests
@@ -8,6 +10,16 @@ from technical_analysis.repositories.volume_repository import save_volume_result
 
 
 def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
+    """Fetch and format volume report for given symbols.
+
+    Args:
+        symbols: List of Symbol objects to analyze
+        conn: Database connection
+
+    Returns:
+        PrettyTable: Formatted volume report table
+
+    """
     results = []
     missing_symbols = []
 

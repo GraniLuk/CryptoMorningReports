@@ -1,3 +1,5 @@
+"""Launchpool and Gempool article monitoring and reporting."""
+
 from http import HTTPStatus
 
 import requests

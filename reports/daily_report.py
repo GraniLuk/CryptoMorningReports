@@ -1,3 +1,5 @@
+"""Daily cryptocurrency market report generation and distribution."""
+
 import os
 from datetime import UTC, datetime
 

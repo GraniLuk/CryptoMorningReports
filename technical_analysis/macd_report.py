@@ -1,3 +1,5 @@
+"""MACD analysis and reporting for cryptocurrency markets."""
+
 from collections import namedtuple
 from datetime import UTC, date, datetime, timedelta
 

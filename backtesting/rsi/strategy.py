@@ -1,3 +1,5 @@
+"""RSI-based trading strategy implementation for backtesting."""
+
 from datetime import UTC, datetime
 from decimal import Decimal
 

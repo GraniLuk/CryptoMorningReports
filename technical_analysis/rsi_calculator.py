@@ -1,3 +1,5 @@
+"""RSI (Relative Strength Index) calculation and processing for cryptocurrency markets."""
+
 import pandas as pd
 
 from infra.telegram_logging_handler import app_logger

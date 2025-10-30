@@ -1,3 +1,5 @@
+"""Document conversion utilities using Pandoc."""
+
 import asyncio
 import importlib
 import os

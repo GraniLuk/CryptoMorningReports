@@ -1,3 +1,5 @@
+"""STEPN ecosystem analysis and reporting."""
+
 import os
 
 import pandas as pd

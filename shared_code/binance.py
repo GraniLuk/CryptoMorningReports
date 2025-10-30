@@ -1,3 +1,5 @@
+"""Binance API integration for cryptocurrency data fetching."""
+
 from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd

@@ -1,3 +1,5 @@
+"""Excel export utilities for RSI backtesting results."""
+
 from datetime import UTC, datetime
 
 

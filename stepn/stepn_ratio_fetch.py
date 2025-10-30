@@ -1,3 +1,5 @@
+"""STEPN GST/GMT ratio data fetching from Azure Monitor."""
+
 import os
 from datetime import timedelta
 
