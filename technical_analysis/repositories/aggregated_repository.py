@@ -69,6 +69,8 @@ def get_aggregated_data(conn):
                     FROM RSI r
                     JOIN DailyCandles dc ON r.DailyCandleID = dc.Id
                 ) rsi_data ON s.SymbolID = rsi_data.SymbolID AND rsi_data.rn = 1
+                -- Join with latest MovingAverages
+                LEFT JOIN (
                     SELECT *,
                            ROW_NUMBER() OVER (PARTITION BY SymbolID ORDER BY
                                               IndicatorDate DESC) as rn
