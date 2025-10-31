@@ -3,7 +3,11 @@
 import os
 from datetime import UTC, datetime
 
-from database.update_latest_data import update_latest_daily_candles
+from database.update_latest_data import (
+    update_latest_daily_candles,
+    update_latest_fifteen_min_candles,
+    update_latest_hourly_candles,
+)
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
 from integrations.onedrive_uploader import (
@@ -197,7 +201,19 @@ async def process_daily_report(  # noqa: PLR0915
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")
     updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
-    logger.info(f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed")
+    logger.info(f"✓ Daily candles: {updated_count} updated, {failed_count} failed")
+
+    # Update hourly candles for intraday analysis
+    hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
+    logger.info(f"✓ Hourly candles: {hourly_updated} updated, {hourly_failed} failed")
+
+    # Update 15-minute candles for intraday analysis
+    fifteen_updated, fifteen_failed = update_latest_fifteen_min_candles(conn, minutes_to_update=120)
+    logger.info(f"✓ 15-minute candles: {fifteen_updated} updated, {fifteen_failed} failed")
+
+    # Commit all the data updates to the database
+    conn.commit()
+    logger.info("✓ All candle data updates committed to database")
 
     # Generate all reports
     # NOTE: fetch_daily_candles() removed - redundant with update_latest_daily_candles() above

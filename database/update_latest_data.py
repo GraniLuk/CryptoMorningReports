@@ -8,7 +8,11 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 from infra.sql_connection import connect_to_sql
-from shared_code.price_checker import fetch_daily_candle, fetch_hourly_candle
+from shared_code.price_checker import (
+    fetch_daily_candle,
+    fetch_fifteen_min_candle,
+    fetch_hourly_candle,
+)
 from source_repository import fetch_symbols
 
 
@@ -256,6 +260,138 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
     return total_updated, total_failed
 
 
+def get_last_fifteen_min_candle_time(conn, symbol):
+    """Get the most recent timestamp in FifteenMinCandles table for a specific symbol.
+
+    Args:
+        conn: Database connection
+        symbol: Symbol object with symbol_id
+
+    Returns:
+        datetime object of the last candle, or None if no candles exist
+
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT MAX(OpenTime) as LastTime
+        FROM FifteenMinCandles
+        WHERE SymbolID = ?
+        """,
+        (symbol.symbol_id,),
+    )
+    result = cursor.fetchone()
+
+    if result and result[0]:
+        last_time = result[0]
+
+        # If it's already a datetime object, ensure UTC timezone
+        if isinstance(last_time, datetime):
+            if last_time.tzinfo is None:
+                return last_time.replace(tzinfo=UTC)
+            return last_time
+
+        # Otherwise parse from string
+        last_time_str = last_time
+        if "+" in last_time_str or "Z" in last_time_str:
+            last_time = datetime.fromisoformat(last_time_str.replace("Z", "+00:00"))
+        else:
+            last_time = datetime.fromisoformat(last_time_str).replace(tzinfo=UTC)
+        return last_time
+
+    return None
+
+
+def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
+    """Update missing 15-minute candles for all symbols up to current 15-minute interval.
+
+    Intelligently fetches only missing data:
+    - Checks database for last available 15-minute interval per symbol
+    - Fetches only missing 15-minute intervals between last_time and now
+    - If no data exists, falls back to fetching last N 15-minute intervals
+
+    Args:
+        conn: Database connection
+        minutes_to_update: Fallback - minutes to fetch if no data exists (default 120 = 2 hours)
+
+    """
+    logger.info("Checking database for missing 15-minute candles...")
+
+    symbols = fetch_symbols(conn)
+    end_time = datetime.now(UTC)
+
+    # Round end_time to nearest 15-minute interval
+    minutes = end_time.minute
+    rounded_minutes = (minutes // 15) * 15
+    end_time = end_time.replace(minute=rounded_minutes, second=0, microsecond=0)
+
+    total_updated = 0
+    total_failed = 0
+    total_skipped = 0
+
+    for symbol in symbols:
+        symbol_updated = 0
+
+        # Check last available 15-minute interval in database
+        last_time = get_last_fifteen_min_candle_time(conn, symbol)
+
+        if last_time:
+            # We have data - only fetch missing 15-minute intervals
+            if last_time >= end_time:
+                logger.info(
+                    f"✓ {symbol.symbol_name}: Already up-to-date "
+                    f"(last: {last_time.strftime('%Y-%m-%d %H:%M')})"
+                )
+                total_skipped += 1
+                continue
+
+            # Start from 15-minute interval after last available
+            start_time = last_time + timedelta(minutes=15)
+            intervals_diff = (
+                int((end_time - start_time).total_seconds() / 900) + 1
+            )  # 900 seconds = 15 minutes
+            logger.info(
+                f"📅 {symbol.symbol_name}: Fetching {intervals_diff} missing 15-minute interval(s) "
+                f"(last in DB: {last_time.strftime('%Y-%m-%d %H:%M')})"
+            )
+        else:
+            # No data exists - fetch last N 15-minute intervals as fallback
+            start_time = end_time - timedelta(minutes=minutes_to_update - 15)
+            logger.info(
+                f"📅 {symbol.symbol_name}: No existing data, "
+                f"fetching last {minutes_to_update // 15} 15-minute intervals"
+            )
+
+        # Fetch missing 15-minute intervals
+        current_time = start_time
+        while current_time <= end_time:
+            try:
+                candle = fetch_fifteen_min_candle(symbol, current_time, conn)
+
+                if candle:
+                    symbol_updated += 1
+                    logger.debug(
+                        f"  ✓ {current_time.strftime('%Y-%m-%d %H:%M')}: Close={candle.close:.2f}"
+                    )
+
+            except Exception as e:
+                logger.error(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed - {e}")
+                total_failed += 1
+
+            current_time += timedelta(minutes=15)
+
+        if symbol_updated > 0:
+            total_updated += symbol_updated
+            logger.info(f"✓ {symbol.symbol_name}: Updated {symbol_updated} 15-minute candle(s)")
+
+    logger.info(
+        f"15-minute data update complete: {total_updated} candles updated, "
+        f"{total_skipped} symbols already current, {total_failed} failed"
+    )
+
+    return total_updated, total_failed
+
+
 if __name__ == "__main__":
     """
     Run this script to manually update the latest candles.
@@ -291,13 +427,28 @@ if __name__ == "__main__":
         # Update hourly candles (only missing since last update)
         hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
 
+        print()  # Blank line between hourly and 15-min updates
+
+        # Update 15-minute candles (only missing since last update)
+        fifteen_min_updated, fifteen_min_failed = (
+            update_latest_fifteen_min_candles(conn, minutes_to_update=120)
+        )
+
         print("\n" + "=" * 70)
         print("📈 UPDATE SUMMARY")
         print("=" * 70)
         print(f"✓ Daily candles:  {daily_updated} updated, {daily_failed} failed")
         print(f"✓ Hourly candles: {hourly_updated} updated, {hourly_failed} failed")
+        print(f"✓ 15-Minute candles: {fifteen_min_updated} updated, {fifteen_min_failed} failed")
 
-        if daily_updated == 0 and hourly_updated == 0 and daily_failed == 0 and hourly_failed == 0:
+        if (
+            daily_updated == 0
+            and hourly_updated == 0
+            and daily_failed == 0
+            and hourly_failed == 0
+            and fifteen_min_updated == 0
+            and fifteen_min_failed == 0
+        ):
             print("\n💡 All symbols already up-to-date - no API calls needed!")
 
         print("=" * 70 + "\n")
