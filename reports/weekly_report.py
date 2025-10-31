@@ -11,6 +11,7 @@ from technical_analysis.moving_averages_report import calculate_indicators
 
 
 async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram_chat_id):
+    """Process and send the weekly cryptocurrency report via Telegram."""
     logger = app_logger
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for weekly report...", len(symbols))

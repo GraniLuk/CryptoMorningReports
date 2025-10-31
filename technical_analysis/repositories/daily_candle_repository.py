@@ -9,11 +9,15 @@ from technical_analysis.repositories.candle_repository import CandleRepository
 
 
 class DailyCandleRepository(CandleRepository):
+    """Repository for managing daily candlestick data."""
+
     def __init__(self, conn):
+        """Initialize the repository with a database connection."""
         super().__init__(conn, table_name="DailyCandles")
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:
         """Override save_candle for DailyCandles table which has both Date and EndDate columns.
+
         Date is the date portion only, EndDate is the full datetime.
         """
         is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"

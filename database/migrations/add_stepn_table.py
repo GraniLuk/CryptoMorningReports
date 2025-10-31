@@ -1,4 +1,5 @@
 """Add StepNResults table to existing SQLite database.
+
 This migration adds support for STEPN token metrics tracking.
 """
 

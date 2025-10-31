@@ -21,10 +21,18 @@ load_dotenv()  # Load environment variables from .env file
 
 class SQLiteRow:
     """Custom row class that mimics pyodbc.Row behavior.
+
     Supports both index and name-based access, and converts date strings to datetime objects.
     """
 
     def __init__(self, cursor, row):
+        """Initialize SQLiteRow with cursor description and row data.
+
+        Args:
+            cursor: SQLite cursor with column descriptions
+            row: Row data from query result
+
+        """
         self._data = []
         self._names = {}
 
@@ -75,12 +83,19 @@ def dict_factory(cursor, row):
 
 class SQLiteConnectionWrapper:
     """Wrapper for SQLite connection to make it compatible with pyodbc-style code.
+
     Provides a cursor() method that supports context manager protocol.
     Also supports direct execute() calls like pyodbc.
     Automatically converts date strings to datetime objects.
     """
 
     def __init__(self, sqlite_conn):
+        """Initialize SQLiteConnection with a SQLite connection object.
+
+        Args:
+            sqlite_conn: SQLite database connection
+
+        """
         self._conn = sqlite_conn
         # Use custom row factory that converts dates and supports column access by name
         self._conn.row_factory = dict_factory
@@ -91,6 +106,7 @@ class SQLiteConnectionWrapper:
 
     def execute(self, sql, params=None):
         """Execute SQL directly on the connection (pyodbc compatibility).
+
         Returns a cursor with the results.
         """
         cursor = self._conn.cursor()
@@ -101,18 +117,23 @@ class SQLiteConnectionWrapper:
         return cursor
 
     def commit(self):
+        """Commit the current transaction."""
         return self._conn.commit()
 
     def rollback(self):
+        """Rollback the current transaction."""
         return self._conn.rollback()
 
     def close(self):
+        """Close the database connection."""
         return self._conn.close()
 
     def __enter__(self):
+        """Enter the runtime context for the connection."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the runtime context, committing or rolling back as appropriate."""
         if exc_type is None:
             self.commit()
         else:
@@ -124,21 +145,31 @@ class SQLiteCursorWrapper:
     """Wrapper for SQLite cursor to support context manager protocol."""
 
     def __init__(self, cursor):
+        """Initialize SQLiteCursorWrapper with a SQLite cursor.
+
+        Args:
+            cursor: SQLite cursor object
+
+        """
         self._cursor = cursor
 
     def __enter__(self):
+        """Enter the runtime context for the cursor."""
         return self._cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the runtime context, closing the cursor."""
         self._cursor.close()
         return False
 
     def __getattr__(self, name):
+        """Delegate attribute access to the underlying cursor."""
         return getattr(self._cursor, name)
 
 
 def connect_to_sql_sqlite(db_path=None):
     """Connect to local SQLite database.
+
     Returns a connection compatible with the existing codebase.
     """
     if db_path is None:
@@ -175,6 +206,7 @@ def connect_to_sql_sqlite(db_path=None):
 
 def connect_to_sql(max_retries=3):
     """Connect to database based on DATABASE_TYPE environment variable.
+
     Supports both SQLite (local) and Azure SQL (cloud).
     """
     database_type = os.getenv("DATABASE_TYPE", "azuresql").lower()

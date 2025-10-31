@@ -11,6 +11,8 @@ TickerPrice = namedtuple(
 
 @dataclass
 class Candle:
+    """Represents a candlestick data point for a cryptocurrency symbol."""
+
     symbol: str
     source: int
     end_date: str

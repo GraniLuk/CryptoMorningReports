@@ -50,6 +50,7 @@ async def send_email_with_epub_attachment(
     attachment_filename: str,
     recipients: Iterable[str],
 ) -> bool:
+    """Send an email with an EPUB attachment via Gmail SMTP."""
     username = os.environ.get("GMAIL_USERNAME")
     password = os.environ.get("GMAIL_PASSWORD")
 

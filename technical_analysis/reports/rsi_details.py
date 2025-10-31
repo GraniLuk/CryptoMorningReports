@@ -11,7 +11,8 @@ from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
 def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
-    """Create RSI table for a symbol using daily candles data for the last 30 days,
+    """Create RSI table for a symbol using daily candles data for the last 30 days.
+
     identifies divergences, and checks for RSI trendline breakouts.
     """
     all_values = pd.DataFrame()
@@ -92,6 +93,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
 
 def detect_bullish_divergence(df):
     """Detect bullish divergence: RSI forms higher lows while price forms lower lows.
+
     Looks for pattern over a 5-day window.
     """
     window = 5
@@ -122,6 +124,7 @@ def detect_bullish_divergence(df):
 
 def detect_bearish_divergence(df):
     """Detect bearish divergence: RSI forms lower highs while price forms higher highs.
+
     Looks for pattern over a 5-day window.
     """
     window = 5
@@ -151,7 +154,8 @@ def detect_bearish_divergence(df):
 
 
 def detect_rsi_breakout(df):
-    """Detect RSI trendline breakout by checking if the current RSI value
+    """Detect RSI trendline breakout by checking if the current RSI value.
+
     breaks above/below key levels.
     """
     breakout_flags = []

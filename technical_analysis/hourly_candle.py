@@ -23,7 +23,8 @@ def calculate_hourly_rsi(symbols: list[Symbol], conn):
 
 
 def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
-    """Check if all hourly candles for the symbol are available in the database for the past days,
+    """Check if all hourly candles for the symbol are available in the database for the past days.
+
     fetches missing ones from API.
 
     Args:
@@ -42,13 +43,13 @@ def fetch_hourly_candles_for_all_symbols(
     end_time: datetime | None = None,
     conn=None,
 ) -> list[Candle]:
-    """Fetch daily candles for given symbols and return a list of Candle objects.
+    """Fetch hourly candles for given symbols and return a list of Candle objects.
 
     Args:
         symbols: List of Symbol objects
+        start_time: Start time for fetching candles (defaults to 1 day before end_time)
+        end_time: End time for fetching candles (defaults to current time)
         conn: Database connection
-        start_date: Start date for fetching candles (defaults to 7 days before end_date)
-        end_date: End date for fetching candles (defaults to current date)
 
     Returns:
         List of Candle objects
@@ -69,6 +70,7 @@ class HourlyCandles(CandleFetcher):
     """Class for handling hourly candles."""
 
     def __init__(self):
+        """Initialize the hourly candles fetcher."""
         super().__init__("hourly", fetch_hourly_candle, HourlyCandleRepository)
 
 

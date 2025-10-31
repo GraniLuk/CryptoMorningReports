@@ -10,6 +10,7 @@ from source_repository import Symbol, fetch_symbols
 
 
 def fetch_price_change_report(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
+    """Fetch and generate a price change report showing 24h and 7d changes."""
     target_date = target_date or datetime.now(UTC).date()
     start_date = target_date - timedelta(days=7)  # Get 7 days of data
 

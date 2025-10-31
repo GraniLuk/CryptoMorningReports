@@ -1,4 +1,5 @@
 """Module for generating current data tables with latest indicators for crypto symbols.
+
 This module can be easily extended to add more indicators in the future.
 """
 

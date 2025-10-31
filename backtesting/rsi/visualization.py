@@ -17,6 +17,7 @@ def create_trading_visualization(
         candles_data: DataFrame with OHLC and RSI data
         results_df: DataFrame with trading results
         symbol_name: Name of the trading symbol
+        rsi_value: RSI threshold value used for trading signals
 
     """
     # Create figure with secondary y-axis

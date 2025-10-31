@@ -63,7 +63,7 @@ def save_stepn_results(
         gmt_price (float): Current GMT price
         gst_price (float): Current GST price
         ratio (float): GMT/GST ratio
-        EMA14 (float): EMA14 value
+        ema (float): EMA14 value
         min_24h (float, optional): Minimum value in the last 24 hours
         max_24h (float, optional): Maximum value in the last 24 hours
         range_24h (float, optional): Range in the last 24 hours

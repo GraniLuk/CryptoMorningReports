@@ -21,13 +21,13 @@ def fetch_fifteen_minutes_candles_for_all_symbols(
     end_time: datetime | None = None,
     conn=None,
 ) -> list[Candle]:
-    """Fetch daily candles for given symbols and return a list of Candle objects.
+    """Fetch 15-minute candles for given symbols and return a list of Candle objects.
 
     Args:
         symbols: List of Symbol objects
+        start_time: Start time for fetching candles (defaults to 1 day before end_time)
+        end_time: End time for fetching candles (defaults to current time)
         conn: Database connection
-        start_date: Start date for fetching candles (defaults to 7 days before end_date)
-        end_date: End date for fetching candles (defaults to current date)
 
     Returns:
         List of Candle objects
@@ -58,6 +58,7 @@ class FifteenMinCandles(CandleFetcher):
     """Class for handling fifteen minute candles."""
 
     def __init__(self):
+        """Initialize the fifteen minute candles fetcher."""
         super().__init__("fifteen_min", fetch_fifteen_min_candle, FifteenMinCandleRepository)
 
 

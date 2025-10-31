@@ -1,4 +1,5 @@
 """SQLite database schema and initialization for local development.
+
 This creates a local database structure compatible with the Azure SQL schema.
 """
 
@@ -10,6 +11,7 @@ from pathlib import Path
 
 def create_sqlite_database(db_path="./local_crypto.db"):
     """Create SQLite database with schema matching Azure SQL.
+
     Returns connection object.
     """
     # Remove existing database if present

@@ -64,7 +64,8 @@ def save_volume_results(conn, sorted_results):
 
 
 def get_combined_market_cap_and_volume_data(self):
-    """Fetch data from CombinedMarketCapAndVolumeView
+    """Fetch data from CombinedMarketCapAndVolumeView.
+
     Returns: List of dictionaries containing market cap and volume data.
     """
     try:

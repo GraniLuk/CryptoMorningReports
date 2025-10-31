@@ -1,4 +1,5 @@
 """Update latest daily candles to ensure fresh data for technical analysis.
+
 This module ensures that daily reports use the most recent market data.
 """
 

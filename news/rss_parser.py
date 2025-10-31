@@ -13,6 +13,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def get_news():
+    """Fetch news articles from various cryptocurrency RSS feeds."""
     feeds = {
         "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content"},
         "coindesk": {
@@ -49,6 +50,7 @@ def get_news():
 
 
 def fetch_rss_news(feed_url, source, class_name):
+    """Fetch and parse news articles from an RSS feed."""
     try:
         feed = feedparser.parse(feed_url)
         latest_news = []
@@ -86,6 +88,7 @@ def fetch_rss_news(feed_url, source, class_name):
 
 
 def fetch_full_content(url, class_name):
+    """Fetch the full content of a news article from its URL."""
     try:
         response = requests.get(url)
         soup = BeautifulSoup(response.content, "html.parser")

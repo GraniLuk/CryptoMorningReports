@@ -1,4 +1,5 @@
 """Fetch live cryptocurrency data from Binance and populate local SQLite database.
+
 This fetches real market data for local development without Azure SQL.
 """
 

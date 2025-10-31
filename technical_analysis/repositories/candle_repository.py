@@ -89,6 +89,7 @@ class CandleRepository:
         self.conn.commit()
 
     def get_candle(self, symbol: Symbol, end_date: datetime) -> Candle | None:
+        """Retrieve a single candle for the given symbol and end date."""
         sql = f"""
         SELECT [Id]
             ,[SymbolID]
@@ -122,6 +123,7 @@ class CandleRepository:
         return None
 
     def get_candles(self, symbol: Symbol, start_date: datetime, end_date: datetime) -> list[Candle]:
+        """Retrieve candles for the given symbol within the date range."""
         # Convert datetime objects to ISO format strings for comparison since
         # EndDate is stored as text
         start_date_str = (
@@ -166,7 +168,8 @@ class CandleRepository:
         ]
 
     def get_min_candle_date(self) -> datetime | None:
-        """Fetch the earliest date from the candles table
+        """Fetch the earliest date from the candles table.
+
         Returns None if table is empty.
         """
         sql = f"""
@@ -177,6 +180,7 @@ class CandleRepository:
         return row[0] if row and row[0] else None
 
     def get_all_candles(self, symbol: Symbol) -> list[Candle]:
+        """Retrieve all candles for the given symbol."""
         sql = f"""
         SELECT [Id]
             ,[SymbolID]

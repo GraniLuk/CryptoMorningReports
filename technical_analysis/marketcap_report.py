@@ -10,6 +10,7 @@ from technical_analysis.repositories.marketcap_repository import save_marketcap_
 
 
 def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
+    """Fetch and generate a market capitalization report for cryptocurrency symbols."""
     results = []
     missing_symbols = []
 

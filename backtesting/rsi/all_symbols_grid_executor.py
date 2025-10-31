@@ -9,6 +9,7 @@ from source_repository import fetch_symbols
 
 def run_grid_search_for_all_symbols(conn):
     """Execute the grid search for all symbols.
+
     Returns a combined list of dictionaries containing symbol name, parameters, and total profit.
     """
     all_results = []

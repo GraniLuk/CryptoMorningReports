@@ -15,6 +15,7 @@ from technical_analysis.rsi import calculate_rsi_using_ema
 
 
 def fetch_stepn_report(conn) -> PrettyTable:
+    """Fetch and generate a STEPN ecosystem report with token prices and ratios."""
     symbols = [
         Symbol(
             symbol_id=1,

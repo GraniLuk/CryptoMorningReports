@@ -137,7 +137,8 @@ class CandleFetcher:
                 )
 
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):
-        """Check if all candles for the symbol are available in the database,
+        """Check if all candles for the symbol are available in the database.
+
         fetches missing ones from API.
 
         Args:

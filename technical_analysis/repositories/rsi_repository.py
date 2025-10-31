@@ -130,7 +130,8 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
 
 
 def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "daily") -> list | None:
-    """Fetch candle data with RSI for a specific symbol,
+    """Fetch candle data with RSI for a specific symbol.
+
     only returning records on or after the specified date.
 
     Args:
@@ -404,7 +405,7 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
     Args:
         conn: Database connection
         symbol_id (int): Symbol ID to fetch RSI for
-        date: The current date to compare from
+        current_date: The current date to compare from
         timeframe (str): Timeframe type ("daily", "hourly", "fifteen_min")
 
     Returns:

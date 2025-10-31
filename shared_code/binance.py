@@ -23,6 +23,7 @@ class FuturesMetrics:
         next_funding_time: datetime,
         timestamp: datetime,
     ):
+        """Initialize futures market metrics with the provided data."""
         self.symbol = symbol
         self.open_interest = open_interest
         self.open_interest_value = open_interest_value
@@ -31,6 +32,7 @@ class FuturesMetrics:
         self.timestamp = timestamp
 
     def __repr__(self):
+        """Return a string representation of the FuturesMetrics object."""
         return (
             f"FuturesMetrics(symbol={self.symbol}, "
             f"open_interest={self.open_interest}, "
@@ -124,6 +126,7 @@ def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:
 
 
 def fetch_close_prices_from_binance(symbol: str, lookback_days: int = 14) -> pd.DataFrame:
+    """Fetch historical close prices from Binance for a given symbol."""
     client = BinanceClient()
 
     try:
@@ -280,8 +283,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
 
 
 def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
-    """Fetch open, close, high, low prices and volume from Binance for the
-    specified 15-minute interval.
+    """Fetch 15-minute kline data from Binance for the specified symbol and time.
 
     Args:
         symbol: Symbol object with binance_name property

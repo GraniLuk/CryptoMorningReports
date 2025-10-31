@@ -519,6 +519,7 @@ if __name__ == "__main__":
     from infra.sql_connection import connect_to_sql
 
     async def main():
+        """Run the main entry point for the current report process."""
         load_dotenv()
         conn = connect_to_sql()
         # Example usage

@@ -81,6 +81,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date | None = None) -> Ca
 
 
 def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame:
+    """Fetch historical close prices from KuCoin for a given symbol."""
     try:
         # Initialize Kucoin client
         kucoin_credentials = get_kucoin_credentials()
@@ -193,7 +194,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) 
 
 
 def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle | None:
-    """Fetch open, close, high, low prices and volume from KuCoin for the specified 15-minute interval.
+    """Fetch 15-minute kline data from KuCoin for the specified symbol and time.
 
     Args:
         symbol: Symbol object with kucoin_name property

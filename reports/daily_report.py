@@ -189,6 +189,7 @@ async def _process_ai_analysis(
 async def process_daily_report(  # noqa: PLR0915
     conn, telegram_enabled, telegram_token, telegram_chat_id
 ):
+    """Process and send the daily cryptocurrency report via Telegram."""
     logger = app_logger
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for daily report...", len(symbols))
@@ -379,6 +380,7 @@ if __name__ == "__main__":
     telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
 
     async def main():
+        """Run the main entry point for the daily report process."""
         await process_daily_report(conn, telegram_enabled, telegram_token, telegram_chat_id)
 
     asyncio.run(main())

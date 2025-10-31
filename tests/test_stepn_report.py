@@ -8,9 +8,12 @@ from stepn.stepn_report import fetch_stepn_report
 
 
 class TestStepnReport(unittest.TestCase):
+    """Unit tests for STEPN ecosystem reporting functionality."""
+
     @patch("stepn.stepn_report.fetch_current_price")
     @patch("stepn.stepn_report.fetch_gstgmt_ratio_range")
     def test_fetch_stepn_report_basic_functionality(self, mock_ratio_range, mock_fetch_price):
+        """Test basic functionality of fetch_stepn_report with mocked dependencies."""
         # Arrange
         # Mock the price fetching to return predetermined values
         mock_fetch_price.side_effect = [

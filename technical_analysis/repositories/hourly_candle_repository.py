@@ -9,7 +9,10 @@ from technical_analysis.repositories.candle_repository import CandleRepository
 
 
 class HourlyCandleRepository(CandleRepository):
+    """Repository for managing hourly candlestick data."""
+
     def __init__(self, conn):
+        """Initialize the repository with a database connection."""
         super().__init__(conn, table_name="HourlyCandles")
 
     def save_candle(self, symbol: Symbol, candle: Candle, source: int) -> None:

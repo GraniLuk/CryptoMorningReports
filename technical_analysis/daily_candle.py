@@ -43,6 +43,7 @@ def fetch_daily_candles(
 
 
 def check_if_all_candles(symbol, conn):
+    """Check if all daily candles are available for a symbol in the database."""
     repo = DailyCandleRepository(conn)
     all_candles = repo.get_all_candles(symbol)
 

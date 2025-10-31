@@ -10,6 +10,7 @@ load_dotenv()
 
 
 def get_kucoin_credentials():
+    """Get KuCoin API credentials from environment variables."""
     return {
         "api_key": os.getenv("KUCOIN_API_KEY"),
         "api_secret": os.getenv("KUCOIN_API_SECRET"),
@@ -18,6 +19,7 @@ def get_kucoin_credentials():
 
 
 def get_twitter_credentials():
+    """Get Twitter credentials from environment variables."""
     return {
         "login": os.getenv("TWITTER_LOGIN"),
         "email": os.getenv("TWITTER_EMAIL"),

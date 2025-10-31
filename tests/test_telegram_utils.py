@@ -15,13 +15,17 @@ from shared_code.telegram import enforce_markdown_v2, smart_split  # noqa: E402
 
 
 class TestTelegramUtils(unittest.TestCase):
+    """Unit tests for Telegram messaging utilities."""
+
     def test_smart_split_short_message(self):
+        """Test that short messages are not split."""
         text = "Short message"
         chunks = smart_split(text, 4096, parse_mode="HTML")
         assert len(chunks) == 1
         assert chunks[0] == text
 
     def test_smart_split_paragraph_preservation(self):
+        """Test that paragraph boundaries are preserved during splitting."""
         paragraph = (
             "Paragraph one." + "\n\n" + "Paragraph two is here." + "\n\n" + "Paragraph three."
         )  # 3 paragraphs
@@ -35,6 +39,7 @@ class TestTelegramUtils(unittest.TestCase):
         assert reassembled == paragraph
 
     def test_smart_split_oversize_paragraph(self):
+        """Test splitting of paragraphs that exceed the size limit."""
         long_para = "A" * 5000  # single oversized paragraph
         chunks = smart_split(long_para, 1000, parse_mode="HTML")
         # Expect dynamic number of chunks (ceil division)
@@ -48,6 +53,7 @@ class TestTelegramUtils(unittest.TestCase):
         assert reassembled.rstrip() == long_para
 
     def test_smart_split_html_tag_boundary(self):
+        """Test that HTML tags are not split across chunks."""
         # Construct text likely to cut inside a tag if naive
         core = "<b>" + ("X" * 300) + "</b>" + "\n\n" + "<a href='u'>link</a>" + ("Y" * 300)
         limit = 350  # Forces potential mid-tag splits
@@ -59,6 +65,7 @@ class TestTelegramUtils(unittest.TestCase):
                 self.fail(f"Unbalanced tag counts in chunk: {c[-60:]}")
 
     def test_enforce_markdown_v2_basic_escapes(self):
+        """Test basic escaping of special characters in Markdown V2."""
         text = "Special _ * [ ] ( ) ~ ` > # + - = | { } . !"
         escaped = enforce_markdown_v2(text)
         # Only the segment before the unmatched backtick is escaped by design.
@@ -69,6 +76,7 @@ class TestTelegramUtils(unittest.TestCase):
         assert "`" in escaped
 
     def test_enforce_markdown_v2_preserves_code_spans(self):
+        """Test that code spans are preserved during escaping."""
         text = "Code: `a_b` outside _italic_"
         escaped = enforce_markdown_v2(text)
         # Inside code span a_b should remain unescaped
@@ -77,6 +85,7 @@ class TestTelegramUtils(unittest.TestCase):
         assert re.search(r"outside \\_italic\\_", escaped)
 
     def test_enforce_markdown_v2_idempotent(self):
+        """Test that repeated escaping doesn't grow unbounded."""
         text = "Heading ## Title"
         first = enforce_markdown_v2(text)
         second = enforce_markdown_v2(first)

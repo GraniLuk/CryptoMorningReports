@@ -23,6 +23,7 @@ app = func.FunctionApp()
 
 
 async def run_report(report_type="daily"):
+    """Run the specified type of cryptocurrency report (daily or weekly)."""
     logging.info(
         f"{report_type.capitalize()} report function started at {datetime.now(UTC).isoformat()}"
     )
@@ -55,16 +56,19 @@ async def run_report(report_type="daily"):
 
 @app.timer_trigger(schedule="0 4 * * *", arg_name="dailyTimer", use_monitor=False)
 def daily_report(_daily_timer: func.TimerRequest) -> None:
+    """Azure Function triggered daily at 4 AM UTC to generate daily reports."""
     asyncio.run(run_report("daily"))
 
 
 @app.timer_trigger(schedule="0 3 * * 0", arg_name="weeklyTimer", use_monitor=False)
 def weekly_report(_weekly_timer: func.TimerRequest) -> None:
+    """Azure Function triggered weekly on Sundays at 3 AM UTC to generate weekly reports."""
     asyncio.run(run_report("weekly"))
 
 
 @app.route(route="manual-trigger")
 def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
+    """HTTP-triggered Azure Function for manually executing reports."""
     report_type = req.params.get("type", "daily")
     if report_type not in ["daily", "weekly"]:
         return func.HttpResponse("Invalid report type. Use 'daily' or 'weekly'.", status_code=400)

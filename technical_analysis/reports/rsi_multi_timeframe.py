@@ -27,6 +27,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ) -> pd.DataFrame | None:
     """Get RSI data for a symbol in the specified timeframe.
+
     If RSI values are missing in the database, it calculates them only for the requested period.
 
     Args:
@@ -473,6 +474,7 @@ def _get_candle_repository(conn, timeframe: str):
 
 def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str):
     """Calculate RSI for the given candles and save to database.
+
     Returns list of candles with RSI data in the format expected by the calling function.
     """
     if not candles:

@@ -41,6 +41,9 @@ select = [
     "D",      # pydocstyle - docstring conventions
 ]
 
+# Ignore conflicting pydocstyle rules
+ignore = ["D203", "D213"]
+
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 

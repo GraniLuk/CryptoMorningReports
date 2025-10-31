@@ -17,6 +17,7 @@ def run_backtest(  # noqa: PLR0915
     days_after_to_buy: int,
     position_type: str = "LONG",  # New parameter
 ):
+    """Run RSI-based backtest on candle data with specified parameters."""
     if position_type not in ["LONG", "SHORT"]:
         msg = "position_type must be either 'LONG' or 'SHORT'"
         raise ValueError(msg)
@@ -165,6 +166,7 @@ def run_strategy_for_symbol_internal(
     position_type: str = "LONG",
 ):
     """Execute the strategy for a single symbol.
+
     Returns the results DataFrame and the TP ratio.
     """
     # Run backtest

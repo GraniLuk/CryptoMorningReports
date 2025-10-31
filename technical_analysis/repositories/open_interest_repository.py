@@ -10,6 +10,7 @@ class OpenInterestRepository:
     """Repository for Open Interest data."""
 
     def __init__(self, conn):
+        """Initialize the open interest repository with a database connection."""
         self.conn = conn
         self.is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 

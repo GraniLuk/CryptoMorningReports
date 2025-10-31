@@ -10,6 +10,7 @@ from infra.telegram_logging_handler import app_logger
 
 
 def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
+    """Fetch the GST/GMT ratio range from Application Insights logs."""
     try:
         # Initialize credentials and Logs Query Client
         credential = DefaultAzureCredential()

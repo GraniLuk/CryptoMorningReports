@@ -10,6 +10,7 @@ URL = "https://www.kucoin.com/_api/seo-content-eco-service/web/article/searchRec
 
 
 def check_gempool_articles():
+    """Check for new articles from the Gempool API."""
     seen_articles = set()
 
     # Fetch articles from the API

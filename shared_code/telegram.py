@@ -23,6 +23,7 @@ async def send_telegram_message(
     disable_notification: bool = False,
     protect_content: bool = False,
 ):
+    """Send a message to a Telegram chat."""
     if not enabled:
         logging.info("Telegram notifications are disabled")
         return None
@@ -98,7 +99,8 @@ async def send_telegram_message(
 
 
 def enforce_markdown_v2(text: str) -> str:
-    """Escape characters required by Telegram MarkdownV2 while preserving existing
+    """Escape characters required by Telegram MarkdownV2 while preserving existing.
+
     code spans. We do a lightweight parse: split by backticks and only escape in the
     non-code segments (even indices after split). This is not a full Markdown parser
     but sufficient for typical report content.
@@ -115,6 +117,7 @@ def enforce_markdown_v2(text: str) -> str:
 
 def sanitize_html(message):
     """Escapes any HTML-like substrings that are not valid Telegram allowed tags.
+
     Allowed tags: b, i, u, s, code, pre, a (opening/closing, with optional attributes for <a>).
     """
     # List the allowed tag names. For the <a> tag, we allow attributes.
@@ -140,6 +143,7 @@ def sanitize_html(message):
 async def try_send_report_with_html_or_markdown(
     telegram_enabled, telegram_token, telegram_chat_id, message
 ):
+    """Send a report message trying HTML first, then falling back to MarkdownV2."""
     # Try HTML first
     success = await send_telegram_message(
         telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode="HTML"
@@ -159,7 +163,8 @@ async def try_send_report_with_html_or_markdown(
 
 
 def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
-    """Split the text into <=limit sized chunks, preferring to break on double newlines
+    """Split the text into <=limit sized chunks, preferring to break on double newlines.
+
     (paragraphs). If a single paragraph exceeds the limit, fall back to hard slicing.
     For HTML parse_mode we also try not to cut inside an open tag (very naive: ensure
     open '<' without closing '>' inside the slice gets extended to the closing '>').
@@ -251,6 +256,7 @@ async def send_telegram_document(
     local_path: str | None = None,
 ):
     """Send a document (e.g. markdown report) to Telegram.
+
     Either provide file_bytes OR a local_path. If both are provided local_path takes precedence.
     Returns True on success, False otherwise.
     """
@@ -302,7 +308,8 @@ async def send_telegram_document(
 
 
 def _extend_to_close_tag(_full_text: str, _start_index: int, slice_: str, _limit: int) -> str:
-    """If the slice ends in the middle of an HTML tag (has unmatched '<'), extend until
+    """If the slice ends in the middle of an HTML tag (has unmatched '<'), extend until.
+
     the closing '>' if possible within a small lookahead window. This is a heuristic to
     reduce parse errors when using HTML parse_mode.
     """

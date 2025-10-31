@@ -6,6 +6,7 @@ import requests
 
 
 def get_yesterday_transaction_count(contract_address, api_key):
+    """Get the transaction count for a BSC contract address from yesterday."""
     # Get block numbers for time range
     def get_block_number(timestamp):
         response = requests.get(

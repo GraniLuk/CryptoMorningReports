@@ -136,7 +136,8 @@ def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
 
 
 def get_macd_with_crossover_data(self):
-    """Fetch data from MACDWithCrossoverView
+    """Fetch data from MACDWithCrossoverView.
+
     Returns: List of dictionaries containing MACD data with crossover signals.
     """
     try:

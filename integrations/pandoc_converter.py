@@ -173,11 +173,13 @@ def _convert_markdown_to_epub_sync(
 
 
 def convert_markdown_to_epub(markdown_text: str, metadata: dict[str, str] | None = None) -> bytes:
+    """Convert markdown text to EPUB format synchronously."""
     return _convert_markdown_to_epub_sync(markdown_text, metadata)
 
 
 async def convert_markdown_to_epub_async(
     markdown_text: str, metadata: dict[str, str] | None = None
 ) -> bytes:
+    """Convert markdown text to EPUB format asynchronously."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _convert_markdown_to_epub_sync, markdown_text, metadata)

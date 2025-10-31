@@ -33,6 +33,7 @@ _price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 
 def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) -> Candle | None:
+    """Fetch a daily candle for a symbol, checking database first if connection provided."""
     if end_date is None:
         end_date = datetime.now(UTC).date()
     # If connection provided, try to get from database first
@@ -111,6 +112,7 @@ def fetch_hourly_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> list[Candle]:
     """Fetch multiple hourly candles for a given symbol between start_time and end_time.
+
     If a database connection is provided, attempts to fetch from database first.
     Will check if all expected candles are available and fetch missing ones.
 
@@ -230,6 +232,7 @@ def fetch_fifteen_min_candles(
     symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
 ) -> list[Candle]:
     """Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
+
     If a database connection is provided, attempts to fetch from database first.
     Will check if all expected candles are available and fetch missing ones.
 
@@ -314,6 +317,7 @@ def fetch_daily_candles(
     symbol: Symbol, start_date: date, end_date: date | None = None, conn=None
 ) -> list[Candle]:
     """Fetch multiple daily candles for a given symbol between start_date and end_date.
+
     If a database connection is provided, attempts to fetch from database first.
     """
     if end_date is None:
@@ -342,6 +346,7 @@ def fetch_daily_candles(
 
 
 def fetch_current_price(symbol: Symbol) -> TickerPrice:
+    """Fetch the current price for a symbol, using cache if available."""
     cache_key = (symbol.symbol_name, symbol.source_id)
 
     # Check cache

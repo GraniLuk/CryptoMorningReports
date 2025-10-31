@@ -9,6 +9,8 @@ from infra.telegram_logging_handler import app_logger
 
 
 class SourceID(Enum):
+    """Enumeration of supported cryptocurrency data sources."""
+
     BINANCE = 1
     KUCOIN = 2
     COINGECKO = 3
@@ -18,6 +20,8 @@ class SourceID(Enum):
 
 @dataclass
 class Symbol:
+    """Represents a cryptocurrency symbol with its properties and exchange-specific names."""
+
     symbol_id: int
     symbol_name: str
     full_name: str
@@ -26,10 +30,12 @@ class Symbol:
 
     @property
     def kucoin_name(self) -> str:
+        """Return the KuCoin-specific name for this symbol."""
         return f"{self.symbol_name}-USDT"
 
     @property
     def binance_name(self) -> str:
+        """Return the Binance-specific name for this symbol."""
         return f"{self.symbol_name}USDT"
 
     @staticmethod

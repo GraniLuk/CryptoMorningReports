@@ -29,11 +29,13 @@ def create_ai_client(api_type, api_key):
 def get_detailed_crypto_analysis_with_news(
     api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
 ):
+    """Get detailed cryptocurrency analysis combining indicators and news data."""
     client = create_ai_client(api_type, api_key)
     return client.get_detailed_crypto_analysis_with_news(indicators_message, news_feeded, conn)
 
 
 def highlight_articles(api_key, user_crypto_list, news_feeded, api_type="perplexity"):
+    """Highlight relevant articles from news feed based on user's crypto list."""
     client = create_ai_client(api_type, api_key)
     return client.highlight_articles(user_crypto_list, news_feeded)
 
@@ -51,7 +53,10 @@ if __name__ == "__main__":
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
 
     class Symbol:
+        """Represents a cryptocurrency symbol with ID, name, and full name."""
+
         def __init__(self, symbol_id, symbol_name, full_name):
+            """Initialize a Symbol with ID, name, and full name."""
             self.symbol_id = symbol_id
             self.symbol_name = symbol_name
             self.full_name = full_name
