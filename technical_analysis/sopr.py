@@ -58,6 +58,10 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
             return None
         metrics["LTH-SOPR"] = response.json()[0]
 
+    except Exception as e:
+        app_logger.error(f"Error fetching SOPR metrics: {e!s}")
+        return None
+    else:
         # Create pretty table for display
         table = PrettyTable()
         table.field_names = ["Indicator", "Value"]
@@ -74,10 +78,6 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
             app_logger.info("SOPR metrics fetched and saved successfully")
 
         return table
-
-    except Exception as e:
-        app_logger.error(f"Error fetching SOPR metrics: {e!s}")
-        return None
 
 
 if __name__ == "__main__":
