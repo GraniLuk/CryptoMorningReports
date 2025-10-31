@@ -32,12 +32,10 @@ async def send_current_report(symbol: str):
 
     conn = connect_to_sql()
     try:
-
         # Generate report
         report = await generate_crypto_situation_report(conn, symbol)
 
         if report and not report.startswith("Failed") and not report.startswith("Error"):
-
             # Send to Telegram
             result = await send_telegram_message(
                 enabled=True,  # Force send for testing

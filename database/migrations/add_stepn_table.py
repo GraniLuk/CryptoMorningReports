@@ -14,7 +14,6 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
         logging.error(f"Database not found: {db_path}")
         return False
 
-
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -63,7 +62,6 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
 
 
 if __name__ == "__main__":
-
     success = migrate_add_stepn_table()
 
     if success:
