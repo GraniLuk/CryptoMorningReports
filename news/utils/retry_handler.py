@@ -55,7 +55,7 @@ def retry_with_fallback_models(
 
         except Exception as e:
             error_msg = f"Failed {operation_name}: {e!s}"
-            logging.error(error_msg)
+            logging.exception(error_msg)
             if current_try < max_retries - 1:
                 current_try += 1
                 continue

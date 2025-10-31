@@ -38,6 +38,7 @@ select = [
     "PTH",    # flake8-use-pathlib
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    "TRY",    # tryceratops - exception handling
     "T",      # flake8-print - no print statements
     "D",      # pydocstyle - docstring conventions
 ]

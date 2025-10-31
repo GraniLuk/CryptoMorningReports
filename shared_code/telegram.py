@@ -94,7 +94,7 @@ async def send_telegram_message(
             if len(message) > message_truncate_threshold
             else message
         )
-        logging.error("Failed to send telegram message: %s | snippet: %s", str(e), snippet)
+        logging.exception("Failed to send telegram message: %s | snippet: %s", str(e), snippet)
         return False
 
 
@@ -303,7 +303,7 @@ async def send_telegram_document(
 
             return _send_document_request(token, files, data, filename)
     except Exception as e:
-        logging.error("Exception while sending document: %s", e)
+        logging.exception("Exception while sending document: %s", e)
         return False
 
 

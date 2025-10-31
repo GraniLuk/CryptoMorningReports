@@ -80,7 +80,7 @@ class GeminiClient(AIClient):
 
         except Exception as e:
             error_msg = f"Failed to get response from Gemini: {e!s}"
-            logging.error(error_msg)
+            logging.exception(error_msg)
             return error_msg
 
     def _identify_part_type(self, idx: int, text_content: str) -> str:

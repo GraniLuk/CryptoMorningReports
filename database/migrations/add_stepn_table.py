@@ -57,7 +57,7 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
         return True
 
     except sqlite3.Error as e:
-        logging.error(f"Migration failed: {e}")
+        logging.exception(f"Migration failed: {e}")
         return False
 
 
