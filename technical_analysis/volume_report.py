@@ -110,4 +110,3 @@ if __name__ == "__main__":
     ]
 
     table = fetch_volume_report(symbols, conn)
-    print(table)

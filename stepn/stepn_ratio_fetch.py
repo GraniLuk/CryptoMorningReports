@@ -78,4 +78,4 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
 
 
 if __name__ == "__main__":
-    print(fetch_gstgmt_ratio_range())
+    pass

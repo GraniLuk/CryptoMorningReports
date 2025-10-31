@@ -149,4 +149,3 @@ def calculate_ema14(ratios):
 
 if __name__ == "__main__":
     report = fetch_stepn_report(None)
-    print(report)

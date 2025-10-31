@@ -5,6 +5,7 @@ from http import HTTPStatus
 import requests
 from prettytable import PrettyTable
 
+from infra.telegram_logging_handler import app_logger
 from source_repository import Symbol
 from technical_analysis.repositories.marketcap_repository import save_marketcap_results
 
@@ -49,7 +50,7 @@ def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
                 else:
                     missing_symbols.append(crypto.symbol_name)
     except Exception as e:
-        print(f"Error fetching market caps: {e}")
+        app_logger.error(f"Error fetching market caps: {e}")
 
     # Sort results by market cap descending
     sorted_results = sorted(results, key=lambda x: x["market_cap"], reverse=True)
@@ -81,4 +82,3 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
 
     table = fetch_marketcap_report(symbols, conn)
-    print(table)

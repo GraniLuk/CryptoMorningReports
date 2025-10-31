@@ -533,10 +533,7 @@ if __name__ == "__main__":
     # Test with a symbol
     symbol = fetch_symbol_by_name(conn, "BTC")
     if symbol:
-        print("=== Current Data Summary Table ===")
-        print(get_current_data_summary_table(symbol, conn))
 
-        print("\n=== AI Prompt Format ===")
-        print(get_current_data_for_ai_prompt(symbol, conn))
+        pass
     else:
-        print("Symbol not found")
+        pass

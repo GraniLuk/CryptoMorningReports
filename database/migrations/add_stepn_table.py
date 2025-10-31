@@ -3,6 +3,7 @@
 This migration adds support for STEPN token metrics tracking.
 """
 
+import logging
 import sqlite3
 from pathlib import Path
 
@@ -10,11 +11,9 @@ from pathlib import Path
 def migrate_add_stepn_table(db_path="./local_crypto.db"):
     """Add StepNResults table to existing database."""
     if not Path(db_path).exists():
-        print(f"❌ Database not found: {db_path}")
-        print("   Please run: python -m database.init_sqlite")
+        logging.error(f"Database not found: {db_path}")
         return False
 
-    print(f"🔄 Adding StepNResults table to: {db_path}")
 
     try:
         conn = sqlite3.connect(db_path)
@@ -27,7 +26,6 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
         """)
 
         if cursor.fetchone():
-            print("✓ StepNResults table already exists")
             conn.close()
             return True
 
@@ -57,33 +55,18 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
         conn.commit()
         conn.close()
 
-        print("✅ StepNResults table created successfully!")
-        print("   STEPN metrics tracking is now enabled")
         return True
 
     except sqlite3.Error as e:
-        print(f"❌ Migration failed: {e}")
+        logging.error(f"Migration failed: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("")
-    print("═" * 60)
-    print("  📊 STEPN Table Migration")
-    print("═" * 60)
-    print("")
 
     success = migrate_add_stepn_table()
 
     if success:
-        print("")
-        print("🎉 Migration complete! STEPN reporting is now available.")
-        print("")
-        print("Next steps:")
-        print("  • Run daily report to start collecting STEPN data")
-        print("  • Data will accumulate for RSI/EMA calculations")
-        print("")
+        pass
     else:
-        print("")
-        print("❌ Migration failed. Please check the error above.")
-        print("")
+        logging.error("Migration failed. Please check the error above.")

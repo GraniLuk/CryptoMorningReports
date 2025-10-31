@@ -365,6 +365,6 @@ if __name__ == "__main__":
     # Fetch open and close prices for the last full day
     response = fetch_binance_daily_kline(symbol, datetime.now(UTC) - timedelta(days=1))
     if response is not None:
-        print(f"Yesterday price: {response}")
+        pass
     else:
-        print("No data found")
+        pass

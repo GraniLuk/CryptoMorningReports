@@ -89,7 +89,6 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     table = fetch_sopr_metrics(conn)
     if table:
-        print("\nCurrent SOPR Metrics:")
-        print(table)
+        pass
     else:
-        print("Failed to retrieve SOPR data")
+        pass

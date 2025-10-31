@@ -554,8 +554,7 @@ if __name__ == "__main__":
     calculate_fifteen_min_rsi(symbols, conn)
 
     # Generate reports
-    print("Individual Symbol Report:")
     symbol = next((s for s in symbols if s.symbol_name == "VIRTUAL"), symbols[0])
     table = create_multi_timeframe_rsi_table(symbol, conn)
     if table:
-        print(table)
+        pass

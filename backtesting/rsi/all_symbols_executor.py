@@ -38,7 +38,6 @@ def run_strategy_for_all_symbols(
             candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy
         )
         symbol_ratios[symbol.symbol_name] = ratio
-        print(f"{symbol.symbol_name}: TP Ratio = {ratio:.2f}\n")
 
         # Append results to combined DataFrame
         if not results_df.empty:

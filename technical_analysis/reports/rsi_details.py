@@ -1,6 +1,6 @@
 """Detailed RSI analysis and reporting for cryptocurrency markets."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -190,5 +190,5 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
     # symbol = [symbol for symbol in symbols if symbol.symbol_name == "BTC"][0]
     # print(create_rsi_table_for_symbol(symbol, conn))
-    for symbol in symbols:
-        print(create_rsi_table_for_symbol(symbol, conn, target_date=datetime.now(UTC).date()))
+    for _symbol in symbols:
+        pass

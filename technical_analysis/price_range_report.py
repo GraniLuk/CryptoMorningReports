@@ -101,4 +101,3 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
 
     table = fetch_range_price(symbols, conn)
-    print(table)

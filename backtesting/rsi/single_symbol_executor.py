@@ -41,7 +41,6 @@ if __name__ == "__main__":
             days_after_to_buy,
             "LONG",
         )
-        print(f"{filtered_symbols[0].symbol_name}: TP Ratio = {ratio:.2f}")
         total_profit = result_df["profit"].sum() if not result_df.empty else 0.0
 
         if not result_df.empty:

@@ -26,35 +26,21 @@ async def main():
     if len(sys.argv) > 1:
         report_type = sys.argv[1].lower()
         if report_type not in ["daily", "weekly", "current"]:
-            print("Usage: python local_runner.py [daily|weekly|current] [symbol]")
-            print("  daily   - Run daily report")
-            print("  weekly  - Run weekly report")
-            print("  current [symbol] - Run current situation report")
-            print("\nDefault: daily")
             sys.exit(1)
 
-    print(f"Starting {report_type} report locally...")
-    print("=" * 60)
 
     try:
         if report_type == "current":
             # Current situation report
             min_args_for_current = 3
             if len(sys.argv) < min_args_for_current:
-                print("❌ Error: Symbol required for current situation report")
-                print("Usage: python local_runner.py current BTC")
                 sys.exit(1)
 
             symbol = sys.argv[2].upper()
-            print(f"📊 Generating situation report for {symbol}...")
 
             conn = connect_to_sql()
             try:
-                report = await generate_crypto_situation_report(conn, symbol)
-                print("\n" + "=" * 60)
-                print("REPORT OUTPUT:")
-                print("=" * 60)
-                print(report)
+                await generate_crypto_situation_report(conn, symbol)
             finally:
                 if conn:
                     conn.close()
@@ -63,12 +49,8 @@ async def main():
             # Daily/weekly report
             await run_report(report_type)
 
-        print("=" * 60)
-        print(f"SUCCESS: {report_type.capitalize()} report completed!")
 
-    except Exception as e:
-        print("=" * 60)
-        print(f"ERROR: Failed to run {report_type} report: {e!s}")
+    except Exception:
         traceback.print_exc()
         sys.exit(1)
 

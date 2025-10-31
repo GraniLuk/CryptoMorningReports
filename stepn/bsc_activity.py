@@ -4,6 +4,8 @@ from datetime import UTC, datetime, timedelta
 
 import requests
 
+from infra.telegram_logging_handler import app_logger
+
 
 def get_yesterday_transaction_count(contract_address, api_key):
     """Get the transaction count for a BSC contract address from yesterday."""
@@ -74,6 +76,6 @@ if __name__ == "__main__":
 
     try:
         count = get_yesterday_transaction_count(stepn_contract_address, api_key)
-        print(f"Yesterday's transaction count: {count}")
+        app_logger.info(f"Yesterday's transaction count: {count}")
     except Exception as e:
-        print(f"An error occurred: {e!s}")
+        app_logger.error(f"An error occurred: {e}", exc_info=True)

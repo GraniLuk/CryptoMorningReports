@@ -265,11 +265,6 @@ if __name__ == "__main__":
     hourly_candle = fetch_kucoin_hourly_kline(symbol, end_time=end_date)
     if hourly_candle:
         # Print the fetched hourly candle data
-        print(
-            f"Date: {hourly_candle.end_date}, High: {hourly_candle.high}, "
-            f"Low: {hourly_candle.low}, "
-            f"Open: {hourly_candle.open}, Close: {hourly_candle.close}, "
-            f"Volume: {hourly_candle.volume}"
-        )
+        pass
     else:
-        print("Failed to fetch hourly candle data.")
+        pass

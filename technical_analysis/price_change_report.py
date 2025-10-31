@@ -75,4 +75,3 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
 
     table = fetch_price_change_report(symbols, conn, target_date=datetime.now(UTC).date())
-    print(table)

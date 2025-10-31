@@ -72,16 +72,12 @@ if __name__ == "__main__":
 
     # Test with Perplexity
     if perplexity_api_key:
-        print("Testing with Perplexity API...")
         highlighted_news = highlight_articles(
             perplexity_api_key, user_crypto_list, news_feeded, "perplexity"
         )
-        print(highlighted_news)
 
     # Test with Gemini
     if gemini_api_key:
-        print("Testing with Gemini API...")
         highlighted_news = highlight_articles(
             gemini_api_key, user_crypto_list, news_feeded, "gemini"
         )
-        print(highlighted_news)

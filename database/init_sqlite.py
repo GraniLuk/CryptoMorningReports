@@ -18,9 +18,7 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     if Path(db_path).exists():
         backup_path = f"{db_path}.backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
         Path(db_path).rename(backup_path)
-        print(f"📦 Backed up existing database to: {backup_path}")
 
-    print(f"🗄️  Creating new SQLite database: {db_path}")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -299,9 +297,6 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     )
 
     conn.commit()
-    print("✅ Database schema created successfully!")
-    print(f"   - Symbols: {len(default_symbols)} symbols added")
-    print("   - Tables: Symbols, HourlyCandles, FifteenMinCandles, DailyCandles")
 
     return conn
 
@@ -309,7 +304,6 @@ def create_sqlite_database(db_path="./local_crypto.db"):
 def verify_database(db_path="./local_crypto.db"):
     """Verify database structure and content."""
     if not Path(db_path).exists():
-        print(f"❌ Database not found: {db_path}")
         return False
 
     conn = sqlite3.connect(db_path)
@@ -317,30 +311,24 @@ def verify_database(db_path="./local_crypto.db"):
 
     # Check tables
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = [row[0] for row in cursor.fetchall()]
-    print(f"\n📊 Database Tables: {', '.join(tables)}")
+    [row[0] for row in cursor.fetchall()]
 
     # Check symbols
     cursor.execute("SELECT SymbolID, SymbolName, FullName FROM Symbols")
     symbols = cursor.fetchall()
-    print(f"\n💰 Symbols ({len(symbols)}):")
-    for symbol_id, name, display_name in symbols:
-        print(f"   {symbol_id}: {name} ({display_name})")
+    for _symbol_id, _name, _display_name in symbols:
+        pass
 
     # Check candle counts
     cursor.execute("SELECT COUNT(*) FROM HourlyCandles")
-    hourly_count = cursor.fetchone()[0]
+    cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM FifteenMinCandles")
-    fifteen_count = cursor.fetchone()[0]
+    cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM DailyCandles")
-    daily_count = cursor.fetchone()[0]
+    cursor.fetchone()[0]
 
-    print("\n📈 Candle Data:")
-    print(f"   Hourly: {hourly_count} candles")
-    print(f"   15-min: {fifteen_count} candles")
-    print(f"   Daily: {daily_count} candles")
 
     conn.close()
     return True
@@ -356,7 +344,3 @@ if __name__ == "__main__":
     else:
         conn = create_sqlite_database(db_path)
         conn.close()
-        print("\n🎉 SQLite database ready!")
-        print("\nNext steps:")
-        print("  1. Run: python database/init_sqlite.py verify")
-        print("  2. Populate with data: python database/fetch_live_data.py")

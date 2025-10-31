@@ -115,6 +115,4 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
 
-    print("Fetching derivatives data...")
     table = fetch_derivatives_report(symbols, conn)
-    print(table)

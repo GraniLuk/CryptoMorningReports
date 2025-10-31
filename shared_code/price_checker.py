@@ -406,10 +406,8 @@ if __name__ == "__main__":
     daily_candles = fetch_hourly_candles(
         symbol, start_time=start_time, end_time=end_time, conn=conn
     )
-    for daily_candle in daily_candles:
-        print(
-            f"Daily candle for {symbol.symbol_name}: {daily_candle.close} {daily_candle.end_date}"
-        )
+    for _daily_candle in daily_candles:
+        pass
     # current_price = fetch_current_price(symbol)
     # print(f"Current price for {symbol.symbol_name}: {current_price}")
 

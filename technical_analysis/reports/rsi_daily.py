@@ -1,6 +1,6 @@
 """Daily RSI analysis and reporting for cryptocurrency markets."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -269,4 +269,3 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
     symbol = next(symbol for symbol in symbols if symbol.symbol_name == "LINK")
-    print(create_rsi_table_for_symbol(symbol, conn, target_date=datetime.now(UTC).date()))

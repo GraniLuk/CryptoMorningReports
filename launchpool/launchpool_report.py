@@ -1,5 +1,6 @@
 """Launchpool and Gempool article monitoring and reporting."""
 
+import logging
 from http import HTTPStatus
 
 import requests
@@ -37,14 +38,13 @@ def check_gempool_articles():
 
             # Notify if there are new articles
             if new_articles:
-                print("New Gempool Articles Found:\n")
-                for article in new_articles:
-                    print(article)
+                for _article in new_articles:
+                    pass
             else:
-                print("No new articles found.")
+                pass
         else:
-            print("Failed to fetch articles: Unexpected response format.")
+            pass
     else:
-        print(f"Failed to fetch articles: HTTP {response.status_code}")
+        logging.error(f"Failed to fetch articles: HTTP {response.status_code}")
 
     return new_articles

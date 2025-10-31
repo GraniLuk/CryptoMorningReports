@@ -157,4 +157,3 @@ if __name__ == "__main__":
 
     # Test database fetching
     candle_data = get_candle_data(btc_eth, conn)
-    print(format_candle_data_for_prompt(candle_data))

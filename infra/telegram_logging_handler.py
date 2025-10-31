@@ -69,7 +69,7 @@ def setup_logger():
         telegram_handler.setFormatter(formatter)
         logger.addHandler(telegram_handler)
     else:
-        print("Telegram logging not configured due to missing environment variables")
+        pass
 
     return logger
 

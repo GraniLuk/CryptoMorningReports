@@ -60,11 +60,10 @@ def check_if_all_candles(symbol, conn):
         oldest_date = date(2017, 1, 1)
 
     if oldest_date:
-        print(f"Oldest candle date: {oldest_date}")
+        pass
     end_date = datetime.now(UTC).date()
     current_date = oldest_date
     while current_date <= end_date:
-        print(f"Fetching data for {current_date}")
 
         # Compare dates properly - convert end_date string to date for comparison
         from_db = next(
@@ -84,7 +83,6 @@ def check_if_all_candles(symbol, conn):
         )
         if from_db is None:
             fetch_daily_candle(symbol, current_date, conn)
-            print("Fetched from API")
         # Process your candles here
         current_date += timedelta(days=1)
 
@@ -100,5 +98,4 @@ if __name__ == "__main__":
     symbols = fetch_symbols(conn)
     # Define start and end dates for January 2025
     for symbol in symbols:
-        print(f"Checking candles for {symbol}")
         check_if_all_candles(symbol, conn)

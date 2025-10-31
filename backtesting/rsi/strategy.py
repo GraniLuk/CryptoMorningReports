@@ -49,10 +49,6 @@ def run_backtest(  # noqa: PLR0915
                 str(df.loc[i + days_after_to_buy, "date"]), "%Y-%m-%d"
             ).replace(tzinfo=UTC)
             entry_price = Decimal(str(df.loc[i + days_after_to_buy, "Open"]))
-            print(
-                f"Started {position_type} position for {symbol_name} on date "
-                f"{entry_date} with entry price {entry_price}"
-            )
 
             tp_price = entry_price * tp_value
             sl_price = entry_price * sl_value
@@ -91,13 +87,6 @@ def run_backtest(  # noqa: PLR0915
 
                 if outcome:
                     days_taken = (current_date - entry_date).days
-                    emoji = "❤️" if outcome == "TP" else "💀"
-                    profit_str = "profit" if profit > 0 else "loss"
-                    print(
-                        f"Closed {position_type} position {emoji} for {symbol_name} "
-                        f"at date {current_date} with price {close_price} and "
-                        f"{profit_str} of {abs(profit):.2f}"
-                    )
                     active_trade = False  # Reset flag when trade is closed
                     break
 
@@ -122,36 +111,13 @@ def run_backtest(  # noqa: PLR0915
         # Add symbol name column to results
         results_df["symbol_name"] = symbol_name
 
-        total_profit = results_df["profit"].sum()
-        summary = results_df.groupby("trade_outcome").agg(
+        results_df["profit"].sum()
+        results_df.groupby("trade_outcome").agg(
             count=("trade_outcome", "size"), avg_days=("days", "mean")
         )
 
-        print(f"\nBacktest Results for {symbol_name}:")
-        print(f"Total trades: {len(results_df)}")
-        print(
-            f"Take Profit hits: {summary.loc['TP', 'count']}"
-            if "TP" in summary.index
-            else "Take Profit hits: 0"
-        )
-        print(
-            f"Stop Loss hits: {summary.loc['SL', 'count']}"
-            if "SL" in summary.index
-            else "Stop Loss hits: 0"
-        )
-        print(
-            f"Average days to TP: {summary.loc['TP', 'avg_days']:.1f}"
-            if "TP" in summary.index
-            else ""
-        )
-        print(
-            f"Average days to SL: {summary.loc['SL', 'avg_days']:.1f}"
-            if "SL" in summary.index
-            else ""
-        )
-        print(f"Total profit for {symbol_name}: ${total_profit:.2f}")
     else:
-        print(f"\nNo trades were executed for {symbol_name} during the backtest period.")
+        pass
 
     return results_df
 

@@ -415,31 +415,20 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
-        print("\n" + "=" * 70)
-        print("📊 SMART DATA UPDATE - Fetching Only Missing Candles")
-        print("=" * 70 + "\n")
 
         # Update daily candles (only missing since last update)
         daily_updated, daily_failed = update_latest_daily_candles(conn, days_to_update=3)
 
-        print()  # Blank line between daily and hourly updates
 
         # Update hourly candles (only missing since last update)
         hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
 
-        print()  # Blank line between hourly and 15-min updates
 
         # Update 15-minute candles (only missing since last update)
         fifteen_min_updated, fifteen_min_failed = (
             update_latest_fifteen_min_candles(conn, minutes_to_update=120)
         )
 
-        print("\n" + "=" * 70)
-        print("📈 UPDATE SUMMARY")
-        print("=" * 70)
-        print(f"✓ Daily candles:  {daily_updated} updated, {daily_failed} failed")
-        print(f"✓ Hourly candles: {hourly_updated} updated, {hourly_failed} failed")
-        print(f"✓ 15-Minute candles: {fifteen_min_updated} updated, {fifteen_min_failed} failed")
 
         if (
             daily_updated == 0
@@ -449,9 +438,8 @@ if __name__ == "__main__":
             and fifteen_min_updated == 0
             and fifteen_min_failed == 0
         ):
-            print("\n💡 All symbols already up-to-date - no API calls needed!")
+            pass
 
-        print("=" * 70 + "\n")
 
     finally:
         conn.close()

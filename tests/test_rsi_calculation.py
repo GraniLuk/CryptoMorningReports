@@ -129,7 +129,7 @@ class TestRSIAgainstTradingView:
         - Candle timing differences
         - Rounding in intermediate calculations
         """
-        candles, _symbol, target_date = get_virtual_data
+        candles, _symbol, _target_date = get_virtual_data
 
         if not candles:
             pytest.skip("No candle data available for VIRTUAL")
@@ -155,23 +155,11 @@ class TestRSIAgainstTradingView:
 
         # Get the latest RSI value
         latest_rsi_rma = df["RSI_RMA"].iloc[-1]
-        latest_rsi_ema = df["RSI_EMA"].iloc[-1]
-        latest_price = df["close"].iloc[-1]
+        df["RSI_EMA"].iloc[-1]
+        df["close"].iloc[-1]
 
-        print(f"\n{'=' * 60}")
-        print(f"VIRTUAL RSI Verification for {target_date}")
-        print(f"{'=' * 60}")
-        print(f"Latest Close Price: ${latest_price:,.4f}")
-        print(f"RSI (RMA method): {latest_rsi_rma:.2f}")
-        print(f"RSI (EMA method): {latest_rsi_ema:.2f}")
-        print("TradingView RSI:  69.01")
-        print(f"{'=' * 60}")
-        print(f"\nDifference (RMA): {abs(latest_rsi_rma - 69.01):.2f}")
-        print(f"Difference (EMA): {abs(latest_rsi_ema - 69.01):.2f}")
 
         # Print last 15 days of data for debugging
-        print("\nLast 15 days of data:")
-        print(df[["close", "RSI_RMA", "RSI_EMA"]].tail(15).to_string())
 
         # TradingView uses RMA (Wilder's smoothing) for RSI calculation
         # Allow tolerance for data source and timing differences
@@ -274,7 +262,7 @@ class TestRSIDataRequirements:
         )
         df_15 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_15])
         df_15.set_index("Date", inplace=True)
-        rsi_15 = calculate_rsi_using_rma(df_15["close"])
+        calculate_rsi_using_rma(df_15["close"])
 
         # Test with sufficient data (30+ days)
         candles_30 = fetch_daily_candles(
@@ -282,11 +270,8 @@ class TestRSIDataRequirements:
         )
         df_30 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_30])
         df_30.set_index("Date", inplace=True)
-        rsi_30 = calculate_rsi_using_rma(df_30["close"])
+        calculate_rsi_using_rma(df_30["close"])
 
-        print(f"\nRSI with 15 days: {rsi_15.iloc[-1]:.2f}")
-        print(f"RSI with 30 days: {rsi_30.iloc[-1]:.2f}")
-        print(f"Difference: {abs(rsi_15.iloc[-1] - rsi_30.iloc[-1]):.2f}")
 
         # The values should differ significantly when data is insufficient
         # With proper data, Wilder's smoothing stabilizes
@@ -326,10 +311,6 @@ class TestRSIMethodComparison:
         rsi_rma = calculate_rsi_using_rma(prices, periods=14)
         rsi_ema = calculate_rsi_using_ema(prices, period=14)
 
-        print("\nComparison of RSI methods:")
-        print(f"Last RMA RSI: {rsi_rma.iloc[-1]:.2f}")
-        print(f"Last EMA RSI: {rsi_ema.iloc[-1]:.2f}")
-        print(f"Difference: {abs(rsi_rma.iloc[-1] - rsi_ema.iloc[-1]):.2f}")
 
         # Methods should produce similar but not identical results
         # RMA and EMA use different smoothing, so some difference is expected
@@ -354,8 +335,7 @@ def test_rsi_integration_with_database():
         assert table is not None or table is None  # Valid outputs
 
         if table:
-            print("\nRSI Table for VIRTUAL:")
-            print(table)
+            pass
 
 
 if __name__ == "__main__":

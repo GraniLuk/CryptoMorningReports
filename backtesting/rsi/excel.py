@@ -11,4 +11,3 @@ def save_to_excel(df, prefix, symbol_name=None):
     else:
         filename = f"{prefix}_{current_date}.xlsx"
     df.to_excel(filename, index=False)
-    print(f"\nResults saved to '{filename}'")

@@ -15,11 +15,9 @@ def run_grid_search_for_all_symbols(conn):
     all_results = []
     symbols = fetch_symbols(conn)
     if not symbols:
-        print("No symbols found for grid search.")
         return all_results
 
     for symbol in symbols:
-        print(f"\nRunning grid search for symbol {symbol.symbol_name}...")
         grid_results = run_grid_search_for_symbol(conn, symbol)
         for res in grid_results:
             res["symbol_name"] = symbol.symbol_name
@@ -46,17 +44,8 @@ if __name__ == "__main__":
     if combined_results:
         # Create a DataFrame for easier analysis
         grid_df = pd.DataFrame(combined_results)
-        print("\nCombined Grid Search Summary (sorted by total profit):")
-        print(grid_df.sort_values("total_profit", ascending=False))
 
         # Find the best overall strategy across all symbols
         best = grid_df.loc[grid_df["total_profit"].idxmax()]
-        print(
-            f"\nBest overall strategy:\n"
-            f"Symbol: {best['symbol_name']}\n"
-            f"RSI: {best['rsi_value']}, TP: {best['tp_value']}, SL: {best['sl_value']}, "
-            f"days_after_to_buy: {best['days_after_to_buy']}\n"
-            f"Total Profit: {best['total_profit']}"
-        )
     else:
-        print("No grid search results found.")
+        pass

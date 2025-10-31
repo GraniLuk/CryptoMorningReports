@@ -104,4 +104,4 @@ def fetch_full_content(url, class_name):
 
 
 if __name__ == "__main__":
-    print(get_news())
+    pass

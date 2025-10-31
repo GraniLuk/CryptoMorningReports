@@ -152,38 +152,31 @@ def test_optimized_rsi():
     conn = connect_to_sql()
 
     if not conn:
-        print("Failed to connect to database")
         return
 
     symbols = fetch_symbols(conn)
 
     if not symbols:
-        print("No symbols found")
         return
 
     # Get the VIRTUAL symbol or first symbol
     symbol = next((s for s in symbols if s.symbol_name == "VIRTUAL"), symbols[0])
-    print(f"Testing with symbol: {symbol.symbol_name}")
 
     # First let's get data with all RSI values present
     df_complete = get_optimized_rsi_for_symbol_timeframe(symbol, conn, "daily", 3)
 
     if df_complete is None or df_complete.empty:
-        print("No RSI data available for testing")
         return
 
-    print("\nDataFrame with optimized RSI calculation:")
-    print(df_complete.head())
 
     # Check if all values have RSI - ensure df_complete is a DataFrame
     assert isinstance(df_complete, pd.DataFrame), "Expected a DataFrame"
     has_missing_rsi: bool = bool(df_complete["RSI"].isna().any())
-    print(f"\nAre there any missing RSI values? {has_missing_rsi}")
 
     if not has_missing_rsi:
-        print("\nSUCCESS: All RSI values are present and accounted for!")
+        pass
     else:
-        print("\nFAILED: There are missing RSI values")
+        pass
 
 
 if __name__ == "__main__":

@@ -524,8 +524,7 @@ if __name__ == "__main__":
         conn = connect_to_sql()
         # Example usage
         symbol_name = "Virtual"  # Replace with desired symbol
-        report = await generate_crypto_situation_report(conn, symbol_name)
-        print(report)
+        await generate_crypto_situation_report(conn, symbol_name)
 
     # Run the async main function
     asyncio.run(main())
