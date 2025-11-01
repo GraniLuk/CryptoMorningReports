@@ -38,9 +38,9 @@ ARTICLE_CONTENT_PREVIEW_LENGTH = 500
 ARTICLE_TITLE_MAX_LENGTH = 100  # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
 You are an expert cryptocurrency technical analyst performing in-depth market
-analysis. Drawing strictly from the provided price and volume data across multiple
-timeframes, deliver a comprehensive technical assessment with no fundamental
-analysis, news, or external factors.
+analysis. Using both technical data (price, volume, indicators) and recent news
+articles, deliver a comprehensive trading analysis that combines technical patterns
+with market sentiment and fundamental catalysts.
 
 Analysis Requirements:
 1. Price Action Analysis
@@ -48,22 +48,33 @@ Analysis Requirements:
    - Specify key support/resistance levels with exact price values
    - Highlight significant chart patterns and their completion targets
    - Flag potential trend reversal points with price triggers
+   - Correlate price movements with news events when relevant
 
 2. Volume Profile Assessment
    - Evaluate volume distribution at key price levels
    - Note volume divergences from price action
    - Identify high-volume nodes and areas of interest
+   - Explain unusual volume spikes in context of news articles
 
 3. Technical Indicator Analysis
    - RSI, MACD, and Moving Averages interpretation
    - Indicator divergences and crossovers
    - Time-sensitive momentum signals
+   - Consider how news sentiment aligns with technical signals
 
-4. Trading Opportunities
-   - Specify exact entry price levels
-   - Define multiple take-profit targets with rationale
-   - Set precise stop-loss levels
+4. News-Enhanced Trading Opportunities
+   - Integrate news sentiment into entry/exit decisions
+   - Specify exact entry price levels based on technical AND fundamental factors
+   - Define multiple take-profit targets with rationale (technical + news-based)
+   - Set precise stop-loss levels accounting for news-driven volatility
    - Calculate risk-reward ratios
+   - Identify potential catalysts from news that could accelerate or reverse trends
+
+5. Market Sentiment & Catalyst Analysis
+   - Evaluate news sentiment (bullish/bearish/neutral) and its reliability
+   - Identify upcoming catalysts mentioned in articles (partnerships, launches, regulations)
+   - Assess how current news aligns with or contradicts technical patterns
+   - Flag any news-driven risks that could invalidate technical setups
 
 Present your analysis in clear Markdown formatting with:
 - Main section headers (##)
@@ -72,11 +83,14 @@ Present your analysis in clear Markdown formatting with:
 - Use **bold** for critical alerts and important levels
 - Price values to 2 decimal places
 - Use emojis to make sections more readable (📈 for trends, 💰 for prices, 🎯
-  for targets, ⚠️ for risks, etc.)
+  for targets, ⚠️ for risks, 📰 for news impact, etc.)
+- Explicitly reference specific news articles when they influence your analysis
 """
 
 USER_PROMPT_SITUATION = """
-Conduct a multi-timeframe technical analysis for {symbol_name} using the provided market data:
+Conduct a comprehensive multi-timeframe technical analysis for {symbol_name} using the
+provided market data AND news articles. Your analysis must integrate both technical
+indicators and news sentiment to provide actionable trading recommendations.
 
 CURRENT MARKET SNAPSHOT:
 {current_data_snapshot}
@@ -99,47 +113,60 @@ Input Data:
 - RECENT NEWS ARTICLES (LAST 24 HOURS):
   {news_articles}
 
+CRITICAL: You MUST actively use the news articles above to enhance your analysis.
+Don't just summarize them - integrate their insights into your trading decisions.
+
 Required Analysis Components:
 
-1. Trend Analysis
-   - Primary trend direction (Daily)
-   - Intermediate trend (Hourly)
-   - Short-term trend (15-min)
-   - Identify any trend divergences between timeframes
+1. News-Informed Trend Analysis
+   - Primary trend direction (Daily) - does news support or contradict this trend?
+   - Intermediate trend (Hourly) - any news catalysts that could accelerate/reverse it?
+   - Short-term trend (15-min) - immediate news impact on momentum
+   - Identify trend divergences between timeframes AND news sentiment
+   - **State how news articles influence your trend assessment**
 
-2. Price Levels
-   - Major support levels (list exact prices)
-   - Major resistance levels (list exact prices)
+2. News-Adjusted Price Levels
+   - Major support levels (exact prices) - will news strengthen or weaken these?
+   - Major resistance levels (exact prices) - any news catalysts to break through?
    - Current price relative to key Moving Averages (20, 50, 200)
+   - **Explain if news creates new support/resistance zones**
 
-3. Technical Patterns
+3. Technical Patterns with News Context
    - Chart patterns (specify completion '%' and target prices)
    - Candlestick formations
    - Momentum indicators (RSI, MACD, Stochastic)
    - Volume profile analysis with specific levels
+   - **Correlate pattern strength with news sentiment**
 
-4. Trading Recommendation
-   - Entry price range: [specify exact prices]
-   - Stop loss price: [specify exact price]
-   - Take profit targets: [list multiple prices]
-   - Risk-to-reward ratio calculation
-   - Maximum drawdown potential (%)
+4. News-Enhanced Trading Recommendation
+   - Entry price range: [specify exact prices] - timing based on technical AND news
+   - Stop loss price: [specify exact price] - adjusted for news-driven volatility
+   - Take profit targets: [list multiple prices] - include news-based targets
+   - Risk-to-reward ratio calculation - factor in news uncertainty
+   - Maximum drawdown potential (%) - consider news risks
+   - **Trading timeframe recommendation based on news catalyst timing**
+   - **Position sizing suggestion based on news sentiment confidence**
 
-5. Risk Assessment
+5. Risk Assessment with News Factors
    - Market volatility metrics (ATR, standard deviation)
-   - Proximity to major economic events
+   - News-driven volatility expectations
+   - Upcoming catalysts mentioned in articles
+   - Regulatory/partnership/technology risks from news
    - Trading volume vs. average volume (%)
-   - Institutional order flow analysis
+   - **Probability of news-driven black swan events**
 
-6. News Context (if articles available)
-   - How recent news might impact technical patterns
-   - Sentiment analysis from news headlines
-   - Potential catalysts or risks mentioned in articles
-   - Correlation between news sentiment and price action
+6. News Impact Summary
+   - Overall news sentiment score (1-10, bullish to bearish)
+   - Key catalysts identified in articles (rank by importance)
+   - News reliability assessment (credible sources vs speculation)
+   - Timeline of expected news impact (immediate/short-term/long-term)
+   - Conflicts between technical signals and news sentiment
+   - **Final verdict: Does news strengthen or weaken the technical setup?**
 
 Format all price targets, levels, and percentages with exact numerical values.
 Include probability estimates for each predicted price movement.
 Specify timeframes for all predictions (in hours/days).
+**Reference specific news article titles when they influence your analysis.**
 """
 
 
