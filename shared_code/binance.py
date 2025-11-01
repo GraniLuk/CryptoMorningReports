@@ -94,7 +94,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching futures metrics for {symbol.symbol_name}: {e.message}")
         return None
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
         app_logger.error(
             f"Unexpected error fetching futures metrics for {symbol.symbol_name}: {e!s}",
         )
@@ -120,7 +120,7 @@ def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching {symbol}: {e.message}")
         return None
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
         app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return None
 
@@ -171,7 +171,7 @@ def fetch_close_prices_from_binance(symbol: str, lookback_days: int = 14) -> pd.
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching data for {symbol}: {e.message}")
         return pd.DataFrame()
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
         app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return pd.DataFrame()
     else:
@@ -219,7 +219,7 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> C
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching {symbol}: {e.message}")
         return None
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
         app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return None
 
@@ -277,7 +277,7 @@ def fetch_binance_hourly_kline(symbol: Symbol, end_time: datetime) -> Candle | N
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching hourly data for {symbol.symbol_name}: {e.message}")
         return None
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
         app_logger.error(f"Unexpected error for {symbol.symbol_name} hourly data: {e!s}")
         return None
 
@@ -336,7 +336,7 @@ def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candl
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching 15-minute data for {symbol.symbol_name}: {e.message}")
         return None
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
         app_logger.error(f"Unexpected error for {symbol.symbol_name} 15-minute data: {e!s}")
         return None
 

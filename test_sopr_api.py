@@ -17,15 +17,15 @@ try:
     if response.text:
         try:
             data = response.json()
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError, KeyError):
             app_logger.exception("Failed to parse JSON response from SOPR API")
-except Exception:  # noqa: BLE001
+except (requests.RequestException, OSError):
     app_logger.exception("Failed to test SOPR API with day parameter")
 
 # Try without parameters
 try:
     response = requests.get("https://bitcoin-data.com/v1/sopr", timeout=30)
-except Exception:  # noqa: BLE001
+except (requests.RequestException, OSError):
     app_logger.exception("Failed to test SOPR API without parameters")
 
 # Try alternative date format
@@ -34,5 +34,5 @@ for param_name in ["date", "timestamp", "from", "start"]:
         response = requests.get(
             "https://bitcoin-data.com/v1/sopr", params={param_name: yesterday}, timeout=30,
         )
-    except Exception:  # noqa: BLE001
+    except (requests.RequestException, OSError):
         app_logger.exception("Failed to test SOPR API with %s parameter", param_name)

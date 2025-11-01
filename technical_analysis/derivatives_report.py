@@ -96,7 +96,7 @@ def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
 
             successful += 1
 
-        except Exception as e:  # noqa: BLE001
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
             app_logger.error(f"Error processing derivatives data for {symbol.symbol_name}: {e!s}")
             failed += 1
 

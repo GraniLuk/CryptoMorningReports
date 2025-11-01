@@ -36,7 +36,7 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
             if binance_response.status_code == HTTPStatus.OK:
                 binance_data = binance_response.json()
                 binance_volume = float(binance_data.get("quoteVolume", 0))
-        except Exception:  # noqa: BLE001
+        except (requests.RequestException, KeyError, ValueError, TypeError):
             app_logger.exception("Failed to get Binance volume for %s", crypto.binance_name)
 
         # Get KuCoin volume
@@ -50,7 +50,7 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
             if kucoin_response.status_code == HTTPStatus.OK:
                 kucoin_data = kucoin_response.json()
                 kucoin_volume = float(kucoin_data.get("data", {}).get("volValue", 0))
-        except Exception:  # noqa: BLE001
+        except (requests.RequestException, KeyError, ValueError, TypeError):
             app_logger.exception("Failed to get KuCoin volume for %s", crypto.kucoin_name)
 
         total_volume = binance_volume + kucoin_volume

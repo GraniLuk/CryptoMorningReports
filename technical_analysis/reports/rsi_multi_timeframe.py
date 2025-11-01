@@ -178,7 +178,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
                             f"Saved {timeframe} RSI for {symbol.symbol_name} "
                             f"candle {candle_id}: RSI={calculated_rsi:.2f}",
                         )
-                except Exception as e:  # noqa: BLE001
+                except (KeyError, ValueError, TypeError, OSError) as e:
                     app_logger.error(
                         f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}",
                     )
@@ -193,7 +193,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
         # Return only the data for the requested date range using the aligned start_timestamp
         result = df[df.index >= start_timestamp]
 
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, IndexError, AttributeError) as e:
         app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
         return None
 
@@ -529,7 +529,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
             for _, row in valid_data.iterrows()
         ]
 
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, IndexError, AttributeError) as e:
         app_logger.error(f"Error calculating RSI for {symbol.symbol_name} {timeframe}: {e!s}")
         return None
 

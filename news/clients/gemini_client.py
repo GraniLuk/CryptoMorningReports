@@ -70,7 +70,7 @@ class GeminiClient(AIClient):
         """
         try:
             response = self.model.generate_content(prompt)
-        except Exception as e:  # noqa: BLE001
+        except (ValueError, TypeError, AttributeError, ConnectionError, OSError) as e:
             error_msg = f"Failed to get response from Gemini: {e!s}"
             app_logger.exception(error_msg)
             return error_msg
@@ -127,7 +127,7 @@ class GeminiClient(AIClient):
                     article_data = json.loads(article_json)
                     app_logger.info(f"  Source: {article_data.get('source', 'N/A')}")
                     app_logger.info(f"  Title: {article_data.get('title', 'N/A')[:100]}")
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError):
             app_logger.exception("Failed to parse article JSON from Gemini response")
 
     def _log_prompt_part(self, idx: int, part: dict, part_type: str) -> None:

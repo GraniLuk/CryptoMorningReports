@@ -48,7 +48,7 @@ async def main():
             # Daily/weekly report
             await run_report(report_type)
 
-    except Exception:  # noqa: BLE001
+    except (ValueError, KeyError, TypeError, OSError, RuntimeError):
         traceback.print_exc()
         sys.exit(1)
 

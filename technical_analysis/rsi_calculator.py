@@ -84,12 +84,12 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
                         f"Saved {timeframe} RSI for {symbol.symbol_name} "
                         f"candle {candle_id}: RSI={rsi_value:.2f}",
                     )
-                except Exception as e:  # noqa: BLE001
+                except (KeyError, ValueError, TypeError, OSError) as e:
                     app_logger.error(
                         f"Failed to save {timeframe} RSI results for candle {candle_id}: {e!s}",
                     )
 
-        except Exception as e:  # noqa: BLE001
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
             app_logger.error(f"Error processing {timeframe} RSI for {symbol.symbol_name}: {e!s}")
 
 

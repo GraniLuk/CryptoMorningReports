@@ -170,7 +170,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
             app_logger.info(
                 f"Saved RSI for {symbol.symbol_name} candle {daily_candle_id}: RSI={rsi_val:.2f}",
             )
-        except Exception as e:  # noqa: BLE001
+        except (KeyError, ValueError, TypeError, OSError) as e:
             app_logger.error(f"Failed to save RSI results for candle {daily_candle_id}: {e!s}")
 
 

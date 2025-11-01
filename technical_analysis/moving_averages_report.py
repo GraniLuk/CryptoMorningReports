@@ -280,12 +280,12 @@ def calculate_indicators(  # noqa: PLR0915
                         ema200=target_ema200,
                         indicator_date=target_date,
                     )
-                except Exception as e:  # noqa: BLE001
+                except (KeyError, ValueError, TypeError, OSError) as e:
                     app_logger.error(
                         f"Failed to save moving averages results for {symbol.symbol_name}: {e!s}",
                     )
 
-        except Exception as e:  # noqa: BLE001
+        except (KeyError, ValueError, TypeError, IndexError, AttributeError) as e:
             app_logger.error(
                 "Error processing moving average for symbol %s: %s",
                 symbol.symbol_name,

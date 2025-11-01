@@ -72,7 +72,7 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
 
         app_logger.info("No data found in query response, using default values")
 
-    except Exception as e:  # noqa: BLE001
+    except (AttributeError, KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
         app_logger.error(f"Error fetching ratio range: {e!s}")
         return 0, 0, 0  # Return default values on error
 

@@ -52,7 +52,7 @@ def retry_with_fallback_models(
                 current_try += 1
                 continue
             app_logger.error(f"{operation_name}: {result}")
-        except Exception as e:  # noqa: BLE001
+        except (ValueError, TypeError, KeyError, AttributeError, ConnectionError, OSError) as e:
             error_msg = f"Failed {operation_name}: {e!s}"
             app_logger.exception(error_msg)
             if current_try < max_retries - 1:

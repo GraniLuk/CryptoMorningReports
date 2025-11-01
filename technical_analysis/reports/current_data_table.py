@@ -143,12 +143,17 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
         daily_rsi_df = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=7)
         hourly_rsi_df = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=2)
         fifteen_min_rsi_df = get_rsi_for_symbol_timeframe(
-            symbol, conn, "fifteen_min", lookback_days=1,
+            symbol,
+            conn,
+            "fifteen_min",
+            lookback_days=1,
         )
 
         # Extract latest price (prefer 15min, then hourly, then daily)
         data["latest_price"] = _extract_latest_price(
-            daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df,
+            daily_rsi_df,
+            hourly_rsi_df,
+            fifteen_min_rsi_df,
         )
 
         # Extract RSI values for each timeframe
@@ -211,7 +216,9 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                         )
                     except (ValueError, TypeError, AttributeError) as e:
                         app_logger.warning(
-                            "Could not compute daily range for date %s: %s", date_str, e,
+                            "Could not compute daily range for date %s: %s",
+                            date_str,
+                            e,
                         )
                         continue
                 data["daily_ranges_7d"] = ranges
@@ -537,7 +544,6 @@ if __name__ == "__main__":
     # Test with a symbol
     symbol = fetch_symbol_by_name(conn, "BTC")
     if symbol:
-
         pass
     else:
         pass

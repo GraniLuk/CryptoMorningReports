@@ -62,12 +62,12 @@ def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
                     high_price=high_price,
                     range_percent=price_range_percent,
                 )
-            except Exception as e:  # noqa: BLE001
+            except (KeyError, ValueError, TypeError, ZeroDivisionError) as e:
                 app_logger.error(
                     f"Failed to save price range results for {symbol.symbol_name}: {e!s}",
                 )
 
-        except Exception as e:  # noqa: BLE001
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
             app_logger.error(f"Unexpected error for {symbol.symbol_name}: {e!s}")
 
     range_table = PrettyTable()

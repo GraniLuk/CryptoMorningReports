@@ -77,7 +77,7 @@ def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             f"{report_type.capitalize()} report executed successfully", status_code=200,
         )
-    except Exception as e:  # noqa: BLE001
+    except (ValueError, KeyError, TypeError, OSError, RuntimeError) as e:
         return func.HttpResponse(f"Function execution failed: {e!s}", status_code=500)
 
 
@@ -164,6 +164,6 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
             if conn:
                 conn.close()
 
-    except Exception as e:  # noqa: BLE001
+    except (ValueError, KeyError, TypeError, OSError, RuntimeError, AttributeError) as e:
         app_logger.error(f"Error in crypto_situation function: {e!s}")
         return func.HttpResponse(f"An error occurred: {e!s}", status_code=500)

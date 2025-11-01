@@ -72,7 +72,7 @@ async def send_telegram_message(
                 # Gather diagnostics
                 try:
                     err_json = response.json()
-                except Exception:  # noqa: BLE001
+                except (ValueError, TypeError, KeyError):
                     err_json = {"raw_text": (response.text[:500] if response.text else None)}
                 app_logger.error(
                     "Telegram API error (status=%s, parse_mode=%s "
@@ -86,7 +86,7 @@ async def send_telegram_message(
                 response.raise_for_status()
             time.sleep(0.5)
 
-    except Exception:  # noqa: BLE001
+    except (requests.RequestException, ValueError, KeyError, TypeError) as e:
         # Avoid logging the entire large message to keep logs clean / protect data
         message_truncate_threshold = 600
         snippet = (
@@ -94,7 +94,9 @@ async def send_telegram_message(
             if len(message) > message_truncate_threshold
             else message
         )
-        app_logger.exception("Failed to send telegram message | snippet: %s", snippet)
+        app_logger.exception(
+            "Failed to send telegram message | snippet: %s | error: %s", snippet, e,
+        )
         return False
 
     else:
@@ -240,7 +242,7 @@ def _send_document_request(token: str, files: dict, data: dict, filename: str) -
     if not response.ok:
         try:
             err_json = response.json()
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError, KeyError):
             err_json = {"raw": response.text[:300]}
         app_logger.error("Failed to send document (status=%s): %s", response.status_code, err_json)
         return False
@@ -306,8 +308,8 @@ async def send_telegram_document(
                 data["parse_mode"] = parse_mode
 
             return _send_document_request(token, files, data, filename)
-    except Exception:  # noqa: BLE001
-        app_logger.exception("Exception while sending document")
+    except (OSError, ValueError, TypeError, KeyError, requests.RequestException) as e:
+        app_logger.exception("Exception while sending document: %s", e)
         return False
 
 
