@@ -373,9 +373,9 @@ async def process_daily_report(  # noqa: PLR0915
     if not analysis_reported_with_news.startswith("Failed"):
         try:
             await send_telegram_document(
-                telegram_enabled,
-                telegram_token,
-                telegram_chat_id,
+                enabled=telegram_enabled,
+                token=telegram_token,
+                chat_id=telegram_chat_id,
                 file_bytes=analysis_reported_with_news.encode("utf-8"),
                 filename=f"CryptoAnalysisWithNews_{today_date}.md",
                 caption=f"Detailed Crypto Analysis with News {today_date}",

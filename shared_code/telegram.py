@@ -20,6 +20,7 @@ async def send_telegram_message(
     chat_id,
     message,
     parse_mode: str | None = "HTML",
+    *,
     disable_web_page_preview: bool = False,
     disable_notification: bool = False,
     protect_content: bool = False,
@@ -206,7 +207,7 @@ def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
     return chunks
 
 
-def _validate_telegram_params(enabled: bool, token: str, chat_id: str) -> bool:
+def _validate_telegram_params(*, enabled: bool, token: str, chat_id: str) -> bool:
     """Validate basic Telegram parameters."""
     if not enabled:
         app_logger.info("Telegram notifications are disabled")
@@ -248,6 +249,7 @@ def _send_document_request(token: str, files: dict, data: dict, filename: str) -
 
 
 async def send_telegram_document(
+    *,
     enabled: bool,
     token: str,
     chat_id: str,
@@ -262,7 +264,7 @@ async def send_telegram_document(
     Either provide file_bytes OR a local_path. If both are provided local_path takes precedence.
     Returns True on success, False otherwise.
     """
-    if not _validate_telegram_params(enabled, token, chat_id):
+    if not _validate_telegram_params(enabled=enabled, token=token, chat_id=chat_id):
         return False
 
     try:

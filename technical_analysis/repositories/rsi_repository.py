@@ -245,6 +245,7 @@ def _get_interval_settings(
 
 
 def _build_query(
+    *,
     is_sqlite: bool,
     candle_table: str,
     rsi_table: str,
@@ -433,13 +434,13 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
 
             # Build the appropriate query
             query = _build_query(
-                is_sqlite,
-                candle_table,
-                rsi_table,
-                id_column,
-                interval_keyword,
-                previous_interval,
-                week_interval,
+                is_sqlite=is_sqlite,
+                candle_table=candle_table,
+                rsi_table=rsi_table,
+                id_column=id_column,
+                interval_keyword=interval_keyword,
+                previous_interval=previous_interval,
+                week_interval=week_interval,
             )
 
             # Execute query with appropriate parameters
