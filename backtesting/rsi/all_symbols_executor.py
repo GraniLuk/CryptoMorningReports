@@ -41,6 +41,10 @@ def run_strategy_for_all_symbols(
 
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
+        if candles_data is None:
+            print(f"No candle data found for symbol {symbol.symbol_name}, skipping")
+            continue
+        
         results_df, ratio = run_strategy_for_symbol_internal(
             candles_data,
             symbol,

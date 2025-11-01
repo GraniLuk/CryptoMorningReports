@@ -159,10 +159,10 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
 
                 if telegram_enabled and telegram_token and telegram_chat_id:
                     await send_telegram_message(
-                        telegram_enabled,
-                        telegram_token,
-                        telegram_chat_id,
-                        report,
+                        enabled=telegram_enabled,
+                        token=telegram_token,
+                        chat_id=telegram_chat_id,
+                        message=report,
                         parse_mode="MarkdownV2",
                     )
 

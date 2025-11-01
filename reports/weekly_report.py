@@ -42,5 +42,9 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
 
     # Send weekly report
     await send_telegram_message(
-        telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode="HTML",
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=message,
+        parse_mode="HTML",
     )

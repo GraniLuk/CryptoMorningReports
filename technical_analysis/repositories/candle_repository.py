@@ -19,7 +19,7 @@ class CandleRepository:
 
     def __init__(
         self,
-        conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper",
         table_name: str,
     ):
         """Initialize the candle repository.

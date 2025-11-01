@@ -24,11 +24,6 @@ if TYPE_CHECKING:
     from infra.sql_connection import SQLiteConnectionWrapper
 
 
-def _calculate_status_indicators(target_price: float, target_ma: float, period_warning: str) -> str:
-    """Calculate status indicator for a moving average."""
-    return f"🟢{period_warning}" if target_price > target_ma else f"🔴{period_warning}"
-
-
 def _detect_crossover(
     yesterday_price: float,
     target_price: float,

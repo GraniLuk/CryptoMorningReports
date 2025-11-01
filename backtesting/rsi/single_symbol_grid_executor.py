@@ -29,6 +29,9 @@ def run_grid_search_for_symbol(conn, symbol):
 
     # Assuming you have a valid connection and symbol_id
     candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
+    if candles_data is None:
+        print(f"No candle data found for symbol {symbol.symbol_name}")
+        return []
 
     for rsi_value, tp_value, sl_value, days_after_to_buy in itertools.product(
         rsi_range, tp_values, sl_values, days_options,

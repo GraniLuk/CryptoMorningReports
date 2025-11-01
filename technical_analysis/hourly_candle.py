@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from infra.telegram_logging_handler import app_logger
 from shared_code.common_price import Candle
 from shared_code.price_checker import fetch_hourly_candle, fetch_hourly_candles
 from source_repository import Symbol
@@ -47,6 +48,10 @@ def check_if_all_hourly_candles(
         days_back: Number of days to look back (default: 7)
 
     """
+    if conn is None:
+        app_logger.error("Database connection is required for checking hourly candles")
+        return
+    
     fetcher = HourlyCandles()
     fetcher.check_if_all_candles(symbol, conn, days_back)
 

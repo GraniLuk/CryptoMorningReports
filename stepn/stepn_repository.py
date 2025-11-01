@@ -219,7 +219,7 @@ def fetch_stepn_results_last_14_days(
             results = cursor.fetchall()
             cursor.close()
             app_logger.info("Successfully fetched STEPN results from the last 14 days")
-            return results
+            return [(row[0], row[1], row[2], row[3]) for row in results]
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching STEPN results: {e}")
         raise

@@ -2,7 +2,7 @@
 
 import os
 from datetime import date, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pyodbc
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def save_rsi_results(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     daily_candle_id: int,
     rsi: float,
 ) -> None:
@@ -68,7 +68,7 @@ def save_rsi_results(
 
 
 def save_rsi_by_timeframe(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     candle_id: int,
     rsi: float,
     timeframe: str = "daily",
@@ -144,11 +144,11 @@ def save_rsi_by_timeframe(
 
 
 def get_candles_with_rsi(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
     from_date: date | datetime,
     timeframe: str = "daily",
-) -> list | None:
+) -> list[dict[str, Any]] | None:
     """Fetch candle data with RSI for a specific symbol.
 
     only returning records on or after the specified date.
@@ -438,7 +438,7 @@ def _match_fifteen_min_rsi(
 
 
 def get_historical_rsi(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
     current_date: date,
     timeframe: str = "daily",

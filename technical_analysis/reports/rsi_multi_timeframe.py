@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframe: str = "daily",
     lookback_days: int = 7,
 ) -> pd.DataFrame | None:
@@ -77,7 +77,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
         candles_with_rsi = get_candles_with_rsi(
             conn,
             symbol.symbol_id,
-            calculation_start_date.isoformat(),
+            calculation_start_date,
             timeframe,
         )
 
@@ -223,7 +223,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
 
 def create_multi_timeframe_rsi_table(
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframes: list[str] | None = None,
 ) -> PrettyTable | None:
     """Create a multi-timeframe RSI table for a symbol.
@@ -334,7 +334,7 @@ def create_multi_timeframe_rsi_table(
 
 def create_multi_timeframe_rsi_tables(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframes: list[str] | None = None,
 ) -> dict[str, PrettyTable]:
     """Create multi-timeframe RSI tables for multiple symbols.
@@ -403,7 +403,7 @@ def create_multi_timeframe_rsi_tables(
 
 def create_consolidated_rsi_table(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> PrettyTable:
     """Create a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes.
 
@@ -486,6 +486,9 @@ def _get_candle_repository(
     timeframe: str,
 ) -> DailyCandleRepository | HourlyCandleRepository | FifteenMinCandleRepository | None:
     """Return the appropriate candle repository based on timeframe."""
+    if conn is None:
+        return None
+    
     timeframe_lower = timeframe.lower()
     if timeframe_lower == "daily":
         return DailyCandleRepository(conn)

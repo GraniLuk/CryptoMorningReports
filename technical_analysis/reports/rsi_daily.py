@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 def create_rsi_table_for_symbol(
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> PrettyTable | None:
     """Create RSI table for a given symbol using daily candles data."""
@@ -129,7 +129,7 @@ def create_rsi_table_for_symbol(
 
 def create_rsi_table(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> PrettyTable:
     """Create RSI table for given symbols using daily candles data."""
@@ -267,7 +267,7 @@ def create_rsi_table(
 
 
 def save_rsi_for_candle(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     daily_candle_id: int,
     rsi: float,
 ) -> None:

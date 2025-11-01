@@ -1,5 +1,6 @@
 """RSI backtesting executor for single cryptocurrency symbols."""
 
+import sys
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
@@ -32,6 +33,10 @@ if __name__ == "__main__":
 
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(conn, filtered_symbols[0].symbol_id, five_years_ago)
+        if candles_data is None:
+            print(f"No candle data found for symbol {filtered_symbols[0].symbol_name}")
+            sys.exit(1)
+        
         result_df, ratio = run_strategy_for_symbol_internal(
             candles_data,
             filtered_symbols[0],

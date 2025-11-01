@@ -120,7 +120,8 @@ class CandleFetcher:
     ):
         """Check and fill gaps at the beginning of the range."""
         if all_candles:
-            first_candle_date = self._ensure_timezone(all_candles[0].end_date)
+            first_candle_date_str = all_candles[0].end_date
+            first_candle_date = self._ensure_timezone(datetime.fromisoformat(first_candle_date_str))
             if first_candle_date > start_time:
                 self._fill_gaps_in_range(
                     symbol,
@@ -171,7 +172,8 @@ class CandleFetcher:
     ):
         """Check and fill gaps at the end of the range."""
         if all_candles:
-            last_candle_date = self._ensure_timezone(all_candles[-1].end_date)
+            last_candle_date_str = all_candles[-1].end_date
+            last_candle_date = self._ensure_timezone(datetime.fromisoformat(last_candle_date_str))
             if last_candle_date < end_time:
                 self._fill_gaps_in_range(
                     symbol,

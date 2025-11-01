@@ -2,16 +2,23 @@
 
 import os
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from shared_code.common_price import Candle
 from source_repository import Symbol
 from technical_analysis.repositories.candle_repository import CandleRepository
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 class HourlyCandleRepository(CandleRepository):
     """Repository for managing hourly candlestick data."""
 
-    def __init__(self, conn):
+    def __init__(self, conn: "pyodbc.Connection | SQLiteConnectionWrapper") -> None:
         """Initialize the repository with a database connection."""
         super().__init__(conn, table_name="HourlyCandles")
 

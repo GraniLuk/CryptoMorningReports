@@ -91,7 +91,7 @@ def _extract_latest_price(
 
 
 def _extract_moving_averages(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
 ) -> dict[str, float | None]:
     """Extract latest moving averages for a symbol."""
@@ -117,7 +117,7 @@ def _extract_moving_averages(
 
 def get_current_data_for_symbol(  # noqa: PLR0915
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> dict[str, Any]:
     """Get current data for a single symbol including latest price and RSI across timeframes.
 
@@ -129,6 +129,29 @@ def get_current_data_for_symbol(  # noqa: PLR0915
         Dictionary containing current data for the symbol
 
     """
+    if conn is None:
+        return {
+            "symbol": symbol.symbol_name,
+            "latest_price": None,
+            "daily_rsi": None,
+            "hourly_rsi": None,
+            "fifteen_min_rsi": None,
+            "ma50": None,
+            "ma200": None,
+            "ema50": None,
+            "ema200": None,
+            "daily_high": None,
+            "daily_low": None,
+            "daily_range": None,
+            "daily_range_pct": None,
+            "daily_ranges_7d": [],
+            "open_interest": None,
+            "open_interest_value": None,
+            "funding_rate": None,
+            "next_funding_time": None,
+            "timestamp": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        }
+    
     data: dict[str, Any] = {
         "symbol": symbol.symbol_name,
         "latest_price": None,
@@ -250,13 +273,19 @@ def get_current_data_for_symbol(  # noqa: PLR0915
                 # Get latest Open Interest
                 oi_data = oi_repo.get_latest_open_interest(symbol.symbol_id)
                 if oi_data:
-                    data["open_interest"] = float(oi_data["open_interest"])
-                    data["open_interest_value"] = float(oi_data["open_interest_value"])
+                    oi_val = oi_data.get("open_interest")
+                    oi_val_value = oi_data.get("open_interest_value")
+                    if oi_val is not None and not isinstance(oi_val, datetime):
+                        data["open_interest"] = float(oi_val)
+                    if oi_val_value is not None and not isinstance(oi_val_value, datetime):
+                        data["open_interest_value"] = float(oi_val_value)
 
                 # Get latest Funding Rate
                 fr_data = fr_repo.get_latest_funding_rate(symbol.symbol_id)
                 if fr_data:
-                    data["funding_rate"] = float(fr_data["funding_rate"])
+                    fr_val = fr_data.get("funding_rate")
+                    if fr_val is not None and not isinstance(fr_val, datetime):
+                        data["funding_rate"] = float(fr_val)
                     if fr_data.get("funding_time"):
                         data["next_funding_time"] = fr_data["funding_time"]
 
@@ -424,7 +453,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
 
 def get_current_data_summary_table(
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> str:
     """Generate a summary table of current data for a symbol in HTML format for Telegram.
 
@@ -450,7 +479,7 @@ def get_current_data_summary_table(
 
 def get_current_data_for_ai_prompt(
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> str:
     """Generate current data in a format suitable for AI prompts.
 

@@ -16,13 +16,13 @@ from news.prompts import (
 )
 from news.utils.candle_data import fetch_and_format_candle_data
 from news.utils.retry_handler import retry_with_fallback_models
+from source_repository import Symbol
 
 
 if TYPE_CHECKING:
     import pyodbc
 
     from infra.sql_connection import SQLiteConnectionWrapper
-    from shared_code.common_price import Symbol
 
 
 class PerplexityClient(AIClient):

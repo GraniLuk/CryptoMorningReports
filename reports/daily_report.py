@@ -336,66 +336,66 @@ async def process_daily_report(  # noqa: PLR0915
 
     # Send all messages
     await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        message_part1,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=message_part1,
         parse_mode="HTML",
     )
     await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        message_part2,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=message_part2,
         parse_mode="HTML",
     )
     await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        stepn_report,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=stepn_report,
         parse_mode="HTML",
     )
     await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        volume_report,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=volume_report,
         parse_mode="HTML",
     )
 
     if sopr_report:
         await send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            sopr_report,
+            enabled=telegram_enabled,
+            token=telegram_token,
+            chat_id=telegram_chat_id,
+            message=sopr_report,
             parse_mode="HTML",
         )
 
     await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        marketcap_report,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=marketcap_report,
         parse_mode="HTML",
     )
 
     await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        derivatives_report,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=derivatives_report,
         parse_mode="HTML",
     )
 
     if launchpool_report:
         message_part3 = f"New Launchpool Report: <pre>{launchpool_report}</pre>"
         await send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            message_part3,
+            enabled=telegram_enabled,
+            token=telegram_token,
+            chat_id=telegram_chat_id,
+            message=message_part3,
             parse_mode="HTML",
         )
 
