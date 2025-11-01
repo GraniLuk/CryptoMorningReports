@@ -2,10 +2,18 @@
 
 This module provides functionality to cache RSS news articles as markdown files
 with YAML frontmatter, enabling faster retrieval and reducing API calls.
+
+Key Functions:
+- `save_article_to_cache()` - Save an article to disk with YAML frontmatter
+- `load_article_from_cache()` - Load an article from disk
+- `get_articles_for_symbol()` - Retrieve cached articles for a specific symbol
+- `get_recent_articles()` - Retrieve all recent cached articles
+- `fetch_and_cache_articles_for_symbol()` - Fetch fresh RSS articles, cache new ones,
+  and return all articles for a symbol (ensures up-to-date data)
 """
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import frontmatter
@@ -180,3 +188,128 @@ def article_exists_in_cache(link: str, date: datetime | None = None) -> bool:
     """
     cached_articles = get_cached_articles(date)
     return any(article.link == link for article in cached_articles)
+
+
+def get_articles_for_symbol(
+    symbol: str,
+    hours: int = 24,
+) -> list[CachedArticle]:
+    """Retrieve cached articles mentioning a specific cryptocurrency symbol.
+
+    Args:
+        symbol: Cryptocurrency symbol to search for (e.g., 'BTC', 'ETH')
+        hours: Number of hours to look back. Defaults to 24.
+
+    Returns:
+        List of CachedArticle instances that mention the symbol,
+        sorted by published date (newest first)
+    """
+    now = datetime.now(tz=UTC)
+    cutoff_time = now - timedelta(hours=hours)
+
+    # Normalize symbol to uppercase for comparison
+    symbol_upper = symbol.upper()
+
+    # Collect articles from recent days
+    articles_with_symbol = []
+    days_to_check = (hours // 24) + 2  # Check enough days to cover the time range
+
+    for days_ago in range(days_to_check):
+        check_date = now - timedelta(days=days_ago)
+        daily_articles = get_cached_articles(check_date)
+
+        for article in daily_articles:
+            # Check if symbol is in the article's symbol list
+            if symbol_upper in [s.upper() for s in article.symbols]:
+                # Parse published date and check if within time range
+                try:
+                    published_dt = datetime.fromisoformat(article.published)
+                    if published_dt >= cutoff_time:
+                        articles_with_symbol.append(article)
+                except (ValueError, AttributeError):  # noqa: S112
+                    # If date parsing fails, skip this article
+                    continue
+
+    # Sort by published date, newest first
+    articles_with_symbol.sort(
+        key=lambda a: datetime.fromisoformat(a.published),
+        reverse=True,
+    )
+
+    return articles_with_symbol
+
+
+def get_recent_articles(hours: int = 24) -> list[CachedArticle]:
+    """Retrieve all cached articles from the last N hours.
+
+    Args:
+        hours: Number of hours to look back. Defaults to 24.
+
+    Returns:
+        List of CachedArticle instances within the time range,
+        sorted by published date (newest first)
+    """
+    now = datetime.now(tz=UTC)
+    cutoff_time = now - timedelta(hours=hours)
+
+    # Collect articles from recent days
+    recent_articles = []
+    days_to_check = (hours // 24) + 2  # Check enough days to cover the time range
+
+    for days_ago in range(days_to_check):
+        check_date = now - timedelta(days=days_ago)
+        daily_articles = get_cached_articles(check_date)
+
+        for article in daily_articles:
+            # Parse published date and check if within time range
+            try:
+                published_dt = datetime.fromisoformat(article.published)
+                if published_dt >= cutoff_time:
+                    recent_articles.append(article)
+            except (ValueError, AttributeError):  # noqa: S112
+                # If date parsing fails, skip this article
+                continue
+
+    # Sort by published date, newest first
+    recent_articles.sort(
+        key=lambda a: datetime.fromisoformat(a.published),
+        reverse=True,
+    )
+
+    return recent_articles
+
+
+def fetch_and_cache_articles_for_symbol(
+    symbol: str,
+    hours: int = 24,
+) -> list[CachedArticle]:
+    """Fetch fresh RSS articles, cache new ones, and return all articles for a symbol.
+
+    This function ensures the cache is up-to-date by:
+    1. Fetching fresh articles from RSS feeds
+    2. Caching any new articles (skips duplicates)
+    3. Returning all cached articles for the specified symbol
+
+    Args:
+        symbol: Cryptocurrency symbol to search for (e.g., 'BTC', 'ETH')
+        hours: Number of hours to look back. Defaults to 24.
+
+    Returns:
+        List of CachedArticle instances that mention the symbol,
+        sorted by published date (newest first)
+    """
+    from news.rss_parser import get_news  # noqa: PLC0415 - avoid circular dependency
+
+    # Fetch fresh articles from RSS feeds (will cache new ones automatically)
+    try:
+        get_news()
+    except Exception as e:  # noqa: BLE001
+        # Log error but continue - we can still return cached articles
+        from infra.telegram_logging_handler import (  # noqa: PLC0415
+            app_logger,
+        )
+
+        app_logger.warning(f"Error fetching fresh RSS articles: {e!s}")
+
+    # Return all cached articles for the symbol
+    return get_articles_for_symbol(symbol, hours)

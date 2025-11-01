@@ -141,13 +141,13 @@ The goal is to:
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-026 | Create `get_articles_for_symbol(symbol: str, hours: int = 24) -> List[CachedArticle]` function | | |
-| TASK-027 | Update `current_report.py` to fetch relevant articles for the analyzed symbol | | |
-| TASK-028 | Add articles section to current situation report markdown output | | |
-| TASK-029 | Format articles with title, source, link, and excerpt in report | | |
-| TASK-030 | Update AI prompts to optionally include relevant news context per symbol | | |
-| TASK-031 | Test current report generation with cached articles for BTC, ETH | | |
-| TASK-032 | Add command-line option to enable/disable news in current reports | | |
+| TASK-026 | Create `get_articles_for_symbol(symbol: str, hours: int = 24) -> List[CachedArticle]` function | ✅ | 2025-11-01 |
+| TASK-027 | Update `current_report.py` to fetch relevant articles for the analyzed symbol | ✅ | 2025-11-01 |
+| TASK-028 | Add articles section to current situation report markdown output | ✅ | 2025-11-01 |
+| TASK-029 | Format articles with title, source, link, and excerpt in report | ✅ | 2025-11-01 |
+| TASK-030 | Update AI prompts to optionally include relevant news context per symbol | ✅ | 2025-11-01 |
+| TASK-031 | Test current report generation with cached articles for BTC, ETH | ✅ | 2025-11-01 |
+| TASK-032 | Add command-line option to enable/disable news in current reports | ⏭️ | SKIPPED |
 
 ### Phase 5: Cache Management & Cleanup
 

@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import requests
 
+from infra.configuration import is_article_cache_enabled
 from infra.telegram_logging_handler import app_logger
+from news.article_cache import CachedArticle, fetch_and_cache_articles_for_symbol
 from news.news_agent import GeminiClient, create_ai_client
 from source_repository import fetch_symbol_by_name
 from technical_analysis.daily_candle import fetch_daily_candles
@@ -31,7 +33,9 @@ if TYPE_CHECKING:
     import logging
 
 
-# Define system prompts for the AI analysis
+# Article formatting constants
+ARTICLE_CONTENT_PREVIEW_LENGTH = 500
+ARTICLE_TITLE_MAX_LENGTH = 100  # Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
 You are an expert cryptocurrency technical analyst performing in-depth market
 analysis. Drawing strictly from the provided price and volume data across multiple
@@ -92,6 +96,9 @@ Input Data:
 - MOVING AVERAGES DATA (LAST 7 DAYS):
   {moving_averages}
 
+- RECENT NEWS ARTICLES (LAST 24 HOURS):
+  {news_articles}
+
 Required Analysis Components:
 
 1. Trend Analysis
@@ -123,6 +130,12 @@ Required Analysis Components:
    - Proximity to major economic events
    - Trading volume vs. average volume (%)
    - Institutional order flow analysis
+
+6. News Context (if articles available)
+   - How recent news might impact technical patterns
+   - Sentiment analysis from news headlines
+   - Potential catalysts or risks mentioned in articles
+   - Correlation between news sentiment and price action
 
 Format all price targets, levels, and percentages with exact numerical values.
 Include probability estimates for each predicted price movement.
@@ -207,6 +220,82 @@ def format_moving_averages_data(ma_df):
             )
 
     return formatted
+
+
+def format_articles_for_prompt(articles: list[CachedArticle]) -> str:
+    """Format cached articles for AI prompt.
+
+    Args:
+        articles: List of CachedArticle instances
+
+    Returns:
+        Formatted string with article information for AI analysis
+    """
+    if not articles:
+        return "No recent news articles available"
+
+    formatted = ""
+    for i, article in enumerate(articles, 1):
+        # Parse published date to make it more readable
+        try:
+            published_dt = datetime.fromisoformat(article.published)
+            time_str = published_dt.strftime("%Y-%m-%d %H:%M UTC")
+        except (ValueError, AttributeError):
+            time_str = article.published
+
+        # Truncate content if too long (keep first N chars)
+        content_preview = (
+            article.content[:ARTICLE_CONTENT_PREVIEW_LENGTH]
+            if len(article.content) > ARTICLE_CONTENT_PREVIEW_LENGTH
+            else article.content
+        )
+        if len(article.content) > ARTICLE_CONTENT_PREVIEW_LENGTH:
+            content_preview += "..."
+
+        formatted += f"\n{i}. {article.title}\n"
+        formatted += f"   Source: {article.source} | Published: {time_str}\n"
+        formatted += f"   Summary: {content_preview}\n"
+        formatted += f"   URL: {article.link}\n"
+
+    return formatted
+
+
+def format_articles_for_html(articles: list[CachedArticle]) -> str:
+    """Format cached articles for HTML output in Telegram.
+
+    Args:
+        articles: List of CachedArticle instances
+
+    Returns:
+        HTML formatted string with article information
+    """
+    if not articles:
+        return ""
+
+    html = "<b>📰 Recent News Articles</b>\n\n"
+
+    for i, article in enumerate(articles, 1):
+        # Parse published date to make it more readable
+        try:
+            published_dt = datetime.fromisoformat(article.published)
+            time_str = published_dt.strftime("%Y-%m-%d %H:%M UTC")
+        except (ValueError, AttributeError):
+            time_str = article.published
+
+        # Truncate title if too long
+        title = (
+            article.title[:ARTICLE_TITLE_MAX_LENGTH]
+            if len(article.title) > ARTICLE_TITLE_MAX_LENGTH
+            else article.title
+        )
+        if len(article.title) > ARTICLE_TITLE_MAX_LENGTH:
+            title += "..."
+
+        html += f"<b>{i}. {title}</b>\n"
+        html += f"<i>🕒 {time_str} | 📡 {article.source}</i>\n"
+        html += f'<a href="{article.link}">Read more</a>\n\n'
+
+    return html
 
 
 def convert_markdown_to_telegram_html(markdown_text: str) -> str:
@@ -409,6 +498,17 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
     # Fetch moving averages data for the symbol
     moving_averages = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=7)
 
+    # Fetch recent news articles for the symbol (if caching is enabled)
+    # This will fetch fresh RSS articles and cache new ones, then return all articles
+    articles = []
+    if is_article_cache_enabled():
+        try:
+            articles = fetch_and_cache_articles_for_symbol(symbol_name, hours=24)
+            logger.info("Found %d cached articles for %s", len(articles), symbol_name)
+        except Exception:
+            logger.exception("Error fetching cached articles for %s", symbol_name)
+            articles = []
+
     # Check if we have data
     if not daily_candles or not hourly_candles or not fifteen_min_candles:
         warning_msg = (
@@ -429,6 +529,9 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
         fifteen_min_rsi,
     )  # Format moving averages data for the AI prompt
     moving_averages_formatted = format_moving_averages_data(moving_averages)
+
+    # Format articles for the AI prompt
+    articles_formatted = format_articles_for_prompt(articles)
 
     # Generate current data snapshot for AI prompt
     current_data_snapshot = get_current_data_for_ai_prompt(symbol, conn)
@@ -465,6 +568,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
             hourly_rsi=hourly_rsi_formatted,
             fifteen_min_rsi=fifteen_min_rsi_formatted,
             moving_averages=moving_averages_formatted,
+            news_articles=articles_formatted,
         )
 
         # Generate AI analysis using helper function
@@ -520,7 +624,14 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
         # Convert AI analysis from markdown to HTML
         analysis_html = convert_markdown_to_telegram_html(analysis_with_emojis)
 
+        # Format articles for HTML output
+        articles_html = format_articles_for_html(articles)
+
+        # Combine all parts of the report
         full_report = report_title + report_date + current_data_html + "\n" + analysis_html
+        if articles_html:
+            full_report += "\n" + articles_html
+
         logger.info("Successfully generated HTML situation report for %s", symbol_name)
 
     except Exception:
