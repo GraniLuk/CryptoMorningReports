@@ -330,7 +330,6 @@ def verify_database(db_path="./local_crypto.db"):
     cursor.execute("SELECT COUNT(*) FROM DailyCandles")
     cursor.fetchone()[0]
 
-
     conn.close()
     return True
 

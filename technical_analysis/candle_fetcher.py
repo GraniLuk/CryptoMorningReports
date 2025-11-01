@@ -144,7 +144,11 @@ class CandleFetcher:
             last_candle_date = self._ensure_timezone(all_candles[-1].end_date)
             if last_candle_date < end_time:
                 self._fill_gaps_in_range(
-                    symbol, last_candle_date + self._get_expected_time_diff(), end_time, conn, "end",
+                    symbol,
+                    last_candle_date + self._get_expected_time_diff(),
+                    end_time,
+                    conn,
+                    "end",
                 )
 
     def check_if_all_candles(self, symbol, conn, days_back: int = 30):
@@ -175,7 +179,8 @@ class CandleFetcher:
 
         if not all_candles:
             self.logger.info(
-                "No %s candles found in DB for %s, fetching all", self.timeframe, symbol.symbol_name,
+                "No %s candles found in DB for %s, fetching all",
+                self.timeframe, symbol.symbol_name,
             )
             current_time = start_time
             expected_diff = self._get_expected_time_diff()

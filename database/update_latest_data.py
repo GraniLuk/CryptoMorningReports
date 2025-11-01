@@ -105,7 +105,8 @@ def update_latest_daily_candles(conn, days_to_update=3):
             # No data exists - fetch last N days as fallback
             start_date = today - timedelta(days=days_to_update - 1)
             logger.info(
-                "📅 %s: No existing data, fetching last %d days", symbol.symbol_name, days_to_update,
+                "📅 %s: No existing data, fetching last %d days",
+                symbol.symbol_name, days_to_update,
             )
 
         # Fetch missing dates
