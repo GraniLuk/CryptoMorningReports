@@ -47,13 +47,14 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str):
         ):
             response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
             logger.info(
-                f"Successfully uploaded '{filename}' to OneDrive via Logic App. "
-                f"Status: {response.status}"
+                "Successfully uploaded '%s' to OneDrive via Logic App. Status: %s",
+                filename,
+                response.status,
             )
             return True
     except aiohttp.ClientError:
-        logger.exception(f"Error uploading '{filename}' to OneDrive via Logic App")
+        logger.exception("Error uploading '%s' to OneDrive via Logic App", filename)
         return False
     except Exception:
-        logger.exception(f"An unexpected error occurred during OneDrive upload for '{filename}'")
+        logger.exception("An unexpected error occurred during OneDrive upload for '%s'", filename)
         return False

@@ -88,21 +88,24 @@ def update_latest_daily_candles(conn, days_to_update=3):
         if last_date:
             # We have data - only fetch missing dates
             if last_date >= today:
-                logger.info(f"✓ {symbol.symbol_name}: Already up-to-date (last: {last_date})")
+                logger.info("✓ %s: Already up-to-date (last: %s)", symbol.symbol_name, last_date)
                 total_skipped += 1
                 continue
 
             # Start from day after last available date
             start_date = last_date + timedelta(days=1)
             logger.info(
-                f"📅 {symbol.symbol_name}: Fetching from {start_date} to {today} "
-                f"(last in DB: {last_date})"
+                "📅 %s: Fetching from %s to %s (last in DB: %s)",
+                symbol.symbol_name,
+                start_date,
+                today,
+                last_date,
             )
         else:
             # No data exists - fetch last N days as fallback
             start_date = today - timedelta(days=days_to_update - 1)
             logger.info(
-                f"📅 {symbol.symbol_name}: No existing data, fetching last {days_to_update} days"
+                "📅 %s: No existing data, fetching last %d days", symbol.symbol_name, days_to_update
             )
 
         # Fetch missing dates
@@ -114,23 +117,25 @@ def update_latest_daily_candles(conn, days_to_update=3):
 
                 if candle:
                     symbol_updated += 1
-                    logger.debug(f"  ✓ {current_date}: Close={candle.close:.2f}")
+                    logger.debug("  ✓ %s: Close=%.2f", current_date, candle.close)
                 else:
-                    logger.debug(f"  ⊘ {current_date}: No data available")
+                    logger.debug("  ⊘ %s: No data available", current_date)
 
             except Exception:
-                logger.exception(f"  ✗ {current_date}: Failed")
+                logger.exception("  ✗ %s: Failed", current_date)
                 total_failed += 1
 
             current_date += timedelta(days=1)
 
         if symbol_updated > 0:
             total_updated += symbol_updated
-            logger.info(f"✓ {symbol.symbol_name}: Updated {symbol_updated} day(s)")
+            logger.info("✓ %s: Updated %d day(s)", symbol.symbol_name, symbol_updated)
 
     logger.info(
-        f"Latest data update complete: {total_updated} candles updated, "
-        f"{total_skipped} symbols already current, {total_failed} failed"
+        "Latest data update complete: %d candles updated, %d symbols already current, %d failed",
+        total_updated,
+        total_skipped,
+        total_failed,
     )
 
     return total_updated, total_failed
@@ -210,8 +215,9 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
             # We have data - only fetch missing hours
             if last_time >= end_time:
                 logger.info(
-                    f"✓ {symbol.symbol_name}: Already up-to-date "
-                    f"(last: {last_time.strftime('%Y-%m-%d %H:%M')})"
+                    "✓ %s: Already up-to-date (last: %s)",
+                    symbol.symbol_name,
+                    last_time.strftime("%Y-%m-%d %H:%M"),
                 )
                 total_skipped += 1
                 continue
@@ -220,14 +226,18 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
             start_time = last_time + timedelta(hours=1)
             hours_diff = int((end_time - start_time).total_seconds() / 3600) + 1
             logger.info(
-                f"📅 {symbol.symbol_name}: Fetching {hours_diff} missing hour(s) "
-                f"(last in DB: {last_time.strftime('%Y-%m-%d %H:%M')})"
+                "📅 %s: Fetching %d missing hour(s) (last in DB: %s)",
+                symbol.symbol_name,
+                hours_diff,
+                last_time.strftime("%Y-%m-%d %H:%M"),
             )
         else:
             # No data exists - fetch last N hours as fallback
             start_time = end_time - timedelta(hours=hours_to_update - 1)
             logger.info(
-                f"📅 {symbol.symbol_name}: No existing data, fetching last {hours_to_update} hours"
+                "📅 %s: No existing data, fetching last %d hours",
+                symbol.symbol_name,
+                hours_to_update,
             )
 
         # Fetch missing hours
@@ -239,22 +249,24 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
                 if candle:
                     symbol_updated += 1
                     logger.debug(
-                        f"  ✓ {current_time.strftime('%Y-%m-%d %H:%M')}: Close={candle.close:.2f}"
+                        "  ✓ %s: Close=%.2f", current_time.strftime("%Y-%m-%d %H:%M"), candle.close
                     )
 
             except Exception:
-                logger.exception(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed")
+                logger.exception("  ✗ %s: Failed", current_time.strftime("%Y-%m-%d %H:%M"))
                 total_failed += 1
 
             current_time += timedelta(hours=1)
 
         if symbol_updated > 0:
             total_updated += symbol_updated
-            logger.info(f"✓ {symbol.symbol_name}: Updated {symbol_updated} hourly candle(s)")
+            logger.info("✓ %s: Updated %d hourly candle(s)", symbol.symbol_name, symbol_updated)
 
     logger.info(
-        f"Hourly data update complete: {total_updated} candles updated, "
-        f"{total_skipped} symbols already current, {total_failed} failed"
+        "Hourly data update complete: %d candles updated, %d symbols already current, %d failed",
+        total_updated,
+        total_skipped,
+        total_failed,
     )
 
     return total_updated, total_failed
@@ -339,8 +351,9 @@ def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
             # We have data - only fetch missing 15-minute intervals
             if last_time >= end_time:
                 logger.info(
-                    f"✓ {symbol.symbol_name}: Already up-to-date "
-                    f"(last: {last_time.strftime('%Y-%m-%d %H:%M')})"
+                    "✓ %s: Already up-to-date (last: %s)",
+                    symbol.symbol_name,
+                    last_time.strftime("%Y-%m-%d %H:%M"),
                 )
                 total_skipped += 1
                 continue
@@ -351,15 +364,18 @@ def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
                 int((end_time - start_time).total_seconds() / 900) + 1
             )  # 900 seconds = 15 minutes
             logger.info(
-                f"📅 {symbol.symbol_name}: Fetching {intervals_diff} missing 15-minute interval(s) "
-                f"(last in DB: {last_time.strftime('%Y-%m-%d %H:%M')})"
+                "📅 %s: Fetching %d missing 15-minute interval(s) (last in DB: %s)",
+                symbol.symbol_name,
+                intervals_diff,
+                last_time.strftime("%Y-%m-%d %H:%M"),
             )
         else:
             # No data exists - fetch last N 15-minute intervals as fallback
             start_time = end_time - timedelta(minutes=minutes_to_update - 15)
             logger.info(
-                f"📅 {symbol.symbol_name}: No existing data, "
-                f"fetching last {minutes_to_update // 15} 15-minute intervals"
+                "📅 %s: No existing data, fetching last %d 15-minute intervals",
+                symbol.symbol_name,
+                minutes_to_update // 15,
             )
 
         # Fetch missing 15-minute intervals
@@ -371,22 +387,24 @@ def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
                 if candle:
                     symbol_updated += 1
                     logger.debug(
-                        f"  ✓ {current_time.strftime('%Y-%m-%d %H:%M')}: Close={candle.close:.2f}"
+                        "  ✓ %s: Close=%.2f", current_time.strftime("%Y-%m-%d %H:%M"), candle.close
                     )
 
             except Exception:
-                logger.exception(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed")
+                logger.exception("  ✗ %s: Failed", current_time.strftime("%Y-%m-%d %H:%M"))
                 total_failed += 1
 
             current_time += timedelta(minutes=15)
 
         if symbol_updated > 0:
             total_updated += symbol_updated
-            logger.info(f"✓ {symbol.symbol_name}: Updated {symbol_updated} 15-minute candle(s)")
+            logger.info("✓ %s: Updated %d 15-minute candle(s)", symbol.symbol_name, symbol_updated)
 
     logger.info(
-        f"15-minute data update complete: {total_updated} candles updated, "
-        f"{total_skipped} symbols already current, {total_failed} failed"
+        "15-minute data update complete: %d candles updated, %d symbols already current, %d failed",
+        total_updated,
+        total_skipped,
+        total_failed,
     )
 
     return total_updated, total_failed

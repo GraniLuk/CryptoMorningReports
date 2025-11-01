@@ -19,7 +19,9 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before weekly analysis...")
     updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
-    logger.info(f"✓ Data refresh complete: {updated_count} candles updated, {failed_count} failed")
+    logger.info(
+        "✓ Data refresh complete: %d candles updated, %d failed", updated_count, failed_count
+    )
 
     # Calculate date range for weekly report
     end_date = datetime.now(UTC)

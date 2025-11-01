@@ -356,7 +356,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
 
     """
     logger = app_logger
-    logger.info(f"Generating situation report for {symbol_name}")
+    logger.info("Generating situation report for %s", symbol_name)
 
     # Get symbol from database
     symbol = fetch_symbol_by_name(conn, symbol_name)
@@ -427,7 +427,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
         ai_api_key = os.environ.get("GEMINI_API_KEY", "")
         logger.info("Using Gemini API for analysis")
     else:
-        logger.warning(f"Unknown AI API type: {ai_api_type}, defaulting to Perplexity")
+        logger.warning("Unknown AI API type: %s, defaulting to Perplexity", ai_api_type)
         ai_api_type = "perplexity"
         ai_api_key = os.environ.get("PERPLEXITY_API_KEY", "")
 
@@ -504,7 +504,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
         analysis_html = convert_markdown_to_telegram_html(analysis_with_emojis)
 
         full_report = report_title + report_date + current_data_html + "\n" + analysis_html
-        logger.info(f"Successfully generated HTML situation report for {symbol_name}")
+        logger.info("Successfully generated HTML situation report for %s", symbol_name)
 
     except Exception:
         error_msg = f"Error generating situation report for {symbol_name}"

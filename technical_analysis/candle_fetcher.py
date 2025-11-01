@@ -39,20 +39,20 @@ class CandleFetcher:
 
         """
         end_time = end_time or datetime.now(UTC)
-        self.logger.info(f"Fetching {self.timeframe} candles for {len(symbols)} symbols")
+        self.logger.info("Fetching %s candles for %d symbols", self.timeframe, len(symbols))
 
         candles = []
         for symbol in symbols:
             candle = self.fetch_function(symbol, end_time, conn)
             if candle is not None:
                 candles.append(candle)
-                self.logger.debug(f"Fetched {self.timeframe} candle for {symbol.symbol_name}")
+                self.logger.debug("Fetched %s candle for %s", self.timeframe, symbol.symbol_name)
             else:
                 self.logger.warning(
-                    f"Failed to fetch {self.timeframe} candle for {symbol.symbol_name}"
+                    "Failed to fetch %s candle for %s", self.timeframe, symbol.symbol_name
                 )
 
-        self.logger.info(f"Successfully fetched {len(candles)} {self.timeframe} candles")
+        self.logger.info("Successfully fetched %d %s candles", len(candles), self.timeframe)
         return candles
 
     def _get_expected_time_diff(self) -> timedelta:
@@ -74,15 +74,21 @@ class CandleFetcher:
     ):
         """Fill gaps in a specific time range."""
         self.logger.info(
-            f"Found {gap_type} gap: {self.timeframe} candles for "
-            f"{symbol.symbol_name} missing from {start_time} to {end_time}"
+            "Found %s gap: %s candles for %s missing from %s to %s",
+            gap_type,
+            self.timeframe,
+            symbol.symbol_name,
+            start_time,
+            end_time,
         )
         expected_diff = self._get_expected_time_diff()
         current_time = start_time
         while current_time <= end_time:
             self.logger.debug(
-                f"Fetching missing {self.timeframe} candle for "
-                f"{symbol.symbol_name} at {current_time}"
+                "Fetching missing %s candle for %s at %s",
+                self.timeframe,
+                symbol.symbol_name,
+                current_time,
             )
             self.fetch_function(symbol, current_time, conn)
             current_time += expected_diff
@@ -114,15 +120,20 @@ class CandleFetcher:
                 actual_diff = next_date - current_date
                 if actual_diff > expected_diff:
                     self.logger.info(
-                        f"Found gap in {self.timeframe} candles for "
-                        f"{symbol.symbol_name} between {current_date} and {next_date}"
+                        "Found gap in %s candles for %s between %s and %s",
+                        self.timeframe,
+                        symbol.symbol_name,
+                        current_date,
+                        next_date,
                     )
                     # Fetch missing candles
                     current_time = current_date + expected_diff
                     while current_time < next_date:
                         self.logger.debug(
-                            f"Fetching missing {self.timeframe} candle for "
-                            f"{symbol.symbol_name} at {current_time}"
+                            "Fetching missing %s candle for %s at %s",
+                            self.timeframe,
+                            symbol.symbol_name,
+                            current_time,
                         )
                         self.fetch_function(symbol, current_time, conn)
                         current_time += expected_diff
@@ -152,8 +163,11 @@ class CandleFetcher:
         start_time = end_time - timedelta(days=days_back)
 
         self.logger.info(
-            f"Checking {self.timeframe} candles for {symbol.symbol_name} "
-            f"from {start_time} to {end_time}"
+            "Checking %s candles for %s from %s to %s",
+            self.timeframe,
+            symbol.symbol_name,
+            start_time,
+            end_time,
         )
 
         # Get existing candles from DB
@@ -161,19 +175,25 @@ class CandleFetcher:
 
         if not all_candles:
             self.logger.info(
-                f"No {self.timeframe} candles found in DB for {symbol.symbol_name}, fetching all"
+                "No %s candles found in DB for %s, fetching all", self.timeframe, symbol.symbol_name
             )
             current_time = start_time
             expected_diff = self._get_expected_time_diff()
             while current_time <= end_time:
                 self.logger.debug(
-                    f"Fetching {self.timeframe} candle for {symbol.symbol_name} at {current_time}"
+                    "Fetching %s candle for %s at %s",
+                    self.timeframe,
+                    symbol.symbol_name,
+                    current_time,
                 )
                 self.fetch_function(symbol, current_time, conn)
                 current_time += expected_diff
         else:
             self.logger.info(
-                f"Found {len(all_candles)} {self.timeframe} candles in DB for {symbol.symbol_name}"
+                "Found %d %s candles in DB for %s",
+                len(all_candles),
+                self.timeframe,
+                symbol.symbol_name,
             )
 
             # Sort candles by end_date

@@ -65,7 +65,7 @@ async def _process_ai_analysis(
     analysis_reported_with_news = "Failed: Analysis with news not generated"
 
     if not ai_api_key:
-        logger.error(f"No API key found for {ai_api_type}")
+        logger.error("No API key found for %s", ai_api_type)
         return analysis_reported_with_news
 
     # Process and send news reports
@@ -183,9 +183,13 @@ async def _process_ai_analysis(
                 folder_path="news",
             )
             if highlights_saved_to_onedrive:
-                logger.info(f"Highlighted articles for {today_date} saved to OneDrive news folder.")
+                logger.info(
+                    "Highlighted articles for %s saved to OneDrive news folder.", today_date
+                )
             else:
-                logger.warning(f"Failed to save highlighted articles for {today_date} to OneDrive.")
+                logger.warning(
+                    "Failed to save highlighted articles for %s to OneDrive.", today_date
+                )
 
     return analysis_reported_with_news
 
@@ -201,15 +205,15 @@ async def process_daily_report(  # noqa: PLR0915
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")
     updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
-    logger.info(f"✓ Daily candles: {updated_count} updated, {failed_count} failed")
+    logger.info("✓ Daily candles: %d updated, %d failed", updated_count, failed_count)
 
     # Update hourly candles for intraday analysis
     hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
-    logger.info(f"✓ Hourly candles: {hourly_updated} updated, {hourly_failed} failed")
+    logger.info("✓ Hourly candles: %d updated, %d failed", hourly_updated, hourly_failed)
 
     # Update 15-minute candles for intraday analysis
     fifteen_updated, fifteen_failed = update_latest_fifteen_min_candles(conn, minutes_to_update=120)
-    logger.info(f"✓ 15-minute candles: {fifteen_updated} updated, {fifteen_failed} failed")
+    logger.info("✓ 15-minute candles: %d updated, %d failed", fifteen_updated, fifteen_failed)
 
     # Commit all the data updates to the database
     conn.commit()

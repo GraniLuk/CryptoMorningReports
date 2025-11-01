@@ -30,10 +30,10 @@ def _detect_crossover(
 ) -> str:
     """Detect crossover and return updated status."""
     if yesterday_price < yesterday_ma and target_price > target_ma:
-        logger.info(f"{symbol_name} crossed above MA")
+        logger.info("%s crossed above MA", symbol_name)
         return "🚨🟢"
     if yesterday_price > yesterday_ma and target_price < target_ma:
-        logger.info(f"{symbol_name} crossed below MA")
+        logger.info("%s crossed below MA", symbol_name)
         return "🚨🔴"
 
     return "🟢" if target_price > target_ma else "🔴"
@@ -50,10 +50,10 @@ def _detect_golden_death_cross(
 ) -> str:
     """Detect golden or death cross."""
     if yesterday_short < yesterday_long and target_short > target_long:
-        logger.info(f"{symbol_name} {indicator_type} Golden Cross detected")
+        logger.info("%s %s Golden Cross detected", symbol_name, indicator_type)
         return "⚡️🟡"  # Golden Cross
     if yesterday_short > yesterday_long and target_short < target_long:
-        logger.info(f"{symbol_name} {indicator_type} Death Cross detected")
+        logger.info("%s %s Death Cross detected", symbol_name, indicator_type)
         return "💀"  # Death Cross
     return ""
 

@@ -55,7 +55,7 @@ def fetch_binance_klines(symbol, interval, limit=100):
             candles.append(candle)
 
     except Exception:
-        logger.exception(f"Error fetching {symbol} {interval}")
+        logger.exception("Error fetching %s %s", symbol, interval)
         return []
     else:
         return candles
@@ -69,18 +69,18 @@ def populate_hourly_candles(conn, hours=168):  # 7 days
     cursor.execute("SELECT SymbolID, SymbolName FROM Symbols WHERE IsActive = 1")
     symbols = cursor.fetchall()
 
-    logger.info(f"Fetching hourly candles for {len(symbols)} symbols...")
+    logger.info("Fetching hourly candles for %d symbols...", len(symbols))
 
     for symbol_id, symbol_name in symbols:
         trading_pair = f"{symbol_name}USDT"
-        logger.info(f"  Fetching {trading_pair}...")
+        logger.info("  Fetching %s...", trading_pair)
 
         candles = fetch_binance_klines(
             trading_pair, Client.KLINE_INTERVAL_1HOUR, limit=min(hours, 1000)
         )
 
         if not candles:
-            logger.warning(f"    No data for {trading_pair}")
+            logger.warning("    No data for %s", trading_pair)
             continue
 
         # Insert candles (using Azure SQL compatible column names)
@@ -108,7 +108,7 @@ def populate_hourly_candles(conn, hours=168):  # 7 days
             )
 
         conn.commit()
-        logger.info(f"    ✓ Inserted {len(candles)} hourly candles")
+        logger.info("    ✓ Inserted %d hourly candles", len(candles))
 
 
 def populate_fifteen_min_candles(conn, hours=24):  # 1 day
@@ -118,11 +118,11 @@ def populate_fifteen_min_candles(conn, hours=24):  # 1 day
     cursor.execute("SELECT SymbolID, SymbolName FROM Symbols WHERE IsActive = 1")
     symbols = cursor.fetchall()
 
-    logger.info(f"Fetching 15-min candles for {len(symbols)} symbols...")
+    logger.info("Fetching 15-min candles for %d symbols...", len(symbols))
 
     for symbol_id, symbol_name in symbols:
         trading_pair = f"{symbol_name}USDT"
-        logger.info(f"  Fetching {trading_pair}...")
+        logger.info("  Fetching %s...", trading_pair)
 
         # Calculate number of 15-min candles needed
         limit = min(hours * 4, 1000)
@@ -130,7 +130,7 @@ def populate_fifteen_min_candles(conn, hours=24):  # 1 day
         candles = fetch_binance_klines(trading_pair, Client.KLINE_INTERVAL_15MINUTE, limit=limit)
 
         if not candles:
-            logger.warning(f"    No data for {trading_pair}")
+            logger.warning("    No data for %s", trading_pair)
             continue
 
         for candle in candles:
@@ -157,7 +157,7 @@ def populate_fifteen_min_candles(conn, hours=24):  # 1 day
             )
 
         conn.commit()
-        logger.info(f"    ✓ Inserted {len(candles)} 15-min candles")
+        logger.info("    ✓ Inserted %d 15-min candles", len(candles))
 
 
 def populate_daily_candles(conn, days=200):  # ~6-7 months
@@ -167,18 +167,18 @@ def populate_daily_candles(conn, days=200):  # ~6-7 months
     cursor.execute("SELECT SymbolID, SymbolName FROM Symbols WHERE IsActive = 1")
     symbols = cursor.fetchall()
 
-    logger.info(f"Fetching daily candles for {len(symbols)} symbols...")
+    logger.info("Fetching daily candles for %d symbols...", len(symbols))
 
     for symbol_id, symbol_name in symbols:
         trading_pair = f"{symbol_name}USDT"
-        logger.info(f"  Fetching {trading_pair}...")
+        logger.info("  Fetching %s...", trading_pair)
 
         candles = fetch_binance_klines(
             trading_pair, Client.KLINE_INTERVAL_1DAY, limit=min(days, 1000)
         )
 
         if not candles:
-            logger.warning(f"    No data for {trading_pair}")
+            logger.warning("    No data for %s", trading_pair)
             continue
 
         for candle in candles:
@@ -205,7 +205,7 @@ def populate_daily_candles(conn, days=200):  # ~6-7 months
             )
 
         conn.commit()
-        logger.info(f"    ✓ Inserted {len(candles)} daily candles")
+        logger.info("    ✓ Inserted %d daily candles", len(candles))
 
 
 def populate_all_data(db_path=None):
@@ -236,9 +236,9 @@ def populate_all_data(db_path=None):
         daily = cursor.fetchone()[0]
 
         logger.info("\n📊 Data Summary:")
-        logger.info(f"   Daily candles: {daily}")
-        logger.info(f"   Hourly candles: {hourly}")
-        logger.info(f"   15-min candles: {fifteen}")
+        logger.info("   Daily candles: %d", daily)
+        logger.info("   Hourly candles: %d", hourly)
+        logger.info("   15-min candles: %d", fifteen)
         logger.info("\n🎉 Ready to use! Run your reports now.")
 
     finally:
@@ -260,7 +260,7 @@ if __name__ == "__main__":
             finally:
                 conn.close()
         else:
-            logger.info(f"Unknown option: {sys.argv[1]}")
+            logger.info("Unknown option: %s", sys.argv[1])
             logger.info("Usage:")
             logger.info("  python database/fetch_live_data.py        # Full data")
             logger.info("  python database/fetch_live_data.py quick  # Quick test")
