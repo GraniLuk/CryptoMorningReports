@@ -2,7 +2,7 @@
 
 import time
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import requests
 
@@ -16,6 +16,13 @@ from news.prompts import (
 )
 from news.utils.candle_data import fetch_and_format_candle_data
 from news.utils.retry_handler import retry_with_fallback_models
+
+
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+    from shared_code.common_price import Symbol
 
 
 class PerplexityClient(AIClient):
@@ -66,9 +73,9 @@ class PerplexityClient(AIClient):
 
     def get_detailed_crypto_analysis_with_news(
         self,
-        indicators_message,
-        news_feeded,
-        conn=None,
+        indicators_message: str,
+        news_feeded: str,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
     ) -> str:
         """Get detailed crypto analysis with news using Perplexity API."""
         start_time = time.time()
@@ -97,7 +104,7 @@ class PerplexityClient(AIClient):
         app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
-    def highlight_articles(self, user_crypto_list, news_feeded) -> str:
+    def highlight_articles(self, user_crypto_list: list["Symbol"], news_feeded: str) -> str:
         """Highlight articles based on user crypto list and news feed."""
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
         app_logger.info("Starting article highlighting with Perplexity")

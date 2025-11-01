@@ -1,6 +1,7 @@
 """Daily candle data processing and analysis for cryptocurrency markets."""
 
 from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from shared_code.common_price import Candle
 from shared_code.price_checker import fetch_daily_candle
@@ -13,9 +14,15 @@ from technical_analysis.repositories.daily_candle_repository import (
 )
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def fetch_daily_candles(
     symbols: list[Symbol],
-    conn,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
     start_date: date | None = None,
     end_date: date | None = None,
 ) -> list[Candle]:

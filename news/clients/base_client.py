@@ -1,6 +1,14 @@
 """Base abstract class for AI clients."""
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+    from source_repository import Symbol
 
 
 class AIClient(ABC):
@@ -8,7 +16,10 @@ class AIClient(ABC):
 
     @abstractmethod
     def get_detailed_crypto_analysis_with_news(
-        self, indicators_message, news_feeded, conn=None,
+        self,
+        indicators_message: str,
+        news_feeded: str,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
     ) -> str:
         """Get detailed crypto analysis with news context.
 
@@ -23,7 +34,7 @@ class AIClient(ABC):
         """
 
     @abstractmethod
-    def highlight_articles(self, user_crypto_list, news_feeded) -> str:
+    def highlight_articles(self, user_crypto_list: list["Symbol"], news_feeded: str) -> str:
         """Highlight relevant articles based on user crypto list.
 
         Args:

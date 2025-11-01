@@ -1,16 +1,22 @@
 """Candle data fetching utilities for different timeframes."""
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from infra.telegram_logging_handler import app_logger
 from shared_code.common_price import Candle
 from source_repository import Symbol
 
+if TYPE_CHECKING:
+    import pyodbc
+    from infra.sql_connection import SQLiteConnectionWrapper
+
 
 class CandleFetcher:
     """Base class for fetching candles of different timeframes."""
 
-    def __init__(self, timeframe: str, fetch_function, repository_class):
+    def __init__(self, timeframe: str, fetch_function: Callable, repository_class: type):
         """Initialize the candle fetcher.
 
         Args:
@@ -27,7 +33,7 @@ class CandleFetcher:
     def fetch_candles(
         self,
         symbols: list[Symbol],
-        conn,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper",
         end_time: datetime | None = None,
     ) -> list[Candle]:
         """Fetch candles for given symbols and return a list of Candle objects.
@@ -76,10 +82,10 @@ class CandleFetcher:
 
     def _fill_gaps_in_range(
         self,
-        symbol,
+        symbol: Symbol,
         start_time: datetime,
         end_time: datetime,
-        conn,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper",
         gap_type: str,
     ):
         """Fill gaps in a specific time range."""
@@ -103,7 +109,13 @@ class CandleFetcher:
             self.fetch_function(symbol, current_time, conn)
             current_time += expected_diff
 
-    def _check_beginning_gap(self, symbol, all_candles, start_time: datetime, conn):
+    def _check_beginning_gap(
+        self,
+        symbol: Symbol,
+        all_candles: list[Candle],
+        start_time: datetime,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+    ):
         """Check and fill gaps at the beginning of the range."""
         if all_candles:
             first_candle_date = self._ensure_timezone(all_candles[0].end_date)
@@ -148,7 +160,13 @@ class CandleFetcher:
                         self.fetch_function(symbol, current_time, conn)
                         current_time += expected_diff
 
-    def _check_end_gap(self, symbol, all_candles, end_time: datetime, conn):
+    def _check_end_gap(
+        self,
+        symbol: Symbol,
+        all_candles: list[Candle],
+        end_time: datetime,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+    ):
         """Check and fill gaps at the end of the range."""
         if all_candles:
             last_candle_date = self._ensure_timezone(all_candles[-1].end_date)
@@ -161,7 +179,12 @@ class CandleFetcher:
                     "end",
                 )
 
-    def check_if_all_candles(self, symbol, conn, days_back: int = 30):
+    def check_if_all_candles(
+        self,
+        symbol: Symbol,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+        days_back: int = 30,
+    ):
         """Check if all candles for the symbol are available in the database.
 
         fetches missing ones from API.

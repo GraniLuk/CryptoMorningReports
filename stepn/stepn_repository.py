@@ -3,11 +3,15 @@
 import math
 import os
 from datetime import UTC, date, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
+
+
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
 
 
 def _is_sqlite() -> bool:
@@ -48,7 +52,7 @@ def _sanitize_int(value: Any) -> int | None:
 
 
 def save_stepn_results(
-    conn,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
     gmt_price: float,
     gst_price: float,
     ratio: float,
@@ -179,7 +183,7 @@ def save_stepn_results(
 
 
 def fetch_stepn_results_last_14_days(
-    conn,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
 ) -> list[tuple[float, float, float, date]] | None:
     """Fetch STEPN results from the last 14 days from the database.
 

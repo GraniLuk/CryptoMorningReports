@@ -3,7 +3,7 @@
 import json
 import re
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import google.generativeai as genai
 
@@ -16,6 +16,13 @@ from news.prompts import (
     build_analysis_user_messages,
 )
 from news.utils.candle_data import fetch_and_format_candle_data
+
+
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+    from source_repository import Symbol
 
 
 class GeminiClient(AIClient):
@@ -57,7 +64,7 @@ class GeminiClient(AIClient):
             msg = f"GeminiClient initialization failed: {e}"
             raise RuntimeError(msg) from e
 
-    def _generate_content(self, prompt: Any) -> str:
+    def _generate_content(self, prompt: str | list[dict[str, str]]) -> str:
         """Generate content using Gemini API.
 
         Args:
@@ -157,9 +164,9 @@ class GeminiClient(AIClient):
 
     def get_detailed_crypto_analysis_with_news(
         self,
-        indicators_message,
-        news_feeded,
-        conn=None,
+        indicators_message: str,
+        news_feeded: str,
+        conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
     ) -> str:
         """Get detailed crypto analysis with news using Gemini API."""
         start_time = time.time()
@@ -198,7 +205,7 @@ class GeminiClient(AIClient):
         app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
-    def highlight_articles(self, user_crypto_list, news_feeded) -> str:
+    def highlight_articles(self, user_crypto_list: list["Symbol"], news_feeded: str) -> str:
         """Highlight articles based on user crypto list and news feed using Gemini API."""
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
         app_logger.info("Starting article highlighting with Gemini")

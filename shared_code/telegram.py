@@ -15,16 +15,16 @@ MAX_DOCUMENT_SIZE = 50 * 1024 * 1024  # 50MB Telegram limit for standard bots
 
 
 async def send_telegram_message(
-    enabled,
-    token,
-    chat_id,
-    message,
+    enabled: bool,
+    token: str | None,
+    chat_id: str | None,
+    message: str | None,
     parse_mode: str | None = "HTML",
     *,
     disable_web_page_preview: bool = False,
     disable_notification: bool = False,
     protect_content: bool = False,
-):
+) -> bool | None:
     """Send a message to a Telegram chat."""
     if not enabled:
         app_logger.info("Telegram notifications are disabled")
@@ -53,7 +53,7 @@ async def send_telegram_message(
 
         for chunk in chunks:
             url = f"https://api.telegram.org/bot{token}/sendMessage"
-            payload = {
+            payload: dict[str, str | bool | None] = {
                 "chat_id": chat_id,
                 "text": chunk,
             }
@@ -269,7 +269,7 @@ async def send_telegram_document(
     caption: str | None = None,
     parse_mode: str | None = None,
     local_path: str | None = None,
-):
+) -> bool:
     """Send a document (e.g. markdown report) to Telegram.
 
     Either provide file_bytes OR a local_path. If both are provided local_path takes precedence.

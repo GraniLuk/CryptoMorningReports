@@ -2,10 +2,15 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
+
+
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
 
 
 class SourceID(Enum):
@@ -61,7 +66,7 @@ class DatabaseError(Exception):
     """Exception raised for database operation errors."""
 
 
-def fetch_symbols(conn) -> list[Symbol]:
+def fetch_symbols(conn: "pyodbc.Connection | SQLiteConnectionWrapper") -> list[Symbol]:
     """Fetch all symbols from the database and return them as a list of Symbol objects.
 
     Raises:
@@ -110,7 +115,10 @@ def fetch_symbols(conn) -> list[Symbol]:
     return symbols
 
 
-def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
+def fetch_symbol_by_name(
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+    symbol_name: str,
+) -> Symbol:
     """Fetch a specific symbol by name from the database.
 
     Args:

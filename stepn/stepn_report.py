@@ -1,6 +1,7 @@
 """STEPN ecosystem analysis and reporting."""
 
 import os
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -14,7 +15,13 @@ from stepn.stepn_repository import fetch_stepn_results_last_14_days, save_stepn_
 from technical_analysis.rsi import calculate_rsi_using_ema
 
 
-def fetch_stepn_report(conn) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_stepn_report(conn: "pyodbc.Connection | SQLiteConnectionWrapper | None") -> PrettyTable:
     """Fetch and generate a STEPN ecosystem report with token prices and ratios."""
     symbols = [
         Symbol(

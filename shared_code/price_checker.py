@@ -1,6 +1,7 @@
 """Price checking and validation utilities for cryptocurrency data."""
 
 from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from shared_code.binance import (
     fetch_binance_daily_kline,
@@ -28,11 +29,21 @@ from technical_analysis.repositories.hourly_candle_repository import (
 )
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 # Simple cache stores
 _price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 
-def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) -> Candle | None:
+def fetch_daily_candle(
+    symbol: Symbol,
+    end_date: date | None = None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
+) -> Candle | None:
     """Fetch a daily candle for a symbol, checking database first if connection provided."""
     if end_date is None:
         end_date = datetime.now(UTC).date()
@@ -59,7 +70,11 @@ def fetch_daily_candle(symbol: Symbol, end_date: date | None = None, conn=None) 
     return candle
 
 
-def fetch_hourly_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
+def fetch_hourly_candle(
+    symbol: Symbol,
+    end_time: datetime,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
+) -> Candle | None:
     """Fetch hourly candle data for a symbol at the specified end time.
 
     Args:
@@ -109,7 +124,10 @@ def _fetch_hourly_candle_from_source(symbol: Symbol, timestamp: datetime) -> Can
 
 
 def fetch_hourly_candles(
-    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None,
+    symbol: Symbol,
+    start_time: datetime,
+    end_time: datetime,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
 ) -> list[Candle]:
     """Fetch multiple hourly candles for a given symbol between start_time and end_time.
 
@@ -186,7 +204,11 @@ def fetch_hourly_candles(
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
 
 
-def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> Candle | None:
+def fetch_fifteen_min_candle(
+    symbol: Symbol,
+    end_time: datetime,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
+) -> Candle | None:
     """Fetch 15-minute candle data for a symbol at the specified end time.
 
     Args:
@@ -229,7 +251,10 @@ def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> C
 
 
 def fetch_fifteen_min_candles(
-    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None,
+    symbol: Symbol,
+    start_time: datetime,
+    end_time: datetime,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
 ) -> list[Candle]:
     """Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
 
@@ -314,7 +339,10 @@ def fetch_fifteen_min_candles(
 
 
 def fetch_daily_candles(
-    symbol: Symbol, start_date: date, end_date: date | None = None, conn=None,
+    symbol: Symbol,
+    start_date: date,
+    end_date: date | None = None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
 ) -> list[Candle]:
     """Fetch multiple daily candles for a given symbol between start_date and end_date.
 
