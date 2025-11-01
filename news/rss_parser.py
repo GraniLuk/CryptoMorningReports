@@ -22,7 +22,7 @@ def get_news():
         },
         "newsBTC": {
             "url": "https://www.newsbtc.com/feed",
-            "class": "content-inner jeg_link_underline",
+            "class": "entry-content",  # Updated from 'content-inner jeg_link_underline'
         },
         "coinJournal": {
             "url": "https://coinjournal.net/feed",
@@ -31,10 +31,6 @@ def get_news():
         "coinpedia": {
             "url": "https://coinpedia.org/feed",
             "class": "entry-content entry clearfix",
-        },
-        "cryptopotato": {
-            "url": "https://cryptopotato.com/feed",
-            "class": "entry-content col-sm-11",
         },
         "ambcrypto": {
             "url": "https://ambcrypto.com/feed/",

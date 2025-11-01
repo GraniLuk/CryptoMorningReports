@@ -1,0 +1,118 @@
+{
+  "timestamp": "2025-11-01T18:43:59.852825+00:00",
+  "summary": {
+    "total": 6,
+    "successful": 6,
+    "failed": 0
+  },
+  "results": [
+    {
+      "source": "decrypt",
+      "url": "https://decrypt.co/feed",
+      "class_selector": "post-content",
+      "success": true,
+      "article_count": 6,
+      "articles_within_24h": 6,
+      "errors": [],
+      "warnings": [],
+      "sample_article": {
+        "title": "Romanian Regulator Blacklists Polymarket as 'Gambling That Must Be Licensed'",
+        "link": "https://decrypt.co/347052/romanian-regulator-blacklists-polymarket-gambling",
+        "published": "Sat, 01 Nov 2025 18:23:38 +0000",
+        "source": "decrypt"
+      },
+      "content_fetch_success": true,
+      "content_length": 3202
+    },
+    {
+      "source": "coindesk",
+      "url": "https://www.coindesk.com/arc/outboundfeeds/rss",
+      "class_selector": "document-body",
+      "success": true,
+      "article_count": 9,
+      "articles_within_24h": 9,
+      "errors": [],
+      "warnings": [],
+      "sample_article": {
+        "title": "Bitcoin: The Dawn of a New Monetary Era",
+        "link": "https://www.coindesk.com/opinion/2025/10/31/bitcoin-the-dawn-of-a-new-monetary-era",
+        "published": "Sat, 01 Nov 2025 18:00:00 +0000",
+        "source": "coindesk"
+      },
+      "content_fetch_success": true,
+      "content_length": 5302
+    },
+    {
+      "source": "newsBTC",
+      "url": "https://www.newsbtc.com/feed",
+      "class_selector": "entry-content",
+      "success": true,
+      "article_count": 10,
+      "articles_within_24h": 10,
+      "errors": [],
+      "warnings": [],
+      "sample_article": {
+        "title": "Analyst Reveals How Litecoin Can Turn $3,700 Into $1 Million For Investors",
+        "link": "https://www.newsbtc.com/news/litecoin/litecoin-turn-3700-into-1-million/",
+        "published": "Sat, 01 Nov 2025 18:30:03 +0000",
+        "source": "newsBTC"
+      },
+      "content_fetch_success": true,
+      "content_length": 3436
+    },
+    {
+      "source": "coinJournal",
+      "url": "https://coinjournal.net/feed",
+      "class_selector": "post-article-content lg:col-span-8",
+      "success": true,
+      "article_count": 1,
+      "articles_within_24h": 1,
+      "errors": [],
+      "warnings": [],
+      "sample_article": {
+        "title": "Chainlink (LINK) rebounds 3.6% as Stellar integration broadens RWA reach",
+        "link": "https://coinjournal.net/news/chainlink-link-rebounds-3-6-as-stellar-integration-broadens-rwa-reach/",
+        "published": "Sat, 01 Nov 2025 12:04:58 +0000",
+        "source": "coinJournal"
+      },
+      "content_fetch_success": true,
+      "content_length": 4828
+    },
+    {
+      "source": "coinpedia",
+      "url": "https://coinpedia.org/feed",
+      "class_selector": "entry-content entry clearfix",
+      "success": true,
+      "article_count": 10,
+      "articles_within_24h": 10,
+      "errors": [],
+      "warnings": [],
+      "sample_article": {
+        "title": "Cardano Price Prediction November 2025: Whale Accumulation Signals a Rebound to $1",
+        "link": "https://coinpedia.org/price-analysis/cardano-price-prediction-november-2025-whales-are-buying-hints-a-rebound-for-1/",
+        "published": "Sat, 01 Nov 2025 14:14:43 +0000",
+        "source": "coinpedia"
+      },
+      "content_fetch_success": true,
+      "content_length": 4179
+    },
+    {
+      "source": "ambcrypto",
+      "url": "https://ambcrypto.com/feed/",
+      "class_selector": "single-post-main-middle",
+      "success": true,
+      "article_count": 10,
+      "articles_within_24h": 10,
+      "errors": [],
+      "warnings": [],
+      "sample_article": {
+        "title": "Bitcoin turns 17 \u2013 Can BTC overcome its first \u2018red October\u2019 since 2018?",
+        "link": "https://ambcrypto.com/bitcoin-turns-17-can-btc-overcome-its-first-red-october-since-2018/",
+        "published": "Sat, 01 Nov 2025 17:00:46 +0000",
+        "source": "ambcrypto"
+      },
+      "content_fetch_success": true,
+      "content_length": 3487
+    }
+  ]
+}
