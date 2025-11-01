@@ -9,11 +9,42 @@ import feedparser
 import requests
 from bs4 import BeautifulSoup
 
+from infra.configuration import is_article_cache_enabled
 from infra.telegram_logging_handler import app_logger
+from news.article_cache import (
+    CachedArticle,
+    article_exists_in_cache,
+    get_cached_articles,
+    save_article_to_cache,
+)
 
 
 def get_news():
-    """Fetch news articles from various cryptocurrency RSS feeds."""
+    """Fetch news articles from various cryptocurrency RSS feeds.
+
+    If article caching is enabled, returns cached articles from today.
+    Otherwise, fetches fresh articles from RSS feeds.
+    """
+    # Check if caching is enabled
+    if is_article_cache_enabled():
+        # Try to get cached articles first
+        cached_articles = get_cached_articles()
+        if cached_articles:
+            # Convert CachedArticle objects to dict format
+            articles_dict = [
+                {
+                    "source": article.source,
+                    "title": article.title,
+                    "link": article.link,
+                    "published": article.published,
+                    "content": article.content,
+                }
+                for article in cached_articles
+            ]
+            app_logger.info(f"Loaded {len(articles_dict)} articles from cache")
+            return json.dumps(articles_dict, indent=2)
+
+    # No cache or cache disabled - fetch from RSS feeds
     feeds = {
         "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content"},
         "coindesk": {
@@ -46,12 +77,21 @@ def get_news():
 
 
 def fetch_rss_news(feed_url, source, class_name):
-    """Fetch and parse news articles from an RSS feed."""
+    """Fetch and parse news articles from an RSS feed.
+
+    If article caching is enabled, saves fetched articles to cache.
+    """
     try:
         feed = feedparser.parse(feed_url)
         latest_news = []
         current_time = datetime.now(UTC)
+        cache_enabled = is_article_cache_enabled()
+
         for entry in feed.entries:
+            # Skip if already cached (when caching is enabled)
+            if cache_enabled and article_exists_in_cache(entry.link):
+                continue
+
             # Make published_time timezone-aware by adding UTC timezone
             if hasattr(entry, "published_parsed") and isinstance(
                 entry.published_parsed,
@@ -64,15 +104,28 @@ def fetch_rss_news(feed_url, source, class_name):
 
             if current_time - published_time <= timedelta(days=1):
                 full_content = fetch_full_content(entry.link, class_name)
-                latest_news.append(
-                    {
-                        "source": source,
-                        "title": entry.title,
-                        "link": entry.link,
-                        "published": entry.published,
-                        "content": full_content,
-                    },
-                )
+
+                article_dict = {
+                    "source": source,
+                    "title": entry.title,
+                    "link": entry.link,
+                    "published": entry.published,
+                    "content": full_content,
+                }
+                latest_news.append(article_dict)
+
+                # Save to cache if enabled
+                if cache_enabled:
+                    cached_article = CachedArticle(
+                        source=source,
+                        title=entry.title,
+                        link=entry.link,
+                        published=entry.published,
+                        fetched=current_time.isoformat(),
+                        content=full_content,
+                        symbols=[],  # Will be populated in Phase 3
+                    )
+                    save_article_to_cache(cached_article)
 
             max_news_items = 10
             if len(latest_news) >= max_news_items:

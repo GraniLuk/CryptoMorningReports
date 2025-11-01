@@ -107,16 +107,18 @@ The goal is to:
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-008 | Create `news/article_cache.py` module with cache management functions | | |
-| TASK-009 | Implement `CachedArticle` dataclass with fields: source, title, link, published, fetched, content, symbols | | |
-| TASK-010 | Create cache directory structure: `news/cache/YYYY-MM-DD/` | | |
-| TASK-011 | Implement `save_article_to_cache(article: CachedArticle) -> Path` function | | |
-| TASK-012 | Implement markdown file generation with YAML frontmatter | | |
-| TASK-013 | Implement filename slugification function (sanitize title for filesystem) | | |
-| TASK-014 | Implement `load_article_from_cache(filepath: Path) -> CachedArticle` function | | |
-| TASK-015 | Implement `get_cached_articles(date: date) -> List[CachedArticle]` function | | |
-| TASK-016 | Add configuration option `ENABLE_ARTICLE_CACHE` (default: True for local) | | |
-| TASK-017 | Update `get_news()` to optionally save to cache if enabled | | |
+| TASK-008 | Create `news/article_cache.py` module with cache management functions | ✅ | 2025-01-15 |
+| TASK-009 | Implement `CachedArticle` dataclass with fields: source, title, link, published, fetched, content, symbols | ✅ | 2025-01-15 |
+| TASK-010 | Create cache directory structure: `news/cache/YYYY-MM-DD/` | ✅ | 2025-01-15 |
+| TASK-011 | Implement `save_article_to_cache(article: CachedArticle) -> Path` function | ✅ | 2025-01-15 |
+| TASK-012 | Implement markdown file generation with YAML frontmatter | ✅ | 2025-01-15 |
+| TASK-013 | Implement filename slugification function (sanitize title for filesystem) | ✅ | 2025-01-15 |
+| TASK-014 | Implement `load_article_from_cache(filepath: Path) -> CachedArticle` function | ✅ | 2025-01-15 |
+| TASK-015 | Implement `get_cached_articles(date: date) -> List[CachedArticle]` function | ✅ | 2025-01-15 |
+| TASK-016 | Add configuration option `ENABLE_ARTICLE_CACHE` (default: True for local) | ✅ | 2025-01-15 |
+| TASK-017 | Update `get_news()` to optionally save to cache if enabled | ✅ | 2025-01-15 |
+
+**Summary**: See `plan/phase2_summary.md` for detailed implementation results and testing
 
 ### Phase 3: Symbol Detection & Tagging
 

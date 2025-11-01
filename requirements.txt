@@ -22,6 +22,8 @@ pycoingecko
 twikit
 feedparser
 beautifulsoup4
+python-frontmatter
+python-slugify
 pytest
 pytest-cov
 ruff
