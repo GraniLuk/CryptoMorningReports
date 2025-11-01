@@ -42,7 +42,7 @@ class GeminiClient(AIClient):
         configure_fn = getattr(genai, "configure", None)
         if not callable(configure_fn):
             msg = "genai.configure not available in google.generativeai module"
-            raise RuntimeError(msg)
+            raise TypeError(msg)
 
         generative_cls = getattr(genai, "GenerativeModel", None)
         if generative_cls is None:

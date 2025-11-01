@@ -326,13 +326,15 @@ async def _generate_ai_analysis(
                 error_msg = "Failed: No valid response from Gemini API"
                 logger.error(error_msg)
                 return error_msg
-            else:
-                error_msg = "Failed: Invalid Gemini client configuration"
-                logger.error(error_msg)
-                return error_msg
+
         except Exception:
             error_msg = "Failed to get crypto situation analysis from Gemini"
             logger.exception(error_msg)
+            return error_msg
+
+        else:
+            error_msg = "Failed: Invalid Gemini client configuration"
+            logger.error(error_msg)
             return error_msg
 
     else:

@@ -23,7 +23,7 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_rma
 
 
-def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
+def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
     symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
 ) -> pd.DataFrame | None:
     """Get RSI data for a symbol in the specified timeframe.
