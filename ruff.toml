@@ -79,6 +79,7 @@ exclude = [
 [lint.per-file-ignores]
 # Ignore certain rules in test files
 "tests/**" = ["PLR2004", "S101", "T201", "S608"]
+"news/test_*.py" = ["S101", "T201", "PLR2004"]  # Allow assert, print, and magic values in news test files
 # Ignore import ordering in __init__.py files
 "**/__init__.py" = ["F401", "I001"]
 

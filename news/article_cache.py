@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-import frontmatter  # type: ignore[import-untyped]
-from slugify import slugify  # type: ignore[import-untyped]
+import frontmatter
+from slugify import slugify
 
 
 @dataclass
@@ -128,14 +128,18 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
         with filepath.open(encoding="utf-8") as f:
             post = frontmatter.load(f)
 
+        # Extract symbols with proper type handling
+        symbols_value = post.get("symbols", [])
+        symbols_list = list(symbols_value) if isinstance(symbols_value, list) else []
+
         return CachedArticle(
-            source=post.get("source", ""),
-            title=post.get("title", ""),
-            link=post.get("link", ""),
-            published=post.get("published", ""),
-            fetched=post.get("fetched", ""),
+            source=str(post.get("source", "")),
+            title=str(post.get("title", "")),
+            link=str(post.get("link", "")),
+            published=str(post.get("published", "")),
+            fetched=str(post.get("fetched", "")),
             content=post.content,
-            symbols=post.get("symbols", []),
+            symbols=symbols_list,
         )
     except (OSError, ValueError, KeyError):
         return None
