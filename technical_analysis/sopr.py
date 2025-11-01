@@ -22,7 +22,7 @@ API_BASE = "https://bitcoin-data.com/"
 
 
 def fetch_sopr_metrics(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> PrettyTable | None:
     """Retrieve yesterday's SOPR variants from BGeometrics API and saves to database.
 

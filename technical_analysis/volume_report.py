@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 def fetch_volume_report(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> PrettyTable:
     """Fetch and format volume report for given symbols.
 

@@ -30,7 +30,7 @@ def _detect_crossover(
     yesterday_ma: float,
     target_ma: float,
     symbol_name: str,
-    logger: logging.Logger,
+    logger: "logging.Logger",
 ) -> str:
     """Detect crossover and return updated status."""
     if yesterday_price < yesterday_ma and target_price > target_ma:
@@ -50,7 +50,7 @@ def _detect_golden_death_cross(
     target_long: float,
     symbol_name: str,
     indicator_type: str,
-    logger: logging.Logger,
+    logger: "logging.Logger",
 ) -> str:
     """Detect golden or death cross."""
     if yesterday_short < yesterday_long and target_short > target_long:
@@ -64,7 +64,7 @@ def _detect_golden_death_cross(
 
 def calculate_indicators(  # noqa: PLR0915
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> tuple[PrettyTable, PrettyTable]:
     """Calculate moving averages and RSI indicators for cryptocurrency symbols."""

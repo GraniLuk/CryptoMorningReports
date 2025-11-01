@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def save_price_range_results(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
     low_price: float,
     high_price: float,

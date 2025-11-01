@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 def fetch_marketcap_report(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> PrettyTable:
     """Fetch and generate a market capitalization report for cryptocurrency symbols."""
     results = []

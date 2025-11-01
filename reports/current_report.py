@@ -1,5 +1,6 @@
 """Current market report generation with news and analysis."""
 
+import html as html_module
 import os
 import re
 from datetime import UTC, datetime, timedelta
@@ -179,7 +180,11 @@ def format_candle_data(candles):
     formatted += "---- | ---- | ---- | --- | ----- | ------\n"
 
     for candle in candles:
-        date_str = candle.end_date.strftime("%Y-%m-%d %H:%M")
+        # Handle both datetime objects and string dates
+        if isinstance(candle.end_date, str):
+            date_str = candle.end_date
+        else:
+            date_str = candle.end_date.strftime("%Y-%m-%d %H:%M")
         formatted += (
             f"{date_str} | {candle.open:.4f} | {candle.high:.4f} | "
             f"{candle.low:.4f} | {candle.close:.4f} | {candle.volume:.2f}\n"
@@ -352,8 +357,11 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
         HTML formatted text compatible with Telegram
 
     """
-    # Escape HTML special characters except those in tags we'll create
-    html_text = markdown_text
+    # First escape HTML special characters to prevent Telegram parsing errors
+    html_text = html_module.escape(markdown_text)
+
+    # Unescape characters we need for markdown processing
+    html_text = html_text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
 
     # Convert headers
     html_text = re.sub(r"^### (.+)$", r"<b><u>\1</u></b>", html_text, flags=re.MULTILINE)

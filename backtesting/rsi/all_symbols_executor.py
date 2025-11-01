@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def run_strategy_for_all_symbols(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
     rsi_value: int = 30,
     tp_value: Decimal = Decimal("1.1"),
     sl_value: Decimal = Decimal("0.9"),

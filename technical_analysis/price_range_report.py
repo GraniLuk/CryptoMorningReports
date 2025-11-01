@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 def fetch_range_price(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> PrettyTable:
     """Calculate 24-hour price range using hourly candles.
 

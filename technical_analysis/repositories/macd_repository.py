@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def save_macd_results(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
     current_price: float,
     macd: float,
@@ -99,7 +99,7 @@ def save_macd_results(
 
 
 def fetch_yesterday_macd(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> pd.DataFrame | None:
     """Fetch all MACD records from yesterday.

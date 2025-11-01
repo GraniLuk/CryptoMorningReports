@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def save_sopr_results(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     metrics: dict,
 ) -> None:
     """Save SOPR metrics to the database.

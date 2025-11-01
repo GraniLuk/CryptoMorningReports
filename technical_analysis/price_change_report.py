@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 def fetch_price_change_report(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> PrettyTable:
     """Fetch and generate a price change report showing 24h and 7d changes."""

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 def get_optimized_rsi_for_symbol_timeframe(
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframe: str = "daily",
     lookback_days: int = 7,
 ) -> pd.DataFrame | None:

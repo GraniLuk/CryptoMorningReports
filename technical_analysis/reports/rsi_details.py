@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 def create_rsi_table_for_symbol(
     symbol: Symbol,
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> PrettyTable | None:
     """Create RSI table for a symbol using daily candles data for the last 30 days.
