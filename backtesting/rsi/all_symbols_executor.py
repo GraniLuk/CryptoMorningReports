@@ -8,6 +8,7 @@ import pandas as pd
 
 from backtesting.rsi.excel import save_to_excel
 from backtesting.rsi.strategy import run_strategy_for_symbol_internal
+from infra.telegram_logging_handler import app_logger
 from source_repository import fetch_symbols
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
@@ -42,7 +43,7 @@ def run_strategy_for_all_symbols(
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
         if candles_data is None:
-            print(f"No candle data found for symbol {symbol.symbol_name}, skipping")
+            app_logger.warning(f"No candle data found for symbol {symbol.symbol_name}, skipping")
             continue
 
         results_df, ratio = run_strategy_for_symbol_internal(
