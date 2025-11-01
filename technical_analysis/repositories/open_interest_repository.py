@@ -107,8 +107,10 @@ class OpenInterestRepository:
                     "open_interest_value": row[1],
                     "indicator_date": row[2],
                 }
-            return None
 
         except Exception as e:
             app_logger.error(f"Error fetching open interest: {e!s}")
             raise
+
+        else:
+            return None

@@ -107,8 +107,10 @@ class FundingRateRepository:
                     "funding_time": row[1],
                     "indicator_date": row[2],
                 }
-            return None
 
         except Exception as e:
             app_logger.error(f"Error fetching funding rate: {e!s}")
             raise
+
+        else:
+            return None

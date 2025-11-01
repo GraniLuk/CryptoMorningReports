@@ -168,14 +168,14 @@ def fetch_close_prices_from_binance(symbol: str, lookback_days: int = 14) -> pd.
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
         df.set_index("timestamp", inplace=True)
 
-        return df
-
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching data for {symbol}: {e.message}")
         return pd.DataFrame()
     except Exception as e:
         app_logger.error(f"Unexpected error for {symbol}: {e!s}")
         return pd.DataFrame()
+    else:
+        return df
 
 
 def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> Candle | None:

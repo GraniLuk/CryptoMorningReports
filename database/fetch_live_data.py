@@ -54,11 +54,11 @@ def fetch_binance_klines(symbol, interval, limit=100):
             }
             candles.append(candle)
 
-        return candles
-
-    except Exception as e:
-        logger.error(f"Error fetching {symbol} {interval}: {e}")
+    except Exception:
+        logger.exception(f"Error fetching {symbol} {interval}")
         return []
+    else:
+        return candles
 
 
 def populate_hourly_candles(conn, hours=168):  # 7 days

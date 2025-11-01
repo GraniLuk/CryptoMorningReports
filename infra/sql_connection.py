@@ -252,13 +252,14 @@ def connect_to_sql(max_retries=3):
                         attrs_before={sql_copt_ss_access_token: token_struct},
                     )
                     logging.info("Successfully connected to the database.")
-                    return conn
                 except pyodbc.Error as e:
                     app_logger.warning(f"ODBC Error: {e}")
                     raise
                 except Exception as e:
                     app_logger.warning(f"Unexpected error: {e!s}")
                     raise
+                else:
+                    return conn
             else:
                 try:
                     connection_string = (
@@ -274,14 +275,12 @@ def connect_to_sql(max_retries=3):
                     logging.info(f"Local connection string (without password): {connection_string}")
                     conn = pyodbc.connect(connection_string + f";PWD={password}")
                     logging.info("Successfully connected to the database.")
-                    return conn
                 except pyodbc.Error as e:
                     app_logger.warning(f"ODBC Error: {e}")
                 except Exception as e:
                     app_logger.warning(f"Failed to connect to the database: {e!s}")
-
-            logging.info("Connection successful")
-            return conn
+                else:
+                    return conn
 
         except pyodbc.Error as e:
             app_logger.warning(f"Attempt {attempt + 1} failed:")

@@ -51,8 +51,6 @@ def retry_with_fallback_models(
                 current_try += 1
                 continue
             logging.error(f"{operation_name}: {result}")
-            return result
-
         except Exception as e:
             error_msg = f"Failed {operation_name}: {e!s}"
             logging.exception(error_msg)
@@ -60,5 +58,7 @@ def retry_with_fallback_models(
                 current_try += 1
                 continue
             return error_msg
+        else:
+            return result
 
     return f"Failed: All retry attempts exhausted after trying models: {', '.join(models)}"

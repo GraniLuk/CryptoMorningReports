@@ -54,11 +54,11 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
         conn.commit()
         conn.close()
 
-        return True
-
-    except sqlite3.Error as e:
-        logging.exception(f"Migration failed: {e}")
+    except sqlite3.Error:
+        logging.exception("Migration failed")
         return False
+    else:
+        return True
 
 
 if __name__ == "__main__":

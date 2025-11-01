@@ -123,11 +123,12 @@ def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         # Set timestamp as index after sorting
         df.set_index("timestamp", inplace=True)
 
-        return df
-
     except Exception as e:
         app_logger.error(f"Error fetching data from Kucoin: {e!s}")
         return pd.DataFrame()
+
+    else:
+        return df
 
 
 # Adding hourly and fifteen-minute candle fetching functions

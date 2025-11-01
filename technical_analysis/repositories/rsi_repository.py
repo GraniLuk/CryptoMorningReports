@@ -460,8 +460,6 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
 
             cursor.close()
 
-        return results  # Return results dictionary (empty if conn is None or exception occurs)
-
     except pyodbc.Error as e:
         app_logger.error(
             f"ODBC Error while fetching historical {timeframe} RSI for symbol {symbol_id}: {e}"
@@ -470,3 +468,6 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
     except Exception as e:
         app_logger.error(f"Error fetching historical {timeframe} RSI for symbol {symbol_id}: {e!s}")
         raise
+
+    else:
+        return results  # Return results dictionary (empty if conn is None or exception occurs)

@@ -167,11 +167,12 @@ ORDER BY s.SymbolName, d.IndicatorDate DESC
                 f"Successfully fetched aggregated data for {len(results)} symbols from SQLite"
             )
 
-            return results
-
         except Exception as e:
             app_logger.error(f"Error fetching aggregated data from SQLite: {e!s}")
             raise
+
+        else:
+            return results
 
     try:
         cursor = conn.cursor()
@@ -207,11 +208,12 @@ ORDER BY s.SymbolName, d.IndicatorDate DESC
         cursor.close()
         app_logger.info("Successfully fetched symbol data")
 
-        return results
-
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbol data: {e}")
         raise
     except Exception as e:
         app_logger.error(f"Error fetching symbol data: {e!s}")
         raise
+
+    else:
+        return results

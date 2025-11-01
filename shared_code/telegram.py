@@ -84,9 +84,7 @@ async def send_telegram_message(
                 response.raise_for_status()
             time.sleep(0.5)
 
-        return True
-
-    except Exception as e:
+    except Exception:
         # Avoid logging the entire large message to keep logs clean / protect data
         message_truncate_threshold = 600
         snippet = (
@@ -94,8 +92,11 @@ async def send_telegram_message(
             if len(message) > message_truncate_threshold
             else message
         )
-        logging.exception("Failed to send telegram message: %s | snippet: %s", str(e), snippet)
+        logging.exception("Failed to send telegram message | snippet: %s", snippet)
         return False
+
+    else:
+        return True
 
 
 def enforce_markdown_v2(text: str) -> str:
@@ -302,8 +303,8 @@ async def send_telegram_document(
                 data["parse_mode"] = parse_mode
 
             return _send_document_request(token, files, data, filename)
-    except Exception as e:
-        logging.exception("Exception while sending document: %s", e)
+    except Exception:
+        logging.exception("Exception while sending document")
         return False
 
 

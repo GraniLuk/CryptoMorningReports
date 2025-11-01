@@ -304,14 +304,14 @@ async def _generate_ai_analysis(
                 json=data,
                 headers=headers,
             )
-
+        except Exception:
+            error_msg = "Failed to get crypto situation analysis"
+            logger.exception(error_msg)
+            return error_msg
+        else:
             if response.status_code == HTTPStatus.OK:
                 return response.json()["choices"][0]["message"]["content"]
             error_msg = f"Failed: API error: {response.status_code} - {response.text}"
-            logger.error(error_msg)
-            return error_msg
-        except Exception as e:
-            error_msg = f"Failed to get crypto situation analysis: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -326,12 +326,13 @@ async def _generate_ai_analysis(
                 error_msg = "Failed: No valid response from Gemini API"
                 logger.error(error_msg)
                 return error_msg
-            error_msg = "Failed: Invalid Gemini client configuration"
-            logger.error(error_msg)
-            return error_msg
-        except Exception as e:
-            error_msg = f"Failed to get crypto situation analysis from Gemini: {e!s}"
-            logger.error(error_msg)
+            else:
+                error_msg = "Failed: Invalid Gemini client configuration"
+                logger.error(error_msg)
+                return error_msg
+        except Exception:
+            error_msg = "Failed to get crypto situation analysis from Gemini"
+            logger.exception(error_msg)
             return error_msg
 
     else:
@@ -502,13 +503,12 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
         full_report = report_title + report_date + current_data_html + "\n" + analysis_html
         logger.info(f"Successfully generated HTML situation report for {symbol_name}")
 
-        return full_report
-        return full_report
-
-    except Exception as e:
-        error_msg = f"Error generating situation report for {symbol_name}: {e!s}"
-        logger.error(error_msg)
+    except Exception:
+        error_msg = f"Error generating situation report for {symbol_name}"
+        logger.exception(error_msg)
         return error_msg
+    else:
+        return full_report
 
 
 if __name__ == "__main__":

@@ -69,18 +69,17 @@ class GeminiClient(AIClient):
         """
         try:
             response = self.model.generate_content(prompt)
-
+        except Exception as e:
+            error_msg = f"Failed to get response from Gemini: {e!s}"
+            logging.exception(error_msg)
+            return error_msg
+        else:
             if response.candidates and len(response.candidates) > 0:
                 content = response.text
                 logging.info(f"Successfully processed. Length: {len(content)} chars")
                 return content
             error_msg = "Failed: No valid response from Gemini API"
             logging.error(error_msg)
-            return error_msg
-
-        except Exception as e:
-            error_msg = f"Failed to get response from Gemini: {e!s}"
-            logging.exception(error_msg)
             return error_msg
 
     def _identify_part_type(self, idx: int, text_content: str) -> str:

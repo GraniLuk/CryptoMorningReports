@@ -81,10 +81,11 @@ def fetch_rss_news(feed_url, source, class_name):
             if len(latest_news) >= max_news_items:
                 break
 
-        return latest_news
     except Exception as e:
         app_logger.error(f"Error fetching news from {feed_url}: {e!s}")
         return []
+    else:
+        return latest_news
 
 
 def fetch_full_content(url, class_name):
@@ -97,10 +98,11 @@ def fetch_full_content(url, class_name):
         if article:
             article_text = article.get_text()
             return "\n".join(line.strip() for line in article_text.splitlines() if line.strip())
-        return "Failed to extract full content"
     except Exception as e:
         app_logger.error(f"Error fetching full content from {url}: {e!s}")
         return "Failed to fetch full content"
+    else:
+        return "Failed to extract full content"
 
 
 if __name__ == "__main__":

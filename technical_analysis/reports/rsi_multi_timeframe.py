@@ -199,11 +199,12 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
             )
             raise TypeError(msg)
 
-        return result
-
     except Exception as e:
         app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
         return None
+
+    else:
+        return result
 
 
 def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str] | None = None):

@@ -30,9 +30,12 @@ def _sanitize_float(value: Any) -> float | None:
         f = float(value)
         if not math.isfinite(f):  # NaN, inf, -inf -> store NULL
             return None
-        return f
+
     except (ValueError, TypeError):
         return None
+
+    else:
+        return f
 
 
 def _sanitize_int(value: Any) -> int | None:

@@ -88,14 +88,9 @@ def _ensure_pandoc_available():
                 if not pandoc_path:
                     pandoc_path = str(Path(target_dir) / "pandoc")
 
-                if not Path(pandoc_path).is_file():
-                    msg = f"Pandoc binary not found at expected location: {pandoc_path}"
-                    raise FileNotFoundError(msg)
-
                 os.environ["PYPANDOC_PANDOC"] = pandoc_path
                 app_logger.info("Pandoc downloaded to %s", pandoc_path)
                 _pypandoc_module = pypandoc
-                return _pypandoc_module
             except Exception as exc:
                 app_logger.exception("Pandoc download failed; target_dir=%s", target_dir)
                 msg = (
@@ -104,6 +99,11 @@ def _ensure_pandoc_available():
                     "a writable storage location."
                 )
                 raise RuntimeError(msg) from exc
+            else:
+                if not Path(pandoc_path).is_file():
+                    msg = f"Pandoc binary not found at expected location: {pandoc_path}"
+                    raise FileNotFoundError(msg)
+                return _pypandoc_module
         else:
             # Local environment but pandoc not found
             msg = (

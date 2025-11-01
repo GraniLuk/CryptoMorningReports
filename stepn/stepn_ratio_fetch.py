@@ -71,10 +71,13 @@ def fetch_gstgmt_ratio_range() -> tuple[float, float, float]:
                 return min_value, max_value, range_24h
 
         app_logger.info("No data found in query response, using default values")
-        return 0, 0, 0  # Return default values when no data
+
     except Exception as e:
         app_logger.error(f"Error fetching ratio range: {e!s}")
         return 0, 0, 0  # Return default values on error
+
+    else:
+        return 0, 0, 0  # Return default values when no data
 
 
 if __name__ == "__main__":

@@ -51,6 +51,10 @@ class PerplexityClient(AIClient):
 
         try:
             response = requests.post(self.url, json=data, headers=self.headers)
+        except Exception as e:
+            error_msg = f"Request failed: {e!s}"
+            return False, error_msg
+        else:
             logging.info(f"API Response Status: {response.status_code}")
 
             if response.status_code == HTTPStatus.OK:
@@ -58,10 +62,6 @@ class PerplexityClient(AIClient):
                 logging.info(f"Successfully processed. Length: {len(content)} chars")
                 return True, content
             error_msg = f"Failed: API error: {response.status_code} - {response.text}"
-            return False, error_msg
-
-        except Exception as e:
-            error_msg = f"Request failed: {e!s}"
             return False, error_msg
 
     def get_detailed_crypto_analysis_with_news(

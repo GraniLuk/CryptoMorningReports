@@ -95,7 +95,6 @@ def fetch_symbols(conn) -> list[Symbol]:
             msg = "No active symbols found in the database"
             raise NoSymbolsFoundError(msg)
 
-        return symbols
     except NoSymbolsFoundError:
         # Re-raise the NoSymbolsFoundError to be handled by the caller
         raise
@@ -106,6 +105,9 @@ def fetch_symbols(conn) -> list[Symbol]:
     except Exception as e:
         app_logger.error(f"Error fetching symbols: {e!s}")
         raise
+
+    else:
+        return symbols
 
 
 def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
