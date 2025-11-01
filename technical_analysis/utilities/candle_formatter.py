@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def get_candle_data(
     symbols: list[Symbol],
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     hourly_limit: int = 24,
     minute_limit: int = 32,
 ) -> dict:

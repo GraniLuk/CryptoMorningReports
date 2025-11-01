@@ -482,7 +482,7 @@ def create_consolidated_rsi_table(
 
 
 def _get_candle_repository(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframe: str,
 ) -> DailyCandleRepository | HourlyCandleRepository | FifteenMinCandleRepository | None:
     """Return the appropriate candle repository based on timeframe."""
@@ -501,7 +501,7 @@ def _get_candle_repository(
 
 
 def _calculate_and_save_rsi(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol: Symbol,
     candles: list,
     timeframe: str,

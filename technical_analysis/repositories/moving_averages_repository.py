@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def save_moving_averages_results(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
     current_price: float,
     ma50: float,
@@ -93,7 +93,7 @@ def save_moving_averages_results(
 
 
 def fetch_yesterday_moving_averages(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> pd.DataFrame:
     """Fetch all moving averages records from yesterday.
@@ -135,7 +135,7 @@ def fetch_yesterday_moving_averages(
 
 
 def fetch_moving_averages_for_symbol(
-    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     symbol_id: int,
     lookback_days: int = 7,
 ) -> pd.DataFrame:
