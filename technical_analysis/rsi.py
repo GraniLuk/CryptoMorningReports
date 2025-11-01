@@ -118,7 +118,6 @@ def calculate_rsi_using_rma(series, periods=14):
     avg_loss.iloc[periods] = loss.iloc[1 : periods + 1].mean()
 
     # Use Wilder's smoothing for subsequent values
-    # Formula: new_avg = (old_avg * (n-1) + current_value) / n
     for i in range(periods + 1, len(series)):
         avg_gain.iloc[i] = (avg_gain.iloc[i - 1] * (periods - 1) + gain.iloc[i]) / periods
         avg_loss.iloc[i] = (avg_loss.iloc[i - 1] * (periods - 1) + loss.iloc[i]) / periods
@@ -184,8 +183,4 @@ if __name__ == "__main__":
     load_dotenv()
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
-    # symbols = [symbol for symbol in symbols if symbol.symbol_name == "XRP"]
     # Define start and end dates for January 2025
-    # for symbol in symbols:
-    # calculate_all_rsi_for_symbol(conn, symbol=symbol)
-    # create_rsi_table(symbols, conn)

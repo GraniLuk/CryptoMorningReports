@@ -121,8 +121,3 @@ if __name__ == "__main__":
 
     # Update RSI for all timeframes
     update_daily_rsi_for_all_symbols(conn, symbols)
-
-    # Examples for hourly and fifteen-minute candles
-    # These would need to be implemented based on your existing candle fetching functions
-    # update_rsi_for_all_candles(conn, symbols, fetch_hourly_candles, "hourly")
-    # update_rsi_for_all_candles(conn, symbols, fetch_fifteen_min_candles, "fifteen_min")

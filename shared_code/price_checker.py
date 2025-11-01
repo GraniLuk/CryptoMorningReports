@@ -378,19 +378,6 @@ if __name__ == "__main__":
 
     load_dotenv()
     conn = connect_to_sql()
-    # symbol = Symbol(
-    #     symbol_id=7,  # Added required field
-    #     symbol_name="KCS",
-    #     full_name="Bitcoin",  # Added required field
-    #     source_id=SourceID.KUCOIN,
-    # )
-
-    # daily_candle = fetch_hourly_candles(symbol, conn=conn)
-    # print(
-    #     f"Daily candle for {symbol.symbol_name}: {daily_candle.close} {daily_candle.end_date}"
-    # )
-    # current_price = fetch_current_price(symbol)
-    # print(f"Current price for {symbol.symbol_name}: {current_price}")
 
     symbol = Symbol(
         symbol_id=3,  # Added required field
@@ -408,10 +395,3 @@ if __name__ == "__main__":
     )
     for _daily_candle in daily_candles:
         pass
-    # current_price = fetch_current_price(symbol)
-    # print(f"Current price for {symbol.symbol_name}: {current_price}")
-
-    # close_prices = fetch_close_prices(symbol, 14)
-    # if isinstance(close_prices, pd.DataFrame):  # Handle DataFrame correctly
-    #     for index, row in close_prices.iterrows():
-    #         print(f"Date: {index}, Close: {row['close']}")

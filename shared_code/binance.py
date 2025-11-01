@@ -350,18 +350,6 @@ if __name__ == "__main__":
         coingecko_name="bitcoin",
     )
 
-    # # Fetch current price
-    # price = fetch_binance_price(symbol)
-    # if price is not None:
-    #     print(price)
-
-    # # Fetch close prices
-    # df = fetch_close_prices_from_Binance(symbol.binance_name)
-    # if not df.empty:
-    #     print(df)
-    # else:
-    #     print("No data found")
-
     # Fetch open and close prices for the last full day
     response = fetch_binance_daily_kline(symbol, datetime.now(UTC) - timedelta(days=1))
     if response is not None:

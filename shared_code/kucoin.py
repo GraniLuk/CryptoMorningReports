@@ -97,8 +97,6 @@ def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         # Get kline data with start and end time
         klines = client.get_kline_data(symbol, "1day", start=start_time, end=end_time)
 
-        # Kucoin returns data in format:
-        # [timestamp, open, close, high, low, volume, turnover]
         if klines:
             df = pd.DataFrame(
                 klines,
@@ -113,7 +111,6 @@ def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         timestamp_series: pd.Series = df["timestamp"]
         numeric_timestamps = pd.to_numeric(timestamp_series, errors="coerce")
         df["timestamp"] = pd.to_datetime(numeric_timestamps, unit="s")
-        # df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
         # Convert string values to float
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
 

@@ -99,6 +99,5 @@ def create_trading_visualization(
 
     # Add RSI lines
     fig.add_hline(y=rsi_value, line_width=1, line_dash="dash", line_color="green", row="2", col="1")
-    # fig.add_hline(y=70, line_width=1, line_dash="dash", line_color="red", row=2, col=1)
 
     return fig
