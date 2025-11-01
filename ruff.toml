@@ -38,6 +38,8 @@ select = [
     "PTH",    # flake8-use-pathlib
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    # Additional stricter rules
+    "ANN",    # flake8-annotations - type annotations
     "BLE",    # flake8-blind-except - no bare except
     "COM",    # flake8-commas - trailing commas
     "ERA",    # eradicate - commented-out code
@@ -76,7 +78,7 @@ exclude = [
 
 [lint.per-file-ignores]
 # Ignore certain rules in test files
-"tests/**" = ["PLR2004", "S101"]
+"tests/**" = ["PLR2004", "S101", "T201", "S608"]
 # Ignore import ordering in __init__.py files
 "**/__init__.py" = ["F401", "I001"]
 
@@ -92,6 +94,29 @@ max-args = 10
 max-branches = 15
 max-returns = 8
 max-statements = 60
+
+[lint.flake8-annotations]
+# Configure type annotation requirements
+allow-star-arg-any = true
+ignore-fully-untyped = true
+mypy-init-return = true
+suppress-dummy-args = true
+suppress-none-returning = true
+
+[lint.flake8-bandit]
+# Configure security checks
+check-typed-exception = true
+
+[lint.flake8-pytest-style]
+# Configure pytest style checks
+fixture-parentheses = false
+parametrize-names-type = "csv"
+parametrize-values-row-type = "tuple"
+parametrize-values-type = "tuple"
+
+[lint.pydocstyle]
+# Configure docstring conventions
+convention = "google"
 
 [format]
 # Use double quotes for strings
