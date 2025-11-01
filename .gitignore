@@ -63,3 +63,4 @@ local_crypto.db
 local_crypto.db-shm
 local_crypto.db-wal
 *.db.backup_*
+news/cache
