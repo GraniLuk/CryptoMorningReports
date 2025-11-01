@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 
 # Add parent directory to path for imports when run standalone
@@ -23,7 +24,16 @@ from technical_analysis.repositories.open_interest_repository import (
 )
 
 
-def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_derivatives_report(
+    symbols: list[Symbol],
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+) -> PrettyTable:
     """Fetch Open Interest and Funding Rate for all symbols and save to database.
 
     Args:

@@ -4,7 +4,7 @@ This module can be easily extended to add more indicators in the future.
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -23,6 +23,12 @@ from technical_analysis.repositories.moving_averages_repository import (
 from technical_analysis.repositories.open_interest_repository import (
     OpenInterestRepository,
 )
+
+
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
 
 
 def get_latest_price_from_candles(
@@ -64,12 +70,16 @@ def get_latest_rsi_from_df(rsi_df: pd.DataFrame | None) -> float | None:
         if pd.notna(latest_rsi):
             return float(latest_rsi)
     except (IndexError, KeyError, ValueError):
-        pass
+        app_logger.debug("Could not extract latest RSI value from dataframe")
 
     return None
 
 
-def _extract_latest_price(daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df) -> float | None:
+def _extract_latest_price(
+    daily_rsi_df: pd.DataFrame | None,
+    hourly_rsi_df: pd.DataFrame | None,
+    fifteen_min_rsi_df: pd.DataFrame | None,
+) -> float | None:
     """Extract latest price from RSI dataframes, preferring higher timeframes."""
     if fifteen_min_rsi_df is not None and not fifteen_min_rsi_df.empty:
         return get_latest_price_from_candles(fifteen_min_rsi_df)
@@ -80,7 +90,10 @@ def _extract_latest_price(daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df) -> fl
     return None
 
 
-def _extract_moving_averages(conn, symbol_id: int) -> dict[str, float | None]:
+def _extract_moving_averages(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    symbol_id: int,
+) -> dict[str, float | None]:
     """Extract latest moving averages for a symbol."""
     ma_data: dict[str, float | None] = {"ma50": None, "ma200": None, "ema50": None, "ema200": None}
     try:
@@ -102,7 +115,10 @@ def _extract_moving_averages(conn, symbol_id: int) -> dict[str, float | None]:
     return ma_data
 
 
-def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa: PLR0915
+def get_current_data_for_symbol(  # noqa: PLR0915
+    symbol: Symbol,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> dict[str, Any]:
     """Get current data for a single symbol including latest price and RSI across timeframes.
 
     Args:
@@ -406,7 +422,10 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
 """
 
 
-def get_current_data_summary_table(symbol: Symbol, conn) -> str:
+def get_current_data_summary_table(
+    symbol: Symbol,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> str:
     """Generate a summary table of current data for a symbol in HTML format for Telegram.
 
     Args:
@@ -429,7 +448,10 @@ def get_current_data_summary_table(symbol: Symbol, conn) -> str:
         return f"<b>Error:</b> Unable to generate summary for {symbol.symbol_name}"
 
 
-def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
+def get_current_data_for_ai_prompt(
+    symbol: Symbol,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> str:
     """Generate current data in a format suitable for AI prompts.
 
     Args:

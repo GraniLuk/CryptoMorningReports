@@ -2,6 +2,7 @@
 
 import os
 from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pyodbc
@@ -9,8 +10,12 @@ import pyodbc
 from infra.telegram_logging_handler import app_logger
 
 
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def save_macd_results(
-    conn,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
     symbol_id: int,
     current_price: float,
     macd: float,
@@ -93,7 +98,10 @@ def save_macd_results(
         raise
 
 
-def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
+def fetch_yesterday_macd(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    target_date: date,
+) -> pd.DataFrame | None:
     """Fetch all MACD records from yesterday.
 
     Args:

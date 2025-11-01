@@ -1,6 +1,7 @@
 """Price range analysis and reporting for cryptocurrency markets."""
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from prettytable import PrettyTable
 
@@ -13,7 +14,16 @@ from technical_analysis.repositories.priceRangeRepository import (
 )
 
 
-def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_range_price(
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> PrettyTable:
     """Calculate 24-hour price range using hourly candles.
 
     Fetches hourly candles for the last 24 hours. If hourly data is missing from the database,

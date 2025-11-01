@@ -3,7 +3,7 @@
 import math
 import os
 from datetime import UTC, date, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pyodbc
 
@@ -19,7 +19,7 @@ def _is_sqlite() -> bool:
     return os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"
 
 
-def _sanitize_float(value: Any) -> float | None:
+def _sanitize_float(value: float | int | str | None) -> float | None:
     """Coerce incoming numeric-like values to a finite float or return None.
 
     This defends against values that SQL Server rejects (e.g. NaN, inf, empty strings,
@@ -42,7 +42,7 @@ def _sanitize_float(value: Any) -> float | None:
         return f
 
 
-def _sanitize_int(value: Any) -> int | None:
+def _sanitize_int(value: float | int | str | None) -> int | None:
     if value is None:
         return None
     try:

@@ -2,6 +2,7 @@
 
 import os
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from database.update_latest_data import (
     update_latest_daily_candles,
@@ -34,6 +35,10 @@ from technical_analysis.reports.rsi_daily import create_rsi_table
 from technical_analysis.repositories.aggregated_repository import get_aggregated_data
 from technical_analysis.sopr import fetch_sopr_metrics
 from technical_analysis.volume_report import fetch_volume_report
+
+
+if TYPE_CHECKING:
+    from source_repository import Symbol
 
 
 def _configure_ai_api():
@@ -80,7 +85,7 @@ async def _process_ai_analysis(
 
     # Reuse current_prices_section also for the news-enhanced analysis by
     # prepending it to aggregated indicators
-    def format_aggregated(agg_list) -> str:
+    def format_aggregated(agg_list: list) -> str:
         if not agg_list:
             return "No aggregated indicator data available.\n"
         header = (
@@ -262,7 +267,7 @@ async def process_daily_report(  # noqa: PLR0915
     today_date = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # --- Current Prices Section (added to indicators message) ---
-    def build_current_prices_section(symbols, limit: int = 12) -> str:
+    def build_current_prices_section(symbols: list[Symbol], limit: int = 12) -> str:
         """Build a current prices snapshot for inclusion in analysis prompt.
 
         Prioritizes BTC & ETH, then fills remaining slots with other symbols.

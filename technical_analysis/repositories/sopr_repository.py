@@ -1,13 +1,21 @@
 """SOPR data repository for cryptocurrency markets."""
 
 import os
+from typing import TYPE_CHECKING
 
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
 
 
-def save_sopr_results(conn, metrics: dict) -> None:
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def save_sopr_results(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    metrics: dict,
+) -> None:
     """Save SOPR metrics to the database.
 
     Args:

@@ -10,7 +10,7 @@ def create_trading_visualization(
     results_df: pd.DataFrame,
     symbol_name: str,
     rsi_value: int,
-):
+) -> go.Figure:
     """Create an interactive visualization of trading strategy with candlesticks, RSI, and signals.
 
     Args:

@@ -71,7 +71,6 @@ def check_if_all_candles(symbol, conn):
     end_date = datetime.now(UTC).date()
     current_date = oldest_date
     while current_date <= end_date:
-
         # Compare dates properly - convert end_date string to date for comparison
         from_db = next(
             (

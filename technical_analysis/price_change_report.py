@@ -1,6 +1,7 @@
 """Price change analysis and reporting for cryptocurrency markets."""
 
 from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from prettytable import PrettyTable
 
@@ -9,7 +10,17 @@ from shared_code.price_checker import fetch_daily_candles
 from source_repository import Symbol, fetch_symbols
 
 
-def fetch_price_change_report(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_price_change_report(
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    target_date: date,
+) -> PrettyTable:
     """Fetch and generate a price change report showing 24h and 7d changes."""
     target_date = target_date or datetime.now(UTC).date()
     start_date = target_date - timedelta(days=7)  # Get 7 days of data

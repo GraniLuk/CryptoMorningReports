@@ -1,6 +1,7 @@
 """Optimized version of RSI calculation for multiple timeframes."""
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -15,12 +16,18 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_rma
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def get_optimized_rsi_for_symbol_timeframe(
     symbol: Symbol,
-    conn,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
     timeframe: str = "daily",
     lookback_days: int = 7,
-):
+) -> pd.DataFrame | None:
     """Get RSI data for a symbol in the specified timeframe.
 
     If RSI values are missing in the database, it calculates them only for the requested period.

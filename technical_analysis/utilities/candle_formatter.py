@@ -1,14 +1,24 @@
 """Utility functions for formatting candle data for AI prompts."""
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from source_repository import Symbol
 from technical_analysis.fifteen_min_candle import fetch_fifteen_min_candles
 from technical_analysis.hourly_candle import fetch_hourly_candles
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def get_candle_data(
-    symbols: list[Symbol], conn, hourly_limit: int = 24, minute_limit: int = 32,
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    hourly_limit: int = 24,
+    minute_limit: int = 32,
 ) -> dict:
     """Fetch hourly and 15-minute candle data for cryptocurrencies.
 
@@ -33,10 +43,16 @@ def get_candle_data(
     for symbol in symbols:
         # Fetch candles from database
         hourly_candles = fetch_hourly_candles(
-            symbol=symbol, start_time=hourly_start_time, end_time=end_time, conn=conn,
+            symbol=symbol,
+            start_time=hourly_start_time,
+            end_time=end_time,
+            conn=conn,
         )
         fifteen_min_candles = fetch_fifteen_min_candles(
-            symbol=symbol, start_time=fifteen_min_start_time, end_time=end_time, conn=conn,
+            symbol=symbol,
+            start_time=fifteen_min_start_time,
+            end_time=end_time,
+            conn=conn,
         )
         symbol_name = symbol.symbol_name
 

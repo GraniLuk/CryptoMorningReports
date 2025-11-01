@@ -8,7 +8,7 @@ import aiohttp
 from infra.telegram_logging_handler import app_logger
 
 
-async def upload_to_onedrive(filename: str, content: str, folder_path: str):
+async def upload_to_onedrive(filename: str, content: str, folder_path: str) -> bool:
     """Send content to an Azure Logic App to be saved in OneDrive.
 
     Args:

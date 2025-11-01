@@ -2,14 +2,23 @@
 
 import os
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
 
 
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def save_price_range_results(
-    conn, symbol_id: int, low_price: float, high_price: float, range_percent: float,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    symbol_id: int,
+    low_price: float,
+    high_price: float,
+    range_percent: float,
 ) -> None:
     """Save price range results to the database.
 

@@ -2,21 +2,26 @@
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from source_repository import Symbol
 
 
+if TYPE_CHECKING:
+    pass
+
+
 def run_backtest(  # noqa: PLR0915
     symbol: Symbol,
-    candles_data,
+    candles_data: list[dict],
     rsi_value: int,
     tp_value: Decimal,
     sl_value: Decimal,
     days_after_to_buy: int,
     position_type: str = "LONG",  # New parameter
-):
+) -> pd.DataFrame:
     """Run RSI-based backtest on candle data with specified parameters."""
     if position_type not in ["LONG", "SHORT"]:
         msg = "position_type must be either 'LONG' or 'SHORT'"
@@ -46,7 +51,8 @@ def run_backtest(  # noqa: PLR0915
         if not active_trade and df.loc[i, "signal"] and (i + days_after_to_buy < len(df)):
             active_trade = True
             entry_date = datetime.strptime(
-                str(df.loc[i + days_after_to_buy, "date"]), "%Y-%m-%d",
+                str(df.loc[i + days_after_to_buy, "date"]),
+                "%Y-%m-%d",
             ).replace(tzinfo=UTC)
             entry_price = Decimal(str(df.loc[i + days_after_to_buy, "Open"]))
 
@@ -113,7 +119,8 @@ def run_backtest(  # noqa: PLR0915
 
         results_df["profit"].sum()
         results_df.groupby("trade_outcome").agg(
-            count=("trade_outcome", "size"), avg_days=("days", "mean"),
+            count=("trade_outcome", "size"),
+            avg_days=("days", "mean"),
         )
 
     else:
@@ -123,14 +130,14 @@ def run_backtest(  # noqa: PLR0915
 
 
 def run_strategy_for_symbol_internal(
-    candles_data,
-    symbol,
+    candles_data: list[dict],
+    symbol: Symbol,
     rsi_value: int = 30,
     tp_value: Decimal = Decimal("1.1"),
     sl_value: Decimal = Decimal("0.9"),
     days_after_to_buy: int = 1,
     position_type: str = "LONG",
-):
+) -> tuple[pd.DataFrame, float]:
     """Execute the strategy for a single symbol.
 
     Returns the results DataFrame and the TP ratio.

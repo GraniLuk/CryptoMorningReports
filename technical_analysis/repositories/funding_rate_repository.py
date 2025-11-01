@@ -77,7 +77,7 @@ class FundingRateRepository:
             self.conn.rollback()
             raise
 
-    def get_latest_funding_rate(self, symbol_id: int):
+    def get_latest_funding_rate(self, symbol_id: int) -> dict[str, float | str | datetime] | None:
         """Get the most recent funding rate for a symbol."""
         cursor = self.conn.cursor()
 

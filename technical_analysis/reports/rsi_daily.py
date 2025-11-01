@@ -1,6 +1,7 @@
 """Daily RSI analysis and reporting for cryptocurrency markets."""
 
 from datetime import date, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -15,7 +16,17 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_rma
 
 
-def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def create_rsi_table_for_symbol(
+    symbol: Symbol,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    target_date: date,
+) -> PrettyTable | None:
     """Create RSI table for a given symbol using daily candles data."""
     all_values = pd.DataFrame()
 
@@ -116,7 +127,11 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
     return rsi_table
 
 
-def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
+def create_rsi_table(
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    target_date: date,
+) -> PrettyTable:
     """Create RSI table for given symbols using daily candles data."""
     all_values = pd.DataFrame()
 
@@ -251,7 +266,11 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
     return rsi_table
 
 
-def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
+def save_rsi_for_candle(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    daily_candle_id: int,
+    rsi: float,
+) -> None:
     """Save RSI value for a specific daily candle."""
     try:
         save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=rsi)

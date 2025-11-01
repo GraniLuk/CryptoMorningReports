@@ -1,6 +1,7 @@
 """Multi-timeframe RSI analysis and reporting for cryptocurrency markets."""
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -23,9 +24,15 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_rma
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
     symbol: Symbol,
-    conn,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
     timeframe: str = "daily",
     lookback_days: int = 7,
 ) -> pd.DataFrame | None:
@@ -214,7 +221,11 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
         return result
 
 
-def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str] | None = None):
+def create_multi_timeframe_rsi_table(
+    symbol: Symbol,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    timeframes: list[str] | None = None,
+) -> PrettyTable | None:
     """Create a multi-timeframe RSI table for a symbol.
 
     Args:
@@ -323,7 +334,7 @@ def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str]
 
 def create_multi_timeframe_rsi_tables(
     symbols: list[Symbol],
-    conn,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
     timeframes: list[str] | None = None,
 ) -> dict[str, PrettyTable]:
     """Create multi-timeframe RSI tables for multiple symbols.
@@ -390,7 +401,10 @@ def create_multi_timeframe_rsi_tables(
     return tables
 
 
-def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
+def create_consolidated_rsi_table(
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> PrettyTable:
     """Create a consolidated RSI table showing RSI for daily, hourly, and 15-min timeframes.
 
     Args:
@@ -467,7 +481,10 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
     return table
 
 
-def _get_candle_repository(conn, timeframe: str):
+def _get_candle_repository(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    timeframe: str,
+) -> DailyCandleRepository | HourlyCandleRepository | FifteenMinCandleRepository | None:
     """Return the appropriate candle repository based on timeframe."""
     timeframe_lower = timeframe.lower()
     if timeframe_lower == "daily":
@@ -480,7 +497,12 @@ def _get_candle_repository(conn, timeframe: str):
     return None
 
 
-def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str):
+def _calculate_and_save_rsi(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    symbol: Symbol,
+    candles: list,
+    timeframe: str,
+) -> list[dict] | None:
     """Calculate RSI for the given candles and save to database.
 
     Returns list of candles with RSI data in the format expected by the calling function.

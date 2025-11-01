@@ -77,7 +77,7 @@ class OpenInterestRepository:
             self.conn.rollback()
             raise
 
-    def get_latest_open_interest(self, symbol_id: int):
+    def get_latest_open_interest(self, symbol_id: int) -> dict[str, float | int | datetime] | None:
         """Get the most recent open interest for a symbol."""
         cursor = self.conn.cursor()
 

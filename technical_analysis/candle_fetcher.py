@@ -8,8 +8,10 @@ from infra.telegram_logging_handler import app_logger
 from shared_code.common_price import Candle
 from source_repository import Symbol
 
+
 if TYPE_CHECKING:
     import pyodbc
+
     from infra.sql_connection import SQLiteConnectionWrapper
 
 

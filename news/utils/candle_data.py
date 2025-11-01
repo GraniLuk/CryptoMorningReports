@@ -1,5 +1,7 @@
 """Utilities for fetching and formatting candle data for AI analysis."""
 
+from typing import TYPE_CHECKING
+
 from infra.telegram_logging_handler import app_logger
 from source_repository import fetch_symbols
 from technical_analysis.utilities.candle_formatter import (
@@ -8,7 +10,13 @@ from technical_analysis.utilities.candle_formatter import (
 )
 
 
-def fetch_and_format_candle_data(conn) -> str:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_and_format_candle_data(conn: "pyodbc.Connection | SQLiteConnectionWrapper | None") -> str:
     """Fetch and format recent intraday candle data for all tracked symbols.
 
     This provides recent price action for intraday momentum analysis,

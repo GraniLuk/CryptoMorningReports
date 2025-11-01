@@ -1,6 +1,7 @@
 """Volume analysis and reporting utilities."""
 
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import requests
 from prettytable import PrettyTable
@@ -10,7 +11,16 @@ from source_repository import Symbol
 from technical_analysis.repositories.volume_repository import save_volume_results
 
 
-def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_volume_report(
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> PrettyTable:
     """Fetch and format volume report for given symbols.
 
     Args:

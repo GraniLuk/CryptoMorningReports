@@ -2,13 +2,22 @@
 
 import os
 from datetime import date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pyodbc
 
 from infra.telegram_logging_handler import app_logger
 
 
-def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def save_rsi_results(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    daily_candle_id: int,
+    rsi: float,
+) -> None:
     """Save RSI results to the database.
 
     Args:
@@ -58,7 +67,12 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
         raise
 
 
-def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "daily") -> None:
+def save_rsi_by_timeframe(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    candle_id: int,
+    rsi: float,
+    timeframe: str = "daily",
+) -> None:
     """Save RSI results to the database for different timeframes.
 
     Args:
@@ -129,7 +143,12 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
         raise
 
 
-def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "daily") -> list | None:
+def get_candles_with_rsi(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    symbol_id: int,
+    from_date: date | datetime,
+    timeframe: str = "daily",
+) -> list | None:
     """Fetch candle data with RSI for a specific symbol.
 
     only returning records on or after the specified date.
@@ -160,7 +179,8 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
             }
 
             candle_table, rsi_table, id_column = table_map.get(
-                timeframe.lower(), table_map["daily"],
+                timeframe.lower(),
+                table_map["daily"],
             )
 
             # Convert date/datetime to ISO string for SQL comparison
@@ -225,7 +245,9 @@ def _get_timeframe_config(timeframe: str) -> tuple[str, str, str, int, int]:
 
 
 def _get_interval_settings(
-    timeframe: str, previous_interval: int, week_interval: int,
+    timeframe: str,
+    previous_interval: int,
+    week_interval: int,
 ) -> tuple[str, int, int]:
     """Get interval keyword and adjusted intervals."""
     interval_keyword = (
@@ -298,7 +320,7 @@ def _build_query(
     return query
 
 
-def _process_rsi_results(rows, current_date: date, timeframe: str) -> dict:
+def _process_rsi_results(rows: list, current_date: date, timeframe: str) -> dict:
     """Process query results into RSI dictionary."""
     results = {}
 
@@ -332,15 +354,30 @@ def _process_rsi_results(rows, current_date: date, timeframe: str) -> dict:
             # Timeframe-specific date matching
             if timeframe.lower() == "daily":
                 _match_daily_rsi(
-                    row_date, compare_date, row[1], interval_description, week_description, results,
+                    row_date,
+                    compare_date,
+                    row[1],
+                    interval_description,
+                    week_description,
+                    results,
                 )
             elif timeframe.lower() == "hourly":
                 _match_hourly_rsi(
-                    row_date, compare_date, row[1], interval_description, week_description, results,
+                    row_date,
+                    compare_date,
+                    row[1],
+                    interval_description,
+                    week_description,
+                    results,
                 )
             elif timeframe.lower() == "fifteen_min":
                 _match_fifteen_min_rsi(
-                    row_date, compare_date, row[1], interval_description, week_description, results,
+                    row_date,
+                    compare_date,
+                    row[1],
+                    interval_description,
+                    week_description,
+                    results,
                 )
 
     return results
@@ -400,7 +437,12 @@ def _match_fifteen_min_rsi(
         results[week_desc] = float(rsi_value)
 
 
-def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str = "daily") -> dict:
+def get_historical_rsi(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    symbol_id: int,
+    current_date: date,
+    timeframe: str = "daily",
+) -> dict:
     """Fetch RSI values for current date, yesterday, and week ago for a symbol.
 
     Args:
@@ -426,7 +468,9 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
 
             # Get interval settings
             interval_keyword, previous_interval, week_interval = _get_interval_settings(
-                timeframe, previous_interval, week_interval,
+                timeframe,
+                previous_interval,
+                week_interval,
             )
 
             # Check if we're using SQLite or SQL Server

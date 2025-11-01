@@ -2,15 +2,26 @@
 
 import os
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from shared_code.common_price import Candle
 from source_repository import Symbol
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 class CandleRepository:
     """Repository for managing candle data operations."""
 
-    def __init__(self, conn, table_name: str):
+    def __init__(
+        self,
+        conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+        table_name: str,
+    ):
         """Initialize the candle repository.
 
         Args:

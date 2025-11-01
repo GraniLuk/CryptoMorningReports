@@ -419,7 +419,10 @@ if __name__ == "__main__":
     end_time = datetime.now(UTC)
 
     daily_candles = fetch_hourly_candles(
-        symbol, start_time=start_time, end_time=end_time, conn=conn,
+        symbol,
+        start_time=start_time,
+        end_time=end_time,
+        conn=conn,
     )
     for _daily_candle in daily_candles:
         pass

@@ -1,16 +1,19 @@
 """Retry handler for AI API requests with fallback model support."""
 
 from collections.abc import Callable
-from typing import Any
+from typing import TypeVar
 
 from infra.telegram_logging_handler import app_logger
 
 
+T = TypeVar("T")
+
+
 def retry_with_fallback_models(
     models: list[str],
-    request_func: Callable[[str], tuple[bool, Any]],
+    request_func: Callable[[str], tuple[bool, T]],
     operation_name: str = "API request",
-) -> Any:
+) -> T | str:
     """Retry a request with a list of fallback models.
 
     Args:

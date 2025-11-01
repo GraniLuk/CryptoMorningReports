@@ -1,6 +1,7 @@
 """15-minute candle data processing and analysis for cryptocurrency markets."""
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from shared_code.common_price import Candle
 from shared_code.price_checker import (
@@ -15,11 +16,17 @@ from technical_analysis.repositories.fifteen_min_candle_repository import (
 from technical_analysis.rsi_calculator import update_rsi_for_all_candles
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def fetch_fifteen_minutes_candles_for_all_symbols(
     symbols: list[Symbol],
     start_time: datetime | None = None,
     end_time: datetime | None = None,
-    conn=None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
 ) -> list[Candle]:
     """Fetch 15-minute candles for given symbols and return a list of Candle objects.
 
@@ -44,7 +51,10 @@ def fetch_fifteen_minutes_candles_for_all_symbols(
     return all_candles
 
 
-def calculate_fifteen_min_rsi(symbols: list[Symbol], conn):
+def calculate_fifteen_min_rsi(
+    symbols: list[Symbol],
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+):
     """Calculate RSI for fifteen minute candles for all symbols."""
 
     def fetch_candles_for_symbol(symbol, conn):

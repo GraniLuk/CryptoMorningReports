@@ -64,7 +64,7 @@ def _ensure_pandoc_available():
                 _pypandoc_module = pypandoc
                 return _pypandoc_module
         except OSError:
-            pass  # System pandoc not found, will try other methods
+            app_logger.debug("System pandoc not found, will try other methods")
 
         # For local development, try to find pandoc in PATH
         pandoc_in_path = shutil.which("pandoc")
@@ -81,7 +81,8 @@ def _ensure_pandoc_available():
             try:
                 Path(target_dir).mkdir(parents=True, exist_ok=True)
                 pandoc_path = pypandoc.download_pandoc(
-                    targetfolder=target_dir, delete_installer=True,
+                    targetfolder=target_dir,
+                    delete_installer=True,
                 )
 
                 # download_pandoc may return None on some platforms; construct expected path
@@ -129,7 +130,8 @@ def _build_metadata_args(metadata: dict[str, str] | None) -> Iterable[str]:
 
 
 def _convert_markdown_to_epub_sync(
-    markdown_text: str, metadata: dict[str, str] | None = None,
+    markdown_text: str,
+    metadata: dict[str, str] | None = None,
 ) -> bytes:
     pypandoc = _ensure_pandoc_available()
 
@@ -141,7 +143,10 @@ def _convert_markdown_to_epub_sync(
     tmp_epub_path = None
     try:
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".md", delete=False, encoding="utf-8",
+            mode="w",
+            suffix=".md",
+            delete=False,
+            encoding="utf-8",
         ) as tmp_md:
             tmp_md.write(markdown_text)
             tmp_md_path = tmp_md.name
@@ -178,7 +183,8 @@ def convert_markdown_to_epub(markdown_text: str, metadata: dict[str, str] | None
 
 
 async def convert_markdown_to_epub_async(
-    markdown_text: str, metadata: dict[str, str] | None = None,
+    markdown_text: str,
+    metadata: dict[str, str] | None = None,
 ) -> bytes:
     """Convert markdown text to EPUB format asynchronously."""
     loop = asyncio.get_running_loop()

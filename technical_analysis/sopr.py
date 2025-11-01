@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import requests
 from prettytable import PrettyTable
@@ -10,11 +11,19 @@ from infra.telegram_logging_handler import app_logger
 from technical_analysis.repositories.sopr_repository import save_sopr_results
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 # Configuration
 API_BASE = "https://bitcoin-data.com/"
 
 
-def fetch_sopr_metrics(conn) -> PrettyTable | None:
+def fetch_sopr_metrics(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> PrettyTable | None:
     """Retrieve yesterday's SOPR variants from BGeometrics API and saves to database.
 
     Args:

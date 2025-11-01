@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -16,7 +17,17 @@ from technical_analysis.repositories.macd_repository import (
 )
 
 
-def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def calculate_macd(
+    symbols: list[Symbol],
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+    target_date: date,
+) -> PrettyTable:
     """Calculate MACD indicators for given symbols and return a formatted table."""
     macd_values = []
     MACDData = namedtuple(

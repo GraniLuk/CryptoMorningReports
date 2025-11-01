@@ -4,6 +4,7 @@ import os
 import re
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import requests
@@ -24,6 +25,10 @@ from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_ti
 from technical_analysis.repositories.moving_averages_repository import (
     fetch_moving_averages_for_symbol,
 )
+
+
+if TYPE_CHECKING:
+    import logging
 
 
 # Define system prompts for the AI analysis
@@ -263,7 +268,10 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
 
 
 async def _generate_ai_analysis(
-    ai_api_type: str, ai_api_key: str, formatted_prompt: str, logger,
+    ai_api_type: str,
+    ai_api_key: str,
+    formatted_prompt: str,
+    logger: logging.Logger,
 ) -> str:
     """Generate AI analysis using the specified API type.
 
@@ -375,13 +383,22 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
 
     # Fetch candles for different timeframes
     daily_candles = fetch_daily_candles(
-        symbols, conn, start_date=half_year_ago.date(), end_date=now.date(),
+        symbols,
+        conn,
+        start_date=half_year_ago.date(),
+        end_date=now.date(),
     )
     hourly_candles = fetch_hourly_candles_for_all_symbols(
-        symbols, end_time=now, start_time=two_days_ago, conn=conn,
+        symbols,
+        end_time=now,
+        start_time=two_days_ago,
+        conn=conn,
     )
     fifteen_min_candles = fetch_fifteen_minutes_candles_for_all_symbols(
-        symbols, end_time=now, start_time=one_day_ago, conn=conn,
+        symbols,
+        end_time=now,
+        start_time=one_day_ago,
+        conn=conn,
     )
 
     # Fetch RSI data for different timeframes

@@ -1,6 +1,7 @@
 """Market capitalization analysis and reporting for cryptocurrency markets."""
 
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import requests
 from prettytable import PrettyTable
@@ -10,7 +11,16 @@ from source_repository import Symbol
 from technical_analysis.repositories.marketcap_repository import save_marketcap_results
 
 
-def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def fetch_marketcap_report(
+    symbols: list[Symbol],
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+) -> PrettyTable:
     """Fetch and generate a market capitalization report for cryptocurrency symbols."""
     results = []
     missing_symbols = []

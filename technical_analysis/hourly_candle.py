@@ -1,6 +1,7 @@
 """Hourly candle data processing and analysis for cryptocurrency markets."""
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from shared_code.common_price import Candle
 from shared_code.price_checker import fetch_hourly_candle, fetch_hourly_candles
@@ -12,7 +13,16 @@ from technical_analysis.repositories.hourly_candle_repository import (
 from technical_analysis.rsi_calculator import update_rsi_for_all_candles
 
 
-def calculate_hourly_rsi(symbols: list[Symbol], conn):
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def calculate_hourly_rsi(
+    symbols: list[Symbol],
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+):
     """Calculate RSI for hourly candles for all symbols."""
 
     def fetch_candles_for_symbol(symbol, conn):
@@ -22,7 +32,11 @@ def calculate_hourly_rsi(symbols: list[Symbol], conn):
     update_rsi_for_all_candles(conn, symbols, fetch_candles_for_symbol, "hourly")
 
 
-def check_if_all_hourly_candles(symbol, conn, days_back: int = 7):
+def check_if_all_hourly_candles(
+    symbol: Symbol,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+    days_back: int = 7,
+):
     """Check if all hourly candles for the symbol are available in the database for the past days.
 
     fetches missing ones from API.
@@ -41,7 +55,7 @@ def fetch_hourly_candles_for_all_symbols(
     symbols: list[Symbol],
     start_time: datetime | None = None,
     end_time: datetime | None = None,
-    conn=None,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
 ) -> list[Candle]:
     """Fetch hourly candles for given symbols and return a list of Candle objects.
 

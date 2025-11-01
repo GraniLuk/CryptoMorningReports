@@ -2,6 +2,7 @@
 
 import os
 from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pyodbc
@@ -9,8 +10,12 @@ import pyodbc
 from infra.telegram_logging_handler import app_logger
 
 
+if TYPE_CHECKING:
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def save_moving_averages_results(
-    conn,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
     symbol_id: int,
     current_price: float,
     ma50: float,
@@ -87,7 +92,10 @@ def save_moving_averages_results(
         raise
 
 
-def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
+def fetch_yesterday_moving_averages(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    target_date: date,
+) -> pd.DataFrame:
     """Fetch all moving averages records from yesterday.
 
     Args:
@@ -126,7 +134,11 @@ def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
         raise
 
 
-def fetch_moving_averages_for_symbol(conn, symbol_id: int, lookback_days: int = 7) -> pd.DataFrame:
+def fetch_moving_averages_for_symbol(
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    symbol_id: int,
+    lookback_days: int = 7,
+) -> pd.DataFrame:
     """Fetch moving averages records for a specific symbol for the past N days.
 
     Args:

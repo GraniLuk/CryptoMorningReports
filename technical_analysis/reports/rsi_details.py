@@ -1,6 +1,7 @@
 """Detailed RSI analysis and reporting for cryptocurrency markets."""
 
 from datetime import date, timedelta
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -10,7 +11,17 @@ from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import get_candles_with_rsi
 
 
-def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> PrettyTable | None:
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def create_rsi_table_for_symbol(
+    symbol: Symbol,
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None,
+    target_date: date,
+) -> PrettyTable | None:
     """Create RSI table for a symbol using daily candles data for the last 30 days.
 
     identifies divergences, and checks for RSI trendline breakouts.

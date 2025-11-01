@@ -15,12 +15,12 @@ MAX_DOCUMENT_SIZE = 50 * 1024 * 1024  # 50MB Telegram limit for standard bots
 
 
 async def send_telegram_message(
+    *,
     enabled: bool,
     token: str | None,
     chat_id: str | None,
     message: str | None,
     parse_mode: str | None = "HTML",
-    *,
     disable_web_page_preview: bool = False,
     disable_notification: bool = False,
     protect_content: bool = False,
@@ -156,20 +156,20 @@ async def try_send_report_with_html_or_markdown(
     """Send a report message trying HTML first, then falling back to MarkdownV2."""
     # Try HTML first
     success = await send_telegram_message(
-        telegram_enabled,
-        telegram_token,
-        telegram_chat_id,
-        message,
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=message,
         parse_mode="HTML",
     )
 
     # If HTML failed, try MarkdownV2
     if not success:
         success = await send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            message,
+            enabled=telegram_enabled,
+            token=telegram_token,
+            chat_id=telegram_chat_id,
+            message=message,
             parse_mode="MarkdownV2",
         )
 
@@ -415,10 +415,10 @@ Bitcoin's rise.
     parse_mode = "HTML"
     asyncio.run(
         send_telegram_message(
-            telegram_enabled,
-            telegram_token,
-            telegram_chat_id,
-            message,
-            parse_mode,
+            enabled=telegram_enabled,
+            token=telegram_token,
+            chat_id=telegram_chat_id,
+            message=message,
+            parse_mode=parse_mode,
         ),
     )

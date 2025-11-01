@@ -12,7 +12,7 @@ from reports.current_report import generate_crypto_situation_report
 from shared_code.telegram import send_telegram_message
 
 
-async def send_current_report(symbol: str):
+async def send_current_report(symbol: str) -> bool:
     """Generate and send current situation report to Telegram."""
     load_dotenv()
 
