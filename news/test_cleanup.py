@@ -76,8 +76,8 @@ def test_cleanup_and_statistics() -> None:
     print(f"Cache path: {stats['cache_path']}\n")
 
     assert stats["total_articles"] == 3, "Should have 3 articles initially"
-    assert stats["oldest_article_hours"] > 49, "Oldest should be ~50 hours"
-    assert stats["newest_article_hours"] < 3, "Newest should be ~2 hours"
+    assert float(stats["oldest_article_hours"]) > 49, "Oldest should be ~50 hours"
+    assert float(stats["newest_article_hours"]) < 3, "Newest should be ~2 hours"
 
     # Cleanup articles older than 24 hours
     print("=== Cleaning up articles older than 24 hours ===")
@@ -96,9 +96,7 @@ def test_cleanup_and_statistics() -> None:
     print(f"Cache path: {stats_after['cache_path']}\n")
 
     assert stats_after["total_articles"] == 1, "Should have 1 article after cleanup"
-    assert (
-        stats_after["oldest_article_hours"] < 3
-    ), "Remaining article should be recent"
+    assert float(stats_after["oldest_article_hours"]) < 3, "Remaining article should be recent"
 
     # Cleanup all articles
     print("=== Cleaning up all articles (0 hour retention) ===")
