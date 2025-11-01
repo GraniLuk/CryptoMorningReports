@@ -3,15 +3,16 @@
 This migration adds support for STEPN token metrics tracking.
 """
 
-import logging
 import sqlite3
 from pathlib import Path
+
+from infra.telegram_logging_handler import app_logger
 
 
 def migrate_add_stepn_table(db_path="./local_crypto.db"):
     """Add StepNResults table to existing database."""
     if not Path(db_path).exists():
-        logging.error(f"Database not found: {db_path}")
+        app_logger.error(f"Database not found: {db_path}")
         return False
 
     try:
@@ -55,7 +56,7 @@ def migrate_add_stepn_table(db_path="./local_crypto.db"):
         conn.close()
 
     except sqlite3.Error:
-        logging.exception("Migration failed")
+        app_logger.exception("Migration failed")
         return False
     else:
         return True
@@ -67,4 +68,4 @@ if __name__ == "__main__":
     if success:
         pass
     else:
-        logging.error("Migration failed. Please check the error above.")
+        app_logger.error("Migration failed. Please check the error above.")

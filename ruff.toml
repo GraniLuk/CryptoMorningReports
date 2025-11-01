@@ -38,6 +38,7 @@ select = [
     "PTH",    # flake8-use-pathlib
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    "LOG",    # flake8-logging - logging rules
     "PD",     # pandas-vet - pandas best practices
     "PERF",   # perflint - performance issues
     "S",      # flake8-bandit - security issues

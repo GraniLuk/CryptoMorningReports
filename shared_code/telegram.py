@@ -1,12 +1,13 @@
 """Telegram messaging utilities and formatting functions."""
 
 import html
-import logging
 import re
 import time
 from pathlib import Path
 
 import requests
+
+from infra.telegram_logging_handler import app_logger
 
 
 MAX_TELEGRAM_LENGTH = 4096
@@ -25,11 +26,11 @@ async def send_telegram_message(
 ):
     """Send a message to a Telegram chat."""
     if not enabled:
-        logging.info("Telegram notifications are disabled")
+        app_logger.info("Telegram notifications are disabled")
         return None
 
     if message is None or len(message) == 0:
-        logging.error("Empty message, skipping telegram notification")
+        app_logger.error("Empty message, skipping telegram notification")
         return None
 
     original_parse_mode = parse_mode
@@ -39,7 +40,7 @@ async def send_telegram_message(
     elif parse_mode == "HTML":
         message = sanitize_html(message)
     elif parse_mode not in (None, ""):
-        logging.warning(
+        app_logger.warning(
             "Unsupported parse_mode '%s' provided. Falling back to raw text (no parse mode).",
             parse_mode,
         )
@@ -72,7 +73,7 @@ async def send_telegram_message(
                     err_json = response.json()
                 except Exception:
                     err_json = {"raw_text": (response.text[:500] if response.text else None)}
-                logging.error(
+                app_logger.error(
                     "Telegram API error (status=%s, parse_mode=%s "
                     "original_parse_mode=%s, chunk_len=%d): %s",
                     response.status_code,
@@ -92,7 +93,7 @@ async def send_telegram_message(
             if len(message) > message_truncate_threshold
             else message
         )
-        logging.exception("Failed to send telegram message | snippet: %s", snippet)
+        app_logger.exception("Failed to send telegram message | snippet: %s", snippet)
         return False
 
     else:
@@ -208,11 +209,11 @@ def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
 def _validate_telegram_params(enabled: bool, token: str, chat_id: str) -> bool:
     """Validate basic Telegram parameters."""
     if not enabled:
-        logging.info("Telegram notifications are disabled")
+        app_logger.info("Telegram notifications are disabled")
         return False
 
     if not token or not chat_id:
-        logging.error("Missing token or chat_id for send_telegram_document")
+        app_logger.error("Missing token or chat_id for send_telegram_document")
         return False
 
     return True
@@ -221,7 +222,7 @@ def _validate_telegram_params(enabled: bool, token: str, chat_id: str) -> bool:
 def _check_file_size(size: int, filename: str) -> bool:
     """Check if file size exceeds Telegram limits."""
     if size > MAX_DOCUMENT_SIZE:
-        logging.error(
+        app_logger.error(
             "File %s exceeds Telegram max size (%d > %d)",
             filename,
             size,
@@ -240,9 +241,9 @@ def _send_document_request(token: str, files: dict, data: dict, filename: str) -
             err_json = response.json()
         except Exception:
             err_json = {"raw": response.text[:300]}
-        logging.error("Failed to send document (status=%s): %s", response.status_code, err_json)
+        app_logger.error("Failed to send document (status=%s): %s", response.status_code, err_json)
         return False
-    logging.info("Document %s successfully sent to Telegram", filename)
+    app_logger.info("Document %s successfully sent to Telegram", filename)
     return True
 
 
@@ -267,7 +268,7 @@ async def send_telegram_document(
     try:
         if local_path:
             if not Path(local_path).exists():
-                logging.error("Local file does not exist: %s", local_path)
+                app_logger.error("Local file does not exist: %s", local_path)
                 return False
             file_size = Path(local_path).stat().st_size
             if not _check_file_size(file_size, local_path):
@@ -287,7 +288,7 @@ async def send_telegram_document(
                 return _send_document_request(token, files, data, filename)
         else:
             if file_bytes is None:
-                logging.error("Neither file_bytes nor local_path provided for document")
+                app_logger.error("Neither file_bytes nor local_path provided for document")
                 return False
             if not _check_file_size(len(file_bytes), filename):
                 return False
@@ -304,7 +305,7 @@ async def send_telegram_document(
 
             return _send_document_request(token, files, data, filename)
     except Exception:
-        logging.exception("Exception while sending document")
+        app_logger.exception("Exception while sending document")
         return False
 
 

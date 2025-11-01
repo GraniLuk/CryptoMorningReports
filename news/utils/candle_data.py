@@ -1,7 +1,6 @@
 """Utilities for fetching and formatting candle data for AI analysis."""
 
-import logging
-
+from infra.telegram_logging_handler import app_logger
 from source_repository import fetch_symbols
 from technical_analysis.utilities.candle_formatter import (
     format_candle_data_for_prompt,
@@ -30,9 +29,9 @@ def fetch_and_format_candle_data(conn) -> str:
         # Include all symbols for comprehensive analysis
         candle_data = get_candle_data(symbols, conn, hourly_limit=6, minute_limit=8)
         price_data = format_candle_data_for_prompt(candle_data, max_display_candles=3)
-        logging.info(f"Successfully fetched candle data for {len(symbols)} symbols")
+        app_logger.info(f"Successfully fetched candle data for {len(symbols)} symbols")
     except Exception:
-        logging.exception("Failed to fetch candle data")
+        app_logger.exception("Failed to fetch candle data")
         return "No price data available."
     else:
         return price_data

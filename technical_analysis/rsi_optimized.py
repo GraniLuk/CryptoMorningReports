@@ -168,7 +168,6 @@ def test_optimized_rsi():
     if df_complete is None or df_complete.empty:
         return
 
-
     # Check if all values have RSI - ensure df_complete is a DataFrame
     if not isinstance(df_complete, pd.DataFrame):
         msg = "Expected a DataFrame"

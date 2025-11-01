@@ -1,7 +1,6 @@
 """Azure Functions app for Crypto Morning Reports."""
 
 import asyncio
-import logging
 import os
 from datetime import UTC, datetime
 
@@ -24,7 +23,7 @@ app = func.FunctionApp()
 
 async def run_report(report_type="daily"):
     """Run the specified type of cryptocurrency report (daily or weekly)."""
-    logging.info(
+    app_logger.info(
         f"{report_type.capitalize()} report function started at {datetime.now(UTC).isoformat()}"
     )
 
@@ -50,7 +49,7 @@ async def run_report(report_type="daily"):
                 conn.close()
 
     except Exception:
-        logging.exception("Function failed with error")
+        app_logger.exception("Function failed with error")
         raise
 
 

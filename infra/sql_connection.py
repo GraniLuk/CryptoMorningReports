@@ -1,6 +1,5 @@
 """Database connection management for SQL Server and SQLite."""
 
-import logging
 import os
 import sqlite3
 import struct
@@ -176,12 +175,12 @@ def connect_to_sql_sqlite(db_path=None):
         db_path = os.getenv("SQLITE_DB_PATH", "./local_crypto.db")
 
     if not Path(db_path).exists():
-        logging.error(f"SQLite database not found: {db_path}")
-        logging.error("Please run: python database/init_sqlite.py")
+        app_logger.error(f"SQLite database not found: {db_path}")
+        app_logger.error("Please run: python database/init_sqlite.py")
         msg = f"Database not found: {db_path}"
         raise FileNotFoundError(msg)
 
-    logging.info(f"Connecting to SQLite database: {db_path}")
+    app_logger.info(f"Connecting to SQLite database: {db_path}")
 
     # Create SQLite connection with optimized settings
     sqlite_conn = sqlite3.connect(
@@ -200,7 +199,7 @@ def connect_to_sql_sqlite(db_path=None):
 
     wrapped_conn = SQLiteConnectionWrapper(sqlite_conn)
 
-    logging.info("✅ Connected to SQLite database (WAL mode enabled, 30s timeout)")
+    app_logger.info("✅ Connected to SQLite database (WAL mode enabled, 30s timeout)")
     return wrapped_conn
 
 
@@ -226,9 +225,9 @@ def connect_to_sql(max_retries=3):
             # Enhanced logging
             environment = os.getenv("AZURE_FUNCTIONS_ENVIRONMENT")
             is_azure = environment is not None and environment.lower() != "development"
-            logging.info(f"Attempt {attempt + 1}/{max_retries}")
-            logging.info(f"Environment: {environment}")
-            logging.info(f"Is Azure: {is_azure}")
+            app_logger.info(f"Attempt {attempt + 1}/{max_retries}")
+            app_logger.info(f"Environment: {environment}")
+            app_logger.info(f"Is Azure: {is_azure}")
 
             if is_azure:
                 try:
@@ -237,7 +236,7 @@ def connect_to_sql(max_retries=3):
                         exclude_interactive_browser_credential=False
                     )
                     token = credential.get_token("https://database.windows.net/.default").token
-                    logging.info(f"Access token: {token}")
+                    app_logger.info(f"Access token: {token}")
                     token_bytes = token.encode("UTF-16-LE")
                     token_struct = struct.pack(
                         f"<I{len(token_bytes)}s", len(token_bytes), token_bytes
@@ -246,12 +245,12 @@ def connect_to_sql(max_retries=3):
                         1256  # This connection option is defined by microsoft in msodbcsql.h
                     )
 
-                    logging.info(f"Azure connection string (without token): {connection_string}")
+                    app_logger.info(f"Azure connection string (without token): {connection_string}")
                     conn = pyodbc.connect(
                         connection_string,
                         attrs_before={sql_copt_ss_access_token: token_struct},
                     )
-                    logging.info("Successfully connected to the database.")
+                    app_logger.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     app_logger.warning(f"ODBC Error: {e}")
                     raise
@@ -272,9 +271,11 @@ def connect_to_sql(max_retries=3):
                         "Encrypt=yes;"
                         "TrustServerCertificate=no"
                     )
-                    logging.info(f"Local connection string (without password): {connection_string}")
+                    app_logger.info(
+                        f"Local connection string (without password): {connection_string}"
+                    )
                     conn = pyodbc.connect(connection_string + f";PWD={password}")
-                    logging.info("Successfully connected to the database.")
+                    app_logger.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     app_logger.warning(f"ODBC Error: {e}")
                 except Exception as e:

@@ -1,12 +1,12 @@
 """Perplexity AI client implementation."""
 
-import logging
 import time
 from http import HTTPStatus
 from typing import Any
 
 import requests
 
+from infra.telegram_logging_handler import app_logger
 from news.clients.base_client import AIClient
 from news.prompts import (
     SYSTEM_PROMPT_ANALYSIS_NEWS,
@@ -55,11 +55,11 @@ class PerplexityClient(AIClient):
             error_msg = f"Request failed: {e!s}"
             return False, error_msg
         else:
-            logging.info(f"API Response Status: {response.status_code}")
+            app_logger.info(f"API Response Status: {response.status_code}")
 
             if response.status_code == HTTPStatus.OK:
                 content = response.json()["choices"][0]["message"]["content"]
-                logging.info(f"Successfully processed. Length: {len(content)} chars")
+                app_logger.info(f"Successfully processed. Length: {len(content)} chars")
                 return True, content
             error_msg = f"Failed: API error: {response.status_code} - {response.text}"
             return False, error_msg
@@ -69,8 +69,8 @@ class PerplexityClient(AIClient):
     ) -> str:
         """Get detailed crypto analysis with news using Perplexity API."""
         start_time = time.time()
-        logging.info("Starting detailed crypto analysis with news using Perplexity")
-        logging.debug(f"Input news articles count: {len(news_feeded)}")
+        app_logger.info("Starting detailed crypto analysis with news using Perplexity")
+        app_logger.debug(f"Input news articles count: {len(news_feeded)}")
 
         price_data = fetch_and_format_candle_data(conn)
 
@@ -91,14 +91,14 @@ class PerplexityClient(AIClient):
 
         result = retry_with_fallback_models(models, request_func, "Crypto analysis with news")
 
-        logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+        app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
     def highlight_articles(self, user_crypto_list, news_feeded) -> str:
         """Highlight articles based on user crypto list and news feed."""
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
-        logging.info("Starting article highlighting with Perplexity")
-        logging.debug(f"Symbol names provided: {symbol_names}")
+        app_logger.info("Starting article highlighting with Perplexity")
+        app_logger.debug(f"Symbol names provided: {symbol_names}")
 
         models = ["sonar-deep-research", "sonar-pro"]
 

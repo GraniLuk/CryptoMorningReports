@@ -1,9 +1,10 @@
 """Launchpool and Gempool article monitoring and reporting."""
 
-import logging
 from http import HTTPStatus
 
 import requests
+
+from infra.telegram_logging_handler import app_logger
 
 
 # Endpoint to fetch articles
@@ -45,6 +46,6 @@ def check_gempool_articles():
         else:
             pass
     else:
-        logging.error(f"Failed to fetch articles: HTTP {response.status_code}")
+        app_logger.error(f"Failed to fetch articles: HTTP {response.status_code}")
 
     return new_articles

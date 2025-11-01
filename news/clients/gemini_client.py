@@ -1,13 +1,13 @@
 """Gemini AI client implementation."""
 
 import json
-import logging
 import re
 import time
 from typing import Any
 
 import google.generativeai as genai
 
+from infra.telegram_logging_handler import app_logger
 from news.clients.base_client import AIClient
 from news.prompts import (
     SYSTEM_PROMPT_ANALYSIS_NEWS,
@@ -33,7 +33,7 @@ class GeminiClient(AIClient):
 
         """
         self.api_key = api_key
-        logging.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
+        app_logger.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
 
         if not self.api_key:
             msg = "GeminiClient initialization failed: API key missing"
@@ -52,7 +52,7 @@ class GeminiClient(AIClient):
         try:
             configure_fn(api_key=self.api_key)
             self.model: Any = generative_cls("gemini-2.5-flash-preview-09-2025")
-            logging.info("GeminiClient [__init__]: Gemini model initialized.")
+            app_logger.info("GeminiClient [__init__]: Gemini model initialized.")
         except Exception as e:
             msg = f"GeminiClient initialization failed: {e}"
             raise RuntimeError(msg) from e
@@ -72,15 +72,15 @@ class GeminiClient(AIClient):
             response = self.model.generate_content(prompt)
         except Exception as e:
             error_msg = f"Failed to get response from Gemini: {e!s}"
-            logging.exception(error_msg)
+            app_logger.exception(error_msg)
             return error_msg
         else:
             if response.candidates and len(response.candidates) > 0:
                 content = response.text
-                logging.info(f"Successfully processed. Length: {len(content)} chars")
+                app_logger.info(f"Successfully processed. Length: {len(content)} chars")
                 return content
             error_msg = "Failed: No valid response from Gemini API"
-            logging.error(error_msg)
+            app_logger.error(error_msg)
             return error_msg
 
     def _identify_part_type(self, idx: int, text_content: str) -> str:
@@ -125,23 +125,23 @@ class GeminiClient(AIClient):
                 if article_json_start > 0:
                     article_json = text_content[article_json_start:]
                     article_data = json.loads(article_json)
-                    logging.info(f"  Source: {article_data.get('source', 'N/A')}")
-                    logging.info(f"  Title: {article_data.get('title', 'N/A')[:100]}")
+                    app_logger.info(f"  Source: {article_data.get('source', 'N/A')}")
+                    app_logger.info(f"  Title: {article_data.get('title', 'N/A')[:100]}")
         except Exception:
-            logging.exception("Failed to parse article JSON from Gemini response")
+            app_logger.exception("Failed to parse article JSON from Gemini response")
 
     def _log_prompt_part(self, idx: int, part: dict, part_type: str) -> None:
         """Log details about a single prompt part."""
         text_content = part["parts"][0]["text"]
         text_length = len(text_content)
 
-        logging.info(f"\n--- Part {idx}: {part_type} ---")
-        logging.info(f"Role: {part['role']}")
-        logging.info(f"Length: {text_length:,} characters")
+        app_logger.info(f"\n--- Part {idx}: {part_type} ---")
+        app_logger.info(f"Role: {part['role']}")
+        app_logger.info(f"Length: {text_length:,} characters")
 
         # Log preview
         preview = text_content[:300].replace("\n", " ")
-        logging.info(f"Preview: {preview}...")
+        app_logger.info(f"Preview: {preview}...")
 
         # Special handling for different part types
         if "NEWS_ARTICLE" in part_type:
@@ -149,19 +149,19 @@ class GeminiClient(AIClient):
 
         max_debug_log_length = 2000
         if part_type in ["INDICATORS", "PRICE_DATA"]:
-            logging.info(f"Full {part_type} content:")
-            logging.info(text_content)
-            logging.info(f"--- End of {part_type} ---")
+            app_logger.info(f"Full {part_type} content:")
+            app_logger.info(text_content)
+            app_logger.info(f"--- End of {part_type} ---")
         elif text_length < max_debug_log_length:
-            logging.debug(f"Full content:\n{text_content}\n")
+            app_logger.debug(f"Full content:\n{text_content}\n")
 
     def get_detailed_crypto_analysis_with_news(
         self, indicators_message, news_feeded, conn=None
     ) -> str:
         """Get detailed crypto analysis with news using Gemini API."""
         start_time = time.time()
-        logging.info("Starting detailed crypto analysis with news using Gemini")
-        logging.info(f"Input news articles count: {len(news_feeded)}")
+        app_logger.info("Starting detailed crypto analysis with news using Gemini")
+        app_logger.info(f"Input news articles count: {len(news_feeded)}")
 
         price_data = fetch_and_format_candle_data(conn)
 
@@ -177,9 +177,9 @@ class GeminiClient(AIClient):
         ]
 
         # Log request details
-        logging.info("=" * 80)
-        logging.info(f"GEMINI API REQUEST - Total parts: {len(prompt_parts)}")
-        logging.info("=" * 80)
+        app_logger.info("=" * 80)
+        app_logger.info(f"GEMINI API REQUEST - Total parts: {len(prompt_parts)}")
+        app_logger.info("=" * 80)
 
         # Log each prompt part
         for idx, part in enumerate(prompt_parts):
@@ -187,19 +187,19 @@ class GeminiClient(AIClient):
             part_type = self._identify_part_type(idx, text_content)
             self._log_prompt_part(idx, part, part_type)
 
-        logging.info(f"\n{'=' * 80}")
-        logging.info("Sending request to Gemini API...")
-        logging.info(f"{'=' * 80}\n")
+        app_logger.info(f"\n{'=' * 80}")
+        app_logger.info("Sending request to Gemini API...")
+        app_logger.info(f"{'=' * 80}\n")
 
         result = self._generate_content(prompt_parts)
-        logging.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
+        app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
     def highlight_articles(self, user_crypto_list, news_feeded) -> str:
         """Highlight articles based on user crypto list and news feed using Gemini API."""
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
-        logging.info("Starting article highlighting with Gemini")
-        logging.debug(f"Symbol names provided: {symbol_names}")
+        app_logger.info("Starting article highlighting with Gemini")
+        app_logger.debug(f"Symbol names provided: {symbol_names}")
 
         prompt = (
             f"{SYSTEM_PROMPT_HIGHLIGHT}\n\n"

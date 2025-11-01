@@ -158,7 +158,6 @@ class TestRSIAgainstTradingView:
         df["RSI_EMA"].iloc[-1]
         df["close"].iloc[-1]
 
-
         # Print last 15 days of data for debugging
 
         # TradingView uses RMA (Wilder's smoothing) for RSI calculation
@@ -272,7 +271,6 @@ class TestRSIDataRequirements:
         df_30 = df_30.set_index("Date")
         calculate_rsi_using_rma(df_30["close"])
 
-
         # The values should differ significantly when data is insufficient
         # With proper data, Wilder's smoothing stabilizes
         assert len(candles_30) >= 28, "Should fetch at least 28 days for accurate RSI"
@@ -310,7 +308,6 @@ class TestRSIMethodComparison:
 
         rsi_rma = calculate_rsi_using_rma(prices, periods=14)
         rsi_ema = calculate_rsi_using_ema(prices, period=14)
-
 
         # Methods should produce similar but not identical results
         # RMA and EMA use different smoothing, so some difference is expected

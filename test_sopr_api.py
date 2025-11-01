@@ -1,9 +1,10 @@
 """Test script for SOPR API endpoints."""
 
-import logging
 from datetime import UTC, datetime, timedelta
 
 import requests
+
+from infra.telegram_logging_handler import app_logger
 
 
 yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -17,15 +18,15 @@ try:
         try:
             data = response.json()
         except Exception:
-            logging.exception("Failed to parse JSON response from SOPR API")
+            app_logger.exception("Failed to parse JSON response from SOPR API")
 except Exception:
-    logging.exception("Failed to test SOPR API with day parameter")
+    app_logger.exception("Failed to test SOPR API with day parameter")
 
 # Try without parameters
 try:
     response = requests.get("https://bitcoin-data.com/v1/sopr", timeout=30)
 except Exception:
-    logging.exception("Failed to test SOPR API without parameters")
+    app_logger.exception("Failed to test SOPR API without parameters")
 
 # Try alternative date format
 for param_name in ["date", "timestamp", "from", "start"]:
@@ -34,4 +35,4 @@ for param_name in ["date", "timestamp", "from", "start"]:
             "https://bitcoin-data.com/v1/sopr", params={param_name: yesterday}, timeout=30
         )
     except Exception:
-        logging.exception("Failed to test SOPR API with %s parameter", param_name)
+        app_logger.exception("Failed to test SOPR API with %s parameter", param_name)
