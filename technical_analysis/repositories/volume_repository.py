@@ -89,10 +89,7 @@ def get_combined_market_cap_and_volume_data(self):
 
             # Convert rows to list of dictionaries
             columns = [column[0] for column in cursor.description]
-            results = []
-
-            for row in cursor.fetchall():
-                results.append(dict(zip(columns, row, strict=False)))
+            results = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
 
             cursor.close()
             app_logger.info("Successfully fetched combined market cap and volume data")

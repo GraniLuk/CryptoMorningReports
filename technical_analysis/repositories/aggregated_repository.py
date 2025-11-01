@@ -157,10 +157,7 @@ ORDER BY s.SymbolName, d.IndicatorDate DESC
             cursor.execute(query)
 
             columns = [column[0] for column in cursor.description]
-            results = []
-
-            for row in cursor.fetchall():
-                results.append(dict(zip(columns, row, strict=False)))
+            results = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
 
             cursor.close()
             app_logger.info(
