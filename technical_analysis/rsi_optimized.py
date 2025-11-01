@@ -16,7 +16,10 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def get_optimized_rsi_for_symbol_timeframe(
-    symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7,
+    symbol: Symbol,
+    conn,
+    timeframe: str = "daily",
+    lookback_days: int = 7,
 ):
     """Get RSI data for a symbol in the specified timeframe.
 
@@ -56,7 +59,10 @@ def get_optimized_rsi_for_symbol_timeframe(
         # Get candle data with RSI values from the database, using the
         # extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
-            conn, symbol.symbol_id, calculation_start_date, timeframe,
+            conn,
+            symbol.symbol_id,
+            calculation_start_date,
+            timeframe,
         )
 
         if not candles_with_rsi:

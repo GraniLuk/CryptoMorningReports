@@ -42,7 +42,10 @@ async def run_report(report_type="daily"):
                 await process_daily_report(conn, telegram_enabled, telegram_token, telegram_chat_id)
             elif report_type == "weekly":
                 await process_weekly_report(
-                    conn, telegram_enabled, telegram_token, telegram_chat_id,
+                    conn,
+                    telegram_enabled,
+                    telegram_token,
+                    telegram_chat_id,
                 )
         finally:
             if conn:
@@ -75,7 +78,8 @@ def manual_trigger(req: func.HttpRequest) -> func.HttpResponse:
     try:
         asyncio.run(run_report(report_type))
         return func.HttpResponse(
-            f"{report_type.capitalize()} report executed successfully", status_code=200,
+            f"{report_type.capitalize()} report executed successfully",
+            status_code=200,
         )
     except (ValueError, KeyError, TypeError, OSError, RuntimeError) as e:
         return func.HttpResponse(f"Function execution failed: {e!s}", status_code=500)
@@ -119,17 +123,20 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
 
             if not report:
                 return func.HttpResponse(
-                    f"Failed to generate report for {symbol}.", status_code=500,
+                    f"Failed to generate report for {symbol}.",
+                    status_code=500,
                 )
 
             if report.startswith(f"Symbol {symbol} not found"):
                 return func.HttpResponse(
-                    f"Symbol '{symbol}' not found in the database.", status_code=404,
+                    f"Symbol '{symbol}' not found in the database.",
+                    status_code=404,
                 )
 
             if report.startswith(("Failed", "Error")):
                 return func.HttpResponse(
-                    f"Error generating report: {report}", status_code=500,
+                    f"Error generating report: {report}",
+                    status_code=500,
                 )  # Save to OneDrive if requested
             if save_to_onedrive:
                 today_date = datetime.now(UTC).strftime("%Y-%m-%d-%H-%M")
@@ -139,7 +146,9 @@ async def crypto_situation(req: func.HttpRequest) -> func.HttpResponse:
                 folder_path = f"current_situation/{symbol.upper()}"
 
                 await upload_to_onedrive(
-                    filename=onedrive_filename, content=report, folder_path=folder_path,
+                    filename=onedrive_filename,
+                    content=report,
+                    folder_path=folder_path,
                 )
 
             # Send to Telegram if requested

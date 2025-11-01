@@ -12,7 +12,9 @@ yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
 # Test base SOPR endpoint
 try:
     response = requests.get(
-        "https://bitcoin-data.com/v1/sopr", params={"day": yesterday}, timeout=30,
+        "https://bitcoin-data.com/v1/sopr",
+        params={"day": yesterday},
+        timeout=30,
     )
     if response.text:
         try:
@@ -32,7 +34,9 @@ except (requests.RequestException, OSError):
 for param_name in ["date", "timestamp", "from", "start"]:
     try:
         response = requests.get(
-            "https://bitcoin-data.com/v1/sopr", params={param_name: yesterday}, timeout=30,
+            "https://bitcoin-data.com/v1/sopr",
+            params={param_name: yesterday},
+            timeout=30,
         )
     except (requests.RequestException, OSError):
         app_logger.exception("Failed to test SOPR API with %s parameter", param_name)
