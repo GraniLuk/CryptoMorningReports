@@ -151,7 +151,7 @@ def get_current_data_for_symbol(  # noqa: PLR0915
             "next_funding_time": None,
             "timestamp": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
         }
-    
+
     data: dict[str, Any] = {
         "symbol": symbol.symbol_name,
         "latest_price": None,

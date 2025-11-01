@@ -488,7 +488,7 @@ def _get_candle_repository(
     """Return the appropriate candle repository based on timeframe."""
     if conn is None:
         return None
-    
+
     timeframe_lower = timeframe.lower()
     if timeframe_lower == "daily":
         return DailyCandleRepository(conn)

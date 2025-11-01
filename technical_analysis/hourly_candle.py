@@ -51,7 +51,7 @@ def check_if_all_hourly_candles(
     if conn is None:
         app_logger.error("Database connection is required for checking hourly candles")
         return
-    
+
     fetcher = HourlyCandles()
     fetcher.check_if_all_candles(symbol, conn, days_back)
 

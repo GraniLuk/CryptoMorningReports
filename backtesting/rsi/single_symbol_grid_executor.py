@@ -34,10 +34,18 @@ def run_grid_search_for_symbol(conn, symbol):
         return []
 
     for rsi_value, tp_value, sl_value, days_after_to_buy in itertools.product(
-        rsi_range, tp_values, sl_values, days_options,
+        rsi_range,
+        tp_values,
+        sl_values,
+        days_options,
     ):
         results_df, ratio = run_strategy_for_symbol_internal(
-            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy,
+            candles_data,
+            symbol,
+            rsi_value,
+            tp_value,
+            sl_value,
+            days_after_to_buy,
         )
 
         if not results_df.empty:

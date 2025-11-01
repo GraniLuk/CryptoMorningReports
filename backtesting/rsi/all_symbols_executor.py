@@ -44,7 +44,7 @@ def run_strategy_for_all_symbols(
         if candles_data is None:
             print(f"No candle data found for symbol {symbol.symbol_name}, skipping")
             continue
-        
+
         results_df, ratio = run_strategy_for_symbol_internal(
             candles_data,
             symbol,

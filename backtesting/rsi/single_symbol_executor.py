@@ -36,7 +36,7 @@ if __name__ == "__main__":
         if candles_data is None:
             print(f"No candle data found for symbol {filtered_symbols[0].symbol_name}")
             sys.exit(1)
-        
+
         result_df, ratio = run_strategy_for_symbol_internal(
             candles_data,
             filtered_symbols[0],
