@@ -81,6 +81,7 @@ exclude = [
 "tests/**" = ["PLR2004", "S101", "T201", "S608"]
 "news/test_*.py" = ["S101", "T201", "PLR2004"]  # Allow assert, print, and magic values in news test files
 "news/demo_*.py" = ["T201"]  # Allow print in demo files
+"news/cleanup_cache.py" = ["T201", "FBT001", "FBT002", "PLC0415"]  # Allow print, boolean args, and local imports in CLI utility
 # Ignore import ordering in __init__.py files
 "**/__init__.py" = ["F401", "I001"]
 

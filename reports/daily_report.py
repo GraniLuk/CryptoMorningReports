@@ -16,6 +16,7 @@ from integrations.onedrive_uploader import (
 )
 from integrations.pandoc_converter import convert_markdown_to_epub_async
 from launchpool.launchpool_report import check_gempool_articles
+from news.article_cache import cleanup_old_articles, get_cache_statistics
 from news.news_agent import (
     get_detailed_crypto_analysis_with_news,
     highlight_articles,
@@ -221,6 +222,20 @@ async def process_daily_report(  # noqa: PLR0915
     logger = app_logger
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for daily report...", len(symbols))
+
+    # 🧹 CLEANUP OLD CACHED ARTICLES - Remove articles older than 24 hours
+    logger.info("🧹 Cleaning up old cached articles...")
+    try:
+        deleted_count = cleanup_old_articles(max_age_hours=24)
+        stats = get_cache_statistics()
+        logger.info(
+            "✓ Cleanup complete: %d articles deleted, %d remain (%.2f MB)",
+            deleted_count,
+            stats["total_articles"],
+            stats["total_size_mb"],
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("⚠️ Article cache cleanup failed: %s", e)
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")

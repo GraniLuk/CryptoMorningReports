@@ -10,6 +10,8 @@ Key Functions:
 - `get_recent_articles()` - Retrieve all recent cached articles
 - `fetch_and_cache_articles_for_symbol()` - Fetch fresh RSS articles, cache new ones,
   and return all articles for a symbol (ensures up-to-date data)
+- `cleanup_old_articles()` - Delete articles older than specified age
+- `get_cache_statistics()` - Get cache statistics (count, size, age)
 """
 
 from dataclasses import dataclass, field
@@ -313,3 +315,133 @@ def fetch_and_cache_articles_for_symbol(
 
     # Return all cached articles for the symbol
     return get_articles_for_symbol(symbol, hours)
+
+
+def cleanup_old_articles(max_age_hours: int = 24) -> int:
+    """Delete cached articles older than the specified age.
+
+    Args:
+        max_age_hours: Maximum age of articles to keep. Defaults to 24 hours.
+
+    Returns:
+        Number of articles deleted
+    """
+    deleted_count = 0
+    cutoff_time = datetime.now(tz=UTC) - timedelta(hours=max_age_hours)
+
+    # Calculate how many days to check (add buffer for timezone differences)
+    days_to_check = (max_age_hours // 24) + 3
+
+    for days_ago in range(days_to_check):
+        check_date = datetime.now(tz=UTC) - timedelta(days=days_ago)
+        cache_dir = get_cache_directory(check_date)
+
+        # Skip if directory doesn't exist
+        if not cache_dir.exists():
+            continue
+
+        # Get all markdown files for this date
+        markdown_files = list(cache_dir.glob("*.md"))
+
+        for markdown_file in markdown_files:
+            try:
+                article = load_article_from_cache(markdown_file)
+
+                # Skip if article failed to load
+                if article is None:
+                    continue
+
+                # Parse published date and check if older than cutoff
+                published_dt = datetime.fromisoformat(article.published)
+                if published_dt < cutoff_time:
+                    # Delete the markdown file
+                    markdown_file.unlink()
+                    deleted_count += 1
+
+            except Exception as e:  # noqa: BLE001
+                # Log warning but continue cleanup
+                from infra.telegram_logging_handler import (  # noqa: PLC0415
+                    app_logger,
+                )
+
+                app_logger.warning(f"Error processing {markdown_file}: {e!s}")
+
+        # Remove empty date directories
+        try:
+            if cache_dir.exists() and not any(cache_dir.iterdir()):
+                cache_dir.rmdir()
+        except OSError:  # noqa: S110
+            pass  # Directory not empty or other error, skip
+
+    return deleted_count
+
+    return deleted_count
+
+
+def get_cache_statistics() -> dict[str, int | float | str]:
+    """Get statistics about the article cache.
+
+    Returns:
+        Dictionary with cache statistics:
+        - total_articles: Number of cached articles
+        - total_size_mb: Total disk space used (MB)
+        - oldest_article_hours: Age of oldest article (hours)
+        - newest_article_hours: Age of newest article (hours)
+        - cache_path: Path to cache root directory
+    """
+    total_articles = 0
+    total_size_bytes = 0
+    oldest_time: datetime | None = None
+    newest_time: datetime | None = None
+
+    # Get cache root directory
+    cache_root = Path(__file__).parent / "cache"
+
+    # Check last 7 days (should be more than enough)
+    for days_ago in range(7):
+        check_date = datetime.now(tz=UTC) - timedelta(days=days_ago)
+        cache_dir = get_cache_directory(check_date)
+
+        # Skip if directory doesn't exist
+        if not cache_dir.exists():
+            continue
+
+        # Get all markdown files for this date
+        markdown_files = list(cache_dir.glob("*.md"))
+
+        for markdown_file in markdown_files:
+            try:
+                article = load_article_from_cache(markdown_file)
+
+                # Skip if article failed to load
+                if article is None:
+                    continue
+
+                total_articles += 1
+
+                # Calculate file size
+                total_size_bytes += markdown_file.stat().st_size
+
+                # Track oldest/newest
+                published_dt = datetime.fromisoformat(article.published)
+                if oldest_time is None or published_dt < oldest_time:
+                    oldest_time = published_dt
+                if newest_time is None or published_dt > newest_time:
+                    newest_time = published_dt
+
+            except Exception:  # noqa: BLE001, S110
+                # Skip invalid articles
+                pass
+
+    # Calculate age in hours
+    now = datetime.now(tz=UTC)
+    oldest_hours = (now - oldest_time).total_seconds() / 3600 if oldest_time else 0
+    newest_hours = (now - newest_time).total_seconds() / 3600 if newest_time else 0
+
+    return {
+        "total_articles": total_articles,
+        "total_size_mb": round(total_size_bytes / (1024 * 1024), 2),
+        "oldest_article_hours": round(oldest_hours, 1),
+        "newest_article_hours": round(newest_hours, 1),
+        "cache_path": str(cache_root),
+    }
