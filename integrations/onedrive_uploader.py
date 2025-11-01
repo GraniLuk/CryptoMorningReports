@@ -51,9 +51,9 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str):
                 f"Status: {response.status}"
             )
             return True
-    except aiohttp.ClientError as e:
-        logger.error(f"Error uploading '{filename}' to OneDrive via Logic App: {e}")
+    except aiohttp.ClientError:
+        logger.exception(f"Error uploading '{filename}' to OneDrive via Logic App")
         return False
-    except Exception as e:
-        logger.error(f"An unexpected error occurred during OneDrive upload for '{filename}': {e}")
+    except Exception:
+        logger.exception(f"An unexpected error occurred during OneDrive upload for '{filename}'")
         return False

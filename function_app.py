@@ -49,8 +49,8 @@ async def run_report(report_type="daily"):
             if conn:
                 conn.close()
 
-    except Exception as e:
-        logger.error(f"Function failed with error: {e!s}")
+    except Exception:
+        logging.exception("Function failed with error")
         raise
 
 

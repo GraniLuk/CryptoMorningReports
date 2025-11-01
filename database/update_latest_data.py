@@ -118,8 +118,8 @@ def update_latest_daily_candles(conn, days_to_update=3):
                 else:
                     logger.debug(f"  ⊘ {current_date}: No data available")
 
-            except Exception as e:
-                logger.error(f"  ✗ {current_date}: Failed - {e}")
+            except Exception:
+                logging.exception(f"  ✗ {current_date}: Failed")
                 total_failed += 1
 
             current_date += timedelta(days=1)
@@ -242,8 +242,8 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
                         f"  ✓ {current_time.strftime('%Y-%m-%d %H:%M')}: Close={candle.close:.2f}"
                     )
 
-            except Exception as e:
-                logger.error(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed - {e}")
+            except Exception:
+                logging.exception(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed")
                 total_failed += 1
 
             current_time += timedelta(hours=1)
@@ -374,8 +374,8 @@ def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
                         f"  ✓ {current_time.strftime('%Y-%m-%d %H:%M')}: Close={candle.close:.2f}"
                     )
 
-            except Exception as e:
-                logger.error(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed - {e}")
+            except Exception:
+                logging.exception(f"  ✗ {current_time.strftime('%Y-%m-%d %H:%M')}: Failed")
                 total_failed += 1
 
             current_time += timedelta(minutes=15)
