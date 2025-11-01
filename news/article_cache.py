@@ -16,10 +16,35 @@ Key Functions:
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 import frontmatter
 from slugify import slugify
+
+
+def parse_article_date(date_string: str) -> datetime:
+    """Parse article date from either ISO format or RSS format.
+
+    Args:
+        date_string: Date string in ISO format or RSS format
+
+    Returns:
+        datetime object with timezone
+
+    Raises:
+        ValueError: If date string cannot be parsed
+    """
+    try:
+        # Try ISO format first (e.g., '2025-11-01T15:30:45+00:00')
+        return datetime.fromisoformat(date_string)
+    except (ValueError, AttributeError):
+        try:
+            # Try RSS format (e.g., 'Sat, 01 Nov 2025 15:30:45 +0000')
+            return parsedate_to_datetime(date_string)
+        except (ValueError, TypeError, AttributeError) as e:
+            msg = f"Cannot parse date: {date_string}"
+            raise ValueError(msg) from e
 
 
 @dataclass
@@ -225,7 +250,7 @@ def get_articles_for_symbol(
             if symbol_upper in [s.upper() for s in article.symbols]:
                 # Parse published date and check if within time range
                 try:
-                    published_dt = datetime.fromisoformat(article.published)
+                    published_dt = parse_article_date(article.published)
                     if published_dt >= cutoff_time:
                         articles_with_symbol.append(article)
                 except (ValueError, AttributeError):  # noqa: S112
@@ -234,7 +259,7 @@ def get_articles_for_symbol(
 
     # Sort by published date, newest first
     articles_with_symbol.sort(
-        key=lambda a: datetime.fromisoformat(a.published),
+        key=lambda a: parse_article_date(a.published),
         reverse=True,
     )
 
@@ -265,7 +290,7 @@ def get_recent_articles(hours: int = 24) -> list[CachedArticle]:
         for article in daily_articles:
             # Parse published date and check if within time range
             try:
-                published_dt = datetime.fromisoformat(article.published)
+                published_dt = parse_article_date(article.published)
                 if published_dt >= cutoff_time:
                     recent_articles.append(article)
             except (ValueError, AttributeError):  # noqa: S112
@@ -274,7 +299,7 @@ def get_recent_articles(hours: int = 24) -> list[CachedArticle]:
 
     # Sort by published date, newest first
     recent_articles.sort(
-        key=lambda a: datetime.fromisoformat(a.published),
+        key=lambda a: parse_article_date(a.published),
         reverse=True,
     )
 
@@ -352,7 +377,7 @@ def cleanup_old_articles(max_age_hours: int = 24) -> int:
                     continue
 
                 # Parse published date and check if older than cutoff
-                published_dt = datetime.fromisoformat(article.published)
+                published_dt = parse_article_date(article.published)
                 if published_dt < cutoff_time:
                     # Delete the markdown file
                     markdown_file.unlink()
@@ -423,7 +448,7 @@ def get_cache_statistics() -> dict[str, int | float | str]:
                 total_size_bytes += markdown_file.stat().st_size
 
                 # Track oldest/newest
-                published_dt = datetime.fromisoformat(article.published)
+                published_dt = parse_article_date(article.published)
                 if oldest_time is None or published_dt < oldest_time:
                     oldest_time = published_dt
                 if newest_time is None or published_dt > newest_time:
