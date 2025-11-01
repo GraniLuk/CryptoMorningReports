@@ -88,8 +88,13 @@ def fetch_rss_news(feed_url, source, class_name):
         cache_enabled = is_article_cache_enabled()
 
         for entry in feed.entries:
+            # Extract fields with type safety
+            entry_link = str(entry.link) if hasattr(entry, "link") else ""
+            entry_title = str(entry.title) if hasattr(entry, "title") else ""
+            entry_published = str(entry.published) if hasattr(entry, "published") else ""
+
             # Skip if already cached (when caching is enabled)
-            if cache_enabled and article_exists_in_cache(entry.link):
+            if cache_enabled and article_exists_in_cache(entry_link):
                 continue
 
             # Make published_time timezone-aware by adding UTC timezone
@@ -103,13 +108,13 @@ def fetch_rss_news(feed_url, source, class_name):
                 published_time = current_time
 
             if current_time - published_time <= timedelta(days=1):
-                full_content = fetch_full_content(entry.link, class_name)
+                full_content = fetch_full_content(entry_link, class_name)
 
                 article_dict = {
                     "source": source,
-                    "title": entry.title,
-                    "link": entry.link,
-                    "published": entry.published,
+                    "title": entry_title,
+                    "link": entry_link,
+                    "published": entry_published,
                     "content": full_content,
                 }
                 latest_news.append(article_dict)
@@ -118,9 +123,9 @@ def fetch_rss_news(feed_url, source, class_name):
                 if cache_enabled:
                     cached_article = CachedArticle(
                         source=source,
-                        title=entry.title,
-                        link=entry.link,
-                        published=entry.published,
+                        title=entry_title,
+                        link=entry_link,
+                        published=entry_published,
                         fetched=current_time.isoformat(),
                         content=full_content,
                         symbols=[],  # Will be populated in Phase 3

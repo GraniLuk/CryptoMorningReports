@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-import frontmatter
-from slugify import slugify
+import frontmatter  # type: ignore[import-untyped]
+from slugify import slugify  # type: ignore[import-untyped]
 
 
 @dataclass
