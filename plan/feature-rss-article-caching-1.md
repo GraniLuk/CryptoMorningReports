@@ -126,13 +126,13 @@ The goal is to:
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-018 | Create `news/symbol_detector.py` module for symbol detection logic | | |
-| TASK-019 | Implement `detect_symbols_in_text(text: str, symbols: List[Symbol]) -> List[str]` function | | |
-| TASK-020 | Add support for detecting symbol names (e.g., "BTC", "Bitcoin", "Ethereum") | | |
-| TASK-021 | Add support for detecting full names and common variations (case-insensitive) | | |
-| TASK-022 | Implement scoring/confidence system to avoid false positives (e.g., "BIT" matching "Bitcoin") | | |
-| TASK-023 | Update `fetch_rss_news()` to detect and tag symbols in article title and content | | |
-| TASK-024 | Store detected symbols in article frontmatter as YAML list | | |
+| TASK-018 | Create `news/symbol_detector.py` module for symbol detection logic | ✅ | 2025-11-01 |
+| TASK-019 | Implement `detect_symbols_in_text(text: str, symbols: List[Symbol]) -> List[str]` function | ✅ | 2025-11-01 |
+| TASK-020 | Add support for detecting symbol names (e.g., "BTC", "Bitcoin", "Ethereum") | ✅ | 2025-11-01 |
+| TASK-021 | Add support for detecting full names and common variations (case-insensitive) | ✅ | 2025-11-01 |
+| TASK-022 | Implement scoring/confidence system to avoid false positives (e.g., "BIT" matching "Bitcoin") | ✅ | 2025-11-01 |
+| TASK-023 | Update `fetch_rss_news()` to detect and tag symbols in article title and content | ✅ | 2025-11-01 |
+| TASK-024 | Store detected symbols in article frontmatter as YAML list | ✅ | 2025-11-01 |
 | TASK-025 | Create manual review utility to verify symbol detection accuracy | | |
 
 ### Phase 4: Integration with Current Reports

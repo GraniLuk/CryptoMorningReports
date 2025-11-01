@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from infra.configuration import is_article_cache_enabled
+from infra.sql_connection import connect_to_sql_sqlite
 from infra.telegram_logging_handler import app_logger
 from news.article_cache import (
     CachedArticle,
@@ -17,6 +18,8 @@ from news.article_cache import (
     get_cached_articles,
     save_article_to_cache,
 )
+from news.symbol_detector import detect_symbols_in_text
+from source_repository import fetch_symbols
 
 
 def get_news():
@@ -79,13 +82,23 @@ def get_news():
 def fetch_rss_news(feed_url, source, class_name):
     """Fetch and parse news articles from an RSS feed.
 
-    If article caching is enabled, saves fetched articles to cache.
+    If article caching is enabled, saves fetched articles to cache with detected symbols.
     """
     try:
         feed = feedparser.parse(feed_url)
         latest_news = []
         current_time = datetime.now(UTC)
         cache_enabled = is_article_cache_enabled()
+
+        # Fetch symbols for detection (only if caching is enabled)
+        symbols_list = []
+        if cache_enabled:
+            try:
+                with connect_to_sql_sqlite() as conn:
+                    symbols_list = fetch_symbols(conn)
+            except (ConnectionError, OSError, ValueError) as e:
+                app_logger.warning(f"Could not fetch symbols for detection: {e!s}")
+                symbols_list = []
 
         for entry in feed.entries:
             # Extract fields with type safety
@@ -110,6 +123,12 @@ def fetch_rss_news(feed_url, source, class_name):
             if current_time - published_time <= timedelta(days=1):
                 full_content = fetch_full_content(entry_link, class_name)
 
+                # Detect symbols in article text (title + content)
+                detected_symbols = []
+                if cache_enabled and symbols_list:
+                    article_text = f"{entry_title} {full_content}"
+                    detected_symbols = detect_symbols_in_text(article_text, symbols_list)
+
                 article_dict = {
                     "source": source,
                     "title": entry_title,
@@ -128,7 +147,7 @@ def fetch_rss_news(feed_url, source, class_name):
                         published=entry_published,
                         fetched=current_time.isoformat(),
                         content=full_content,
-                        symbols=[],  # Will be populated in Phase 3
+                        symbols=detected_symbols,
                     )
                     save_article_to_cache(cached_article)
 
