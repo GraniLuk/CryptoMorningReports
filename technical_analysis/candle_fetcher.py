@@ -25,7 +25,10 @@ class CandleFetcher:
         self.logger = app_logger
 
     def fetch_candles(
-        self, symbols: list[Symbol], conn, end_time: datetime | None = None,
+        self,
+        symbols: list[Symbol],
+        conn,
+        end_time: datetime | None = None,
     ) -> list[Candle]:
         """Fetch candles for given symbols and return a list of Candle objects.
 
@@ -49,7 +52,9 @@ class CandleFetcher:
                 self.logger.debug("Fetched %s candle for %s", self.timeframe, symbol.symbol_name)
             else:
                 self.logger.warning(
-                    "Failed to fetch %s candle for %s", self.timeframe, symbol.symbol_name,
+                    "Failed to fetch %s candle for %s",
+                    self.timeframe,
+                    symbol.symbol_name,
                 )
 
         self.logger.info("Successfully fetched %d %s candles", len(candles), self.timeframe)
@@ -70,7 +75,12 @@ class CandleFetcher:
         return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
     def _fill_gaps_in_range(
-        self, symbol, start_time: datetime, end_time: datetime, conn, gap_type: str,
+        self,
+        symbol,
+        start_time: datetime,
+        end_time: datetime,
+        conn,
+        gap_type: str,
     ):
         """Fill gaps in a specific time range."""
         self.logger.info(
@@ -180,7 +190,8 @@ class CandleFetcher:
         if not all_candles:
             self.logger.info(
                 "No %s candles found in DB for %s, fetching all",
-                self.timeframe, symbol.symbol_name,
+                self.timeframe,
+                symbol.symbol_name,
             )
             current_time = start_time
             expected_diff = self._get_expected_time_diff()
