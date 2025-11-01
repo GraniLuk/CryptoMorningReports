@@ -39,7 +39,7 @@ class CandleRepository:
             INSERT OR REPLACE INTO {self.table_name}
             (SymbolID, SourceID, EndDate, [Open], [Close], High, Low, Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
+            """  # noqa: S608
             self.conn.execute(
                 sql,
                 (
@@ -67,7 +67,7 @@ class CandleRepository:
                 INSERT (SymbolID, SourceID, EndDate, [Open], [Close], High, Low,
                         Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """
+            """  # noqa: S608
             self.conn.execute(
                 sql,
                 (
@@ -104,7 +104,7 @@ class CandleRepository:
             ,[VolumeQuote]
         FROM {self.table_name}
         WHERE SymbolID = ? AND EndDate = ?
-        """
+        """  # noqa: S608
         row = self.conn.execute(sql, (symbol.symbol_id, end_date)).fetchone()
         if row:
             return Candle(
@@ -148,7 +148,7 @@ class CandleRepository:
         AND EndDate >= ?
         AND EndDate <= ?
         ORDER BY EndDate
-        """
+        """  # noqa: S608
         rows = self.conn.execute(sql, (symbol.symbol_id, start_date_str, end_date_str)).fetchall()
         return [
             Candle(
@@ -175,7 +175,7 @@ class CandleRepository:
         sql = f"""
         SELECT MIN(EndDate)
         FROM {self.table_name}
-        """
+        """  # noqa: S608
         row = self.conn.execute(sql).fetchone()
         return row[0] if row and row[0] else None
 
@@ -196,7 +196,7 @@ class CandleRepository:
         FROM {self.table_name}
         WHERE SymbolID = ?
         ORDER BY EndDate
-        """
+        """  # noqa: S608
         rows = self.conn.execute(sql, (symbol.symbol_id,)).fetchall()
         return [
             Candle(

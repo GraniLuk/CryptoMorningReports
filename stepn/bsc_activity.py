@@ -25,6 +25,7 @@ def get_yesterday_transaction_count(contract_address, api_key):
                 "closest": "before",
                 "apikey": api_key,
             },
+            timeout=30,
         ).json()
         if response["status"] != "1":
             msg = f"Block API Error: {response['message']}"
@@ -56,7 +57,7 @@ def get_yesterday_transaction_count(contract_address, api_key):
     url = "https://api.bscscan.com/api"
 
     # Make the API request
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, timeout=30)
     data = response.json()
 
     # Check if the response is successful

@@ -109,8 +109,10 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
         if not isinstance(df.index, pd.DatetimeIndex):
             df.index = pd.DatetimeIndex(df.index)
 
-        # Type assertion to help type checker understand df.index is DatetimeIndex
-        assert isinstance(df.index, pd.DatetimeIndex), "Index must be DatetimeIndex"
+        # Type check to ensure df.index is DatetimeIndex
+        if not isinstance(df.index, pd.DatetimeIndex):
+            msg = "Index must be DatetimeIndex"
+            raise TypeError(msg)  # noqa: TRY301
         # Cast to DatetimeIndex for type checker
         datetime_index = pd.DatetimeIndex(df.index)
 
@@ -154,10 +156,10 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
             )
             # Update only the missing values in the database
             for idx, row in missing_rows.iterrows():
-                # Type assertion to help type checker understand idx is a valid index
-                assert isinstance(idx, pd.Timestamp | str | int), (
-                    f"Unexpected index type: {type(idx)}"
-                )
+                # Type check to ensure idx is a valid index type
+                if not isinstance(idx, (pd.Timestamp, str, int)):
+                    msg = f"Unexpected index type: {type(idx)}"
+                    raise TypeError(msg)  # noqa: TRY301
 
                 candle_id = int(row["Id"])  # Note: column name is 'Id' not 'ID'
                 try:

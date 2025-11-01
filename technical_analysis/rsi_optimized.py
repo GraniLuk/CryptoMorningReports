@@ -99,10 +99,10 @@ def get_optimized_rsi_for_symbol_timeframe(
 
             # Update only the missing values in the database
             for idx, row in missing_rows.iterrows():
-                # Type assertion to help type checker understand idx is a valid index
-                assert isinstance(idx, pd.Timestamp | str | int), (
-                    f"Unexpected index type: {type(idx)}"
-                )
+                # Type check to ensure idx is a valid index type
+                if not isinstance(idx, (pd.Timestamp, str, int)):
+                    msg = f"Unexpected index type: {type(idx)}"
+                    raise TypeError(msg)  # noqa: TRY301
 
                 candle_id = int(row["SymbolId"])
 
@@ -170,7 +170,9 @@ def test_optimized_rsi():
 
 
     # Check if all values have RSI - ensure df_complete is a DataFrame
-    assert isinstance(df_complete, pd.DataFrame), "Expected a DataFrame"
+    if not isinstance(df_complete, pd.DataFrame):
+        msg = "Expected a DataFrame"
+        raise TypeError(msg)
     has_missing_rsi: bool = bool(df_complete["RSI"].isna().any())
 
     if not has_missing_rsi:

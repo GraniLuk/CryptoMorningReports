@@ -183,6 +183,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                 recent = candles[-7:]
                 ranges = []
                 for c in recent:
+                    date_str = "unknown"  # Initialize in case of early exception
                     try:
                         c_high = float(c.high)
                         c_low = float(c.low)
@@ -208,7 +209,10 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                                 "range_pct": c_range_pct,
                             }
                         )
-                    except Exception:
+                    except Exception as e:
+                        app_logger.warning(
+                            "Could not compute daily range for date %s: %s", date_str, e
+                        )
                         continue
                 data["daily_ranges_7d"] = ranges
         except Exception as inner_e:

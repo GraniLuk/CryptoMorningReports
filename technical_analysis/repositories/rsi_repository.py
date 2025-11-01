@@ -101,7 +101,7 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
                 query = f"""
                     INSERT OR REPLACE INTO {table_name} ({id_column}, RSI)
                     VALUES (?, ?)
-                """
+                """  # noqa: S608
             else:
                 # SQL Server uses MERGE
                 query = f"""
@@ -114,7 +114,7 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
                     WHEN NOT MATCHED THEN
                         INSERT ({id_column}, RSI)
                         VALUES (source.{id_column}, source.RSI);
-                """
+                """  # noqa: S608
             cursor.execute(query, (candle_id, rsi))
             conn.commit()
             cursor.close()
@@ -184,7 +184,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
                 LEFT JOIN {rsi_table} r ON dc.ID = r.{id_column}
                 WHERE dc.SymbolId = ? AND dc.EndDate >= ?
                 ORDER BY dc.EndDate DESC
-            """
+            """  # noqa: S608
             cursor.execute(query, (symbol_id, from_date_str))
 
             # Fetch column names
@@ -278,7 +278,7 @@ def _build_query(
                 {date_func_week}   -- Week equivalent
             )
             ORDER BY dc.EndDate DESC
-        """
+        """  # noqa: S608
     else:
         # SQL Server syntax
         query = f"""
@@ -293,7 +293,7 @@ def _build_query(
                 DATEADD({interval_keyword}, -{week_interval}, ?)   -- Week equivalent
             )
             ORDER BY dc.EndDate DESC
-        """
+        """  # noqa: S608
     return query
 
 

@@ -64,7 +64,7 @@ async def send_telegram_message(
             if protect_content:
                 payload["protect_content"] = True
 
-            response = requests.post(url, json=payload)
+            response = requests.post(url, json=payload, timeout=30)
 
             if not response.ok:
                 # Gather diagnostics
@@ -234,7 +234,7 @@ def _check_file_size(size: int, filename: str) -> bool:
 def _send_document_request(token: str, files: dict, data: dict, filename: str) -> bool:
     """Send document request to Telegram API."""
     url = f"https://api.telegram.org/bot{token}/sendDocument"
-    response = requests.post(url, data=data, files=files)
+    response = requests.post(url, data=data, files=files, timeout=30)
     if not response.ok:
         try:
             err_json = response.json()

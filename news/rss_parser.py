@@ -91,7 +91,7 @@ def fetch_rss_news(feed_url, source, class_name):
 def fetch_full_content(url, class_name):
     """Fetch the full content of a news article from its URL."""
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=30)
         soup = BeautifulSoup(response.content, "html.parser")
 
         article = soup.find("div", class_=class_name) or soup.find("article")

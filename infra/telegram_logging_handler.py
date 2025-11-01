@@ -35,7 +35,7 @@ class TelegramHandler(logging.Handler):
             message = message[:telegram_max_message_length]
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
         payload = {"chat_id": self.chat_id, "text": message, "parse_mode": None}
-        requests.post(url, json=payload)
+        requests.post(url, json=payload, timeout=30)
 
 
 def setup_logger():

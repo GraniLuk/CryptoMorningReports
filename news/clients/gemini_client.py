@@ -128,7 +128,7 @@ class GeminiClient(AIClient):
                     logging.info(f"  Source: {article_data.get('source', 'N/A')}")
                     logging.info(f"  Title: {article_data.get('title', 'N/A')[:100]}")
         except Exception:
-            pass
+            logging.exception("Failed to parse article JSON from Gemini response")
 
     def _log_prompt_part(self, idx: int, part: dict, part_type: str) -> None:
         """Log details about a single prompt part."""

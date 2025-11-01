@@ -50,7 +50,7 @@ class PerplexityClient(AIClient):
         data = {"model": model, "messages": messages}
 
         try:
-            response = requests.post(self.url, json=data, headers=self.headers)
+            response = requests.post(self.url, json=data, headers=self.headers, timeout=30)
         except Exception as e:
             error_msg = f"Request failed: {e!s}"
             return False, error_msg

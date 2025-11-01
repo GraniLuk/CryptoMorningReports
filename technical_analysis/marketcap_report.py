@@ -28,7 +28,7 @@ def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
     }
 
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=30)
         if response.status_code == HTTPStatus.OK:
             data = response.json()
 

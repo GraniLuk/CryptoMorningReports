@@ -33,7 +33,7 @@ class HourlyCandleRepository(CandleRepository):
             (SymbolID, SourceID, OpenTime, EndDate, [Open], [Close], High, Low,
              Last, Volume, VolumeQuote)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
+            """  # noqa: S608
             self.conn.execute(
                 sql,
                 (

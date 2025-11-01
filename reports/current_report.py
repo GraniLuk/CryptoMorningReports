@@ -303,6 +303,7 @@ async def _generate_ai_analysis(
                 "https://api.perplexity.ai/chat/completions",
                 json=data,
                 headers=headers,
+                timeout=30,
             )
         except Exception:
             error_msg = "Failed to get crypto situation analysis"

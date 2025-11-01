@@ -1,5 +1,6 @@
 """Volume analysis and reporting utilities."""
 
+import logging
 from http import HTTPStatus
 
 import requests
@@ -30,12 +31,13 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
             binance_response = requests.get(
                 "https://api.binance.com/api/v3/ticker/24hr",
                 params={"symbol": crypto.binance_name},
+                timeout=30,
             )
             if binance_response.status_code == HTTPStatus.OK:
                 binance_data = binance_response.json()
                 binance_volume = float(binance_data.get("quoteVolume", 0))
         except Exception:
-            pass
+            logging.exception("Failed to get Binance volume for %s", crypto.binance_name)
 
         # Get KuCoin volume
         kucoin_volume = 0.0
@@ -43,12 +45,13 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
             kucoin_response = requests.get(
                 "https://api.kucoin.com/api/v1/market/stats",
                 params={"symbol": crypto.kucoin_name},
+                timeout=30,
             )
             if kucoin_response.status_code == HTTPStatus.OK:
                 kucoin_data = kucoin_response.json()
                 kucoin_volume = float(kucoin_data.get("data", {}).get("volValue", 0))
         except Exception:
-            pass
+            logging.exception("Failed to get KuCoin volume for %s", crypto.kucoin_name)
 
         total_volume = binance_volume + kucoin_volume
 

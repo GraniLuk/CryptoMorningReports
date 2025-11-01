@@ -15,7 +15,7 @@ def check_gempool_articles():
     seen_articles = set()
 
     # Fetch articles from the API
-    response = requests.get(URL)
+    response = requests.get(URL, timeout=30)
     new_articles = []
 
     if response.status_code == HTTPStatus.OK:
