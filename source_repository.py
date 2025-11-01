@@ -69,11 +69,11 @@ def fetch_symbols(conn) -> list[Symbol]:
 
     """
     symbols = []
-    try:
-        if not conn:
-            msg = "Database connection was not established."
-            raise ConnectionError(msg)
+    if not conn:
+        msg = "Database connection was not established."
+        raise ConnectionError(msg)
 
+    try:
         query = (
             "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName "
             "FROM Symbols WHERE IsActive = 1"
@@ -90,14 +90,6 @@ def fetch_symbols(conn) -> list[Symbol]:
                 )
                 symbols.append(symbol)
 
-        if not symbols:
-            app_logger.error("No active symbols found in the database")
-            msg = "No active symbols found in the database"
-            raise NoSymbolsFoundError(msg)
-
-    except NoSymbolsFoundError:
-        # Re-raise the NoSymbolsFoundError to be handled by the caller
-        raise
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbols: {e}")
         msg = f"Database error while fetching symbols: {e}"
@@ -106,8 +98,12 @@ def fetch_symbols(conn) -> list[Symbol]:
         app_logger.error(f"Error fetching symbols: {e!s}")
         raise
 
-    else:
-        return symbols
+    if not symbols:
+        app_logger.error("No active symbols found in the database")
+        msg = "No active symbols found in the database"
+        raise NoSymbolsFoundError(msg)
+
+    return symbols
 
 
 def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
@@ -126,11 +122,11 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
         Symbol: The symbol object
 
     """
-    try:
-        if not conn:
-            msg = "Database connection was not established."
-            raise ConnectionError(msg)
+    if not conn:
+        msg = "Database connection was not established."
+        raise ConnectionError(msg)
 
+    try:
         query = (
             "SELECT SymbolID, SymbolName, FullName, SourceID, CoinGeckoName "
             "FROM Symbols WHERE SymbolName = ? AND IsActive = 1"
@@ -138,21 +134,7 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
 
         with conn.cursor() as cursor:
             row = cursor.execute(query, (symbol_name,)).fetchone()
-            if row is None:
-                msg = f"Symbol '{symbol_name}' not found in the database"
-                raise SymbolNotFoundError(msg)
 
-        return Symbol(
-            symbol_id=row[0],
-            symbol_name=row[1],
-            full_name=row[2],
-            source_id=SourceID(row[3]),
-            coingecko_name=row[4],
-        )
-
-    except SymbolNotFoundError:
-        # Re-raise the SymbolNotFoundError to be handled by the caller
-        raise
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbol {symbol_name}: {e}")
         msg = f"Database error while fetching symbol {symbol_name}: {e}"
@@ -163,3 +145,15 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
     except Exception as e:
         app_logger.error(f"Error fetching symbol {symbol_name}: {e!s}")
         raise
+
+    if row is None:
+        msg = f"Symbol '{symbol_name}' not found in the database"
+        raise SymbolNotFoundError(msg)
+
+    return Symbol(
+        symbol_id=row[0],
+        symbol_name=row[1],
+        full_name=row[2],
+        source_id=SourceID(row[3]),
+        coingecko_name=row[4],
+    )

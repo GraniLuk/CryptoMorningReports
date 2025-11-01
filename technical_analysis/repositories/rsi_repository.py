@@ -68,30 +68,30 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
         timeframe (str): Timeframe type ("daily", "hourly", "fifteen_min")
 
     """
+    # Map timeframe to the correct table
+    table_map = {
+        "daily": "RSI",
+        "hourly": "HourlyRSI",
+        "fifteen_min": "FifteenMinRSI",
+    }
+
+    # Map timeframe to the correct ID column name
+    id_column_map = {
+        "daily": "DailyCandleID",
+        "hourly": "HourlyCandleID",
+        "fifteen_min": "FifteenMinCandleID",
+    }
+
+    table_name = table_map.get(timeframe.lower())
+    id_column = id_column_map.get(timeframe.lower())
+
+    if not table_name or not id_column:
+        msg = f"Invalid timeframe: {timeframe}"
+        raise ValueError(msg)
+
     try:
         if conn:
             cursor = conn.cursor()
-
-            # Map timeframe to the correct table
-            table_map = {
-                "daily": "RSI",
-                "hourly": "HourlyRSI",
-                "fifteen_min": "FifteenMinRSI",
-            }
-
-            # Map timeframe to the correct ID column name
-            id_column_map = {
-                "daily": "DailyCandleID",
-                "hourly": "HourlyCandleID",
-                "fifteen_min": "FifteenMinCandleID",
-            }
-
-            table_name = table_map.get(timeframe.lower())
-            id_column = id_column_map.get(timeframe.lower())
-
-            if not table_name or not id_column:
-                msg = f"Invalid timeframe: {timeframe}"
-                raise ValueError(msg)
 
             # Check if we're using SQLite or SQL Server
             is_sqlite = os.getenv("DATABASE_TYPE", "azuresql").lower() == "sqlite"

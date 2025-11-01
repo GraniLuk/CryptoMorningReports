@@ -191,6 +191,11 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
         # Return only the data for the requested date range using the aligned start_timestamp
         result = df[df.index >= start_timestamp]
 
+    except Exception as e:
+        app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
+        return None
+
+    else:
         # Validate that we're returning a DataFrame
         if not isinstance(result, pd.DataFrame):
             msg = (
@@ -198,12 +203,6 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915
                 f"but got {type(result).__name__} for {symbol.symbol_name}"
             )
             raise TypeError(msg)
-
-    except Exception as e:
-        app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
-        return None
-
-    else:
         return result
 
 
