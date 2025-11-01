@@ -57,6 +57,10 @@ class SymbolNotFoundError(Exception):
     """Exception raised when a specific symbol is not found in the database."""
 
 
+class DatabaseError(Exception):
+    """Exception raised for database operation errors."""
+
+
 def fetch_symbols(conn) -> list[Symbol]:
     """Fetch all symbols from the database and return them as a list of Symbol objects.
 
@@ -93,7 +97,7 @@ def fetch_symbols(conn) -> list[Symbol]:
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbols: {e}")
         msg = f"Database error while fetching symbols: {e}"
-        raise Exception(msg) from e
+        raise DatabaseError(msg) from e
     except Exception as e:
         app_logger.error(f"Error fetching symbols: {e!s}")
         raise
@@ -138,7 +142,7 @@ def fetch_symbol_by_name(conn, symbol_name: str) -> Symbol:
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while fetching symbol {symbol_name}: {e}")
         msg = f"Database error while fetching symbol {symbol_name}: {e}"
-        raise Exception(msg) from e
+        raise DatabaseError(msg) from e
     except ConnectionError:
         # Re-raise connection errors
         raise

@@ -415,20 +415,16 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
-
         # Update daily candles (only missing since last update)
         daily_updated, daily_failed = update_latest_daily_candles(conn, days_to_update=3)
-
 
         # Update hourly candles (only missing since last update)
         hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
 
-
         # Update 15-minute candles (only missing since last update)
-        fifteen_min_updated, fifteen_min_failed = (
-            update_latest_fifteen_min_candles(conn, minutes_to_update=120)
+        fifteen_min_updated, fifteen_min_failed = update_latest_fifteen_min_candles(
+            conn, minutes_to_update=120
         )
-
 
         if (
             daily_updated == 0
@@ -439,7 +435,6 @@ if __name__ == "__main__":
             and fifteen_min_failed == 0
         ):
             pass
-
 
     finally:
         conn.close()

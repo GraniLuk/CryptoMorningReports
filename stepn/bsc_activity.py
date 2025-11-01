@@ -7,6 +7,10 @@ import requests
 from infra.telegram_logging_handler import app_logger
 
 
+class BSCAPIError(Exception):
+    """Exception raised for BSCScan API errors."""
+
+
 def get_yesterday_transaction_count(contract_address, api_key):
     """Get the transaction count for a BSC contract address from yesterday."""
 
@@ -24,7 +28,7 @@ def get_yesterday_transaction_count(contract_address, api_key):
         ).json()
         if response["status"] != "1":
             msg = f"Block API Error: {response['message']}"
-            raise Exception(msg)
+            raise BSCAPIError(msg)
         return int(response["result"])
 
     # Calculate yesterday's timestamps
@@ -60,7 +64,7 @@ def get_yesterday_transaction_count(contract_address, api_key):
         transactions = data["result"]
         return len(transactions)
     msg = f"API Error: {data['message']}"
-    raise Exception(msg)
+    raise BSCAPIError(msg)
 
 
 if __name__ == "__main__":
