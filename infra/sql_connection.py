@@ -239,7 +239,9 @@ def connect_to_sql(max_retries=3):
                     app_logger.info(f"Access token: {token}")
                     token_bytes = token.encode("UTF-16-LE")
                     token_struct = struct.pack(
-                        f"<I{len(token_bytes)}s", len(token_bytes), token_bytes,
+                        f"<I{len(token_bytes)}s",
+                        len(token_bytes),
+                        token_bytes,
                     )
                     sql_copt_ss_access_token = (
                         1256  # This connection option is defined by microsoft in msodbcsql.h

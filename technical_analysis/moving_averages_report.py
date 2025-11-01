@@ -59,7 +59,9 @@ def _detect_golden_death_cross(
 
 
 def calculate_indicators(  # noqa: PLR0915
-    symbols: list[Symbol], conn, target_date: date,
+    symbols: list[Symbol],
+    conn,
+    target_date: date,
 ) -> tuple[PrettyTable, PrettyTable]:
     """Calculate moving averages and RSI indicators for cryptocurrency symbols."""
     # If no date provided, use today's date

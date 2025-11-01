@@ -97,7 +97,7 @@ def _extract_moving_averages(conn, symbol_id: int) -> dict[str, float | None]:
             ma_data["ema200"] = (
                 float(latest_ma["EMA200"]) if pd.notna(latest_ma.get("EMA200")) else None
             )
-    except Exception as ma_error:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, IndexError) as ma_error:
         app_logger.warning(f"Could not fetch moving averages for symbol_id {symbol_id}: {ma_error}")
     return ma_data
 
@@ -209,13 +209,13 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                                 "range_pct": c_range_pct,
                             },
                         )
-                    except Exception as e:  # noqa: BLE001
+                    except (ValueError, TypeError, AttributeError) as e:
                         app_logger.warning(
                             "Could not compute daily range for date %s: %s", date_str, e,
                         )
                         continue
                 data["daily_ranges_7d"] = ranges
-        except Exception as inner_e:  # noqa: BLE001
+        except (KeyError, ValueError, TypeError, IndexError) as inner_e:
             app_logger.warning(f"Could not compute daily range for {symbol.symbol_name}: {inner_e}")
 
         # Fetch derivatives data (Open Interest and Funding Rate) - only for Binance symbols
@@ -237,14 +237,14 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                     if fr_data.get("funding_time"):
                         data["next_funding_time"] = fr_data["funding_time"]
 
-            except Exception as deriv_error:  # noqa: BLE001
+            except (KeyError, ValueError, TypeError) as deriv_error:
                 app_logger.warning(
                     f"Could not fetch derivatives data for {symbol.symbol_name}: {deriv_error}",
                 )
 
         app_logger.info(f"Successfully retrieved current data for {symbol.symbol_name}")
 
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError, AttributeError) as e:
         app_logger.error(f"Error getting current data for {symbol.symbol_name}: {e!s}")
 
     return data
@@ -417,7 +417,7 @@ def get_current_data_summary_table(symbol: Symbol, conn) -> str:
         # Format as HTML
         return format_current_data_for_telegram_html(symbol_data)
 
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError) as e:
         app_logger.error(f"Error generating current data summary for {symbol.symbol_name}: {e!s}")
         return f"<b>Error:</b> Unable to generate summary for {symbol.symbol_name}"
 
@@ -503,7 +503,7 @@ CURRENT MARKET SNAPSHOT ({symbol_data.get("symbol", "Unknown")}):
 
         return prompt_data.strip()
 
-    except Exception as e:  # noqa: BLE001
+    except (KeyError, ValueError, TypeError) as e:
         app_logger.error(f"Error generating AI prompt data for {symbol.symbol_name}: {e!s}")
         return f"CURRENT MARKET SNAPSHOT: Error retrieving data for {symbol.symbol_name}"
 

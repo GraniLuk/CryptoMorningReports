@@ -28,7 +28,6 @@ async def main():
         if report_type not in ["daily", "weekly", "current"]:
             sys.exit(1)
 
-
     try:
         if report_type == "current":
             # Current situation report
@@ -48,7 +47,6 @@ async def main():
         else:
             # Daily/weekly report
             await run_report(report_type)
-
 
     except Exception:  # noqa: BLE001
         traceback.print_exc()

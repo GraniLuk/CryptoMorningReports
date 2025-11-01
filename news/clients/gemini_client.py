@@ -156,7 +156,10 @@ class GeminiClient(AIClient):
             app_logger.debug(f"Full content:\n{text_content}\n")
 
     def get_detailed_crypto_analysis_with_news(
-        self, indicators_message, news_feeded, conn=None,
+        self,
+        indicators_message,
+        news_feeded,
+        conn=None,
     ) -> str:
         """Get detailed crypto analysis with news using Gemini API."""
         start_time = time.time()

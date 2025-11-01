@@ -65,7 +65,10 @@ class PerplexityClient(AIClient):
             return False, error_msg
 
     def get_detailed_crypto_analysis_with_news(
-        self, indicators_message, news_feeded, conn=None,
+        self,
+        indicators_message,
+        news_feeded,
+        conn=None,
     ) -> str:
         """Get detailed crypto analysis with news using Perplexity API."""
         start_time = time.time()
@@ -108,7 +111,8 @@ class PerplexityClient(AIClient):
                 {
                     "role": "user",
                     "content": USER_PROMPT_HIGHLIGHT.format(
-                        news_feeded=news_feeded, symbol_names=symbol_names,
+                        news_feeded=news_feeded,
+                        symbol_names=symbol_names,
                     ),
                 },
             ]

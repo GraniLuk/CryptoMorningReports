@@ -58,7 +58,8 @@ def fetch_rss_news(feed_url, source, class_name):
         for entry in feed.entries:
             # Make published_time timezone-aware by adding UTC timezone
             if hasattr(entry, "published_parsed") and isinstance(
-                entry.published_parsed, time.struct_time,
+                entry.published_parsed,
+                time.struct_time,
             ):
                 published_time = datetime.fromtimestamp(mktime(entry.published_parsed), tz=UTC)
             else:
