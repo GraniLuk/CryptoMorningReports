@@ -105,7 +105,7 @@ def update_latest_daily_candles(conn, days_to_update=3):
             # No data exists - fetch last N days as fallback
             start_date = today - timedelta(days=days_to_update - 1)
             logger.info(
-                "📅 %s: No existing data, fetching last %d days", symbol.symbol_name, days_to_update
+                "📅 %s: No existing data, fetching last %d days", symbol.symbol_name, days_to_update,
             )
 
         # Fetch missing dates
@@ -249,7 +249,7 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
                 if candle:
                     symbol_updated += 1
                     logger.debug(
-                        "  ✓ %s: Close=%.2f", current_time.strftime("%Y-%m-%d %H:%M"), candle.close
+                        "  ✓ %s: Close=%.2f", current_time.strftime("%Y-%m-%d %H:%M"), candle.close,
                     )
 
             except Exception:
@@ -387,7 +387,7 @@ def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
                 if candle:
                     symbol_updated += 1
                     logger.debug(
-                        "  ✓ %s: Close=%.2f", current_time.strftime("%Y-%m-%d %H:%M"), candle.close
+                        "  ✓ %s: Close=%.2f", current_time.strftime("%Y-%m-%d %H:%M"), candle.close,
                     )
 
             except Exception:
@@ -441,7 +441,7 @@ if __name__ == "__main__":
 
         # Update 15-minute candles (only missing since last update)
         fifteen_min_updated, fifteen_min_failed = update_latest_fifteen_min_candles(
-            conn, minutes_to_update=120
+            conn, minutes_to_update=120,
         )
 
         if (

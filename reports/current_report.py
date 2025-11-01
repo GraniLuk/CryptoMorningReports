@@ -263,7 +263,7 @@ def convert_markdown_to_telegram_html(markdown_text: str) -> str:
 
 
 async def _generate_ai_analysis(
-    ai_api_type: str, ai_api_key: str, formatted_prompt: str, logger
+    ai_api_type: str, ai_api_key: str, formatted_prompt: str, logger,
 ) -> str:
     """Generate AI analysis using the specified API type.
 
@@ -375,13 +375,13 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
 
     # Fetch candles for different timeframes
     daily_candles = fetch_daily_candles(
-        symbols, conn, start_date=half_year_ago.date(), end_date=now.date()
+        symbols, conn, start_date=half_year_ago.date(), end_date=now.date(),
     )
     hourly_candles = fetch_hourly_candles_for_all_symbols(
-        symbols, end_time=now, start_time=two_days_ago, conn=conn
+        symbols, end_time=now, start_time=two_days_ago, conn=conn,
     )
     fifteen_min_candles = fetch_fifteen_minutes_candles_for_all_symbols(
-        symbols, end_time=now, start_time=one_day_ago, conn=conn
+        symbols, end_time=now, start_time=one_day_ago, conn=conn,
     )
 
     # Fetch RSI data for different timeframes
@@ -409,7 +409,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
     daily_rsi_formatted = format_rsi_data(daily_rsi)
     hourly_rsi_formatted = format_rsi_data(hourly_rsi)
     fifteen_min_rsi_formatted = format_rsi_data(
-        fifteen_min_rsi
+        fifteen_min_rsi,
     )  # Format moving averages data for the AI prompt
     moving_averages_formatted = format_moving_averages_data(moving_averages)
 

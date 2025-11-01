@@ -144,12 +144,12 @@ def sanitize_html(message):
 
 
 async def try_send_report_with_html_or_markdown(
-    telegram_enabled, telegram_token, telegram_chat_id, message
+    telegram_enabled, telegram_token, telegram_chat_id, message,
 ):
     """Send a report message trying HTML first, then falling back to MarkdownV2."""
     # Try HTML first
     success = await send_telegram_message(
-        telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode="HTML"
+        telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode="HTML",
     )
 
     # If HTML failed, try MarkdownV2
@@ -404,6 +404,6 @@ Bitcoin's rise.
     parse_mode = "HTML"
     asyncio.run(
         send_telegram_message(
-            telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode
-        )
+            telegram_enabled, telegram_token, telegram_chat_id, message, parse_mode,
+        ),
     )

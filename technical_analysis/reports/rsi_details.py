@@ -85,7 +85,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
                 bool(row["bullish_divergence"]),
                 bool(row["bearish_divergence"]),
                 bool(row["rsi_breakout"]),
-            ]
+            ],
         )
 
     return rsi_table

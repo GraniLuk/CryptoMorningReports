@@ -238,40 +238,41 @@ def create_sqlite_database(db_path="./local_crypto.db"):
 
     # Create indexes for better query performance
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_hourly_symbol_date ON HourlyCandles(SymbolID, EndDate)"
+        "CREATE INDEX IF NOT EXISTS idx_hourly_symbol_date ON HourlyCandles(SymbolID, EndDate)",
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_fifteen_symbol_date ON FifteenMinCandles(SymbolID, EndDate)"
+        "CREATE INDEX IF NOT EXISTS idx_fifteen_symbol_date "
+        "ON FifteenMinCandles(SymbolID, EndDate)",
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_daily_symbol_date ON DailyCandles(SymbolID, Date)"
+        "CREATE INDEX IF NOT EXISTS idx_daily_symbol_date ON DailyCandles(SymbolID, Date)",
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_rsi_daily_candle ON RSI(DailyCandleID)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_rsi_hourly_candle ON HourlyRSI(HourlyCandleID)")
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_rsi_fifteen_candle ON FifteenMinRSI(FifteenMinCandleID)"
+        "CREATE INDEX IF NOT EXISTS idx_rsi_fifteen_candle ON FifteenMinRSI(FifteenMinCandleID)",
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_ma_symbol_date ON MovingAverages(SymbolID, IndicatorDate)"
+        "CREATE INDEX IF NOT EXISTS idx_ma_symbol_date ON MovingAverages(SymbolID, IndicatorDate)",
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)"
+        "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)",
     )
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_volume_symbol_date ON "
-        "VolumeHistory(SymbolID, IndicatorDate)"
+        "VolumeHistory(SymbolID, IndicatorDate)",
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sopr_date ON SOPR(IndicatorDate)")
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_pricerange_symbol_date ON "
-        "PriceRange(SymbolID, IndicatorDate)"
+        "PriceRange(SymbolID, IndicatorDate)",
     )
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_marketcap_symbol_date ON "
-        "MarketCapHistory(SymbolID, IndicatorDate)"
+        "MarketCapHistory(SymbolID, IndicatorDate)",
     )
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)"
+        "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)",
     )
 
     # Insert default symbols (with SourceID and CoinGeckoName for compatibility)

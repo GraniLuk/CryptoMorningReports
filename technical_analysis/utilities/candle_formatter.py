@@ -8,7 +8,7 @@ from technical_analysis.hourly_candle import fetch_hourly_candles
 
 
 def get_candle_data(
-    symbols: list[Symbol], conn, hourly_limit: int = 24, minute_limit: int = 32
+    symbols: list[Symbol], conn, hourly_limit: int = 24, minute_limit: int = 32,
 ) -> dict:
     """Fetch hourly and 15-minute candle data for cryptocurrencies.
 
@@ -33,10 +33,10 @@ def get_candle_data(
     for symbol in symbols:
         # Fetch candles from database
         hourly_candles = fetch_hourly_candles(
-            symbol=symbol, start_time=hourly_start_time, end_time=end_time, conn=conn
+            symbol=symbol, start_time=hourly_start_time, end_time=end_time, conn=conn,
         )
         fifteen_min_candles = fetch_fifteen_min_candles(
-            symbol=symbol, start_time=fifteen_min_start_time, end_time=end_time, conn=conn
+            symbol=symbol, start_time=fifteen_min_start_time, end_time=end_time, conn=conn,
         )
         symbol_name = symbol.symbol_name
 
@@ -51,7 +51,7 @@ def get_candle_data(
                 if isinstance(c.end_date, str) and "T" in c.end_date
                 else (
                     datetime.fromisoformat(c.end_date.replace("Z", "+00:00")).strftime(
-                        "%Y-%m-%dT%H:%M:%SZ"
+                        "%Y-%m-%dT%H:%M:%SZ",
                     )
                     if isinstance(c.end_date, str)
                     else c.end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -71,7 +71,7 @@ def get_candle_data(
                 if isinstance(c.end_date, str) and "T" in c.end_date
                 else (
                     datetime.fromisoformat(c.end_date.replace("Z", "+00:00")).strftime(
-                        "%Y-%m-%dT%H:%M:%SZ"
+                        "%Y-%m-%dT%H:%M:%SZ",
                     )
                     if isinstance(c.end_date, str)
                     else c.end_date.strftime("%Y-%m-%dT%H:%M:%SZ")

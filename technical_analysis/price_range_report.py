@@ -64,7 +64,7 @@ def fetch_range_price(symbols: list[Symbol], conn) -> PrettyTable:
                 )
             except Exception as e:
                 app_logger.error(
-                    f"Failed to save price range results for {symbol.symbol_name}: {e!s}"
+                    f"Failed to save price range results for {symbol.symbol_name}: {e!s}",
                 )
 
         except Exception as e:

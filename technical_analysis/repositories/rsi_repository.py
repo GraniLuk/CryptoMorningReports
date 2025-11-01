@@ -48,7 +48,7 @@ def save_rsi_results(conn, daily_candle_id: int, rsi: float) -> None:
             conn.commit()
             cursor.close()
             app_logger.info(
-                f"Successfully saved RSI results to database for daily_candle_id {daily_candle_id}"
+                f"Successfully saved RSI results to database for daily_candle_id {daily_candle_id}",
             )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving RSI results: {e}")
@@ -119,7 +119,7 @@ def save_rsi_by_timeframe(conn, candle_id: int, rsi: float, timeframe: str = "da
             conn.commit()
             cursor.close()
             app_logger.info(
-                f"Successfully saved {timeframe} RSI results to database for candle_id {candle_id}"
+                f"Successfully saved {timeframe} RSI results to database for candle_id {candle_id}",
             )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving {timeframe} RSI results: {e}")
@@ -160,7 +160,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
             }
 
             candle_table, rsi_table, id_column = table_map.get(
-                timeframe.lower(), table_map["daily"]
+                timeframe.lower(), table_map["daily"],
             )
 
             # Convert date/datetime to ISO string for SQL comparison
@@ -196,7 +196,7 @@ def get_candles_with_rsi(conn, symbol_id: int, from_date, timeframe: str = "dail
             cursor.close()
             app_logger.info(
                 f"Successfully fetched {timeframe} candle data with RSI for "
-                f"symbol_id {symbol_id} starting from {from_date}"
+                f"symbol_id {symbol_id} starting from {from_date}",
             )
             return results
 
@@ -225,7 +225,7 @@ def _get_timeframe_config(timeframe: str) -> tuple[str, str, str, int, int]:
 
 
 def _get_interval_settings(
-    timeframe: str, previous_interval: int, week_interval: int
+    timeframe: str, previous_interval: int, week_interval: int,
 ) -> tuple[str, int, int]:
     """Get interval keyword and adjusted intervals."""
     interval_keyword = (
@@ -332,15 +332,15 @@ def _process_rsi_results(rows, current_date: date, timeframe: str) -> dict:
             # Timeframe-specific date matching
             if timeframe.lower() == "daily":
                 _match_daily_rsi(
-                    row_date, compare_date, row[1], interval_description, week_description, results
+                    row_date, compare_date, row[1], interval_description, week_description, results,
                 )
             elif timeframe.lower() == "hourly":
                 _match_hourly_rsi(
-                    row_date, compare_date, row[1], interval_description, week_description, results
+                    row_date, compare_date, row[1], interval_description, week_description, results,
                 )
             elif timeframe.lower() == "fifteen_min":
                 _match_fifteen_min_rsi(
-                    row_date, compare_date, row[1], interval_description, week_description, results
+                    row_date, compare_date, row[1], interval_description, week_description, results,
                 )
 
     return results
@@ -426,7 +426,7 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
 
             # Get interval settings
             interval_keyword, previous_interval, week_interval = _get_interval_settings(
-                timeframe, previous_interval, week_interval
+                timeframe, previous_interval, week_interval,
             )
 
             # Check if we're using SQLite or SQL Server
@@ -463,7 +463,7 @@ def get_historical_rsi(conn, symbol_id: int, current_date: date, timeframe: str 
 
     except pyodbc.Error as e:
         app_logger.error(
-            f"ODBC Error while fetching historical {timeframe} RSI for symbol {symbol_id}: {e}"
+            f"ODBC Error while fetching historical {timeframe} RSI for symbol {symbol_id}: {e}",
         )
         raise
     except Exception as e:

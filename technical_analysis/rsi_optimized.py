@@ -16,7 +16,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def get_optimized_rsi_for_symbol_timeframe(
-    symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
+    symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7,
 ):
     """Get RSI data for a symbol in the specified timeframe.
 
@@ -49,14 +49,14 @@ def get_optimized_rsi_for_symbol_timeframe(
     }
 
     calculation_start_date = start_date - timedelta(
-        days=additional_lookback.get(timeframe, rsi_periods)
+        days=additional_lookback.get(timeframe, rsi_periods),
     )
 
     try:
         # Get candle data with RSI values from the database, using the
         # extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
-            conn, symbol.symbol_id, calculation_start_date, timeframe
+            conn, symbol.symbol_id, calculation_start_date, timeframe,
         )
 
         if not candles_with_rsi:
@@ -83,7 +83,7 @@ def get_optimized_rsi_for_symbol_timeframe(
         if missing_rsi:
             app_logger.info(
                 f"Found missing {timeframe} RSI values for "
-                f"{symbol.symbol_name}, calculating them now..."
+                f"{symbol.symbol_name}, calculating them now...",
             )
 
             # Calculate RSI for the entire dataframe (to ensure accurate values)
@@ -94,7 +94,7 @@ def get_optimized_rsi_for_symbol_timeframe(
             rsi_mask: pd.Series = requested_df["RSI"].isna()
             missing_rows: pd.DataFrame = requested_df[rsi_mask]
             app_logger.info(
-                f"Found {len(missing_rows)} rows with missing RSI in the requested date range"
+                f"Found {len(missing_rows)} rows with missing RSI in the requested date range",
             )
 
             # Update only the missing values in the database
@@ -122,18 +122,18 @@ def get_optimized_rsi_for_symbol_timeframe(
 
                         app_logger.info(
                             f"Saved {timeframe} RSI for {symbol.symbol_name} "
-                            f"candle {candle_id}: RSI={calculated_rsi_value:.2f}"
+                            f"candle {candle_id}: RSI={calculated_rsi_value:.2f}",
                         )
                     except Exception as e:
                         app_logger.error(
-                            f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}"
+                            f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}",
                         )
 
             # Remove the temporary calculation column
             df = df.drop("calculated_RSI", axis=1, errors="ignore")
 
             app_logger.info(
-                f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}"
+                f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}",
             )
 
         # Return only the data for the requested date range

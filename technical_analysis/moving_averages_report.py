@@ -59,7 +59,7 @@ def _detect_golden_death_cross(
 
 
 def calculate_indicators(  # noqa: PLR0915
-    symbols: list[Symbol], conn, target_date: date
+    symbols: list[Symbol], conn, target_date: date,
 ) -> tuple[PrettyTable, PrettyTable]:
     """Calculate moving averages and RSI indicators for cryptocurrency symbols."""
     # If no date provided, use today's date
@@ -107,13 +107,13 @@ def calculate_indicators(  # noqa: PLR0915
 
             # Create DataFrame from candles
             df = pd.DataFrame(
-                [{"Close": candle.close, "Date": candle.end_date} for candle in candles]
+                [{"Close": candle.close, "Date": candle.end_date} for candle in candles],
             )
             df = df.set_index("Date")
 
             if df.empty:
                 app_logger.warning(
-                    f"No data available for {symbol.symbol_name} up to {target_date}"
+                    f"No data available for {symbol.symbol_name} up to {target_date}",
                 )
                 continue
 
@@ -144,7 +144,7 @@ def calculate_indicators(  # noqa: PLR0915
                 period_warning = "⚠️"  # Add warning emoji for shortened periods
                 app_logger.warning(
                     f"{symbol.symbol_name} using shortened periods due to "
-                    f"limited history: {available_periods} days"
+                    f"limited history: {available_periods} days",
                 )
 
             # Initialize status indicators
@@ -250,7 +250,7 @@ def calculate_indicators(  # noqa: PLR0915
                     ma50_status=ma50_status,
                     ma200_status=ma200_status,
                     cross_status=ma_cross_status,
-                )
+                ),
             )
 
             ema_values.append(
@@ -262,7 +262,7 @@ def calculate_indicators(  # noqa: PLR0915
                     ema50_status=ema50_status,
                     ema200_status=ema200_status,
                     cross_status=ema_cross_status,
-                )
+                ),
             )
 
             # Save to database
@@ -280,7 +280,7 @@ def calculate_indicators(  # noqa: PLR0915
                     )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save moving averages results for {symbol.symbol_name}: {e!s}"
+                        f"Failed to save moving averages results for {symbol.symbol_name}: {e!s}",
                     )
 
         except Exception as e:
@@ -327,7 +327,7 @@ def calculate_indicators(  # noqa: PLR0915
                 f"{format_price(ma_row.ma50)} {ma_row.ma50_status}",
                 f"{format_price(ma_row.ma200)} {ma_row.ma200_status}",
                 ma_row.cross_status,
-            ]
+            ],
         )
 
         ema_table.add_row(
@@ -337,7 +337,7 @@ def calculate_indicators(  # noqa: PLR0915
                 f"{format_price(ema_row.ema50)} {ema_row.ema50_status}",
                 f"{format_price(ema_row.ema200)} {ema_row.ema200_status}",
                 ema_row.cross_status,
-            ]
+            ],
         )
 
     return ma_table, ema_table

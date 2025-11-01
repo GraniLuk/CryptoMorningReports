@@ -76,7 +76,7 @@ def populate_hourly_candles(conn, hours=168):  # 7 days
         logger.info("  Fetching %s...", trading_pair)
 
         candles = fetch_binance_klines(
-            trading_pair, Client.KLINE_INTERVAL_1HOUR, limit=min(hours, 1000)
+            trading_pair, Client.KLINE_INTERVAL_1HOUR, limit=min(hours, 1000),
         )
 
         if not candles:
@@ -174,7 +174,7 @@ def populate_daily_candles(conn, days=200):  # ~6-7 months
         logger.info("  Fetching %s...", trading_pair)
 
         candles = fetch_binance_klines(
-            trading_pair, Client.KLINE_INTERVAL_1DAY, limit=min(days, 1000)
+            trading_pair, Client.KLINE_INTERVAL_1DAY, limit=min(days, 1000),
         )
 
         if not candles:

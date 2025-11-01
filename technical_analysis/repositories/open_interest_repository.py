@@ -69,7 +69,7 @@ class OpenInterestRepository:
             self.conn.commit()
             app_logger.info(
                 f"Saved Open Interest for SymbolID {symbol_id}: OI={open_interest}, "
-                f"Value=${open_interest_value:,.0f}"
+                f"Value=${open_interest_value:,.0f}",
             )
 
         except Exception as e:

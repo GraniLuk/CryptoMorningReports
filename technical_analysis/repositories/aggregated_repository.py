@@ -161,7 +161,7 @@ ORDER BY s.SymbolName, d.IndicatorDate DESC
 
             cursor.close()
             app_logger.info(
-                f"Successfully fetched aggregated data for {len(results)} symbols from SQLite"
+                f"Successfully fetched aggregated data for {len(results)} symbols from SQLite",
             )
 
         except Exception as e:

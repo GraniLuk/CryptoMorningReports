@@ -109,7 +109,7 @@ def _fetch_hourly_candle_from_source(symbol: Symbol, timestamp: datetime) -> Can
 
 
 def fetch_hourly_candles(
-    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
+    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None,
 ) -> list[Candle]:
     """Fetch multiple hourly candles for a given symbol between start_time and end_time.
 
@@ -229,7 +229,7 @@ def fetch_fifteen_min_candle(symbol: Symbol, end_time: datetime, conn=None) -> C
 
 
 def fetch_fifteen_min_candles(
-    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None
+    symbol: Symbol, start_time: datetime, end_time: datetime, conn=None,
 ) -> list[Candle]:
     """Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
 
@@ -314,7 +314,7 @@ def fetch_fifteen_min_candles(
 
 
 def fetch_daily_candles(
-    symbol: Symbol, start_date: date, end_date: date | None = None, conn=None
+    symbol: Symbol, start_date: date, end_date: date | None = None, conn=None,
 ) -> list[Candle]:
     """Fetch multiple daily candles for a given symbol between start_date and end_date.
 
@@ -391,7 +391,7 @@ if __name__ == "__main__":
     end_time = datetime.now(UTC)
 
     daily_candles = fetch_hourly_candles(
-        symbol, start_time=start_time, end_time=end_time, conn=conn
+        symbol, start_time=start_time, end_time=end_time, conn=conn,
     )
     for _daily_candle in daily_candles:
         pass

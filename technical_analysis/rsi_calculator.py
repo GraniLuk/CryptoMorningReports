@@ -35,7 +35,7 @@ def calculate_rsi_for_candles(candles, _timeframe="daily"):
                 "candle_id": candle.id,  # Assumes each candle has an id attribute
             }
             for candle in candles
-        ]
+        ],
     )
 
     # Sort by date
@@ -82,11 +82,11 @@ def update_rsi_for_all_candles(conn, symbols, candle_fetcher, timeframe="daily")
                     save_rsi_by_timeframe(conn, candle_id, rsi_value, timeframe)
                     app_logger.info(
                         f"Saved {timeframe} RSI for {symbol.symbol_name} "
-                        f"candle {candle_id}: RSI={rsi_value:.2f}"
+                        f"candle {candle_id}: RSI={rsi_value:.2f}",
                     )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save {timeframe} RSI results for candle {candle_id}: {e!s}"
+                        f"Failed to save {timeframe} RSI results for candle {candle_id}: {e!s}",
                     )
 
         except Exception as e:

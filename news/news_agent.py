@@ -27,7 +27,7 @@ def create_ai_client(api_type, api_key):
 
 
 def get_detailed_crypto_analysis_with_news(
-    api_key, indicators_message, news_feeded, api_type="perplexity", conn=None
+    api_key, indicators_message, news_feeded, api_type="perplexity", conn=None,
 ):
     """Get detailed cryptocurrency analysis combining indicators and news data."""
     client = create_ai_client(api_type, api_key)
@@ -73,11 +73,11 @@ if __name__ == "__main__":
     # Test with Perplexity
     if perplexity_api_key:
         highlighted_news = highlight_articles(
-            perplexity_api_key, user_crypto_list, news_feeded, "perplexity"
+            perplexity_api_key, user_crypto_list, news_feeded, "perplexity",
         )
 
     # Test with Gemini
     if gemini_api_key:
         highlighted_news = highlight_articles(
-            gemini_api_key, user_crypto_list, news_feeded, "gemini"
+            gemini_api_key, user_crypto_list, news_feeded, "gemini",
         )

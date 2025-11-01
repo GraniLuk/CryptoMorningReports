@@ -147,7 +147,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
                 "daily_candle_id": candle.id,  # Make sure Candle object includes ID
             }
             for candle in all_daily_candles
-        ]
+        ],
     )
     df = df.set_index("Date")
     df = df.sort_index()
@@ -168,7 +168,7 @@ def calculate_all_rsi_for_symbol(conn, symbol):
         try:
             save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=float(rsi_val))
             app_logger.info(
-                f"Saved RSI for {symbol.symbol_name} candle {daily_candle_id}: RSI={rsi_val:.2f}"
+                f"Saved RSI for {symbol.symbol_name} candle {daily_candle_id}: RSI={rsi_val:.2f}",
             )
         except Exception as e:
             app_logger.error(f"Failed to save RSI results for candle {daily_candle_id}: {e!s}")

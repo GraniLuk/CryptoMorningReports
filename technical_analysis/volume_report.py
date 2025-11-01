@@ -64,7 +64,7 @@ def fetch_volume_report(symbols: list[Symbol], conn) -> PrettyTable:
                     "binance": binance_volume,
                     "kucoin": kucoin_volume,
                     "total": total_volume,
-                }
+                },
             )
         else:
             missing_symbols.append(crypto.symbol_name)

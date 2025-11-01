@@ -37,7 +37,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
                     "symbol": symbol.symbol_name,
                 }
                 for candle in candles
-            ]
+            ],
         )
         df = df.set_index("Date")
 
@@ -110,7 +110,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
                 f"{rsi:.2f}",
                 f"{daily_change:+.2f}",
                 f"{weekly_change:+.2f}",
-            ]
+            ],
         )
 
     return rsi_table
@@ -140,7 +140,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                         "symbol": symbol.symbol_name,
                     }
                     for candle in candles
-                ]
+                ],
             )
             df = df.set_index("Date")
 
@@ -190,7 +190,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                             f"{symbol.symbol_name} on {target_date} is missing "
                             f"database ID. RSI results cannot be saved. Check "
                             f"fetch_daily_candle() and repository.get_candle() "
-                            f"implementation."
+                            f"implementation.",
                         )
                     else:
                         try:
@@ -201,7 +201,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                             )
                         except Exception as e:
                             app_logger.error(
-                                f"Failed to save RSI results for {symbol.symbol_name}: {e!s}"
+                                f"Failed to save RSI results for {symbol.symbol_name}: {e!s}",
                             )
 
                 app_logger.info(
@@ -218,7 +218,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
         all_values = all_values.sort_values("RSI", ascending=False)
     else:
         app_logger.warning(
-            "No RSI values calculated - all_values DataFrame is empty or missing RSI column"
+            "No RSI values calculated - all_values DataFrame is empty or missing RSI column",
         )
 
     # Create table with new columns
@@ -245,7 +245,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                 f"{rsi:.2f}",
                 f"{daily_change:+.2f}",
                 f"{weekly_change:+.2f}",
-            ]
+            ],
         )
 
     return rsi_table

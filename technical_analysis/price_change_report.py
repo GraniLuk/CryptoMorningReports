@@ -47,11 +47,11 @@ def fetch_price_change_report(symbols: list[Symbol], conn, target_date: date) ->
                     (
                         [symbol.symbol_name, day_change_str, week_change_str],
                         day_change,  # This will be used for sorting
-                    )
+                    ),
                 )
         except Exception as e:
             app_logger.error(
-                f"Unexpected error when processing 24change report for {symbol.symbol_name}: {e!s}"
+                f"Unexpected error when processing 24change report for {symbol.symbol_name}: {e!s}",
             )
 
     # Sort rows based on the day_change value

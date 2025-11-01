@@ -77,7 +77,7 @@ def save_moving_averages_results(
             conn.commit()
             cursor.close()
             app_logger.info(
-                f"Successfully saved moving averages results to database for symbol_id {symbol_id}"
+                f"Successfully saved moving averages results to database for symbol_id {symbol_id}",
             )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving moving averages results: {e}")
@@ -114,7 +114,7 @@ def fetch_yesterday_moving_averages(conn, target_date: date) -> pd.DataFrame:
 
             df = pd.read_sql(query, conn, params=[yesterday])
             app_logger.info(
-                f"Successfully fetched {len(df)} moving averages records for {yesterday}"
+                f"Successfully fetched {len(df)} moving averages records for {yesterday}",
             )
             return df
         return pd.DataFrame()
@@ -156,7 +156,7 @@ def fetch_moving_averages_for_symbol(conn, symbol_id: int, lookback_days: int = 
 
             df = pd.read_sql(query, conn, params=[symbol_id, start_date])
             app_logger.info(
-                f"Successfully fetched {len(df)} moving averages records for symbol_id {symbol_id}"
+                f"Successfully fetched {len(df)} moving averages records for symbol_id {symbol_id}",
             )
             return df
         return pd.DataFrame()

@@ -24,7 +24,7 @@ class TestRSICalculationMethods:
         """Test RSI calculation on a simple increasing sequence."""
         # Simple increasing prices should show high RSI (overbought)
         prices = pd.Series(
-            [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115]
+            [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115],
         )
 
         rsi = calculate_rsi_using_rma(prices, periods=14)
@@ -36,7 +36,7 @@ class TestRSICalculationMethods:
         """Test RSI calculation on a simple decreasing sequence."""
         # Simple decreasing prices should show low RSI (oversold)
         prices = pd.Series(
-            [115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100]
+            [115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100],
         )
 
         rsi = calculate_rsi_using_rma(prices, periods=14)
@@ -78,7 +78,7 @@ class TestRSICalculationMethods:
                 109,
                 108,
                 110,
-            ]
+            ],
         )
 
         rsi_default = calculate_rsi_using_rma(prices)
@@ -142,7 +142,7 @@ class TestRSIAgainstTradingView:
                     "close": candle.close,
                 }
                 for candle in candles
-            ]
+            ],
         )
         df = df.set_index("Date")
         df = df.sort_index()
@@ -185,7 +185,7 @@ class TestRSIAgainstTradingView:
                     "close": candle.close,
                 }
                 for candle in candles
-            ]
+            ],
         )
         df = df.set_index("Date")
         df = df.sort_index()
@@ -206,7 +206,7 @@ class TestRSIEdgeCases:
     def test_rsi_with_nan_values(self):
         """Test RSI handles NaN values in price data."""
         prices = pd.Series(
-            [100, 101, None, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115]
+            [100, 101, None, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115],
         )
 
         # Should handle NaN gracefully
@@ -218,7 +218,7 @@ class TestRSIEdgeCases:
     def test_rsi_with_negative_prices(self):
         """Test RSI with negative prices (invalid for crypto but test edge case)."""
         prices = pd.Series(
-            [-100, -99, -98, -97, -96, -95, -94, -93, -92, -91, -90, -89, -88, -87, -86, -85]
+            [-100, -99, -98, -97, -96, -95, -94, -93, -92, -91, -90, -89, -88, -87, -86, -85],
         )
 
         # Should still calculate (mathematically valid)
@@ -230,7 +230,7 @@ class TestRSIEdgeCases:
     def test_rsi_with_extreme_volatility(self):
         """Test RSI with extreme price swings."""
         prices = pd.Series(
-            [100, 200, 50, 300, 25, 400, 10, 500, 5, 600, 1, 700, 0.5, 800, 0.1, 900]
+            [100, 200, 50, 300, 25, 400, 10, 500, 5, 600, 1, 700, 0.5, 800, 0.1, 900],
         )
 
         rsi = calculate_rsi_using_rma(prices, periods=14)
@@ -257,7 +257,7 @@ class TestRSIDataRequirements:
 
         # Test with insufficient data (15 days)
         candles_15 = fetch_daily_candles(
-            virtual, target_date - timedelta(days=15), target_date, conn
+            virtual, target_date - timedelta(days=15), target_date, conn,
         )
         df_15 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_15])
         df_15 = df_15.set_index("Date")
@@ -265,7 +265,7 @@ class TestRSIDataRequirements:
 
         # Test with sufficient data (30+ days)
         candles_30 = fetch_daily_candles(
-            virtual, target_date - timedelta(days=30), target_date, conn
+            virtual, target_date - timedelta(days=30), target_date, conn,
         )
         df_30 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_30])
         df_30 = df_30.set_index("Date")
@@ -303,7 +303,7 @@ class TestRSIMethodComparison:
                 113.2,
                 114.5,
                 113.9,
-            ]
+            ],
         )
 
         rsi_rma = calculate_rsi_using_rma(prices, periods=14)

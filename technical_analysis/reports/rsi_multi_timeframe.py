@@ -24,7 +24,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 
 def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
-    symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7
+    symbol: Symbol, conn, timeframe: str = "daily", lookback_days: int = 7,
 ) -> pd.DataFrame | None:
     """Get RSI data for a symbol in the specified timeframe.
 
@@ -59,19 +59,19 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
     }
 
     calculation_start_date = start_date - timedelta(
-        days=additional_lookback.get(timeframe, rsi_periods)
+        days=additional_lookback.get(timeframe, rsi_periods),
     )
 
     try:  # Get candle data with RSI values from the database, using the
         # extended date range for calculation
         candles_with_rsi = get_candles_with_rsi(
-            conn, symbol.symbol_id, calculation_start_date.isoformat(), timeframe
+            conn, symbol.symbol_id, calculation_start_date.isoformat(), timeframe,
         )
 
         if not candles_with_rsi:
             app_logger.warning(
                 f"No {timeframe} RSI data found for {symbol.symbol_name}, "
-                f"attempting to calculate RSI"
+                f"attempting to calculate RSI",
             )
 
             # Attempt to fetch candles directly and calculate RSI
@@ -80,7 +80,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
                 app_logger.error(f"No repository available for timeframe: {timeframe}")
                 return None  # Fetch candles for calculation (need more data for RSI calculation)
             extended_start_date = calculation_start_date - timedelta(
-                days=30
+                days=30,
             )  # Get more historical data for RSI calculation
             # Convert date to datetime for repository call
             extended_start_datetime = datetime.combine(extended_start_date, datetime.min.time())
@@ -142,7 +142,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
         if missing_rsi:
             app_logger.info(
                 f"Found missing {timeframe} RSI values for "
-                f"{symbol.symbol_name}, calculating them now..."
+                f"{symbol.symbol_name}, calculating them now...",
             )
 
             # Calculate RSI for the entire dataframe (to ensure accurate values)
@@ -152,7 +152,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
             missing_mask: pd.Series = requested_df["RSI"].isna()
             missing_rows: pd.DataFrame = requested_df[missing_mask]
             app_logger.info(
-                f"Found {len(missing_rows)} rows with missing RSI in the requested date range"
+                f"Found {len(missing_rows)} rows with missing RSI in the requested date range",
             )
             # Update only the missing values in the database
             for idx, row in missing_rows.iterrows():
@@ -176,18 +176,18 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
 
                         app_logger.info(
                             f"Saved {timeframe} RSI for {symbol.symbol_name} "
-                            f"candle {candle_id}: RSI={calculated_rsi:.2f}"
+                            f"candle {candle_id}: RSI={calculated_rsi:.2f}",
                         )
                 except Exception as e:
                     app_logger.error(
-                        f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}"
+                        f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}",
                     )
 
             # Remove the temporary calculation column
             df = df.drop("calculated_RSI", axis=1, errors="ignore")
 
             app_logger.info(
-                f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}"
+                f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}",
             )
 
         # Return only the data for the requested date range using the aligned start_timestamp
@@ -285,7 +285,7 @@ def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str]
         row_data.append(
             f"{latest_data['daily']['rsi']:.2f}"
             if latest_data["daily"]["rsi"] is not None
-            else "N/A"
+            else "N/A",
         )
 
     if "hourly" in latest_data:
@@ -293,7 +293,7 @@ def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str]
         row_data.append(
             f"{latest_data['hourly']['rsi']:.2f}"
             if latest_data["hourly"]["rsi"] is not None
-            else "N/A"
+            else "N/A",
         )
 
     if "fifteen_min" in latest_data:
@@ -301,7 +301,7 @@ def create_multi_timeframe_rsi_table(symbol: Symbol, conn, timeframes: list[str]
         row_data.append(
             f"{latest_data['fifteen_min']['rsi']:.2f}"
             if latest_data["fifteen_min"]["rsi"] is not None
-            else "N/A"
+            else "N/A",
         )
 
     # Check if all required RSI values are present
@@ -376,7 +376,7 @@ def create_multi_timeframe_rsi_tables(
                         symbol,
                         f"${price:,.2f}",
                         f"{rsi:.2f}" if rsi is not None else "N/A",
-                    ]
+                    ],
                 )
 
             tables[timeframe] = table
@@ -455,7 +455,7 @@ def create_consolidated_rsi_table(symbols: list[Symbol], conn) -> PrettyTable:
                 row.get("daily_rsi", "N/A"),
                 row.get("hourly_rsi", "N/A"),
                 row.get("fifteen_min_rsi", "N/A"),
-            ]
+            ],
         )
 
     return table
@@ -496,7 +496,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
                     "volume": candle.volume,
                 }
                 for candle in candles
-            ]
+            ],
         )
 
         df = df.set_index("date")

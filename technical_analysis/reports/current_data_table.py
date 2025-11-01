@@ -143,12 +143,12 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
         daily_rsi_df = get_rsi_for_symbol_timeframe(symbol, conn, "daily", lookback_days=7)
         hourly_rsi_df = get_rsi_for_symbol_timeframe(symbol, conn, "hourly", lookback_days=2)
         fifteen_min_rsi_df = get_rsi_for_symbol_timeframe(
-            symbol, conn, "fifteen_min", lookback_days=1
+            symbol, conn, "fifteen_min", lookback_days=1,
         )
 
         # Extract latest price (prefer 15min, then hourly, then daily)
         data["latest_price"] = _extract_latest_price(
-            daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df
+            daily_rsi_df, hourly_rsi_df, fifteen_min_rsi_df,
         )
 
         # Extract RSI values for each timeframe
@@ -207,11 +207,11 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
                                 "low": c_low,
                                 "range": c_range,
                                 "range_pct": c_range_pct,
-                            }
+                            },
                         )
                     except Exception as e:
                         app_logger.warning(
-                            "Could not compute daily range for date %s: %s", date_str, e
+                            "Could not compute daily range for date %s: %s", date_str, e,
                         )
                         continue
                 data["daily_ranges_7d"] = ranges
@@ -239,7 +239,7 @@ def get_current_data_for_symbol(symbol: Symbol, conn) -> dict[str, Any]:  # noqa
 
             except Exception as deriv_error:
                 app_logger.warning(
-                    f"Could not fetch derivatives data for {symbol.symbol_name}: {deriv_error}"
+                    f"Could not fetch derivatives data for {symbol.symbol_name}: {deriv_error}",
                 )
 
         app_logger.info(f"Successfully retrieved current data for {symbol.symbol_name}")
@@ -480,7 +480,7 @@ def get_current_data_for_ai_prompt(symbol: Symbol, conn) -> str:
                 rng_str = f"${rng_val:,.4f}" if rng_val is not None else "N/A"
                 rng_pct_str = f"{rng_pct_val:.2f}%" if rng_pct_val is not None else "N/A"
                 ranges_lines.append(
-                    f"- {r.get('date', '')}: {high_str} | {low_str} | {rng_str} | {rng_pct_str}"
+                    f"- {r.get('date', '')}: {high_str} | {low_str} | {rng_str} | {rng_pct_str}",
                 )
         else:
             ranges_lines.append("No recent daily range data available")

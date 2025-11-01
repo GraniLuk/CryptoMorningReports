@@ -35,7 +35,7 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
         if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
             app_logger.warning(
                 "SOPR API rate limit exceeded (5 requests/hour for free tier). "
-                "Skipping SOPR metrics this run."
+                "Skipping SOPR metrics this run.",
             )
             return None
         if response.status_code != HTTPStatus.OK:

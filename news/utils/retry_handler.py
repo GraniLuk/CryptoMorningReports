@@ -41,13 +41,13 @@ def retry_with_fallback_models(
             if "504" in str(result) and current_try < max_retries - 1:
                 app_logger.warning(
                     f"{operation_name}: Received 504 error with {current_model}, "
-                    f"retrying with next model"
+                    f"retrying with next model",
                 )
                 current_try += 1
                 continue
             if current_try < max_retries - 1:
                 app_logger.warning(
-                    f"{operation_name}: Failed with {current_model}, retrying with next model"
+                    f"{operation_name}: Failed with {current_model}, retrying with next model",
                 )
                 current_try += 1
                 continue

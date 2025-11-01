@@ -31,10 +31,10 @@ def run_grid_search_for_symbol(conn, symbol):
     candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
 
     for rsi_value, tp_value, sl_value, days_after_to_buy in itertools.product(
-        rsi_range, tp_values, sl_values, days_options
+        rsi_range, tp_values, sl_values, days_options,
     ):
         results_df, ratio = run_strategy_for_symbol_internal(
-            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy
+            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy,
         )
 
         if not results_df.empty:
@@ -57,7 +57,7 @@ def run_grid_search_for_symbol(conn, symbol):
                 "TP_ratio": ratio,
                 "TP_hits": tp_hits,
                 "SL_hits": sl_hits,
-            }
+            },
         )
 
     grid_df = pd.DataFrame(results)

@@ -79,7 +79,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
         # Get next funding time from mark price
         mark_price = client.futures_mark_price(symbol=symbol.binance_name)
         next_funding_time = datetime.fromtimestamp(
-            mark_price.get("nextFundingTime", 0) / 1000, tz=UTC
+            mark_price.get("nextFundingTime", 0) / 1000, tz=UTC,
         )
 
         return FuturesMetrics(
@@ -96,7 +96,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
         return None
     except Exception as e:
         app_logger.error(
-            f"Unexpected error fetching futures metrics for {symbol.symbol_name}: {e!s}"
+            f"Unexpected error fetching futures metrics for {symbol.symbol_name}: {e!s}",
         )
         return None
 
@@ -187,7 +187,7 @@ def fetch_binance_daily_kline(symbol: Symbol, end_date: date | None = None) -> C
     # Get yesterday's date
     end_date_timestamp = datetime.combine(end_date, datetime.min.time()).timestamp()
     start_date_timestamp = datetime.combine(
-        end_date - timedelta(days=1), datetime.min.time()
+        end_date - timedelta(days=1), datetime.min.time(),
     ).timestamp()
 
     try:

@@ -233,13 +233,13 @@ def connect_to_sql(max_retries=3):
                 try:
                     connection_string = os.environ["AZURE_SQL_CONNECTIONSTRING"]
                     credential = identity.DefaultAzureCredential(
-                        exclude_interactive_browser_credential=False
+                        exclude_interactive_browser_credential=False,
                     )
                     token = credential.get_token("https://database.windows.net/.default").token
                     app_logger.info(f"Access token: {token}")
                     token_bytes = token.encode("UTF-16-LE")
                     token_struct = struct.pack(
-                        f"<I{len(token_bytes)}s", len(token_bytes), token_bytes
+                        f"<I{len(token_bytes)}s", len(token_bytes), token_bytes,
                     )
                     sql_copt_ss_access_token = (
                         1256  # This connection option is defined by microsoft in msodbcsql.h
@@ -272,7 +272,7 @@ def connect_to_sql(max_retries=3):
                         "TrustServerCertificate=no"
                     )
                     app_logger.info(
-                        f"Local connection string (without password): {connection_string}"
+                        f"Local connection string (without password): {connection_string}",
                     )
                     conn = pyodbc.connect(connection_string + f";PWD={password}")
                     app_logger.info("Successfully connected to the database.")

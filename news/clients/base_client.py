@@ -8,7 +8,7 @@ class AIClient(ABC):
 
     @abstractmethod
     def get_detailed_crypto_analysis_with_news(
-        self, indicators_message, news_feeded, conn=None
+        self, indicators_message, news_feeded, conn=None,
     ) -> str:
         """Get detailed crypto analysis with news context.
 

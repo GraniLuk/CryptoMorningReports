@@ -59,7 +59,7 @@ def _configure_ai_api():
 
 
 async def _process_ai_analysis(
-    ai_api_key, ai_api_type, symbols, current_prices_section, conn, today_date, logger
+    ai_api_key, ai_api_type, symbols, current_prices_section, conn, today_date, logger,
 ):
     """Process AI analysis with news and handle uploads/email."""
     analysis_reported_with_news = "Failed: Analysis with news not generated"
@@ -108,7 +108,7 @@ async def _process_ai_analysis(
                     f"{row.get('RangePercent', ''):>6} | "
                     f"{oi_str:>10} | "
                     f"{oi_val_str:>11} | "
-                    f"{fr_str:>11}"
+                    f"{fr_str:>11}",
                 )
             except Exception as e:
                 lines.append(f"Row format error: {e}")
@@ -122,7 +122,7 @@ async def _process_ai_analysis(
     aggregated_formatted = format_aggregated(aggregated_data)
     aggregated_with_prices = current_prices_section + aggregated_formatted
     analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
-        ai_api_key, aggregated_with_prices, fetched_news, ai_api_type, conn
+        ai_api_key, aggregated_with_prices, fetched_news, ai_api_type, conn,
     )
     highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
 
@@ -154,7 +154,7 @@ async def _process_ai_analysis(
             if not recipients:
                 logger.info(
                     "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; "
-                    "skipping email dispatch."
+                    "skipping email dispatch.",
                 )
             else:
                 email_body = (
@@ -184,18 +184,18 @@ async def _process_ai_analysis(
             )
             if highlights_saved_to_onedrive:
                 logger.info(
-                    "Highlighted articles for %s saved to OneDrive news folder.", today_date
+                    "Highlighted articles for %s saved to OneDrive news folder.", today_date,
                 )
             else:
                 logger.warning(
-                    "Failed to save highlighted articles for %s to OneDrive.", today_date
+                    "Failed to save highlighted articles for %s to OneDrive.", today_date,
                 )
 
     return analysis_reported_with_news
 
 
 async def process_daily_report(  # noqa: PLR0915
-    conn, telegram_enabled, telegram_token, telegram_chat_id
+    conn, telegram_enabled, telegram_token, telegram_chat_id,
 ):
     """Process and send the daily cryptocurrency report via Telegram."""
     logger = app_logger
@@ -225,7 +225,7 @@ async def process_daily_report(  # noqa: PLR0915
 
     rsi_table = create_rsi_table(symbols, conn, target_date=datetime.now(UTC).date())
     ma_average_table, ema_average_table = calculate_indicators(
-        symbols, conn, target_date=datetime.now(UTC).date()
+        symbols, conn, target_date=datetime.now(UTC).date(),
     )
     range_table = fetch_range_price(symbols, conn)
     stepn_table = fetch_stepn_report(conn)
@@ -234,7 +234,7 @@ async def process_daily_report(  # noqa: PLR0915
     volume_table = fetch_volume_report(symbols, conn)
     marketcap_table = fetch_marketcap_report(symbols, conn)
     pricechange_table = fetch_price_change_report(
-        symbols, conn, target_date=datetime.now(UTC).date()
+        symbols, conn, target_date=datetime.now(UTC).date(),
     )
     sopr_table = fetch_sopr_metrics(conn)
     derivatives_table = fetch_derivatives_report(symbols, conn)
@@ -256,10 +256,10 @@ async def process_daily_report(  # noqa: PLR0915
             key=lambda s: (0 if s.symbol_name in priority else 1, s.symbol_name),
         )[:limit]
         lines = [
-            "Symbol  | Last        | 24h Low     | 24h High    | Range% | FromLow% | FromHigh%"
+            "Symbol  | Last        | 24h Low     | 24h High    | Range% | FromLow% | FromHigh%",
         ]
         lines.append(
-            "--------|------------|------------|------------|--------|----------|-----------"
+            "--------|------------|------------|------------|--------|----------|-----------",
         )
         for sym in ordered:
             try:
@@ -271,7 +271,7 @@ async def process_daily_report(  # noqa: PLR0915
                 lines.append(
                     f"{sym.symbol_name:<7}| {tp.last:>10.6f} | {tp.low:>10.6f} | "
                     f"{tp.high:>10.6f} | {pos_pct:>6.2f} | {from_low:>8.2f} | "
-                    f"{from_high:>9.2f}"
+                    f"{from_high:>9.2f}",
                 )
             except Exception as e:
                 lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")
@@ -301,7 +301,7 @@ async def process_daily_report(  # noqa: PLR0915
 
     # Process AI analysis with news
     analysis_reported_with_news = await _process_ai_analysis(
-        ai_api_key, ai_api_type, symbols, current_prices_section, conn, today_date, logger
+        ai_api_key, ai_api_type, symbols, current_prices_section, conn, today_date, logger,
     )
 
     # Send all messages

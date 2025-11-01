@@ -35,7 +35,7 @@ def run_strategy_for_all_symbols(
         # Assuming you have a valid connection and symbol_id
         candles_data = get_candles_with_rsi(conn, symbol.symbol_id, five_years_ago)
         results_df, ratio = run_strategy_for_symbol_internal(
-            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy
+            candles_data, symbol, rsi_value, tp_value, sl_value, days_after_to_buy,
         )
         symbol_ratios[symbol.symbol_name] = ratio
 

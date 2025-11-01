@@ -20,7 +20,7 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
     """Calculate MACD indicators for given symbols and return a formatted table."""
     macd_values = []
     MACDData = namedtuple(
-        "MACDData", ["symbol", "current_price", "macd", "signal", "histogram", "status"]
+        "MACDData", ["symbol", "current_price", "macd", "signal", "histogram", "status"],
     )
 
     # Fetch previous day's values
@@ -53,7 +53,7 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
                         "Volume": candle.volume,
                     }
                     for candle in candles
-                ]
+                ],
             )
 
             # Normalize dates to timezone-naive datetime objects for consistent comparison
@@ -105,7 +105,7 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
                     signal=signal,
                     histogram=histogram,
                     status=status,
-                )
+                ),
             )
 
             # Save to database
@@ -138,7 +138,7 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
                 format_to_6digits_without_trailing_zeros(row.current_price),
                 format_to_6digits_without_trailing_zeros(row.macd),
                 f"{format_to_6digits_without_trailing_zeros(row.histogram)} {row.status}",
-            ]
+            ],
         )
 
     return macd_table

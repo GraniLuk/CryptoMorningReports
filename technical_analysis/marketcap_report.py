@@ -45,7 +45,7 @@ def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
                             "symbol_id": crypto.symbol_id,
                             "name": crypto.full_name,
                             "market_cap": market_cap,
-                        }
+                        },
                     )
                 else:
                     missing_symbols.append(crypto.symbol_name)

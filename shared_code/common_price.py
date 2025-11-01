@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 
 TickerPrice = namedtuple(
-    "TickerPrice", ["source", "symbol", "low", "high", "last", "volume", "volume_quote"]
+    "TickerPrice", ["source", "symbol", "low", "high", "last", "volume", "volume_quote"],
 )
 
 

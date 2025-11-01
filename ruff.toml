@@ -38,6 +38,7 @@ select = [
     "PTH",    # flake8-use-pathlib
     "PL",     # pylint
     "RUF",    # ruff-specific rules
+    "COM",    # flake8-commas - trailing commas
     "ERA",    # eradicate - commented-out code
     "FBT",    # flake8-boolean-trap - boolean arguments
     "G",      # flake8-logging-format - logging format

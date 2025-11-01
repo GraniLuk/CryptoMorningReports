@@ -83,7 +83,7 @@ def save_macd_results(
             conn.commit()
             cursor.close()
             app_logger.info(
-                f"Successfully saved MACD results to database for symbol_id {symbol_id}"
+                f"Successfully saved MACD results to database for symbol_id {symbol_id}",
             )
     except pyodbc.Error as e:
         app_logger.error(f"ODBC Error while saving MACD results: {e}")
@@ -121,7 +121,7 @@ def fetch_yesterday_macd(conn, target_date: date) -> pd.DataFrame | None:
             # Normalize IndicatorDate to timezone-naive datetime for consistent comparison
             if not df.empty and "IndicatorDate" in df.columns:
                 df["IndicatorDate"] = pd.to_datetime(df["IndicatorDate"], utc=True).dt.tz_localize(
-                    None
+                    None,
                 )
 
             app_logger.info(f"Successfully fetched {len(df)} MACD records for {yesterday}")

@@ -46,7 +46,7 @@ def run_backtest(  # noqa: PLR0915
         if not active_trade and df.loc[i, "signal"] and (i + days_after_to_buy < len(df)):
             active_trade = True
             entry_date = datetime.strptime(
-                str(df.loc[i + days_after_to_buy, "date"]), "%Y-%m-%d"
+                str(df.loc[i + days_after_to_buy, "date"]), "%Y-%m-%d",
             ).replace(tzinfo=UTC)
             entry_price = Decimal(str(df.loc[i + days_after_to_buy, "Open"]))
 
@@ -63,7 +63,7 @@ def run_backtest(  # noqa: PLR0915
                 current_high = Decimal(str(df.loc[j, "High"]))
                 current_low = Decimal(str(df.loc[j, "Low"]))
                 current_date = datetime.strptime(str(df.loc[j, "date"]), "%Y-%m-%d").replace(
-                    tzinfo=UTC
+                    tzinfo=UTC,
                 )
                 close_date = current_date
 
@@ -102,7 +102,7 @@ def run_backtest(  # noqa: PLR0915
                         "trade_outcome": outcome,
                         "days": days_taken,
                         "profit": profit,
-                    }
+                    },
                 )
 
     # Analyze results
@@ -113,7 +113,7 @@ def run_backtest(  # noqa: PLR0915
 
         results_df["profit"].sum()
         results_df.groupby("trade_outcome").agg(
-            count=("trade_outcome", "size"), avg_days=("days", "mean")
+            count=("trade_outcome", "size"), avg_days=("days", "mean"),
         )
 
     else:

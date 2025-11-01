@@ -91,7 +91,7 @@ def fetch_derivatives_report(symbols: list[Symbol], conn) -> PrettyTable:
                     f"${metrics.open_interest_value:,.0f}",
                     f"{metrics.funding_rate:.4f}%",
                     metrics.next_funding_time.strftime("%H:%M UTC"),
-                ]
+                ],
             )
 
             successful += 1

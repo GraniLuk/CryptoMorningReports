@@ -69,7 +69,7 @@ class FundingRateRepository:
             self.conn.commit()
             app_logger.info(
                 f"Saved Funding Rate for SymbolID {symbol_id}: "
-                f"{funding_rate:.6f}%, Next: {funding_time}"
+                f"{funding_rate:.6f}%, Next: {funding_time}",
             )
 
         except Exception as e:
