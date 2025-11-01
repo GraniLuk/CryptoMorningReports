@@ -99,8 +99,8 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
 
         # Create DataFrame from candles
         df = pd.DataFrame(candles_with_rsi)
-        df.set_index("date", inplace=True)
-        df.sort_index(inplace=True)
+        df = df.set_index("date")
+        df = df.sort_index()
         df["symbol"] = symbol.symbol_name
 
         # Ensure the index is DatetimeIndex
@@ -184,7 +184,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
                     )
 
             # Remove the temporary calculation column
-            df.drop("calculated_RSI", axis=1, inplace=True, errors="ignore")
+            df = df.drop("calculated_RSI", axis=1, errors="ignore")
 
             app_logger.info(
                 f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}"
@@ -499,8 +499,8 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
             ]
         )
 
-        df.set_index("date", inplace=True)
-        df.sort_index(inplace=True)
+        df = df.set_index("date")
+        df = df.sort_index()
 
         # Calculate RSI using RMA method
         df["rsi"] = calculate_rsi_using_rma(df["close"])
@@ -511,7 +511,7 @@ def _calculate_and_save_rsi(conn, symbol: Symbol, candles: list, timeframe: str)
 
         # Return data in the format expected by the calling function
         # Reset index to make date a column again
-        df.reset_index(inplace=True)
+        df = df.reset_index()
 
         # Filter out rows with NaN RSI values and return as list of dictionaries
         valid_data = df.dropna(subset=["rsi"])

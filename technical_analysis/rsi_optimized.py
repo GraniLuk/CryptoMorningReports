@@ -65,8 +65,8 @@ def get_optimized_rsi_for_symbol_timeframe(
 
         # Create DataFrame from candles
         df = pd.DataFrame(candles_with_rsi)
-        df.set_index("date", inplace=True)
-        df.sort_index(inplace=True)
+        df = df.set_index("date")
+        df = df.sort_index()
         df["symbol"] = symbol.symbol_name
 
         # Check if any candles in the requested date range are missing RSI values
@@ -130,7 +130,7 @@ def get_optimized_rsi_for_symbol_timeframe(
                         )
 
             # Remove the temporary calculation column
-            df.drop("calculated_RSI", axis=1, inplace=True, errors="ignore")
+            df = df.drop("calculated_RSI", axis=1, errors="ignore")
 
             app_logger.info(
                 f"Successfully updated missing {timeframe} RSI values for {symbol.symbol_name}"

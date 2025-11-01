@@ -39,8 +39,8 @@ def calculate_rsi_for_candles(candles, _timeframe="daily"):
     )
 
     # Sort by date
-    df.set_index("Date", inplace=True)
-    df.sort_index(inplace=True)
+    df = df.set_index("Date")
+    df = df.sort_index()
 
     # Calculate RSI for the entire series
     df["RSI"] = calculate_rsi_using_rma(df["close"])

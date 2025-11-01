@@ -166,7 +166,7 @@ def fetch_close_prices_from_binance(symbol: str, lookback_days: int = 14) -> pd.
         # Convert price columns to float
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
-        df.set_index("timestamp", inplace=True)
+        df = df.set_index("timestamp")
 
     except BinanceAPIException as e:
         app_logger.error(f"Error fetching data for {symbol}: {e.message}")

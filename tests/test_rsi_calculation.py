@@ -144,8 +144,8 @@ class TestRSIAgainstTradingView:
                 for candle in candles
             ]
         )
-        df.set_index("Date", inplace=True)
-        df.sort_index(inplace=True)
+        df = df.set_index("Date")
+        df = df.sort_index()
 
         # Calculate RSI using RMA (which is what TradingView uses)
         df["RSI_RMA"] = calculate_rsi_using_rma(df["close"], periods=14)
@@ -188,8 +188,8 @@ class TestRSIAgainstTradingView:
                 for candle in candles
             ]
         )
-        df.set_index("Date", inplace=True)
-        df.sort_index(inplace=True)
+        df = df.set_index("Date")
+        df = df.sort_index()
 
         # Calculate RSI multiple times
         rsi1 = calculate_rsi_using_rma(df["close"], periods=14)
@@ -261,7 +261,7 @@ class TestRSIDataRequirements:
             virtual, target_date - timedelta(days=15), target_date, conn
         )
         df_15 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_15])
-        df_15.set_index("Date", inplace=True)
+        df_15 = df_15.set_index("Date")
         calculate_rsi_using_rma(df_15["close"])
 
         # Test with sufficient data (30+ days)
@@ -269,7 +269,7 @@ class TestRSIDataRequirements:
             virtual, target_date - timedelta(days=30), target_date, conn
         )
         df_30 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_30])
-        df_30.set_index("Date", inplace=True)
+        df_30 = df_30.set_index("Date")
         calculate_rsi_using_rma(df_30["close"])
 
 

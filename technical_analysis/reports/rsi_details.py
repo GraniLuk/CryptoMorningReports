@@ -27,8 +27,8 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
 
         # Create DataFrame from candles
         df = pd.DataFrame(candles_with_rsi)
-        df.set_index("date", inplace=True)
-        df.sort_index(inplace=True)
+        df = df.set_index("date")
+        df = df.sort_index()
         df["symbol"] = symbol.symbol_name
 
         if not df.empty:

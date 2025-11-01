@@ -60,8 +60,8 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
             if not df.empty and "Date" in df.columns:
                 df["Date"] = pd.to_datetime(df["Date"], utc=True).dt.tz_localize(None)
 
-            df.set_index("Date", inplace=True)
-            df.sort_index(inplace=True)
+            df = df.set_index("Date")
+            df = df.sort_index()
 
             if df.empty:
                 continue

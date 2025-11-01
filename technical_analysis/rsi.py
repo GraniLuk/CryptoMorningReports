@@ -150,8 +150,8 @@ def calculate_all_rsi_for_symbol(conn, symbol):
             for candle in all_daily_candles
         ]
     )
-    df.set_index("Date", inplace=True)
-    df.sort_index(inplace=True)
+    df = df.set_index("Date")
+    df = df.sort_index()
 
     # Calculate RSI for entire series using your EMA based method
     df["RSI"] = calculate_rsi_using_rma(df["close"])

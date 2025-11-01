@@ -121,7 +121,7 @@ def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         df = df.sort_values("timestamp", ascending=True)
 
         # Set timestamp as index after sorting
-        df.set_index("timestamp", inplace=True)
+        df = df.set_index("timestamp")
 
     except Exception as e:
         app_logger.error(f"Error fetching data from Kucoin: {e!s}")

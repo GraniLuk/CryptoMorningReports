@@ -39,12 +39,12 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
                 for candle in candles
             ]
         )
-        df.set_index("Date", inplace=True)
+        df = df.set_index("Date")
 
         # Normalize index to timezone-naive date objects (handle mixed datetime/date/timezone types)
         df.index = pd.to_datetime(df.index, utc=True).tz_localize(None).date
 
-        df.sort_index(inplace=True)
+        df = df.sort_index()
 
         if not df.empty:
             df["RSI"] = calculate_rsi_using_rma(df["close"])
@@ -142,13 +142,13 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                     for candle in candles
                 ]
             )
-            df.set_index("Date", inplace=True)
+            df = df.set_index("Date")
 
             # Normalize index to timezone-naive date objects
             # (handle mixed datetime/date/timezone types)
             df.index = pd.to_datetime(df.index, utc=True).tz_localize(None).date
 
-            df.sort_index(inplace=True)
+            df = df.sort_index()
 
             if not df.empty:
                 df["RSI"] = calculate_rsi_using_rma(df["close"])

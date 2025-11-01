@@ -109,7 +109,7 @@ def calculate_indicators(  # noqa: PLR0915
             df = pd.DataFrame(
                 [{"Close": candle.close, "Date": candle.end_date} for candle in candles]
             )
-            df.set_index("Date", inplace=True)
+            df = df.set_index("Date")
 
             if df.empty:
                 app_logger.warning(
