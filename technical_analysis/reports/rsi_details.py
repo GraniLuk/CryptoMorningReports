@@ -51,7 +51,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
                 df["Close"].iloc[-1],
                 df["RSI"].iloc[-1],
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error processing {symbol.symbol_name}: {e!s}")
 
     # Create PrettyTable output

@@ -50,7 +50,7 @@ async def main():
             await run_report(report_type)
 
 
-    except Exception:
+    except Exception:  # noqa: BLE001
         traceback.print_exc()
         sys.exit(1)
 

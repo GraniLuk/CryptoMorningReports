@@ -124,7 +124,7 @@ def get_optimized_rsi_for_symbol_timeframe(
                             f"Saved {timeframe} RSI for {symbol.symbol_name} "
                             f"candle {candle_id}: RSI={calculated_rsi_value:.2f}",
                         )
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         app_logger.error(
                             f"Failed to save {timeframe} RSI for candle {candle_id}: {e!s}",
                         )
@@ -139,7 +139,7 @@ def get_optimized_rsi_for_symbol_timeframe(
         # Return only the data for the requested date range
         return df[df.index >= pd.Timestamp(start_date)]
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error getting {timeframe} RSI for {symbol.symbol_name}: {e!s}")
         return None
 

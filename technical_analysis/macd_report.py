@@ -120,10 +120,10 @@ def calculate_macd(symbols: list[Symbol], conn, target_date: date) -> PrettyTabl
                         histogram=histogram,
                         indicator_date=target_date,
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     app_logger.error(f"Failed to save MACD results for {symbol.symbol_name}: {e!s}")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             app_logger.error("Error processing MACD for symbol %s: %s", symbol.symbol_name, str(e))
 
     # Create MACD table

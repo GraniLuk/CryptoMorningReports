@@ -58,7 +58,7 @@ def fetch_sopr_metrics(conn) -> PrettyTable | None:
             return None
         metrics["LTH-SOPR"] = response.json()[0]
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching SOPR metrics: {e!s}")
         return None
     else:

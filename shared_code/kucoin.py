@@ -33,7 +33,7 @@ def fetch_kucoin_price(symbol: Symbol) -> TickerPrice | None:
             volume=float(ticker["vol"]),
             volume_quote=float(ticker["volValue"]),
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Kucoin error for {symbol}: {e!s}")
         return None
 
@@ -75,7 +75,7 @@ def fetch_kucoin_daily_kline(symbol: Symbol, end_date: date | None = None) -> Ca
             volume_quote=float(klines[0][6]),
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Unexpected error when fetching Kucoin daily kline for {symbol}: {e!s}")
         return None
 
@@ -120,7 +120,7 @@ def fetch_close_prices_from_kucoin(symbol: str, limit: int = 14) -> pd.DataFrame
         # Set timestamp as index after sorting
         df = df.set_index("timestamp")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching data from Kucoin: {e!s}")
         return pd.DataFrame()
 
@@ -186,7 +186,7 @@ def fetch_kucoin_hourly_kline(symbol: Symbol, end_time: datetime | None = None) 
             volume_quote=float(klines[0][6]),
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching hourly data for {symbol.symbol_name}: {e!s}")
         return None
 
@@ -241,7 +241,7 @@ def fetch_kucoin_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candle
             volume_quote=float(klines[0][6]),
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching 15-minute data for {symbol.symbol_name}: {e!s}")
         return None
 

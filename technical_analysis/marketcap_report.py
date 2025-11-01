@@ -49,7 +49,7 @@ def fetch_marketcap_report(symbols: list[Symbol], conn) -> PrettyTable:
                     )
                 else:
                     missing_symbols.append(crypto.symbol_name)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching market caps: {e}")
 
     # Sort results by market cap descending

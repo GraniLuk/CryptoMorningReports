@@ -278,7 +278,7 @@ def connect_to_sql(max_retries=3):
                     app_logger.info("Successfully connected to the database.")
                 except pyodbc.Error as e:
                     app_logger.warning(f"ODBC Error: {e}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     app_logger.warning(f"Failed to connect to the database: {e!s}")
                 else:
                     return conn

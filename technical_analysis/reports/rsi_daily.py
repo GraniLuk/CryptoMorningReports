@@ -84,7 +84,7 @@ def create_rsi_table_for_symbol(symbol: Symbol, conn, target_date: date) -> Pret
                 latest_row["close"].iloc[-1],
                 latest_row["RSI"].iloc[-1],
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error processing {symbol.symbol_name}: {e!s}")
 
     rsi_table = PrettyTable()
@@ -199,7 +199,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                                 daily_candle_id=candles[-1].id,
                                 rsi=float(latest_row["RSI"].iloc[-1]),
                             )
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             app_logger.error(
                                 f"Failed to save RSI results for {symbol.symbol_name}: {e!s}",
                             )
@@ -210,7 +210,7 @@ def create_rsi_table(symbols: list[Symbol], conn, target_date: date) -> PrettyTa
                     latest_row["close"].iloc[-1],
                     latest_row["RSI"].iloc[-1],
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             app_logger.error(f"Error processing {symbol.symbol_name}: {e!s}")
 
     # Sort by RSI descending only if we have data
@@ -255,7 +255,7 @@ def save_rsi_for_candle(conn, daily_candle_id: int, rsi: float) -> None:
     """Save RSI value for a specific daily candle."""
     try:
         save_rsi_results(conn=conn, daily_candle_id=daily_candle_id, rsi=rsi)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Failed to save RSI results for candle {daily_candle_id}: {e!s}")
 
 

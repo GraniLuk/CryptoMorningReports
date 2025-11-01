@@ -30,7 +30,7 @@ def fetch_and_format_candle_data(conn) -> str:
         candle_data = get_candle_data(symbols, conn, hourly_limit=6, minute_limit=8)
         price_data = format_candle_data_for_prompt(candle_data, max_display_candles=3)
         app_logger.info(f"Successfully fetched candle data for {len(symbols)} symbols")
-    except Exception:
+    except Exception:  # noqa: BLE001
         app_logger.exception("Failed to fetch candle data")
         return "No price data available."
     else:

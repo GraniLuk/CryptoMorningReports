@@ -79,7 +79,7 @@ async def send_email_with_epub_attachment(
         )
     except smtplib.SMTPAuthenticationError:
         app_logger.exception("SMTP authentication failed for Gmail account %s", username)
-    except Exception:
+    except Exception:  # noqa: BLE001
         app_logger.exception("Failed to send EPUB report email via Gmail")
     else:
         app_logger.info("Sent EPUB report email to %s", ", ".join(recipient_list))

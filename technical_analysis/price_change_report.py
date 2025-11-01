@@ -49,7 +49,7 @@ def fetch_price_change_report(symbols: list[Symbol], conn, target_date: date) ->
                         day_change,  # This will be used for sorting
                     ),
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             app_logger.error(
                 f"Unexpected error when processing 24change report for {symbol.symbol_name}: {e!s}",
             )

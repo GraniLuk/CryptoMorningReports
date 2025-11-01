@@ -81,7 +81,7 @@ def fetch_rss_news(feed_url, source, class_name):
             if len(latest_news) >= max_news_items:
                 break
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching news from {feed_url}: {e!s}")
         return []
     else:
@@ -98,7 +98,7 @@ def fetch_full_content(url, class_name):
         if article:
             article_text = article.get_text()
             return "\n".join(line.strip() for line in article_text.splitlines() if line.strip())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error fetching full content from {url}: {e!s}")
         return "Failed to fetch full content"
     else:

@@ -51,7 +51,7 @@ class PerplexityClient(AIClient):
 
         try:
             response = requests.post(self.url, json=data, headers=self.headers, timeout=30)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error_msg = f"Request failed: {e!s}"
             return False, error_msg
         else:

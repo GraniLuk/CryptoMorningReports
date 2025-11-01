@@ -110,7 +110,7 @@ async def _process_ai_analysis(
                     f"{oi_val_str:>11} | "
                     f"{fr_str:>11}",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 lines.append(f"Row format error: {e}")
         note = (
             "Aggregated Indicators "
@@ -273,7 +273,7 @@ async def process_daily_report(  # noqa: PLR0915
                     f"{tp.high:>10.6f} | {pos_pct:>6.2f} | {from_low:>8.2f} | "
                     f"{from_high:>9.2f}",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 lines.append(f"{sym.symbol_name:<7}| price fetch failed: {e}")
         return "Current Prices (spot / last 24h):\n<pre>" + "\n".join(lines) + "</pre>\n\n"
 
@@ -381,7 +381,7 @@ async def process_daily_report(  # noqa: PLR0915
                 caption=f"Detailed Crypto Analysis with News {today_date}",
                 parse_mode=None,  # treat as plain text/markdown without Telegram parsing
             )
-        except Exception as doc_err:
+        except Exception as doc_err:  # noqa: BLE001
             logger.warning("Failed to send analysis with news as document: %s", doc_err)
 
 

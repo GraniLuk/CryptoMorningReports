@@ -82,5 +82,5 @@ if __name__ == "__main__":
     try:
         count = get_yesterday_transaction_count(stepn_contract_address, api_key)
         app_logger.info(f"Yesterday's transaction count: {count}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"An error occurred: {e}", exc_info=True)
