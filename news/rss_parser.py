@@ -15,7 +15,6 @@ from infra.telegram_logging_handler import app_logger
 from news.article_cache import (
     CachedArticle,
     article_exists_in_cache,
-    get_cached_articles,
     save_article_to_cache,
 )
 from news.symbol_detector import detect_symbols_in_text
@@ -25,29 +24,14 @@ from source_repository import fetch_symbols
 def get_news():
     """Fetch news articles from various cryptocurrency RSS feeds.
 
-    If article caching is enabled, returns cached articles from today.
-    Otherwise, fetches fresh articles from RSS feeds.
-    """
-    # Check if caching is enabled
-    if is_article_cache_enabled():
-        # Try to get cached articles first
-        cached_articles = get_cached_articles()
-        if cached_articles:
-            # Convert CachedArticle objects to dict format
-            articles_dict = [
-                {
-                    "source": article.source,
-                    "title": article.title,
-                    "link": article.link,
-                    "published": article.published,
-                    "content": article.content,
-                }
-                for article in cached_articles
-            ]
-            app_logger.info(f"Loaded {len(articles_dict)} articles from cache")
-            return json.dumps(articles_dict, indent=2)
+    Always fetches from RSS feeds to ensure latest articles are available.
+    The fetch_rss_news() method handles caching - it skips articles that
+    are already cached and only fetches/caches new ones.
 
-    # No cache or cache disabled - fetch from RSS feeds
+    Returns:
+        JSON string of fetched articles (newly cached ones only)
+    """
+    # Always fetch from RSS feeds - fetch_rss_news() handles duplicate checking
     feeds = {
         "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content"},
         "coindesk": {
