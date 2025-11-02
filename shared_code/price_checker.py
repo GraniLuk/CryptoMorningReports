@@ -13,7 +13,7 @@ Recommended Usage Patterns:
 
     conn = connect_to_sql()
     symbol = get_symbol_by_name("BTC")  # Symbol with source_id property
-    
+
     # Fetch last 30 days of daily candles (uses batch API + cache)
     end_date = date.today()
     start_date = end_date - timedelta(days=30)
