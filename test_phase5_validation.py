@@ -269,6 +269,5 @@ def test_fully_updated_database():
 
     assert candles is not None, "Failed to fetch candles from cache"
     assert len(candles) > 0, "No candles returned from cache"
-    
-    conn.close()
 
+    conn.close()
