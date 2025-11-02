@@ -18,7 +18,7 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before weekly analysis...")
-    
+
     # Fetch missing daily candles for all symbols (last 3 days)
     today = datetime.now(UTC).date()
     start_date = today - timedelta(days=3)
@@ -26,7 +26,7 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
     for symbol in symbols:
         candles = fetch_daily_candles(symbol, start_date, today, conn)
         updated_count += len(candles)
-    
+
     logger.info(
         "✓ Data refresh complete: %d candles fetched/cached for all symbols",
         updated_count,

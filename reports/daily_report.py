@@ -239,7 +239,7 @@ async def process_daily_report(  # noqa: PLR0915
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")
-    
+
     # Fetch missing daily candles for all symbols (last 3 days)
     today = datetime.now(UTC).date()
     start_date = today - timedelta(days=3)
