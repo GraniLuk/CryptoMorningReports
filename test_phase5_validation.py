@@ -172,10 +172,8 @@ def test_database_storage():
 def test_timezone_handling():
     """TEST-009: Test timezone handling (UTC consistency).
 
-    NOTE: This test currently fails due to a known data model inconsistency:
-    - Candles from database have end_date as string
-    - Newly fetched candles have end_date as datetime
-    This is a separate issue from the batch fetching refactoring.
+    Verifies that all candles have timezone information in their end_date field.
+    Accepts both datetime objects with tzinfo and ISO 8601 strings with timezone.
     """
     load_dotenv()
     conn = connect_to_sql()
@@ -184,41 +182,43 @@ def test_timezone_handling():
     binance_symbol = next((s for s in symbols if s.source_id == SourceID.BINANCE), None)
     assert binance_symbol is not None, "No BINANCE symbols found"
 
-    results = []
+    def has_timezone(end_date: datetime | str) -> bool:
+        """Check if end_date has timezone info (works for both datetime and str)."""
+        if isinstance(end_date, datetime):
+            return end_date.tzinfo is not None
+        if isinstance(end_date, str):
+            return end_date.endswith(("+00:00", "Z"))
+        return False
 
-    # Test that at least SOME candles have timezone-aware datetimes (newly fetched)
+    # Test daily candles
     today = datetime.now(UTC).date()
     start_date = today - timedelta(days=2)
     daily_candles = fetch_daily_candles(binance_symbol, start_date, today, conn)
 
-    datetime_candles = [c for c in daily_candles if isinstance(c.end_date, datetime)]
-    if datetime_candles and all(c.end_date.tzinfo is not None for c in datetime_candles):
-        results.append(True)
-    else:
-        results.append(False)
+    assert len(daily_candles) > 0, "No daily candles returned"
+    for candle in daily_candles:
+        assert has_timezone(candle.end_date), \
+            f"end_date missing timezone: {candle.end_date} (type: {type(candle.end_date)})"
 
     # Test hourly candles
     end_time = datetime.now(UTC)
     start_time = end_time - timedelta(hours=6)
     hourly_candles = fetch_hourly_candles(binance_symbol, start_time, end_time, conn)
 
-    datetime_candles = [c for c in hourly_candles if isinstance(c.end_date, datetime)]
-    if datetime_candles and all(c.end_date.tzinfo is not None for c in datetime_candles):
-        results.append(True)
-    else:
-        results.append(False)
+    assert len(hourly_candles) > 0, "No hourly candles returned"
+    for candle in hourly_candles:
+        assert has_timezone(candle.end_date), \
+            f"end_date missing timezone: {candle.end_date} (type: {type(candle.end_date)})"
 
     # Test 15-min candles
     start_time = end_time - timedelta(hours=2)
     fifteen_min_candles = fetch_fifteen_min_candles(binance_symbol, start_time, end_time, conn)
 
-    datetime_candles = [c for c in fifteen_min_candles if isinstance(c.end_date, datetime)]
-    if datetime_candles and all(c.end_date.tzinfo is not None for c in datetime_candles):
-        results.append(True)
-    else:
-        results.append(False)
+    assert len(fifteen_min_candles) > 0, "No 15-min candles returned"
+    for candle in fifteen_min_candles:
+        assert has_timezone(candle.end_date), \
+            f"end_date missing timezone: {candle.end_date} (type: {type(candle.end_date)})"
 
-    assert all(results), "Some timezone checks failed"
     conn.close()
 
 
