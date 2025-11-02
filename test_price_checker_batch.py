@@ -4,9 +4,8 @@ This script validates that all three candle fetching functions
 (fetch_daily_candles, fetch_hourly_candles, fetch_fifteen_min_candles)
 correctly use intelligent batch fetching for BINANCE and individual fetching for KUCOIN.
 """
-# ruff: noqa: T201, S101, PLR2004
+# ruff: noqa: T201, PLR2004
 
-import os
 import sqlite3
 from datetime import UTC, datetime, timedelta
 
@@ -111,7 +110,7 @@ def test_daily_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
 
     print(f"Symbol: {symbol.symbol_name} (source_id={symbol.source_id.name})")
     print(f"Date Range: {start_date.date()} to {end_date.date()}")
-    print(f"Expected: ~30 daily candles")
+    print("Expected: ~30 daily candles")
 
     candles = fetch_daily_candles(symbol, start_date, end_date, conn)
 
@@ -144,7 +143,7 @@ def test_hourly_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
 
     print(f"Symbol: {symbol.symbol_name} (source_id={symbol.source_id.name})")
     print(f"Time Range: {start_time} to {end_time}")
-    print(f"Expected: ~48 hourly candles")
+    print("Expected: ~48 hourly candles")
 
     candles = fetch_hourly_candles(symbol, start_time, end_time, conn)
 
@@ -177,7 +176,7 @@ def test_fifteen_min_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
 
     print(f"Symbol: {symbol.symbol_name} (source_id={symbol.source_id.name})")
     print(f"Time Range: {start_time} to {end_time}")
-    print(f"Expected: ~16 fifteen-minute candles")
+    print("Expected: ~16 fifteen-minute candles")
 
     candles = fetch_fifteen_min_candles(symbol, start_time, end_time, conn)
 
