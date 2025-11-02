@@ -120,43 +120,66 @@ The goal is to:
 | TASK-019 | Implement 15-minute timestamp generation and DB checking | ✅ | 2025-11-02 |
 | TASK-020 | Add source-aware dispatch for 15-minute candles | ✅ | 2025-11-02 |
 | TASK-021 | Update docstrings to document batch fetching behavior | ✅ | 2025-11-02 |
-| TASK-022 | Add comprehensive logging for batch operations (count, source, duration) | ⏳ | |
+| TASK-022 | ~~Add comprehensive logging for batch operations~~ (SKIPPED - not needed) | ⊘ | 2025-11-02 |
 
-**Phase 2 Status**: 🔄 **IN PROGRESS** (14/15 tasks completed - 93%)  
-**Summary**: Successfully refactored all three candle fetching functions (`fetch_daily_candles()`, `fetch_hourly_candles()`, `fetch_fifteen_min_candles()`) to use intelligent batch fetching for BINANCE and individual fetching for KUCOIN. Updated all docstrings to document the new behavior. Added helper function `_parse_candle_date()` to handle timezone-aware date parsing. All functions now use the same pattern: check DB → identify missing → batch fetch (BINANCE) or individual fetch (KUCOIN) → save to DB → return sorted list. Remaining task: add comprehensive logging.
+**Phase 2 Status**: ✅ **COMPLETED** (14/14 essential tasks completed - 100%)  
+**Summary**: Successfully refactored all three candle fetching functions (`fetch_daily_candles()`, `fetch_hourly_candles()`, `fetch_fifteen_min_candles()`) to use intelligent batch fetching for BINANCE and individual fetching for KUCOIN. Updated all docstrings to document the new behavior. Added helper function `_parse_candle_date()` to handle timezone-aware date parsing. All functions now use the same pattern: check DB → identify missing → batch fetch (BINANCE) or individual fetch (KUCOIN) → save to DB → return sorted list.
 
 **Note**: This phase modifies existing functions rather than creating new ones. This is a breaking change approach that simplifies the API and automatically provides batch performance to all existing code.
 
-### Phase 3: Simplify update_latest_data.py
+### Phase 3: Remove Redundant update_latest_data.py Module
 
-**GOAL-003**: Remove source-specific logic and use refactored price_checker functions
+**GOAL-003**: Eliminate duplicate logic by removing update_latest_data.py and using price_checker.py directly
 
-| Task | Description | Completed | Date |
-|------|-------------|-----------|------|
-| TASK-023 | Refactor `update_latest_daily_candles()` to use modified `fetch_daily_candles()` | | |
-| TASK-024 | Remove hardcoded `if symbol.source_id == SourceID.BINANCE` logic | | |
-| TASK-025 | Simplify function to: check last date, call fetch_daily_candles with range | | |
-| TASK-026 | Refactor `update_latest_hourly_candles()` to use modified `fetch_hourly_candles()` | | |
-| TASK-027 | Remove individual fetch fallback logic (now handled in price_checker) | | |
-| TASK-028 | Remove direct imports of `fetch_binance_*_klines_batch()` functions | | |
-| TASK-029 | Refactor `update_latest_fifteen_min_candles()` to use modified function | | |
-| TASK-030 | Update logging to reflect simplified flow | | |
-| TASK-031 | Remove helper functions `_fetch_hourly_candles_individually()` etc. | | |
+**Rationale**: After Phase 2 refactoring, `update_latest_data.py` has become redundant wrapper code. The refactored `fetch_*_candles()` functions in `price_checker.py` already handle:
+- Database checking for existing data ✅
+- Missing data identification ✅
+- Batch fetching for BINANCE ✅
+- Individual fetching for KUCOIN ✅
+- Database persistence ✅
 
-### Phase 4: Update current_report.py
-
-**GOAL-004**: Ensure current_report uses update functions before analysis (Option A)
+The `update_latest_data.py` module duplicates batch fetching logic (imports `fetch_binance_*_klines_batch` directly) and adds unnecessary complexity. Direct use of `price_checker.py` functions is simpler and more maintainable.
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-032 | Add imports for `update_latest_*_candles()` functions | | |
-| TASK-033 | Call `update_latest_daily_candles()` before fetching daily candles | | |
-| TASK-034 | Call `update_latest_hourly_candles()` before fetching hourly candles | | |
-| TASK-035 | Call `update_latest_fifteen_min_candles()` before fetching 15-min candles | | |
-| TASK-036 | Adjust update parameters based on analysis requirements (180 days, 48 hours, etc.) | | |
-| TASK-037 | Add database commit after all updates complete | | |
-| TASK-038 | Verify reports use fresh data from database | | |
-| TASK-039 | Add logging to indicate data refresh step | | |
+| TASK-023 | Search for all usages of `update_latest_data.py` functions in codebase | | |
+| TASK-024 | Identify all callers of `update_latest_daily_candles()` | | |
+| TASK-025 | Identify all callers of `update_latest_hourly_candles()` | | |
+| TASK-026 | Identify all callers of `update_latest_fifteen_min_candles()` | | |
+| TASK-027 | Replace `update_latest_daily_candles()` calls with `fetch_daily_candles()` | | |
+| TASK-028 | Replace `update_latest_hourly_candles()` calls with `fetch_hourly_candles()` | | |
+| TASK-029 | Replace `update_latest_fifteen_min_candles()` calls with `fetch_fifteen_min_candles()` | | |
+| TASK-030 | Update imports in all affected files | | |
+| TASK-031 | Test all modified callers to ensure functionality preserved | | |
+| TASK-032 | Delete `database/update_latest_data.py` file | | |
+| TASK-033 | Update any documentation referencing update_latest_data.py | | |
+
+**Migration Pattern**:
+```python
+# OLD (update_latest_data.py):
+from database.update_latest_data import update_latest_daily_candles
+update_latest_daily_candles(conn, days_to_update=7)
+
+# NEW (price_checker.py - direct usage):
+from shared_code.price_checker import fetch_daily_candles
+from datetime import datetime, timedelta, UTC
+today = datetime.now(UTC).date()
+start_date = today - timedelta(days=7)
+candles = fetch_daily_candles(symbol, start_date, today, conn)
+```
+
+### Phase 4: Update Report Generators
+
+**GOAL-004**: Ensure reports use fresh data by calling fetch functions with appropriate ranges
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-034 | Update `daily_report.py` to use `fetch_*_candles()` directly with required ranges | | |
+| TASK-035 | Update `current_report.py` to use `fetch_*_candles()` directly with required ranges | | |
+| TASK-036 | Remove any remaining imports of `update_latest_data` module | | |
+| TASK-037 | Verify reports fetch appropriate data ranges (180 days, 48 hours, etc.) | | |
+| TASK-038 | Add database commit after report generation if needed | | |
+| TASK-039 | Test both reports generate correctly with new approach | | |
 
 ### Phase 5: Testing & Validation
 
@@ -194,18 +217,16 @@ The goal is to:
 
 ### Phase 7: Documentation & Cleanup
 
-**GOAL-007**: Update documentation and remove obsolete code
+**GOAL-007**: Document changes and finalize refactoring
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-060 | Update `price_checker.py` docstrings with batch behavior | | |
-| TASK-061 | Document source-aware dispatching in comments | | |
-| TASK-062 | Update `readme.md` with architecture changes | | |
-| TASK-063 | Document recommended usage patterns (update functions first) | | |
-| TASK-064 | Remove obsolete helper functions from update_latest_data.py | | |
-| TASK-065 | Clean up unused imports | | |
-| TASK-066 | Add performance metrics to daily report logs | | |
-| TASK-067 | Create troubleshooting guide for common issues | | |
+| TASK-060 | Update `readme.md` with architecture changes | | |
+| TASK-061 | Document recommended usage patterns in code comments | | |
+| TASK-062 | Clean up unused imports across affected files | | |
+| TASK-063 | Add performance metrics to logs (optional) | | |
+| TASK-064 | Create migration guide for other developers | | |
+| TASK-065 | Update any other documentation referencing old patterns | | |
 
 ## 3. Alternatives
 
@@ -223,8 +244,8 @@ The goal is to:
 - **ALT-004**: **Always fetch from API, ignore database cache**
   - *Rejected*: Wasteful of API calls. Hits rate limits. Slower performance.
 
-- **ALT-005**: **Option B: Use batch functions directly in current_report**
-  - *Considered but not chosen*: Option A (call update functions first) ensures consistency with daily_report and reuses proven update logic. More maintainable.
+- **ALT-005**: **Keep update_latest_data.py as wrapper layer**
+  - *Rejected*: After Phase 2 refactoring, this module became redundant. It duplicates batch logic already in price_checker.py, adds unnecessary complexity, and provides no real value. Direct use of price_checker functions is simpler and more maintainable.
 
 - **ALT-006**: **Implement generic batch interface for all sources**
   - *Deferred*: Would require significant changes to source-specific code. Can be considered after KuCoin batch research.
@@ -262,31 +283,32 @@ The goal is to:
 
 ### Files to Modify
 
-- **FILE-001**: `shared_code/price_checker.py` - Add batch functions, refactor existing functions
-- **FILE-002**: `shared_code/binance.py` - Add `fetch_binance_daily_klines_batch()`
-- **FILE-003**: `database/update_latest_data.py` - Simplify by delegating to price_checker
-- **FILE-004**: `reports/current_report.py` - Add update function calls before analysis
-- **FILE-005**: `shared_code/kucoin.py` - Optionally add batch functions (Phase 7)
-- **FILE-006**: `readme.md` - Update architecture documentation
+- **FILE-001**: `shared_code/price_checker.py` - ✅ Refactored with batch fetching (Phase 2)
+- **FILE-002**: `shared_code/binance.py` - ✅ Added `fetch_binance_daily_klines_batch()` (Phase 1)
+- **FILE-003**: `database/update_latest_data.py` - ⚠️ **TO BE DELETED** (Phase 3)
+- **FILE-004**: `reports/current_report.py` - Update to use fetch functions directly (Phase 4)
+- **FILE-005**: `reports/daily_report.py` - Update to use fetch functions directly (Phase 4)
+- **FILE-006**: `shared_code/kucoin.py` - Optionally add batch functions (Phase 6)
+- **FILE-007**: `readme.md` - Update architecture documentation (Phase 7)
 
-### Files Potentially Affected (Testing)
+### Files Potentially Affected (Need Review)
 
-- **FILE-007**: `technical_analysis/daily_candle.py` - Wrapper functions may need testing
-- **FILE-008**: `technical_analysis/hourly_candle.py` - Wrapper functions may need testing
-- **FILE-009**: `technical_analysis/fifteen_min_candle.py` - Wrapper functions may need testing
-- **FILE-010**: `reports/daily_report.py` - Should continue working without changes
+- **FILE-008**: Any script/module importing from `database.update_latest_data` (Phase 3)
+- **FILE-009**: `technical_analysis/daily_candle.py` - Wrapper functions may need testing
+- **FILE-010**: `technical_analysis/hourly_candle.py` - Wrapper functions may need testing
+- **FILE-011**: `technical_analysis/fifteen_min_candle.py` - Wrapper functions may need testing
 
 ## 6. Testing
 
 ### Unit Tests
 
-- **TEST-001**: Test `fetch_binance_daily_klines_batch()` with valid date range
-- **TEST-002**: Test `fetch_binance_daily_klines_batch()` with date range > 1000 days (API limit)
-- **TEST-003**: Test `fetch_daily_candles_batch()` with BINANCE symbol (batch path)
-- **TEST-004**: Test `fetch_daily_candles_batch()` with KUCOIN symbol (individual path)
-- **TEST-005**: Test `fetch_hourly_candles_batch()` with empty database
-- **TEST-006**: Test `fetch_hourly_candles_batch()` with partially filled database
-- **TEST-007**: Test `fetch_fifteen_min_candles_batch()` with timestamp generation
+- **TEST-001**: ✅ Test `fetch_binance_daily_klines_batch()` with valid date range (Phase 1)
+- **TEST-002**: ✅ Test `fetch_binance_daily_klines_batch()` with date range > 1000 days (Phase 1)
+- **TEST-003**: ✅ Test `fetch_daily_candles()` with BINANCE symbol (batch path validated)
+- **TEST-004**: Test `fetch_daily_candles()` with KUCOIN symbol (individual path)
+- **TEST-005**: ✅ Test `fetch_hourly_candles()` with BINANCE (batch validated)
+- **TEST-006**: Test `fetch_hourly_candles()` with partially filled database
+- **TEST-007**: ✅ Test `fetch_fifteen_min_candles()` with BINANCE (batch validated)
 - **TEST-008**: Test database save operations for batch-fetched candles
 - **TEST-009**: Test timezone handling (UTC conversion and consistency)
 - **TEST-010**: Test error handling when API returns empty results
@@ -294,9 +316,9 @@ The goal is to:
 
 ### Integration Tests
 
-- **TEST-012**: Test full update_latest_daily_candles() flow with multiple symbols
-- **TEST-013**: Test full update_latest_hourly_candles() flow with BINANCE and KUCOIN mix
-- **TEST-014**: Test current_report generation after data updates
+- **TEST-012**: Test report generation with direct fetch_*_candles() calls (Phase 4)
+- **TEST-013**: Test migration from update_latest_data to direct fetch calls (Phase 3)
+- **TEST-014**: Test current_report generation after removing update_latest_data (Phase 4)
 - **TEST-015**: Test daily_report continues to work correctly
 - **TEST-016**: Test backward compatibility of existing fetch_*_candles() functions
 - **TEST-017**: Test database commit after batch updates
