@@ -33,7 +33,9 @@ def test_daily_candles_binance():
 
         candles = fetch_daily_candles(binance_symbol, start_date, today, conn)
 
-        assert candles is not None, f"Failed to fetch daily candles for {binance_symbol.symbol_name}"
+        assert candles is not None, (
+            f"Failed to fetch daily candles for {binance_symbol.symbol_name}"
+        )
         assert len(candles) > 0, f"No candles returned for {binance_symbol.symbol_name}"
         assert all(c.symbol == binance_symbol.symbol_name for c in candles), "Symbol mismatch"
         assert all(c.source == binance_symbol.source_id.value for c in candles), "Source mismatch"
@@ -87,8 +89,12 @@ def test_hourly_candles_both_sources():
         candles = fetch_hourly_candles(binance_symbol, start_time, end_time, conn)
 
         assert candles is not None, "Failed to fetch BINANCE hourly candles"
-        assert len(candles) > 0, f"No hourly candles returned for BINANCE {binance_symbol.symbol_name}"
-        assert all(c.symbol == binance_symbol.symbol_name for c in candles), "Symbol mismatch in BINANCE candles"
+        assert len(candles) > 0, (
+            f"No hourly candles returned for BINANCE {binance_symbol.symbol_name}"
+        )
+        assert all(c.symbol == binance_symbol.symbol_name for c in candles), (
+            "Symbol mismatch in BINANCE candles"
+        )
 
         # Test KUCOIN (optional - don't fail if no symbols)
         kucoin_symbol = next((s for s in symbols if s.source_id == SourceID.KUCOIN), None)
@@ -103,22 +109,26 @@ def test_fifteen_min_candles_both_sources():
     """TEST-003/007: Test fetch_fifteen_min_candles() with both sources."""
     load_dotenv()
     conn = connect_to_sql()
-    
+
     try:
         symbols = fetch_symbols(conn)
 
         # Test BINANCE
         binance_symbol = next((s for s in symbols if s.source_id == SourceID.BINANCE), None)
         assert binance_symbol is not None, "No BINANCE symbols found"
-        
+
         end_time = datetime.now(UTC)
         start_time = end_time - timedelta(hours=2)
 
         candles = fetch_fifteen_min_candles(binance_symbol, start_time, end_time, conn)
 
         assert candles is not None, "Failed to fetch BINANCE 15-min candles"
-        assert len(candles) > 0, f"No 15-min candles returned for BINANCE {binance_symbol.symbol_name}"
-        assert all(c.symbol == binance_symbol.symbol_name for c in candles), "Symbol mismatch in candles"
+        assert len(candles) > 0, (
+            f"No 15-min candles returned for BINANCE {binance_symbol.symbol_name}"
+        )
+        assert all(c.symbol == binance_symbol.symbol_name for c in candles), (
+            "Symbol mismatch in candles"
+        )
 
         # Test KUCOIN (optional - don't fail if no symbols)
         kucoin_symbol = next((s for s in symbols if s.source_id == SourceID.KUCOIN), None)
@@ -133,7 +143,7 @@ def test_database_storage():
     """TEST-008: Verify database correctly stores all fetched candles."""
     load_dotenv()
     conn = connect_to_sql()
-    
+
     try:
         symbols = fetch_symbols(conn)
 
@@ -151,7 +161,9 @@ def test_database_storage():
         candles_after = fetch_daily_candles(binance_symbol, start_date, today, conn)
         count_after = len(candles_after)
 
-        assert count_before == count_after, f"Inconsistent candle counts: {count_before} vs {count_after}"
+        assert count_before == count_after, (
+            f"Inconsistent candle counts: {count_before} vs {count_after}"
+        )
         assert count_after > 0, "No candles stored in database"
     finally:
         conn.close()
@@ -298,7 +310,6 @@ def run_all_tests():
 
     for test_name, result in results:
         pass
-
 
     return passed == total
 
