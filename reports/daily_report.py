@@ -1,14 +1,9 @@
 """Daily cryptocurrency market report generation and distribution."""
 
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from database.update_latest_data import (
-    update_latest_daily_candles,
-    update_latest_fifteen_min_candles,
-    update_latest_hourly_candles,
-)
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
 from integrations.onedrive_uploader import (
@@ -22,7 +17,12 @@ from news.news_agent import (
     highlight_articles,
 )
 from news.rss_parser import get_news
-from shared_code.price_checker import fetch_current_price
+from shared_code.price_checker import (
+    fetch_current_price,
+    fetch_daily_candles,
+    fetch_fifteen_min_candles,
+    fetch_hourly_candles,
+)
 from shared_code.telegram import send_telegram_document, send_telegram_message
 from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
@@ -239,16 +239,33 @@ async def process_daily_report(  # noqa: PLR0915
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")
-    updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
-    logger.info("✓ Daily candles: %d updated, %d failed", updated_count, failed_count)
+    
+    # Fetch missing daily candles for all symbols (last 3 days)
+    today = datetime.now(UTC).date()
+    start_date = today - timedelta(days=3)
+    daily_updated = 0
+    for symbol in symbols:
+        candles = fetch_daily_candles(symbol, start_date, today, conn)
+        daily_updated += len(candles)
+    logger.info("✓ Daily candles: %d fetched/cached for all symbols", daily_updated)
 
-    # Update hourly candles for intraday analysis
-    hourly_updated, hourly_failed = update_latest_hourly_candles(conn, hours_to_update=24)
-    logger.info("✓ Hourly candles: %d updated, %d failed", hourly_updated, hourly_failed)
+    # Fetch missing hourly candles for all symbols (last 24 hours)
+    end_time = datetime.now(UTC)
+    start_time = end_time - timedelta(hours=24)
+    hourly_updated = 0
+    for symbol in symbols:
+        candles = fetch_hourly_candles(symbol, start_time, end_time, conn)
+        hourly_updated += len(candles)
+    logger.info("✓ Hourly candles: %d fetched/cached for all symbols", hourly_updated)
 
-    # Update 15-minute candles for intraday analysis
-    fifteen_updated, fifteen_failed = update_latest_fifteen_min_candles(conn, minutes_to_update=120)
-    logger.info("✓ 15-minute candles: %d updated, %d failed", fifteen_updated, fifteen_failed)
+    # Fetch missing 15-minute candles for all symbols (last 2 hours)
+    end_time = datetime.now(UTC)
+    start_time = end_time - timedelta(hours=2)
+    fifteen_updated = 0
+    for symbol in symbols:
+        candles = fetch_fifteen_min_candles(symbol, start_time, end_time, conn)
+        fifteen_updated += len(candles)
+    logger.info("✓ 15-minute candles: %d fetched/cached for all symbols", fifteen_updated)
 
     # Commit all the data updates to the database
     conn.commit()

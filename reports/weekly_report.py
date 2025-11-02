@@ -2,8 +2,8 @@
 
 from datetime import UTC, datetime, timedelta
 
-from database.update_latest_data import update_latest_daily_candles
 from infra.telegram_logging_handler import app_logger
+from shared_code.price_checker import fetch_daily_candles
 from shared_code.telegram import send_telegram_message
 from source_repository import fetch_symbols
 from technical_analysis.macd_report import calculate_macd
@@ -18,11 +18,18 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before weekly analysis...")
-    updated_count, failed_count = update_latest_daily_candles(conn, days_to_update=3)
+    
+    # Fetch missing daily candles for all symbols (last 3 days)
+    today = datetime.now(UTC).date()
+    start_date = today - timedelta(days=3)
+    updated_count = 0
+    for symbol in symbols:
+        candles = fetch_daily_candles(symbol, start_date, today, conn)
+        updated_count += len(candles)
+    
     logger.info(
-        "✓ Data refresh complete: %d candles updated, %d failed",
+        "✓ Data refresh complete: %d candles fetched/cached for all symbols",
         updated_count,
-        failed_count,
     )
 
     # Calculate date range for weekly report
