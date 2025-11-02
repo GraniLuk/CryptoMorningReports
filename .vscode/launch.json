@@ -10,6 +10,61 @@
                 "port": 9091
             },
             "preLaunchTask": "func: host start"
+        },
+        {
+            "name": "Debug PowerShell Script (XRP)",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/run-local.ps1",
+            "args": [
+                "current",
+                "XRP"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Python Local Runner (XRP) - SIMPLE",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "local_runner",
+            "args": [
+                "current",
+                "XRP"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug Python Local Runner (XRP)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/local_runner.py",
+            "args": [
+                "current",
+                "XRP"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "justMyCode": true,
+            "stopOnEntry": true
+        },
+        {
+            "name": "Debug Python Local Runner (Daily)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/local_runner.py",
+            "args": [
+                "daily"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }
