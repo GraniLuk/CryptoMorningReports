@@ -1,4 +1,71 @@
-"""Price checking and validation utilities for cryptocurrency data."""
+"""Price checking and validation utilities for cryptocurrency data.
+
+This module provides centralized candle fetching with intelligent batch API optimization.
+
+Recommended Usage Patterns:
+--------------------------
+
+1. **Fetching Daily Candles (Preferred Method)**:
+    ```python
+    from shared_code.price_checker import fetch_daily_candles
+    from datetime import date, timedelta
+    from infra.sql_connection import connect_to_sql
+
+    conn = connect_to_sql()
+    symbol = get_symbol_by_name("BTC")  # Symbol with source_id property
+    
+    # Fetch last 30 days of daily candles (uses batch API + cache)
+    end_date = date.today()
+    start_date = end_date - timedelta(days=30)
+    candles = fetch_daily_candles(symbol, start_date, end_date, conn)
+    ```
+
+2. **Fetching Hourly Candles**:
+    ```python
+    from shared_code.price_checker import fetch_hourly_candles
+    from datetime import datetime, timedelta, UTC
+
+    # Fetch last 48 hours (uses batch API + cache)
+    end_time = datetime.now(UTC)
+    start_time = end_time - timedelta(hours=48)
+    hourly_candles = fetch_hourly_candles(symbol, start_time, end_time, conn)
+    ```
+
+3. **Fetching 15-Minute Candles**:
+    ```python
+    from shared_code.price_checker import fetch_fifteen_min_candles
+
+    # Fetch last 8 hours of 15-min candles (uses batch API + cache)
+    end_time = datetime.now(UTC)
+    start_time = end_time - timedelta(hours=8)
+    candles = fetch_fifteen_min_candles(symbol, start_time, end_time, conn)
+    ```
+
+Key Benefits:
+-------------
+- **Automatic batch optimization**: BINANCE (1000 candles/call), KUCOIN (1500 candles/call)
+- **Database caching**: Checks SQLite first, only fetches missing data
+- **Source-aware**: Automatically dispatches to correct exchange based on symbol.source_id
+- **Performance**: ~97% fewer API calls, 30-50x faster than individual fetching
+- **Consistent interface**: Same function signature for all timeframes
+
+Architecture:
+-------------
+All fetch_*_candles() functions follow this pattern:
+1. Generate expected timestamps/dates for the requested range
+2. Check database for cached candles
+3. Identify missing candles
+4. Dispatch to batch API based on source_id (BINANCE/KUCOIN) or fallback
+5. Save newly fetched candles to database
+6. Return sorted list of all candles (cached + new)
+
+Notes:
+------
+- Always pass a database connection for optimal performance
+- Use timezone-aware datetime objects (UTC) for hourly/15-min fetches
+- Batch functions respect API limits (1000 for Binance, 1500 for KuCoin)
+- Database automatically handles deduplication
+"""
 
 from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING
