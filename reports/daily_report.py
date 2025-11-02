@@ -24,7 +24,7 @@ from news.news_agent import (
 from news.rss_parser import get_news
 from shared_code.price_checker import fetch_current_price
 from shared_code.telegram import send_telegram_document, send_telegram_message
-from source_repository import fetch_symbols
+from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd

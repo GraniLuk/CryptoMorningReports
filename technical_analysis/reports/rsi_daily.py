@@ -209,11 +209,20 @@ def create_rsi_table(
                         )
                     else:
                         try:
-                            save_rsi_results(
-                                conn=conn,
-                                daily_candle_id=candles[-1].id,
-                                rsi=float(latest_row["RSI"].iloc[-1]),
-                            )
+                            rsi_value = float(latest_row["RSI"].iloc[-1])
+
+                            # Check if RSI is valid (not NaN, not None, not infinite)
+                            if pd.isna(rsi_value) or not pd.notna(rsi_value):
+                                app_logger.warning(
+                                    f"Skipping RSI save for {symbol.symbol_name}: "
+                                    f"RSI is NaN (insufficient data - need >14 periods)",
+                                )
+                            else:
+                                save_rsi_results(
+                                    conn=conn,
+                                    daily_candle_id=candles[-1].id,
+                                    rsi=rsi_value,
+                                )
                         except (KeyError, ValueError, TypeError, OSError) as e:
                             app_logger.error(
                                 f"Failed to save RSI results for {symbol.symbol_name}: {e!s}",
