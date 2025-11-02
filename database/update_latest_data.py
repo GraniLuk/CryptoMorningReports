@@ -8,12 +8,20 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 from infra.sql_connection import connect_to_sql
+from shared_code.binance import (
+    fetch_binance_fifteen_min_klines_batch,
+    fetch_binance_hourly_klines_batch,
+)
 from shared_code.price_checker import (
     fetch_daily_candle,
     fetch_fifteen_min_candle,
     fetch_hourly_candle,
 )
-from source_repository import fetch_symbols
+from source_repository import SourceID, fetch_symbols
+from technical_analysis.repositories.fifteen_min_candle_repository import (
+    FifteenMinCandleRepository,
+)
+from technical_analysis.repositories.hourly_candle_repository import HourlyCandleRepository
 
 
 logger = logging.getLogger(__name__)
@@ -185,6 +193,42 @@ def get_last_hourly_candle_time(conn, symbol):
     return None
 
 
+def _fetch_hourly_candles_individually(symbol, start_time, end_time, conn):
+    """Fetch hourly candles one by one (fallback for non-Binance or batch failures).
+
+    Args:
+        symbol: Symbol object
+        start_time: Start time for fetching
+        end_time: End time for fetching
+        conn: Database connection
+
+    Returns:
+        Number of candles fetched
+
+    """
+    candles_fetched = 0
+    current_time = start_time
+
+    while current_time <= end_time:
+        try:
+            candle = fetch_hourly_candle(symbol, current_time, conn)
+
+            if candle:
+                candles_fetched += 1
+                logger.debug(
+                    "  ✓ %s: Close=%.2f",
+                    current_time.strftime("%Y-%m-%d %H:%M"),
+                    candle.close,
+                )
+
+        except Exception:
+            logger.exception("  ✗ %s: Failed", current_time.strftime("%Y-%m-%d %H:%M"))
+
+        current_time += timedelta(hours=1)
+
+    return candles_fetched
+
+
 def update_latest_hourly_candles(conn, hours_to_update=24):
     """Update missing hourly candles for all symbols up to current hour.
 
@@ -242,29 +286,53 @@ def update_latest_hourly_candles(conn, hours_to_update=24):
                 hours_to_update,
             )
 
-        # Fetch missing hours
-        current_time = start_time
-        while current_time <= end_time:
+        # Use batch fetch for Binance symbols (much faster than individual fetches)
+        if symbol.source_id == SourceID.BINANCE:
             try:
-                candle = fetch_hourly_candle(symbol, current_time, conn)
+                # Fetch all candles in a single API call
+                candles = fetch_binance_hourly_klines_batch(symbol, start_time, end_time)
 
-                if candle:
-                    symbol_updated += 1
-                    logger.debug(
-                        "  ✓ %s: Close=%.2f",
-                        current_time.strftime("%Y-%m-%d %H:%M"),
-                        candle.close,
+                if candles:
+                    # Save all candles to database
+                    repo = HourlyCandleRepository(conn)
+                    for candle in candles:
+                        repo.save_candle(symbol, candle, source=SourceID.BINANCE.value)
+                        symbol_updated += 1
+
+                    logger.info(
+                        "✓ %s: Batch updated %d hourly candle(s) in single API call",
+                        symbol.symbol_name,
+                        symbol_updated,
+                    )
+                else:
+                    logger.warning(
+                        "⚠ %s: No hourly candles returned from batch fetch",
+                        symbol.symbol_name,
                     )
 
             except Exception:
-                logger.exception("  ✗ %s: Failed", current_time.strftime("%Y-%m-%d %H:%M"))
-                total_failed += 1
-
-            current_time += timedelta(hours=1)
+                logger.exception(
+                    "✗ %s: Hourly batch fetch failed, falling back to individual fetches",
+                    symbol.symbol_name,
+                )
+                # Fall back to individual fetches if batch fails
+                symbol_updated = _fetch_hourly_candles_individually(
+                    symbol,
+                    start_time,
+                    end_time,
+                    conn,
+                )
+        else:
+            # Non-Binance symbols: use individual fetches
+            symbol_updated = _fetch_hourly_candles_individually(
+                symbol,
+                start_time,
+                end_time,
+                conn,
+            )
 
         if symbol_updated > 0:
             total_updated += symbol_updated
-            logger.info("✓ %s: Updated %d hourly candle(s)", symbol.symbol_name, symbol_updated)
 
     logger.info(
         "Hourly data update complete: %d candles updated, %d symbols already current, %d failed",
@@ -316,6 +384,42 @@ def get_last_fifteen_min_candle_time(conn, symbol):
         return last_time
 
     return None
+
+
+def _fetch_fifteen_min_candles_individually(symbol, start_time, end_time, conn):
+    """Fetch 15-minute candles one by one (fallback for non-Binance or batch failures).
+
+    Args:
+        symbol: Symbol object
+        start_time: Start time for fetching
+        end_time: End time for fetching
+        conn: Database connection
+
+    Returns:
+        Number of candles fetched
+
+    """
+    candles_fetched = 0
+    current_time = start_time
+
+    while current_time <= end_time:
+        try:
+            candle = fetch_fifteen_min_candle(symbol, current_time, conn)
+
+            if candle:
+                candles_fetched += 1
+                logger.debug(
+                    "  ✓ %s: Close=%.2f",
+                    current_time.strftime("%Y-%m-%d %H:%M"),
+                    candle.close,
+                )
+
+        except Exception:
+            logger.exception("  ✗ %s: Failed", current_time.strftime("%Y-%m-%d %H:%M"))
+
+        current_time += timedelta(minutes=15)
+
+    return candles_fetched
 
 
 def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
@@ -382,29 +486,50 @@ def update_latest_fifteen_min_candles(conn, minutes_to_update=120):
                 minutes_to_update // 15,
             )
 
-        # Fetch missing 15-minute intervals
-        current_time = start_time
-        while current_time <= end_time:
+        # Use batch fetch for Binance symbols (much faster than individual fetches)
+        if symbol.source_id == SourceID.BINANCE:
             try:
-                candle = fetch_fifteen_min_candle(symbol, current_time, conn)
+                # Fetch all candles in a single API call
+                candles = fetch_binance_fifteen_min_klines_batch(symbol, start_time, end_time)
 
-                if candle:
-                    symbol_updated += 1
-                    logger.debug(
-                        "  ✓ %s: Close=%.2f",
-                        current_time.strftime("%Y-%m-%d %H:%M"),
-                        candle.close,
+                if candles:
+                    # Save all candles to database
+                    repo = FifteenMinCandleRepository(conn)
+                    for candle in candles:
+                        repo.save_candle(symbol, candle, source=SourceID.BINANCE.value)
+                        symbol_updated += 1
+
+                    logger.info(
+                        "✓ %s: Batch updated %d 15-minute candle(s) in single API call",
+                        symbol.symbol_name,
+                        symbol_updated,
                     )
+                else:
+                    logger.warning("⚠ %s: No candles returned from batch fetch", symbol.symbol_name)
 
             except Exception:
-                logger.exception("  ✗ %s: Failed", current_time.strftime("%Y-%m-%d %H:%M"))
-                total_failed += 1
-
-            current_time += timedelta(minutes=15)
+                logger.exception(
+                    "✗ %s: Batch fetch failed, falling back to individual fetches",
+                    symbol.symbol_name,
+                )
+                # Fall back to individual fetches if batch fails
+                symbol_updated = _fetch_fifteen_min_candles_individually(
+                    symbol,
+                    start_time,
+                    end_time,
+                    conn,
+                )
+        else:
+            # Non-Binance symbols: use individual fetches
+            symbol_updated = _fetch_fifteen_min_candles_individually(
+                symbol,
+                start_time,
+                end_time,
+                conn,
+            )
 
         if symbol_updated > 0:
             total_updated += symbol_updated
-            logger.info("✓ %s: Updated %d 15-minute candle(s)", symbol.symbol_name, symbol_updated)
 
     logger.info(
         "15-minute data update complete: %d candles updated, %d symbols already current, %d failed",

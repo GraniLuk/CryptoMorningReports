@@ -343,6 +343,219 @@ def fetch_binance_fifteen_min_kline(symbol: Symbol, end_time: datetime) -> Candl
         return None
 
 
+def fetch_binance_fifteen_min_klines_batch(
+    symbol: Symbol,
+    start_time: datetime,
+    end_time: datetime,
+) -> list[Candle]:
+    """Fetch multiple 15-minute klines from Binance in a single API call.
+
+    This function is optimized to fetch up to 1000 candles in one request,
+    significantly reducing API overhead compared to individual fetches.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        start_time: Start time for the candle range
+        end_time: End time for the candle range
+
+    Returns:
+        List of Candle objects, empty list if fetch fails
+
+    """
+    max_candles_per_request = 1000
+    client = BinanceClient()
+
+    # Ensure timezone-aware datetimes
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=UTC)
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=UTC)
+
+    # Round to nearest 15 minutes
+    start_minutes = (start_time.minute // 15) * 15
+    start_time = start_time.replace(minute=start_minutes, second=0, microsecond=0)
+
+    end_minutes = (end_time.minute // 15) * 15
+    end_time = end_time.replace(minute=end_minutes, second=0, microsecond=0)
+
+    # Calculate expected number of candles
+    time_diff = end_time - start_time
+    expected_candles = int(time_diff.total_seconds() / (15 * 60)) + 1
+
+    # Binance API limit is 1000 candles per request
+    if expected_candles > max_candles_per_request:
+        app_logger.warning(
+            f"Requested {expected_candles} candles for {symbol.symbol_name}, "
+            f"limiting to {max_candles_per_request} (max per API call)",
+        )
+        expected_candles = max_candles_per_request
+
+    # Convert to milliseconds for Binance API
+    start_timestamp_ms = int(start_time.timestamp() * 1000)
+    end_timestamp_ms = int(end_time.timestamp() * 1000)
+
+    try:
+        # Fetch 15-minute Kline data in batch
+        klines = client.get_klines(
+            symbol=symbol.binance_name,
+            interval=client.KLINE_INTERVAL_15MINUTE,
+            startTime=start_timestamp_ms,
+            endTime=end_timestamp_ms,
+            limit=expected_candles,
+        )
+
+        if not klines:
+            app_logger.error(f"No 15-minute Kline data found for {symbol.symbol_name}")
+            return []
+
+        # Convert each kline to Candle object
+        candles = []
+        for kline in klines:
+            # kline[0] is the open time in milliseconds
+            candle_end_time = datetime.fromtimestamp(
+                kline[0] / 1000,
+                tz=UTC,
+            ) + timedelta(minutes=15)
+
+            candles.append(
+                Candle(
+                    end_date=candle_end_time.isoformat(),
+                    source=SourceID.BINANCE.value,
+                    open=float(kline[1]),
+                    close=float(kline[4]),
+                    symbol=symbol.symbol_name,
+                    low=float(kline[3]),
+                    high=float(kline[2]),
+                    last=float(kline[4]),
+                    volume=float(kline[5]),
+                    volume_quote=float(kline[7]),
+                ),
+            )
+
+        app_logger.info(
+            f"✓ Fetched {len(candles)} 15-minute candles for {symbol.symbol_name} "
+            f"in single API call (requested {expected_candles})",
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error batch fetching 15-minute data for {symbol.symbol_name}: {e.message}",
+        )
+        return []
+    except (KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
+        app_logger.error(
+            f"Unexpected error batch fetching {symbol.symbol_name} 15-minute data: {e!s}",
+        )
+        return []
+    else:
+        return candles
+
+
+def fetch_binance_hourly_klines_batch(
+    symbol: Symbol,
+    start_time: datetime,
+    end_time: datetime,
+) -> list[Candle]:
+    """Fetch multiple hourly klines from Binance in a single API call.
+
+    This function is optimized to fetch up to 1000 candles in one request,
+    significantly reducing API overhead compared to individual fetches.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        start_time: Start time for the candle range
+        end_time: End time for the candle range
+
+    Returns:
+        List of Candle objects, empty list if fetch fails
+
+    """
+    max_candles_per_request = 1000
+    client = BinanceClient()
+
+    # Ensure timezone-aware datetimes
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=UTC)
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=UTC)
+
+    # Round to nearest hour
+    start_time = start_time.replace(minute=0, second=0, microsecond=0)
+    end_time = end_time.replace(minute=0, second=0, microsecond=0)
+
+    # Calculate expected number of candles
+    time_diff = end_time - start_time
+    expected_candles = int(time_diff.total_seconds() / 3600) + 1  # 3600 seconds = 1 hour
+
+    # Binance API limit is 1000 candles per request
+    if expected_candles > max_candles_per_request:
+        app_logger.warning(
+            f"Requested {expected_candles} hourly candles for {symbol.symbol_name}, "
+            f"limiting to {max_candles_per_request} (max per API call)",
+        )
+        expected_candles = max_candles_per_request
+
+    # Convert to milliseconds for Binance API
+    start_timestamp_ms = int(start_time.timestamp() * 1000)
+    end_timestamp_ms = int(end_time.timestamp() * 1000)
+
+    try:
+        # Fetch hourly Kline data in batch
+        klines = client.get_klines(
+            symbol=symbol.binance_name,
+            interval=client.KLINE_INTERVAL_1HOUR,
+            startTime=start_timestamp_ms,
+            endTime=end_timestamp_ms,
+            limit=expected_candles,
+        )
+
+        if not klines:
+            app_logger.error(f"No hourly Kline data found for {symbol.symbol_name}")
+            return []
+
+        # Convert each kline to Candle object
+        candles = []
+        for kline in klines:
+            # kline[0] is the open time in milliseconds
+            candle_end_time = datetime.fromtimestamp(
+                kline[0] / 1000,
+                tz=UTC,
+            ) + timedelta(hours=1)
+
+            candles.append(
+                Candle(
+                    end_date=candle_end_time.isoformat(),
+                    source=SourceID.BINANCE.value,
+                    open=float(kline[1]),
+                    close=float(kline[4]),
+                    symbol=symbol.symbol_name,
+                    low=float(kline[3]),
+                    high=float(kline[2]),
+                    last=float(kline[4]),
+                    volume=float(kline[5]),
+                    volume_quote=float(kline[7]),
+                ),
+            )
+
+        app_logger.info(
+            f"✓ Fetched {len(candles)} hourly candles for {symbol.symbol_name} "
+            f"in single API call (requested {expected_candles})",
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error batch fetching hourly data for {symbol.symbol_name}: {e.message}",
+        )
+        return []
+    except (KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
+        app_logger.error(
+            f"Unexpected error batch fetching {symbol.symbol_name} hourly data: {e!s}",
+        )
+        return []
+    else:
+        return candles
+
+
 if __name__ == "__main__":
     symbol = Symbol(
         symbol_id=1,
