@@ -197,8 +197,9 @@ def test_timezone_handling():
 
     assert len(daily_candles) > 0, "No daily candles returned"
     for candle in daily_candles:
-        assert has_timezone(candle.end_date), \
+        assert has_timezone(candle.end_date), (
             f"end_date missing timezone: {candle.end_date} (type: {type(candle.end_date)})"
+        )
 
     # Test hourly candles
     end_time = datetime.now(UTC)
@@ -207,8 +208,9 @@ def test_timezone_handling():
 
     assert len(hourly_candles) > 0, "No hourly candles returned"
     for candle in hourly_candles:
-        assert has_timezone(candle.end_date), \
+        assert has_timezone(candle.end_date), (
             f"end_date missing timezone: {candle.end_date} (type: {type(candle.end_date)})"
+        )
 
     # Test 15-min candles
     start_time = end_time - timedelta(hours=2)
@@ -216,8 +218,9 @@ def test_timezone_handling():
 
     assert len(fifteen_min_candles) > 0, "No 15-min candles returned"
     for candle in fifteen_min_candles:
-        assert has_timezone(candle.end_date), \
+        assert has_timezone(candle.end_date), (
             f"end_date missing timezone: {candle.end_date} (type: {type(candle.end_date)})"
+        )
 
     conn.close()
 
@@ -225,7 +228,6 @@ def test_timezone_handling():
 def test_empty_database_scenario():
     """TEST-045: Test with empty database (first run scenario)."""
     # This test is a placeholder - empty DB scenario is covered by other tests
-    pass
 
 
 def test_partially_filled_database():
