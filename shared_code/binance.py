@@ -556,6 +556,114 @@ def fetch_binance_hourly_klines_batch(
         return candles
 
 
+def fetch_binance_daily_klines_batch(
+    symbol: Symbol,
+    start_date: date,
+    end_date: date,
+) -> list[Candle]:
+    """Fetch multiple daily klines from Binance in a single API call.
+
+    This function is optimized to fetch up to 1000 candles in one request,
+    significantly reducing API overhead compared to individual fetches.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        start_date: Start date for the candle range
+        end_date: End date for the candle range
+
+    Returns:
+        List of Candle objects, empty list if fetch fails
+
+    """
+    max_candles_per_request = 1000
+    client = BinanceClient()
+
+    # Convert dates to datetime objects for timestamp calculation
+    start_datetime = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
+    end_datetime = datetime.combine(end_date, datetime.max.time(), tzinfo=UTC)
+
+    # Calculate expected number of candles
+    days_diff = (end_date - start_date).days + 1
+    expected_candles = days_diff
+
+    # Binance API limit is 1000 candles per request
+    if expected_candles > max_candles_per_request:
+        app_logger.warning(
+            f"Requested {expected_candles} daily candles for {symbol.symbol_name}, "
+            f"limiting to {max_candles_per_request} (max per API call)",
+        )
+        expected_candles = max_candles_per_request
+        # Adjust end_datetime to match the limit
+        end_datetime = start_datetime + timedelta(days=max_candles_per_request - 1)
+
+    # Convert to milliseconds for Binance API
+    start_timestamp_ms = int(start_datetime.timestamp() * 1000)
+    end_timestamp_ms = int(end_datetime.timestamp() * 1000)
+
+    try:
+        # Fetch daily Kline data in batch
+        klines = client.get_klines(
+            symbol=symbol.binance_name,
+            interval=client.KLINE_INTERVAL_1DAY,
+            startTime=start_timestamp_ms,
+            endTime=end_timestamp_ms,
+            limit=expected_candles,
+        )
+
+        if not klines:
+            app_logger.error(f"No daily Kline data found for {symbol.symbol_name}")
+            return []
+
+        # Convert each kline to Candle object
+        candles = []
+        for kline in klines:
+            # kline[0] is the open time in milliseconds
+            candle_date = datetime.fromtimestamp(
+                kline[0] / 1000,
+                tz=UTC,
+            ).date()
+
+            # Use end of day for end_date (consistent with individual fetch)
+            candle_end_datetime = datetime.combine(
+                candle_date,
+                datetime.max.time(),
+                tzinfo=UTC,
+            )
+
+            candles.append(
+                Candle(
+                    end_date=candle_end_datetime.isoformat(),
+                    source=SourceID.BINANCE.value,
+                    open=float(kline[1]),
+                    close=float(kline[4]),
+                    symbol=symbol.symbol_name,
+                    low=float(kline[3]),
+                    high=float(kline[2]),
+                    last=float(kline[4]),
+                    volume=float(kline[5]),
+                    volume_quote=float(kline[7]),
+                ),
+            )
+
+        app_logger.info(
+            f"✓ Fetched {len(candles)} daily candles for {symbol.symbol_name} "
+            f"in single API call (requested {expected_candles})",
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error batch fetching daily data for {symbol.symbol_name}: {e.message}",
+        )
+        return []
+    except (KeyError, ValueError, TypeError, IndexError, ConnectionError) as e:
+        app_logger.error(
+            f"Unexpected error batch fetching {symbol.symbol_name} daily data: {e!s}",
+        )
+        return []
+    else:
+        return candles
+
+
 if __name__ == "__main__":
     symbol = Symbol(
         symbol_id=1,
