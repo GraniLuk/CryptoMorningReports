@@ -1,8 +1,8 @@
-"""Phase 5: Comprehensive Testing & Validation
+"""Phase 5: Comprehensive Testing & Validation.
+
 Tests all refactored batch fetching functionality.
 """
 
-import sys
 from datetime import UTC, datetime, timedelta
 
 from dotenv import load_dotenv
@@ -182,9 +182,7 @@ def test_timezone_handling():
     symbols = fetch_symbols(conn)
 
     binance_symbol = next((s for s in symbols if s.source_id == SourceID.BINANCE), None)
-    if not binance_symbol:
-        conn.close()
-        return False
+    assert binance_symbol is not None, "No BINANCE symbols found"
 
     results = []
 
@@ -220,13 +218,14 @@ def test_timezone_handling():
     else:
         results.append(False)
 
+    assert all(results), "Some timezone checks failed"
     conn.close()
-    return all(results)
 
 
 def test_empty_database_scenario():
     """TEST-045: Test with empty database (first run scenario)."""
-    return True
+    # This test is a placeholder - empty DB scenario is covered by other tests
+    pass
 
 
 def test_partially_filled_database():
@@ -236,9 +235,7 @@ def test_partially_filled_database():
     symbols = fetch_symbols(conn)
 
     binance_symbol = next((s for s in symbols if s.source_id == SourceID.BINANCE), None)
-    if not binance_symbol:
-        conn.close()
-        return False
+    assert binance_symbol is not None, "No BINANCE symbols found"
 
     # Request a larger date range (30 days)
     today = datetime.now(UTC).date()
@@ -246,11 +243,10 @@ def test_partially_filled_database():
 
     candles = fetch_daily_candles(binance_symbol, start_date, today, conn)
 
-    if candles and len(candles) > 0:
-        conn.close()
-        return True
+    assert candles is not None, "Failed to fetch candles"
+    assert len(candles) > 0, "No candles returned from partially filled database"
+
     conn.close()
-    return False
 
 
 def test_fully_updated_database():
@@ -260,9 +256,7 @@ def test_fully_updated_database():
     symbols = fetch_symbols(conn)
 
     binance_symbol = next((s for s in symbols if s.source_id == SourceID.BINANCE), None)
-    if not binance_symbol:
-        conn.close()
-        return False
+    assert binance_symbol is not None, "No BINANCE symbols found"
 
     # First fetch to populate
     today = datetime.now(UTC).date()
@@ -273,47 +267,8 @@ def test_fully_updated_database():
     # Second fetch should use cache entirely
     candles = fetch_daily_candles(binance_symbol, start_date, today, conn)
 
-    if candles and len(candles) > 0:
-        conn.close()
-        return True
+    assert candles is not None, "Failed to fetch candles from cache"
+    assert len(candles) > 0, "No candles returned from cache"
+    
     conn.close()
-    return False
 
-
-def run_all_tests():
-    """Run all Phase 5 validation tests."""
-    tests = [
-        ("TEST-001: Daily BINANCE", test_daily_candles_binance),
-        ("TEST-004: Daily KUCOIN", test_daily_candles_kucoin),
-        ("TEST-002/005: Hourly Both Sources", test_hourly_candles_both_sources),
-        ("TEST-003/007: 15-min Both Sources", test_fifteen_min_candles_both_sources),
-        ("TEST-008: Database Storage", test_database_storage),
-        ("TEST-009: Timezone Handling", test_timezone_handling),
-        ("TEST-045: Empty Database", test_empty_database_scenario),
-        ("TEST-046: Partial Database", test_partially_filled_database),
-        ("TEST-047: Full Cache", test_fully_updated_database),
-    ]
-
-    results = []
-
-    for test_name, test_func in tests:
-        try:
-            result = test_func()
-            results.append((test_name, result))
-        except Exception:
-            results.append((test_name, False))
-
-    # Summary
-
-    passed = sum(1 for _, result in results if result)
-    total = len(results)
-
-    for test_name, result in results:
-        pass
-
-    return passed == total
-
-
-if __name__ == "__main__":
-    success = run_all_tests()
-    sys.exit(0 if success else 1)

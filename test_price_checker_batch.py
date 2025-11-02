@@ -11,6 +11,7 @@ from datetime import UTC, datetime, timedelta
 
 from dotenv import load_dotenv
 
+from shared_code.common_price import Candle
 from shared_code.price_checker import (
     fetch_daily_candles,
     fetch_fifteen_min_candles,
@@ -98,7 +99,7 @@ def setup_test_db() -> sqlite3.Connection:
     return conn
 
 
-def test_daily_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
+def test_daily_candles_batch(symbol: Symbol, conn: sqlite3.Connection) -> list[Candle]:
     """Test fetch_daily_candles with batch fetching (BINANCE)."""
     print("\n" + "=" * 80)
     print("TEST 1: Daily Candles - Batch Fetching (BINANCE)")
@@ -131,7 +132,7 @@ def test_daily_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
     return candles
 
 
-def test_hourly_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
+def test_hourly_candles_batch(symbol: Symbol, conn: sqlite3.Connection) -> list[Candle]:
     """Test fetch_hourly_candles with batch fetching (BINANCE)."""
     print("\n" + "=" * 80)
     print("TEST 2: Hourly Candles - Batch Fetching (BINANCE)")
@@ -164,7 +165,7 @@ def test_hourly_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
     return candles
 
 
-def test_fifteen_min_candles_batch(symbol: Symbol, conn: sqlite3.Connection):
+def test_fifteen_min_candles_batch(symbol: Symbol, conn: sqlite3.Connection) -> list[Candle]:
     """Test fetch_fifteen_min_candles with batch fetching (BINANCE)."""
     print("\n" + "=" * 80)
     print("TEST 3: 15-Minute Candles - Batch Fetching (BINANCE)")
