@@ -266,3 +266,219 @@ if __name__ == "__main__":
         pass
     else:
         pass
+
+
+def fetch_kucoin_daily_klines_batch(
+    symbol: Symbol,
+    start_date: date,
+    end_date: date,
+) -> list[Candle]:
+    """Fetch multiple daily candles from KuCoin in a single API call.
+
+    Args:
+        symbol: Symbol object with kucoin_name
+        start_date: Start date (inclusive)
+        end_date: End date (inclusive)
+
+    Returns:
+        List of Candle objects, sorted by date (oldest first)
+        Empty list if no data or error
+
+    Note:
+        KuCoin API limit: 1500 candles per request
+        For larger ranges, multiple API calls are needed
+    """
+    client = KucoinClient()
+
+    # Convert dates to timestamps
+    start_time_int = int(datetime.combine(start_date, datetime.min.time(), UTC).timestamp())
+    end_time_int = int(datetime.combine(end_date, datetime.max.time(), UTC).timestamp())
+
+    # Calculate expected number of candles
+    num_days = (end_date - start_date).days + 1
+
+    try:
+        klines = client.get_kline_data(
+            symbol.kucoin_name,
+            kline_type="1day",
+            start=start_time_int,
+            end=end_time_int,
+        )
+
+        if not klines:
+            app_logger.warning(f"No kline data from KuCoin for {symbol.symbol_name}")
+            return []
+
+        candles = []
+        for kline in klines:
+            # KuCoin kline format: [timestamp, open, close, high, low, volume, turnover]
+            timestamp = int(kline[0])
+            candle_date = datetime.fromtimestamp(timestamp, UTC)
+
+            candle = Candle(
+                end_date=candle_date.isoformat(),
+                source=SourceID.KUCOIN.value,
+                symbol=symbol.symbol_name,
+                open=float(kline[1]),
+                close=float(kline[2]),
+                high=float(kline[3]),
+                low=float(kline[4]),
+                last=float(kline[2]),
+                volume=float(kline[5]),
+                volume_quote=float(kline[6]),
+            )
+            candles.append(candle)
+
+        app_logger.info(
+            f"✓ Fetched {len(candles)} daily candles for {symbol.symbol_name} "
+            f"from KuCoin in single API call (requested {num_days})",
+        )
+        return sorted(candles, key=lambda c: c.end_date)
+
+    except Exception as e:  # noqa: BLE001
+        app_logger.error(f"Error fetching KuCoin daily batch for {symbol.symbol_name}: {e!s}")
+        return []
+
+
+def fetch_kucoin_hourly_klines_batch(
+    symbol: Symbol,
+    start_time: datetime,
+    end_time: datetime,
+) -> list[Candle]:
+    """Fetch multiple hourly candles from KuCoin in a single API call.
+
+    Args:
+        symbol: Symbol object with kucoin_name
+        start_time: Start time (timezone-aware)
+        end_time: End time (timezone-aware)
+
+    Returns:
+        List of Candle objects, sorted by timestamp (oldest first)
+        Empty list if no data or error
+
+    Note:
+        KuCoin API limit: 1500 candles per request
+        For larger ranges, multiple API calls are needed
+    """
+    client = KucoinClient()
+
+    # Convert to timestamps
+    start_time_int = int(start_time.timestamp())
+    end_time_int = int(end_time.timestamp())
+
+    # Calculate expected number of candles
+    num_hours = int((end_time - start_time).total_seconds() / 3600)
+
+    try:
+        klines = client.get_kline_data(
+            symbol.kucoin_name,
+            kline_type="1hour",
+            start=start_time_int,
+            end=end_time_int,
+        )
+
+        if not klines:
+            app_logger.warning(f"No hourly kline data from KuCoin for {symbol.symbol_name}")
+            return []
+
+        candles = []
+        for kline in klines:
+            # KuCoin kline format: [timestamp, open, close, high, low, volume, turnover]
+            timestamp = int(kline[0])
+            candle_time = datetime.fromtimestamp(timestamp, UTC)
+
+            candle = Candle(
+                end_date=candle_time.isoformat(),
+                source=SourceID.KUCOIN.value,
+                symbol=symbol.symbol_name,
+                open=float(kline[1]),
+                close=float(kline[2]),
+                high=float(kline[3]),
+                low=float(kline[4]),
+                last=float(kline[2]),
+                volume=float(kline[5]),
+                volume_quote=float(kline[6]),
+            )
+            candles.append(candle)
+
+        app_logger.info(
+            f"✓ Fetched {len(candles)} hourly candles for {symbol.symbol_name} "
+            f"from KuCoin in single API call (requested {num_hours})",
+        )
+        return sorted(candles, key=lambda c: c.end_date)
+
+    except Exception as e:  # noqa: BLE001
+        app_logger.error(f"Error fetching KuCoin hourly batch for {symbol.symbol_name}: {e!s}")
+        return []
+
+
+def fetch_kucoin_fifteen_min_klines_batch(
+    symbol: Symbol,
+    start_time: datetime,
+    end_time: datetime,
+) -> list[Candle]:
+    """Fetch multiple 15-minute candles from KuCoin in a single API call.
+
+    Args:
+        symbol: Symbol object with kucoin_name
+        start_time: Start time (timezone-aware)
+        end_time: End time (timezone-aware)
+
+    Returns:
+        List of Candle objects, sorted by timestamp (oldest first)
+        Empty list if no data or error
+
+    Note:
+        KuCoin API limit: 1500 candles per request
+        For larger ranges, multiple API calls are needed
+    """
+    client = KucoinClient()
+
+    # Convert to timestamps
+    start_time_int = int(start_time.timestamp())
+    end_time_int = int(end_time.timestamp())
+
+    # Calculate expected number of candles
+    num_periods = int((end_time - start_time).total_seconds() / 900)  # 900 seconds = 15 minutes
+
+    try:
+        klines = client.get_kline_data(
+            symbol.kucoin_name,
+            kline_type="15min",
+            start=start_time_int,
+            end=end_time_int,
+        )
+
+        if not klines:
+            app_logger.warning(f"No 15-min kline data from KuCoin for {symbol.symbol_name}")
+            return []
+
+        candles = []
+        for kline in klines:
+            # KuCoin kline format: [timestamp, open, close, high, low, volume, turnover]
+            timestamp = int(kline[0])
+            candle_time = datetime.fromtimestamp(timestamp, UTC)
+
+            candle = Candle(
+                end_date=candle_time.isoformat(),
+                source=SourceID.KUCOIN.value,
+                symbol=symbol.symbol_name,
+                open=float(kline[1]),
+                close=float(kline[2]),
+                high=float(kline[3]),
+                low=float(kline[4]),
+                last=float(kline[2]),
+                volume=float(kline[5]),
+                volume_quote=float(kline[6]),
+            )
+            candles.append(candle)
+
+        app_logger.info(
+            f"✓ Fetched {len(candles)} 15-minute candles for {symbol.symbol_name} "
+            f"from KuCoin in single API call (requested {num_periods})",
+        )
+        return sorted(candles, key=lambda c: c.end_date)
+
+    except Exception as e:  # noqa: BLE001
+        app_logger.error(f"Error fetching KuCoin 15-min batch for {symbol.symbol_name}: {e!s}")
+        return []

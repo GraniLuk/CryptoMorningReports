@@ -148,8 +148,10 @@ def fetch_hourly_candles(
 ) -> list[Candle]:
     """Fetch multiple hourly candles for a given symbol between start_time and end_time.
 
-    Uses intelligent batch fetching for BINANCE (up to 1000 candles per API call).
-    Falls back to individual fetching for other sources like KUCOIN.
+    Uses intelligent batch fetching for BINANCE and KUCOIN:
+    - BINANCE: Up to 1000 candles per API call
+    - KUCOIN: Up to 1500 candles per API call
+    Falls back to individual fetching for other sources.
 
     If a database connection is provided, attempts to fetch from database first
     and only fetches missing candles from the API.
@@ -198,17 +200,27 @@ def fetch_hourly_candles(
     missing_timestamps = [ts for ts in expected_timestamps if ts not in candle_dict]
 
     if missing_timestamps:
-        # Fetch missing candles using source-aware strategy
+        # Fetch missing candles using source-aware batch strategy
         if symbol.source_id == SourceID.BINANCE:
-            # Use batch API for BINANCE (efficient)
+            # Use batch API for BINANCE (up to 1000 candles per call)
             # Local import to avoid circular dependency between price_checker and binance
             from shared_code.binance import fetch_binance_hourly_klines_batch  # noqa: PLC0415
 
             batch_start = missing_timestamps[0]
             batch_end = missing_timestamps[-1]
             fetched_candles = fetch_binance_hourly_klines_batch(symbol, batch_start, batch_end)
+
+        elif symbol.source_id == SourceID.KUCOIN:
+            # Use batch API for KUCOIN (up to 1500 candles per call)
+            # Local import to avoid circular dependency between price_checker and kucoin
+            from shared_code.kucoin import fetch_kucoin_hourly_klines_batch  # noqa: PLC0415
+
+            batch_start = missing_timestamps[0]
+            batch_end = missing_timestamps[-1]
+            fetched_candles = fetch_kucoin_hourly_klines_batch(symbol, batch_start, batch_end)
+
         else:
-            # Use individual fetching for other sources (e.g., KUCOIN)
+            # Use individual fetching for other sources (fallback)
             fetched_candles = []
             for timestamp in missing_timestamps:
                 candle = _fetch_hourly_candle_from_source(symbol, timestamp)
@@ -281,8 +293,10 @@ def fetch_fifteen_min_candles(
 ) -> list[Candle]:
     """Fetch multiple 15-minute candles for a given symbol between start_time and end_time.
 
-    Uses intelligent batch fetching for BINANCE (up to 1000 candles per API call).
-    Falls back to individual fetching for other sources like KUCOIN.
+    Uses intelligent batch fetching for BINANCE and KUCOIN:
+    - BINANCE: Up to 1000 candles per API call
+    - KUCOIN: Up to 1500 candles per API call
+    Falls back to individual fetching for other sources.
 
     If a database connection is provided, attempts to fetch from database first
     and only fetches missing candles from the API.
@@ -333,24 +347,29 @@ def fetch_fifteen_min_candles(
     missing_timestamps = [ts for ts in expected_timestamps if ts not in candle_dict]
 
     if missing_timestamps:
-        # Fetch missing candles using source-aware strategy
+        # Fetch missing candles using source-aware batch strategy
         if symbol.source_id == SourceID.BINANCE:
-            # Use batch API for BINANCE (efficient)
+            # Use batch API for BINANCE (up to 1000 candles per call)
             # Local import to avoid circular dependency between price_checker and binance
             from shared_code.binance import fetch_binance_fifteen_min_klines_batch  # noqa: PLC0415
 
             batch_start = missing_timestamps[0]
             batch_end = missing_timestamps[-1]
             fetched_candles = fetch_binance_fifteen_min_klines_batch(symbol, batch_start, batch_end)
+
+        elif symbol.source_id == SourceID.KUCOIN:
+            # Use batch API for KUCOIN (up to 1500 candles per call)
+            # Local import to avoid circular dependency between price_checker and kucoin
+            from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch  # noqa: PLC0415
+
+            batch_start = missing_timestamps[0]
+            batch_end = missing_timestamps[-1]
+            fetched_candles = fetch_kucoin_fifteen_min_klines_batch(symbol, batch_start, batch_end)
+
         else:
-            # Use individual fetching for other sources (e.g., KUCOIN)
+            # Use individual fetching for other sources (fallback)
+            # Currently no other sources support 15-minute candles
             fetched_candles = []
-            for timestamp in missing_timestamps:
-                candle = None
-                if symbol.source_id == SourceID.KUCOIN:
-                    candle = fetch_kucoin_fifteen_min_kline(symbol, timestamp)
-                if candle:
-                    fetched_candles.append(candle)
 
         # Save fetched candles to database and add to dictionary
         if conn and fetched_candles:
@@ -376,7 +395,8 @@ def fetch_daily_candles(
     - Checks database for existing candles in the range
     - Identifies missing dates
     - For BINANCE: Fetches all missing candles in one batch API call (up to 1000)
-    - For KUCOIN: Fetches missing candles individually
+    - For KUCOIN: Fetches all missing candles in one batch API call (up to 1500)
+    - For other sources: Fetches missing candles individually
     - Saves newly fetched candles to database
     - Returns combined list of cached + newly fetched candles (sorted)
 
@@ -421,9 +441,9 @@ def fetch_daily_candles(
     missing_dates = [d for d in expected_dates if d not in candle_dict]
 
     if missing_dates:
-        # Fetch missing candles using source-aware strategy
+        # Fetch missing candles using source-aware batch strategy
         if symbol.source_id == SourceID.BINANCE:
-            # Use batch API for BINANCE (efficient)
+            # Use batch API for BINANCE (up to 1000 candles per call)
             # Local import to avoid circular dependency between price_checker and binance
             from shared_code.binance import fetch_binance_daily_klines_batch  # noqa: PLC0415
 
@@ -431,20 +451,30 @@ def fetch_daily_candles(
             batch_end = missing_dates[-1]
             fetched_candles = fetch_binance_daily_klines_batch(symbol, batch_start, batch_end)
 
-            # Save to database and add to dictionary
-            for candle in fetched_candles:
-                candle_date = _parse_candle_date(candle.end_date)
-                if conn:
-                    repo = DailyCandleRepository(conn)
-                    repo.save_candle(symbol, candle, source=symbol.source_id.value)
-                candle_dict[candle_date] = candle
+        elif symbol.source_id == SourceID.KUCOIN:
+            # Use batch API for KUCOIN (up to 1500 candles per call)
+            # Local import to avoid circular dependency between price_checker and kucoin
+            from shared_code.kucoin import fetch_kucoin_daily_klines_batch  # noqa: PLC0415
+
+            batch_start = missing_dates[0]
+            batch_end = missing_dates[-1]
+            fetched_candles = fetch_kucoin_daily_klines_batch(symbol, batch_start, batch_end)
 
         else:
-            # For KUCOIN and others, fetch individually (fallback)
+            # For other sources, fetch individually (fallback)
+            fetched_candles = []
             for missing_date in missing_dates:
                 candle = fetch_daily_candle(symbol, missing_date, conn)
                 if candle:
-                    candle_dict[missing_date] = candle
+                    fetched_candles.append(candle)
+
+        # Save to database and add to dictionary
+        for candle in fetched_candles:
+            candle_date = _parse_candle_date(candle.end_date)
+            if conn:
+                repo = DailyCandleRepository(conn)
+                repo.save_candle(symbol, candle, source=symbol.source_id.value)
+            candle_dict[candle_date] = candle
 
     # Convert dictionary to sorted list
     return [candle_dict[d] for d in sorted(candle_dict.keys()) if d in candle_dict]

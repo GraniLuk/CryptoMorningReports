@@ -6,6 +6,7 @@ from infra.sql_connection import connect_to_sql
 from shared_code.price_checker import fetch_daily_candles
 from source_repository import SourceID, fetch_symbols
 
+
 load_dotenv()
 conn = connect_to_sql()
 symbols = fetch_symbols(conn)
