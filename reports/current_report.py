@@ -14,6 +14,7 @@ from infra.configuration import is_article_cache_enabled
 from infra.telegram_logging_handler import app_logger
 from news.article_cache import CachedArticle, fetch_and_cache_articles_for_symbol
 from news.news_agent import GeminiClient, create_ai_client
+from shared_code.telegram import try_send_report_with_html_or_markdown
 from source_repository import fetch_symbol_by_name
 from technical_analysis.daily_candle import fetch_daily_candles
 from technical_analysis.fifteen_min_candle import (
@@ -476,7 +477,7 @@ async def _generate_ai_analysis(
         return error_msg
 
 
-async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
+async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915, PLR0912
     """Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 
     Args:
@@ -668,6 +669,25 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915
             full_report += "\n" + articles_html
 
         logger.info("Successfully generated HTML situation report for %s", symbol_name)
+
+        # Send to Telegram
+        telegram_enabled = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
+        telegram_token = os.getenv("TELEGRAM_TOKEN", "")
+        telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+
+        if telegram_enabled and telegram_token and telegram_chat_id:
+            success = await try_send_report_with_html_or_markdown(
+                telegram_enabled=telegram_enabled,
+                telegram_token=telegram_token,
+                telegram_chat_id=telegram_chat_id,
+                message=full_report,
+            )
+            if success:
+                logger.info("Successfully sent %s report to Telegram", symbol_name)
+            else:
+                logger.warning("Failed to send %s report to Telegram", symbol_name)
+        else:
+            logger.info("Telegram not configured, skipping message send")
 
     except Exception:
         error_msg = f"Error generating situation report for {symbol_name}"
