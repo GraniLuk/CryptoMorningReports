@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import requests
 
-from infra.configuration import is_article_cache_enabled
+from infra.configuration import get_telegram_parse_mode, is_article_cache_enabled
 from infra.telegram_logging_handler import app_logger
 from news.article_cache import CachedArticle, fetch_and_cache_articles_for_symbol
 from news.news_agent import GeminiClient, create_ai_client
@@ -553,6 +553,10 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
         telegram_enabled = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
         telegram_token = os.getenv("TELEGRAM_TOKEN", "")
         telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+
+        # Log which parse mode will be used
+        telegram_parse_mode = get_telegram_parse_mode()
+        logger.info("Using Telegram parse mode: %s", telegram_parse_mode)
 
         if telegram_enabled and telegram_token and telegram_chat_id:
             success = await try_send_report_with_html_or_markdown(

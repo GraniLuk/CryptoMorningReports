@@ -37,3 +37,34 @@ def is_article_cache_enabled() -> bool:
     """
     enabled = os.getenv("ENABLE_ARTICLE_CACHE", "true").lower()
     return enabled in ("true", "1", "yes", "on")
+
+
+def get_telegram_parse_mode() -> str:
+    """Get the Telegram parse mode from environment variables.
+
+    Returns the configured parse mode for Telegram messages. Defaults to "HTML"
+    if not specified or if an invalid value is provided.
+
+    Returns:
+        str: The parse mode to use - either "HTML" or "MarkdownV2"
+
+    Environment Variables:
+        TELEGRAM_PARSE_MODE: The parse mode to use (HTML or MarkdownV2)
+
+    Examples:
+        >>> os.environ["TELEGRAM_PARSE_MODE"] = "HTML"
+        >>> get_telegram_parse_mode()
+        'HTML'
+        >>> os.environ["TELEGRAM_PARSE_MODE"] = "MarkdownV2"
+        >>> get_telegram_parse_mode()
+        'MarkdownV2'
+    """
+    parse_mode = os.getenv("TELEGRAM_PARSE_MODE", "HTML").strip()
+
+    # Validate and normalize the parse mode
+    valid_modes = {"HTML", "MarkdownV2"}
+    if parse_mode not in valid_modes:
+        # Default to HTML if invalid value provided
+        return "HTML"
+
+    return parse_mode

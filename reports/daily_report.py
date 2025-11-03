@@ -4,6 +4,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from infra.configuration import get_telegram_parse_mode
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
 from integrations.onedrive_uploader import (
@@ -23,11 +24,7 @@ from shared_code.price_checker import (
     fetch_fifteen_min_candles,
     fetch_hourly_candles,
 )
-from shared_code.telegram import (
-    PARSE_MODE_HTML,
-    send_telegram_document,
-    send_telegram_message,
-)
+from shared_code.telegram import send_telegram_document, send_telegram_message
 from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
@@ -224,6 +221,11 @@ async def process_daily_report(  # noqa: PLR0915
 ):
     """Process and send the daily cryptocurrency report via Telegram."""
     logger = app_logger
+
+    # Get configured Telegram parse mode
+    telegram_parse_mode = get_telegram_parse_mode()
+    logger.info("Using Telegram parse mode: %s", telegram_parse_mode)
+
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for daily report...", len(symbols))
 
@@ -376,28 +378,28 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=message_part1,
-        parse_mode=PARSE_MODE_HTML,
+        parse_mode=telegram_parse_mode,
     )
     await send_telegram_message(
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=message_part2,
-        parse_mode=PARSE_MODE_HTML,
+        parse_mode=telegram_parse_mode,
     )
     await send_telegram_message(
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=stepn_report,
-        parse_mode=PARSE_MODE_HTML,
+        parse_mode=telegram_parse_mode,
     )
     await send_telegram_message(
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=volume_report,
-        parse_mode=PARSE_MODE_HTML,
+        parse_mode=telegram_parse_mode,
     )
 
     if sopr_report:
@@ -406,7 +408,7 @@ async def process_daily_report(  # noqa: PLR0915
             token=telegram_token,
             chat_id=telegram_chat_id,
             message=sopr_report,
-            parse_mode=PARSE_MODE_HTML,
+            parse_mode=telegram_parse_mode,
         )
 
     await send_telegram_message(
@@ -414,7 +416,7 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=marketcap_report,
-        parse_mode=PARSE_MODE_HTML,
+        parse_mode=telegram_parse_mode,
     )
 
     await send_telegram_message(
@@ -422,7 +424,7 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=derivatives_report,
-        parse_mode=PARSE_MODE_HTML,
+        parse_mode=telegram_parse_mode,
     )
 
     if launchpool_report:
@@ -432,7 +434,7 @@ async def process_daily_report(  # noqa: PLR0915
             token=telegram_token,
             chat_id=telegram_chat_id,
             message=message_part3,
-            parse_mode=PARSE_MODE_HTML,
+            parse_mode=telegram_parse_mode,
         )
 
     # Send the detailed analysis with news as a Telegram document (last message)
