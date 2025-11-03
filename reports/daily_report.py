@@ -23,7 +23,11 @@ from shared_code.price_checker import (
     fetch_fifteen_min_candles,
     fetch_hourly_candles,
 )
-from shared_code.telegram import send_telegram_document, send_telegram_message
+from shared_code.telegram import (
+    PARSE_MODE_HTML,
+    send_telegram_document,
+    send_telegram_message,
+)
 from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
@@ -372,28 +376,28 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=message_part1,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
     await send_telegram_message(
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=message_part2,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
     await send_telegram_message(
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=stepn_report,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
     await send_telegram_message(
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=volume_report,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
 
     if sopr_report:
@@ -402,7 +406,7 @@ async def process_daily_report(  # noqa: PLR0915
             token=telegram_token,
             chat_id=telegram_chat_id,
             message=sopr_report,
-            parse_mode="HTML",
+            parse_mode=PARSE_MODE_HTML,
         )
 
     await send_telegram_message(
@@ -410,7 +414,7 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=marketcap_report,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
 
     await send_telegram_message(
@@ -418,7 +422,7 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=derivatives_report,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
 
     if launchpool_report:
@@ -428,7 +432,7 @@ async def process_daily_report(  # noqa: PLR0915
             token=telegram_token,
             chat_id=telegram_chat_id,
             message=message_part3,
-            parse_mode="HTML",
+            parse_mode=PARSE_MODE_HTML,
         )
 
     # Send the detailed analysis with news as a Telegram document (last message)

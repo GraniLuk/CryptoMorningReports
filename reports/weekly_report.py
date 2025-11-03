@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from infra.telegram_logging_handler import app_logger
 from shared_code.price_checker import fetch_daily_candles
-from shared_code.telegram import send_telegram_message
+from shared_code.telegram import PARSE_MODE_HTML, send_telegram_message
 from source_repository import fetch_symbols
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.moving_averages_report import calculate_indicators
@@ -55,5 +55,5 @@ async def process_weekly_report(conn, telegram_enabled, telegram_token, telegram
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=message,
-        parse_mode="HTML",
+        parse_mode=PARSE_MODE_HTML,
     )
