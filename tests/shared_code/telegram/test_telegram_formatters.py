@@ -11,7 +11,7 @@ import pytest
 
 
 # Ensure project root is on sys.path
-ROOT = str(Path(__file__).parent.parent.resolve())
+ROOT = str(Path(__file__).parent.parent.parent.parent.resolve())
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
