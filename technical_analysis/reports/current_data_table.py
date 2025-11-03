@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from infra.telegram_logging_handler import app_logger
-from shared_code.telegram import format_rsi_with_emoji
+from shared_code.telegram import (
+    TelegramFormatter,
+    format_funding_rate_with_emoji,
+    format_rsi_with_emoji,
+    get_formatter,
+)
 from source_repository import SourceID, Symbol
 from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
 from technical_analysis.repositories.daily_candle_repository import (
@@ -303,16 +308,24 @@ def get_current_data_for_symbol(  # noqa: PLR0915, PLR0912
     return data
 
 
-def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  # noqa: PLR0915
-    """Format current data for a single symbol into HTML for Telegram.
+def format_current_data_for_telegram(  # noqa: PLR0915
+    symbol_data: dict[str, Any],
+    formatter: TelegramFormatter | None = None,
+) -> str:
+    """Format current data for a single symbol for Telegram.
 
     Args:
         symbol_data: Dictionary containing current data for the symbol
+        formatter: TelegramFormatter instance (HTML or MarkdownV2). Defaults to HTML if not provided.
 
     Returns:
-        HTML formatted string for Telegram
+        Formatted string for Telegram (HTML or MarkdownV2 depending on formatter)
 
     """
+    # Use HTML formatter by default if none provided
+    if formatter is None:
+        formatter = get_formatter("HTML")
+
     symbol_name = symbol_data.get("symbol", "Unknown")
     timestamp = symbol_data.get("timestamp", "Unknown")
 
@@ -361,83 +374,90 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
 
     # Last 7 days ranges
     ranges_7d = symbol_data.get("daily_ranges_7d", [])
-    history_html = ""
+    history_section = ""
     if ranges_7d:
-        history_html = "\n<b>📊 Last 7 Days Price Ranges:</b>\n<pre>"
-        for day_data in ranges_7d:
-            date_str = day_data.get("date", "N/A")
-            day_range = day_data.get("range", 0)
-            day_range_pct = day_data.get("range_pct", 0)
-            day_range_str = f"${day_range:,.4f}" if day_range is not None else "N/A"
-            day_range_pct_str = f"{day_range_pct:.2f}%" if day_range_pct is not None else "N/A"
-            history_html += f"{date_str}: {day_range_str} ({day_range_pct_str})\n"
-        history_html += "</pre>"
+        history_section = "\n" + formatter.format_bold("📊 Last 7 Days Price Ranges:") + "\n"
+        history_section += formatter.format_code_block(
+            "\n".join(
+                f"{day_data.get('date', 'N/A')}: "
+                f"${day_data.get('range', 0):,.4f} "
+                f"({day_data.get('range_pct', 0):.2f}%)"
+                for day_data in ranges_7d
+            ),
+        )
 
     # Format derivatives data (Open Interest and Funding Rate)
-    derivatives_html = ""
+    derivatives_section = ""
     open_interest = symbol_data.get("open_interest")
     open_interest_value = symbol_data.get("open_interest_value")
     funding_rate = symbol_data.get("funding_rate")
     next_funding_time = symbol_data.get("next_funding_time")
 
     if any([open_interest, funding_rate]):
-        derivatives_html = "\n<b>📈 Derivatives Data:</b>\n"
+        derivatives_section = "\n" + formatter.format_bold("📈 Derivatives Data:") + "\n"
 
         if open_interest is not None:
             oi_str = f"{open_interest:,.0f}"
-            derivatives_html += f"├ Open Interest: <code>{oi_str}</code>\n"
+            derivatives_section += f"├ Open Interest: {formatter.format_code(oi_str)}\n"
 
         if open_interest_value is not None:
             oi_value_str = f"${open_interest_value:,.0f}"
-            derivatives_html += f"├ OI Value: <code>{oi_value_str}</code>\n"
+            derivatives_section += f"├ OI Value: {formatter.format_code(oi_value_str)}\n"
 
-        funding_rate_high_threshold = 0.01
-        funding_rate_low_threshold = -0.01
         if funding_rate is not None:
-            fr_pct = funding_rate * 100
-            fr_str = f"{fr_pct:+.4f}%"
-            emoji = (
-                "🔴"
-                if funding_rate > funding_rate_high_threshold
-                else "🟢"
-                if funding_rate < funding_rate_low_threshold
-                else "🟡"
-            )
-            derivatives_html += f"├ Funding Rate: {emoji} <code>{fr_str}</code>\n"
+            funding_formatted = format_funding_rate_with_emoji(funding_rate)
+            derivatives_section += f"├ Funding Rate: {funding_formatted}\n"
 
         if next_funding_time:
             if isinstance(next_funding_time, datetime):
                 funding_time_str = next_funding_time.strftime("%H:%M UTC")
             else:
                 funding_time_str = str(next_funding_time)
-            derivatives_html += f"└ Next Funding: <code>{funding_time_str}</code>\n"
+            derivatives_section += f"└ Next Funding: {formatter.format_code(funding_time_str)}\n"
         elif funding_rate is not None:
             # Add a closing character if we have funding rate but no time
-            derivatives_html = derivatives_html.replace("├ Funding Rate:", "└ Funding Rate:")
+            derivatives_section = derivatives_section.replace("├ Funding Rate:", "└ Funding Rate:")
 
-    # Create HTML formatted message
-    return f"""<b>📈 Current Market Data for {symbol_name}</b>
+    # Create formatted message using formatter
+    return f"""{formatter.format_bold(f"📈 Current Market Data for {symbol_name}")}
 
-<i>⏰ {timestamp}</i>
+{formatter.format_italic(f"⏰ {timestamp}")}
 
-<b>💰 Price Information:</b>
-├ Latest Price: <code>{price_str}</code>
-├ Daily High: <code>{high_str}</code>
-├ Daily Low: <code>{low_str}</code>
-└ Daily Range: <code>{range_str}</code>
+{formatter.format_bold("💰 Price Information:")}
+├ Latest Price: {formatter.format_code(price_str)}
+├ Daily High: {formatter.format_code(high_str)}
+├ Daily Low: {formatter.format_code(low_str)}
+└ Daily Range: {formatter.format_code(range_str)}
 
-<b>📊 RSI Indicators:</b>
+{formatter.format_bold("📊 RSI Indicators:")}
 ├ Daily RSI: {daily_rsi_str}
 ├ Hourly RSI: {hourly_rsi_str}
 └ 15-min RSI: {fifteen_min_rsi_str}
 
-<b>📉 Moving Averages:</b>
-├ MA50: <code>{ma50_str}</code>
-├ MA200: <code>{ma200_str}</code>
-├ EMA50: <code>{ema50_str}</code>
-└ EMA200: <code>{ema200_str}</code>
-{derivatives_html}{history_html}
+{formatter.format_bold("📉 Moving Averages:")}
+├ MA50: {formatter.format_code(ma50_str)}
+├ MA200: {formatter.format_code(ma200_str)}
+├ EMA50: {formatter.format_code(ema50_str)}
+└ EMA200: {formatter.format_code(ema200_str)}
+{derivatives_section}{history_section}
 """
+
+
+# Backward compatibility - old function name (deprecated, use format_current_data_for_telegram instead)
+def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:
+    """Format current data for Telegram in HTML format.
+
+    .. deprecated::
+        Use :func:`format_current_data_for_telegram` with formatter parameter instead.
+
+    Args:
+        symbol_data: Dictionary containing current data for the symbol
+
+    Returns:
+        HTML formatted string for Telegram
+
+    """
+    return format_current_data_for_telegram(symbol_data, formatter=get_formatter("HTML"))
 
 
 def get_current_data_summary_table(
@@ -458,8 +478,8 @@ def get_current_data_summary_table(
         # Get current data
         symbol_data = get_current_data_for_symbol(symbol, conn)
 
-        # Format as HTML
-        return format_current_data_for_telegram_html(symbol_data)
+        # Format for Telegram (defaults to HTML formatter)
+        return format_current_data_for_telegram(symbol_data)
 
     except (KeyError, ValueError, TypeError) as e:
         app_logger.error(f"Error generating current data summary for {symbol.symbol_name}: {e!s}")
