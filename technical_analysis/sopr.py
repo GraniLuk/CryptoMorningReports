@@ -51,21 +51,33 @@ def fetch_sopr_metrics(
             app_logger.error(f"SOPR API returned status {response.status_code}: {response.text}")
             return None
 
-        metrics["SOPR"] = response.json()[0]
+        sopr_data = response.json()
+        if not sopr_data or len(sopr_data) == 0:
+            app_logger.warning(f"SOPR API returned empty data for {yesterday}, skipping")
+            return None
+        metrics["SOPR"] = sopr_data[0]
 
         # Fetch STH-SOPR
         response = requests.get(f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10)
         if response.status_code != HTTPStatus.OK:
             app_logger.warning(f"STH-SOPR API error (status {response.status_code}), skipping")
             return None
-        metrics["STH-SOPR"] = response.json()[0]
+        sth_data = response.json()
+        if not sth_data or len(sth_data) == 0:
+            app_logger.warning(f"STH-SOPR API returned empty data for {yesterday}, skipping")
+            return None
+        metrics["STH-SOPR"] = sth_data[0]
 
         # Fetch LTH-SOPR
         response = requests.get(f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10)
         if response.status_code != HTTPStatus.OK:
             app_logger.warning(f"LTH-SOPR API error (status {response.status_code}), skipping")
             return None
-        metrics["LTH-SOPR"] = response.json()[0]
+        lth_data = response.json()
+        if not lth_data or len(lth_data) == 0:
+            app_logger.warning(f"LTH-SOPR API returned empty data for {yesterday}, skipping")
+            return None
+        metrics["LTH-SOPR"] = lth_data[0]
 
     except (requests.RequestException, KeyError, ValueError, TypeError) as e:
         app_logger.error(f"Error fetching SOPR metrics: {e!s}")
