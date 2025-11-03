@@ -4,9 +4,7 @@ This module tests the high-level formatting functions in the telegram package,
 including RSI formatting, article formatting, price formatting, and markdown conversion.
 """
 
-from datetime import datetime
 
-import pytest
 
 from shared_code.telegram import (
     convert_ai_markdown_to_telegram_html,
@@ -281,6 +279,7 @@ class MockArticle:
     """Mock CachedArticle for testing."""
 
     def __init__(self, title, published, source, link):
+        """Initialize mock article with test data."""
         self.title = title
         self.published = published
         self.source = source
@@ -303,7 +302,7 @@ class TestFormatArticlesForTelegram:
                 published="2024-01-15T10:30:00",
                 source="CoinDesk",
                 link="https://example.com/article",
-            )
+            ),
         ]
         result = format_articles_for_telegram(articles, HTMLFormatter())
         assert "<b>📰 Recent News Articles</b>" in result
@@ -319,7 +318,7 @@ class TestFormatArticlesForTelegram:
                 published="2024-01-15T10:30:00",
                 source="CoinDesk",
                 link="https://example.com/article",
-            )
+            ),
         ]
         result = format_articles_for_telegram(articles, MarkdownV2Formatter())
         # MarkdownV2 uses single * for bold, not **

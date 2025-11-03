@@ -31,6 +31,7 @@ Create a `.env` or configure your Function App settings with the following value
 TELEGRAM_ENABLED=true
 TELEGRAM_TOKEN=<telegram_bot_token>
 TELEGRAM_CHAT_ID=<telegram_chat_id>
+TELEGRAM_PARSE_MODE=HTML
 SQL_PASSWORD=<sql_password>
 KUCOIN_API_KEY=<kucoin_api_key>
 KUCOIN_API_SECRET=<kucoin_api_secret>
@@ -40,6 +41,22 @@ PANDOC_DOWNLOAD_DIR=<optional_custom_path>
 ```
 
 > ℹ️ `PANDOC_DOWNLOAD_DIR` is optional. If omitted, the function uses a cache folder under the script root.
+
+#### Telegram Configuration
+
+The application uses a modular Telegram formatting package (`shared_code/telegram/`) that supports two message formats:
+
+- **`HTML`** (default) – Recommended for most use cases. Uses `<b>`, `<i>`, `<code>`, `<a href="">` tags.
+- **`MarkdownV2`** – Telegram's strict markdown format. Requires escaping many special characters.
+
+Set `TELEGRAM_PARSE_MODE` in your environment to switch between formats. If unset or invalid, defaults to `HTML`.
+
+**Example:**
+```ini
+TELEGRAM_PARSE_MODE=HTML  # or MarkdownV2
+```
+
+For detailed usage, formatter examples, and migration guidance, see [`docs/TELEGRAM_FORMATTING.md`](docs/TELEGRAM_FORMATTING.md).
 
 ### Install Dependencies
 
@@ -91,9 +108,22 @@ CryptoMorningReports/
 ├── news/                  # News aggregation and parsing utilities
 ├── integrations/          # External services (Pandoc, OneDrive, etc.)
 ├── infra/                 # Configuration, SQL connectivity, telemetry
-├── sharedCode/            # Common SDK wrappers and helpers
+├── shared_code/           # Common SDK wrappers and helpers
+│   └── telegram/          # Telegram formatting package (HTML/MarkdownV2 support)
+├── docs/                  # Documentation (TELEGRAM_FORMATTING.md, etc.)
 └── function_app.py        # Azure Functions entry point
 ```
+
+### Telegram Package
+
+The `shared_code/telegram/` package provides a modular, testable abstraction for Telegram message formatting and sending:
+
+- **Formatters** – Separate `HtmlFormatter` and `MarkdownV2Formatter` classes for consistent formatting
+- **Configuration** – Switchable via `TELEGRAM_PARSE_MODE` environment variable
+- **Text Processing** – Character escaping, link handling, list formatting utilities
+- **Comprehensive Tests** – 99 unit tests with 70% coverage (API-dependent functions excluded)
+
+See [`docs/TELEGRAM_FORMATTING.md`](docs/TELEGRAM_FORMATTING.md) for detailed usage and migration guidance.
 
 ---
 

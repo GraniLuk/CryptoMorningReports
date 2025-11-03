@@ -22,13 +22,6 @@ from .constants import (
 from .formatters import TelegramFormatter, get_formatter
 
 
-try:
-    from news.article_cache import CachedArticle
-except ImportError:
-    # Fallback for when news module is not available
-    CachedArticle = None  # type: ignore
-
-
 def format_rsi_with_emoji(
     rsi_value: float | None,
     overbought_threshold: float = RSI_OVERBOUGHT,
@@ -74,7 +67,7 @@ def enhance_text_with_emojis(
     text: str,
     emoji_map: dict[str, str] | None = None,
 ) -> str:
-    """Add emojis to markdown section headers based on keyword matching.
+    r"""Add emojis to markdown section headers based on keyword matching.
 
     Scans markdown headers (lines starting with #) and prepends emojis
     if the header contains certain keywords and doesn't already have the emoji.
@@ -128,7 +121,7 @@ def enhance_text_with_emojis(
 
 
 def convert_ai_markdown_to_telegram_html(markdown_text: str) -> str:
-    """Convert AI-generated markdown text to Telegram-compatible HTML.
+    r"""Convert AI-generated markdown text to Telegram-compatible HTML.
 
     Designed specifically for AI-generated analysis text. Converts common
     markdown patterns to HTML tags supported by Telegram's parse_mode='HTML'.
@@ -193,7 +186,7 @@ def format_articles_for_telegram(
     formatter: TelegramFormatter | None = None,
     max_title_length: int = ARTICLE_TITLE_MAX_LENGTH,
 ) -> str:
-    """Format cached news articles for Telegram using specified formatter.
+    r"""Format cached news articles for Telegram using specified formatter.
 
     Args:
         articles: List of CachedArticle instances with title, published, source, link
@@ -275,6 +268,7 @@ def format_funding_rate_with_emoji(
     funding_rate: float | None,
     high_threshold: float = FUNDING_RATE_HIGH,
     low_threshold: float = FUNDING_RATE_LOW,
+    *,
     as_percentage: bool = True,
 ) -> str:
     """Format funding rate with emoji based on threshold.
@@ -308,10 +302,7 @@ def format_funding_rate_with_emoji(
         return "N/A"
 
     # Format the value
-    if as_percentage:
-        value_str = f"{funding_rate * 100:.2f}%"
-    else:
-        value_str = f"{funding_rate:.4f}"
+    value_str = f"{funding_rate * 100:.2f}%" if as_percentage else f"{funding_rate:.4f}"
 
     # Select emoji based on threshold
     if funding_rate >= high_threshold:

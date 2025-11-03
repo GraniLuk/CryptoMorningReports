@@ -7,6 +7,8 @@ both HTML and MarkdownV2 formatters work correctly.
 import sys
 from pathlib import Path
 
+import pytest
+
 
 # Ensure project root is on sys.path
 ROOT = str(Path(__file__).parent.parent.resolve())
@@ -45,11 +47,8 @@ class TestGetFormatter:
 
     def test_get_formatter_invalid_raises_error(self):
         """Test that invalid parse mode raises ValueError."""
-        try:
+        with pytest.raises(ValueError, match="Unsupported parse_mode"):
             get_formatter("INVALID")
-            assert False, "Should have raised ValueError"
-        except ValueError as e:
-            assert "Unsupported parse_mode" in str(e)
 
 
 class TestHTMLFormatter:
@@ -146,10 +145,10 @@ class TestMarkdownV2Formatter:
         assert result == "```\ndef hello():\n    pass\n```"
 
     def test_format_code_block_with_language(self):
-        """Test MarkdownV2 code block with language."""
+        """Test MarkdownV2 code block formatting."""
         formatter = MarkdownV2Formatter()
-        result = formatter.format_code_block("def hello():\n    pass", "python")
-        assert result == "```python\ndef hello():\n    pass\n```"
+        result = formatter.format_code_block("def hello():\n    pass")
+        assert result == "```\ndef hello():\n    pass\n```"
 
     def test_format_link(self):
         """Test MarkdownV2 link formatting."""

@@ -13,6 +13,12 @@ from typing import Protocol
 from .constants import PARSE_MODE_HTML, PARSE_MODE_MARKDOWN_V2
 
 
+# Header level constants
+HEADER_LEVEL_TOP = 1
+HEADER_LEVEL_SECTION = 2
+HEADER_LEVEL_SUBSECTION = 3
+
+
 class TelegramFormatter(Protocol):
     """Protocol defining the interface for Telegram message formatters.
 
@@ -75,12 +81,11 @@ class TelegramFormatter(Protocol):
         """
         ...
 
-    def format_code_block(self, text: str, language: str = "") -> str:
+    def format_code_block(self, text: str) -> str:
         """Format text as code block.
 
         Args:
             text: Code text to format
-            language: Programming language for syntax highlighting (optional)
 
         Returns:
             Formatted text as code block
@@ -141,7 +146,7 @@ class HTMLFormatter:
         """Format text as inline code using HTML."""
         return f"<code>{text}</code>"
 
-    def format_code_block(self, text: str, language: str = "") -> str:
+    def format_code_block(self, text: str) -> str:
         """Format text as code block using HTML.
 
         Note: Telegram HTML doesn't support language-specific syntax highlighting.
@@ -159,12 +164,12 @@ class HTMLFormatter:
             text: Header text
             level: 1 = top level (▓▓▓), 2 = section (═══), 3 = subsection (underline)
         """
-        if level == 1:
+        if level == HEADER_LEVEL_TOP:
             return f"<b>▓▓▓ {text} ▓▓▓</b>"
-        elif level == 2:
+        if level == HEADER_LEVEL_SECTION:
             return f"<b>═══ {text} ═══</b>"
-        else:  # level 3 or higher
-            return f"<b><u>{text}</u></b>"
+        # level 3 or higher
+        return f"<b><u>{text}</u></b>"
 
 
 class MarkdownV2Formatter:
@@ -199,15 +204,11 @@ class MarkdownV2Formatter:
         """Format text as inline code using MarkdownV2."""
         return f"`{text}`"
 
-    def format_code_block(self, text: str, language: str = "") -> str:
+    def format_code_block(self, text: str) -> str:
         """Format text as code block using MarkdownV2.
 
-        Args:
-            text: Code text
-            language: Programming language (e.g., 'python', 'javascript')
+        Note: MarkdownV2 supports language-specific syntax highlighting.
         """
-        if language:
-            return f"```{language}\n{text}\n```"
         return f"```\n{text}\n```"
 
     def format_link(self, text: str, url: str) -> str:
@@ -221,12 +222,12 @@ class MarkdownV2Formatter:
             text: Header text
             level: 1 = top level (▓▓▓), 2 = section (═══), 3 = subsection (underline)
         """
-        if level == 1:
+        if level == HEADER_LEVEL_TOP:
             return f"*▓▓▓ {text} ▓▓▓*"
-        elif level == 2:
+        if level == HEADER_LEVEL_SECTION:
             return f"*═══ {text} ═══*"
-        else:  # level 3 or higher
-            return f"__{text}__"
+        # level 3 or higher
+        return f"__{text}__"
 
 
 def get_formatter(parse_mode: str | None) -> TelegramFormatter:
@@ -252,13 +253,13 @@ def get_formatter(parse_mode: str | None) -> TelegramFormatter:
     """
     if parse_mode == PARSE_MODE_HTML:
         return HTMLFormatter()
-    elif parse_mode == PARSE_MODE_MARKDOWN_V2:
+    if parse_mode == PARSE_MODE_MARKDOWN_V2:
         return MarkdownV2Formatter()
-    elif parse_mode is None or parse_mode == "":
+    if parse_mode is None or parse_mode == "":
         # Default to HTML for backward compatibility
         return HTMLFormatter()
-    else:
-        raise ValueError(
-            f"Unsupported parse_mode: {parse_mode}. "
-            f"Supported modes: '{PARSE_MODE_HTML}', '{PARSE_MODE_MARKDOWN_V2}', None"
-        )
+    msg = (
+        f"Unsupported parse_mode: {parse_mode}. "
+        f"Supported modes: '{PARSE_MODE_HTML}', '{PARSE_MODE_MARKDOWN_V2}', None"
+    )
+    raise ValueError(msg)

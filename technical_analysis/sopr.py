@@ -21,6 +21,23 @@ if TYPE_CHECKING:
 API_BASE = "https://bitcoin-data.com/"
 
 
+def _fetch_sopr_data(endpoint: str, date_str: str) -> dict | None:
+    """Fetch SOPR data from a specific endpoint."""
+    try:
+        response = requests.get(f"{API_BASE}/v1/{endpoint}", params={"day": date_str}, timeout=10)
+        if response.status_code != HTTPStatus.OK:
+            app_logger.warning(f"{endpoint.upper()} API error (status {response.status_code})")
+            return None
+        data = response.json()
+        if not data or len(data) == 0:
+            app_logger.warning(f"{endpoint.upper()} API returned empty data for {date_str}")
+            return None
+        return data[0]
+    except (requests.RequestException, KeyError, ValueError, TypeError) as e:
+        app_logger.error(f"Error fetching {endpoint}: {e!s}")
+        return None
+
+
 def fetch_sopr_metrics(
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> PrettyTable | None:
@@ -33,72 +50,44 @@ def fetch_sopr_metrics(
         PrettyTable: containing formatted table for display
 
     """
-    metrics = {}
     yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
 
-    try:
-        # Fetch base SOPR
-        response = requests.get(f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10)
-
-        # Check for rate limiting or other HTTP errors
-        if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
-            app_logger.warning(
-                "SOPR API rate limit exceeded (5 requests/hour for free tier). "
-                "Skipping SOPR metrics this run.",
-            )
-            return None
-        if response.status_code != HTTPStatus.OK:
-            app_logger.error(f"SOPR API returned status {response.status_code}: {response.text}")
-            return None
-
-        sopr_data = response.json()
-        if not sopr_data or len(sopr_data) == 0:
-            app_logger.warning(f"SOPR API returned empty data for {yesterday}, skipping")
-            return None
-        metrics["SOPR"] = sopr_data[0]
-
-        # Fetch STH-SOPR
-        response = requests.get(f"{API_BASE}/v1/sth-sopr", params={"day": yesterday}, timeout=10)
-        if response.status_code != HTTPStatus.OK:
-            app_logger.warning(f"STH-SOPR API error (status {response.status_code}), skipping")
-            return None
-        sth_data = response.json()
-        if not sth_data or len(sth_data) == 0:
-            app_logger.warning(f"STH-SOPR API returned empty data for {yesterday}, skipping")
-            return None
-        metrics["STH-SOPR"] = sth_data[0]
-
-        # Fetch LTH-SOPR
-        response = requests.get(f"{API_BASE}/v1/lth-sopr", params={"day": yesterday}, timeout=10)
-        if response.status_code != HTTPStatus.OK:
-            app_logger.warning(f"LTH-SOPR API error (status {response.status_code}), skipping")
-            return None
-        lth_data = response.json()
-        if not lth_data or len(lth_data) == 0:
-            app_logger.warning(f"LTH-SOPR API returned empty data for {yesterday}, skipping")
-            return None
-        metrics["LTH-SOPR"] = lth_data[0]
-
-    except (requests.RequestException, KeyError, ValueError, TypeError) as e:
-        app_logger.error(f"Error fetching SOPR metrics: {e!s}")
+    # Check rate limit first
+    response = requests.get(f"{API_BASE}/v1/sopr", params={"day": yesterday}, timeout=10)
+    if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+        app_logger.warning(
+            "SOPR API rate limit exceeded (5 requests/hour for free tier). "
+            "Skipping SOPR metrics this run.",
+        )
         return None
-    else:
-        # Create pretty table for display
-        table = PrettyTable()
-        table.field_names = ["Indicator", "Value"]
-        table.align["Indicator"] = "l"  # Left align indicator names
-        table.align["Value"] = "r"  # Right align values
 
-        for metric, data in metrics.items():
-            value = float(data.get("sopr") or data.get("sthSopr") or data.get("lthSopr"))
-            table.add_row([metric, f"{value:.4f}"])
+    # Fetch all metrics
+    metrics = {}
+    endpoints = ["sopr", "sth-sopr", "lth-sopr"]
+    names = ["SOPR", "STH-SOPR", "LTH-SOPR"]
 
-        # Save results to database
-        if conn:
-            save_sopr_results(conn, metrics)
-            app_logger.info("SOPR metrics fetched and saved successfully")
+    for endpoint, name in zip(endpoints, names, strict=True):
+        data = _fetch_sopr_data(endpoint, yesterday)
+        if data is None:
+            return None  # Early return on any failure
+        metrics[name] = data
 
-        return table
+    # Create and return table
+    table = PrettyTable()
+    table.field_names = ["Indicator", "Value"]
+    table.align["Indicator"] = "l"  # Left align indicator names
+    table.align["Value"] = "r"  # Right align values
+
+    for metric, data in metrics.items():
+        value = float(data.get("sopr") or data.get("sthSopr") or data.get("lthSopr"))
+        table.add_row([metric, f"{value:.4f}"])
+
+    # Save results to database
+    if conn:
+        save_sopr_results(conn, metrics)
+        app_logger.info("SOPR metrics fetched and saved successfully")
+
+    return table
 
 
 if __name__ == "__main__":

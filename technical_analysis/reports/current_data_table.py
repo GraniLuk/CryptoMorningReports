@@ -316,7 +316,8 @@ def format_current_data_for_telegram(  # noqa: PLR0915
 
     Args:
         symbol_data: Dictionary containing current data for the symbol
-        formatter: TelegramFormatter instance (HTML or MarkdownV2). Defaults to HTML if not provided.
+        formatter: TelegramFormatter instance (HTML or MarkdownV2).
+            Defaults to HTML if not provided.
 
     Returns:
         Formatted string for Telegram (HTML or MarkdownV2 depending on formatter)
@@ -443,7 +444,7 @@ def format_current_data_for_telegram(  # noqa: PLR0915
 """
 
 
-# Backward compatibility - old function name (deprecated, use format_current_data_for_telegram instead)
+# Backward compatibility - old function name (deprecated)
 def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:
     """Format current data for Telegram in HTML format.
 

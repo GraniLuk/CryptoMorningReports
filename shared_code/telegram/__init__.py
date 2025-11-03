@@ -169,7 +169,6 @@ from .sending import (
 
 __version__ = "2.0.0"  # Version 2.0 - Package refactoring
 __all__ = [
-    # Constants
     "ARTICLE_CONTENT_PREVIEW_LENGTH",
     "ARTICLE_TITLE_MAX_LENGTH",
     "DEFAULT_EMOJI_MAP",
@@ -187,24 +186,20 @@ __all__ = [
     "TELEGRAM_ALLOWED_HTML_TAGS",
     "TELEGRAM_MAX_DOCUMENT_SIZE",
     "TELEGRAM_MAX_MESSAGE_LENGTH",
-    # Formatters
-    "get_formatter",
     "HTMLFormatter",
     "MarkdownV2Formatter",
     "TelegramFormatter",
-    # Formatting Utils
     "convert_ai_markdown_to_telegram_html",
+    "enforce_markdown_v2",
     "enhance_text_with_emojis",
     "format_articles_for_telegram",
     "format_funding_rate_with_emoji",
     "format_price_with_currency",
     "format_rsi_with_emoji",
-    # Sending
+    "get_formatter",
+    "sanitize_html",
     "send_telegram_document",
     "send_telegram_message",
-    "try_send_report_with_html_or_markdown",
-    # Text Processing
-    "enforce_markdown_v2",
-    "sanitize_html",
     "smart_split",
+    "try_send_report_with_html_or_markdown",
 ]
