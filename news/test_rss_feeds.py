@@ -54,7 +54,7 @@ RSS_FEEDS = {
 FAILED_CONTENT_MESSAGES = {"Failed to fetch full content", "Failed to extract full content"}
 
 
-def test_single_feed(source: str, feed_info: dict[str, str]) -> dict[str, Any]:
+def check_single_feed(source: str, feed_info: dict[str, str]) -> dict[str, Any]:
     """Test a single RSS feed and return detailed results.
 
     Args:
@@ -296,7 +296,7 @@ def main() -> None:
 
     # Test each feed individually
     for source, feed_info in RSS_FEEDS.items():
-        result = test_single_feed(source, feed_info)
+        result = check_single_feed(source, feed_info)
         all_results.append(result)
 
     # Test 24h filtering

@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from news.article_cache import (
     CachedArticle,
+    cleanup_old_articles,
     get_articles_for_symbol,
     get_recent_articles,
     save_article_to_cache,
@@ -20,6 +21,9 @@ def test_end_to_end_article_integration():
     """Test end-to-end workflow: save articles -> retrieve by symbol."""
     print("\n🧪 Running Phase 4 Integration Tests")
     print("=" * 50)
+
+    # Clean up old articles to ensure clean test state
+    cleanup_old_articles(max_age_hours=0)
 
     # Step 1: Create test articles with different symbols
     now = datetime.now(tz=UTC)
