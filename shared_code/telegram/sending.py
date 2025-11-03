@@ -237,4 +237,3 @@ async def send_telegram_document(
     except (OSError, ValueError, TypeError, KeyError, requests.RequestException) as e:
         app_logger.exception("Exception while sending document: %s", e)
         return False
-
