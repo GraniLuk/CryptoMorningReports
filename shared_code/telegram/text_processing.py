@@ -111,4 +111,3 @@ def _extend_to_close_tag(_full_text: str, _start_index: int, slice_: str, _limit
         # drop dangling part after last '<'
         return slice_[:last_lt]
     return slice_
-

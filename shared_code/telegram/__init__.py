@@ -30,9 +30,9 @@ Formatting Utils:
     - format_funding_rate_with_emoji() - Format funding rate with emoji
 
 Sending:
-    - send_telegram_message() - (TODO: Phase 6)
-    - send_telegram_document() - (TODO: Phase 6)
-    - try_send_report_with_html_or_markdown() - (TODO: Phase 6)
+    - send_telegram_message() - Send text message to Telegram
+    - send_telegram_document() - Send document to Telegram
+    - try_send_report_with_html_or_markdown() - Send with fallback
 
 Usage:
 ------
@@ -102,47 +102,15 @@ from .text_processing import (
     smart_split,
 )
 
-# Sending functions (temporarily imported from old telegram.py for backward compatibility)
-# These will be moved to sending.py in Phase 6
-try:
-    # Import from parent shared_code.telegram module (the old .py file, not this package)
-    import importlib.util
-    from pathlib import Path
-
-    _old_telegram_path = Path(__file__).parent.parent / "telegram.py"
-    spec = importlib.util.spec_from_file_location("old_telegram", _old_telegram_path)
-    if spec and spec.loader:
-        old_telegram = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(old_telegram)
-
-        send_telegram_message = old_telegram.send_telegram_message
-        send_telegram_document = old_telegram.send_telegram_document
-        try_send_report_with_html_or_markdown = old_telegram.try_send_report_with_html_or_markdown
-    else:
-        raise ImportError("Could not load old telegram module")
-except (ImportError, AttributeError) as e:
-    # If import fails, define stub functions
-    import sys
-
-    print(f"Warning: Could not import from old telegram.py: {e}", file=sys.stderr)
-
-    async def send_telegram_message(**kwargs):
-        """Temporary stub - will be implemented in Phase 6."""
-        msg = "This function will be moved in Phase 6"
-        raise NotImplementedError(msg)
-
-    async def send_telegram_document(**kwargs):
-        """Temporary stub - will be implemented in Phase 6."""
-        msg = "This function will be moved in Phase 6"
-        raise NotImplementedError(msg)
-
-    async def try_send_report_with_html_or_markdown(**kwargs):
-        """Temporary stub - will be implemented in Phase 6."""
-        msg = "This function will be moved in Phase 6"
-        raise NotImplementedError(msg)
+# Sending - Now imported from sending module
+from .sending import (
+    send_telegram_document,
+    send_telegram_message,
+    try_send_report_with_html_or_markdown,
+)
 
 
-# Commented out old Phase 6 TODOs - text_processing is now imported above
+# Commented out old Phase 6 TODOs - all modules now imported above
 
 # Formatting Utils (TODO: Phase 3-5)
 # from .formatting_utils import (
