@@ -4,8 +4,6 @@ This module tests the high-level formatting functions in the telegram package,
 including RSI formatting, article formatting, price formatting, and markdown conversion.
 """
 
-
-
 from shared_code.telegram import (
     convert_ai_markdown_to_telegram_html,
     enhance_text_with_emojis,
