@@ -17,9 +17,9 @@ Formatters:
     - HTMLFormatter, MarkdownV2Formatter - Formatter implementations
 
 Text Processing:
-    - enforce_markdown_v2() - (TODO: Phase 6)
-    - sanitize_html() - (TODO: Phase 6)
-    - smart_split() - (TODO: Phase 6)
+    - enforce_markdown_v2() - Escape MarkdownV2 special characters
+    - sanitize_html() - Sanitize HTML to Telegram-allowed tags
+    - smart_split() - Split text into chunks respecting limits
 
 Formatting Utils:
     - format_rsi_with_emoji() - Format RSI values with emoji indicators
@@ -30,9 +30,9 @@ Formatting Utils:
     - format_funding_rate_with_emoji() - Format funding rate with emoji
 
 Sending:
-    - send_telegram_message() - (TODO: Phase 4)
-    - send_telegram_document() - (TODO: Phase 4)
-    - try_send_report_with_html_or_markdown() - (TODO: Phase 4)
+    - send_telegram_message() - (TODO: Phase 6)
+    - send_telegram_document() - (TODO: Phase 6)
+    - try_send_report_with_html_or_markdown() - (TODO: Phase 6)
 
 Usage:
 ------
@@ -95,14 +95,18 @@ from .formatting_utils import (
     format_rsi_with_emoji,
 )
 
-# Text Processing (TODO: Phase 6 - These are temporarily imported from old telegram.py)
-# Import from parent module (old telegram.py) for backward compatibility
-# Temporarily import from old telegram.py file (in shared_code directory)
-# These will be moved to text_processing.py in Phase 6
+# Text Processing - Now imported from text_processing module
+from .text_processing import (
+    enforce_markdown_v2,
+    sanitize_html,
+    smart_split,
+)
+
+# Sending functions (temporarily imported from old telegram.py for backward compatibility)
+# These will be moved to sending.py in Phase 6
 try:
     # Import from parent shared_code.telegram module (the old .py file, not this package)
     import importlib.util
-    import sys
     from pathlib import Path
 
     _old_telegram_path = Path(__file__).parent.parent / "telegram.py"
@@ -111,9 +115,6 @@ try:
         old_telegram = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(old_telegram)
 
-        enforce_markdown_v2 = old_telegram.enforce_markdown_v2
-        sanitize_html = old_telegram.sanitize_html
-        smart_split = old_telegram.smart_split
         send_telegram_message = old_telegram.send_telegram_message
         send_telegram_document = old_telegram.send_telegram_document
         try_send_report_with_html_or_markdown = old_telegram.try_send_report_with_html_or_markdown
@@ -125,42 +126,23 @@ except (ImportError, AttributeError) as e:
 
     print(f"Warning: Could not import from old telegram.py: {e}", file=sys.stderr)
 
-    def enforce_markdown_v2(text: str) -> str:
-        """Temporary stub - will be implemented in Phase 6."""
-        msg = "This function will be moved in Phase 6"
-        raise NotImplementedError(msg)
-
-    def sanitize_html(message: str) -> str:
-        """Temporary stub - will be implemented in Phase 6."""
-        msg = "This function will be moved in Phase 6"
-        raise NotImplementedError(msg)
-
-    def smart_split(text: str, limit: int, parse_mode: str | None) -> list[str]:
-        """Temporary stub - will be implemented in Phase 6."""
-        msg = "This function will be moved in Phase 6"
-        raise NotImplementedError(msg)
-
     async def send_telegram_message(**kwargs):
-        """Temporary stub - will be implemented in Phase 4."""
-        msg = "This function will be moved in Phase 4"
+        """Temporary stub - will be implemented in Phase 6."""
+        msg = "This function will be moved in Phase 6"
         raise NotImplementedError(msg)
 
     async def send_telegram_document(**kwargs):
-        """Temporary stub - will be implemented in Phase 4."""
-        msg = "This function will be moved in Phase 4"
+        """Temporary stub - will be implemented in Phase 6."""
+        msg = "This function will be moved in Phase 6"
         raise NotImplementedError(msg)
 
     async def try_send_report_with_html_or_markdown(**kwargs):
-        """Temporary stub - will be implemented in Phase 4."""
-        msg = "This function will be moved in Phase 4"
+        """Temporary stub - will be implemented in Phase 6."""
+        msg = "This function will be moved in Phase 6"
         raise NotImplementedError(msg)
 
 
-# from .text_processing import (
-#     enforce_markdown_v2,
-#     sanitize_html,
-#     smart_split,
-# )
+# Commented out old Phase 6 TODOs - text_processing is now imported above
 
 # Formatting Utils (TODO: Phase 3-5)
 # from .formatting_utils import (
