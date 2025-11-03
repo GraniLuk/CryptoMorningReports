@@ -22,12 +22,12 @@ Text Processing:
     - smart_split() - (TODO: Phase 6)
 
 Formatting Utils:
-    - format_rsi_with_emoji() - (TODO: Phase 3)
-    - enhance_text_with_emojis() - (TODO: Phase 3)
-    - convert_ai_markdown_to_telegram_html() - (TODO: Phase 3)
-    - format_articles_for_telegram() - (TODO: Phase 3)
-    - format_price_with_currency() - (TODO: Phase 3)
-    - format_funding_rate_with_emoji() - (TODO: Phase 3)
+    - format_rsi_with_emoji() - Format RSI values with emoji indicators
+    - enhance_text_with_emojis() - Add emojis to markdown headers
+    - convert_ai_markdown_to_telegram_html() - Convert AI markdown to HTML
+    - format_articles_for_telegram() - Format news articles for Telegram
+    - format_price_with_currency() - Format price with currency symbol
+    - format_funding_rate_with_emoji() - Format funding rate with emoji
 
 Sending:
     - send_telegram_message() - (TODO: Phase 4)
@@ -83,6 +83,16 @@ from .formatters import (
     MarkdownV2Formatter,
     TelegramFormatter,
     get_formatter,
+)
+
+# Formatting Utils
+from .formatting_utils import (
+    convert_ai_markdown_to_telegram_html,
+    enhance_text_with_emojis,
+    format_articles_for_telegram,
+    format_funding_rate_with_emoji,
+    format_price_with_currency,
+    format_rsi_with_emoji,
 )
 
 # Text Processing (TODO: Phase 6 - These are temporarily imported from old telegram.py)
@@ -203,13 +213,13 @@ __all__ = [
     "enforce_markdown_v2",
     "sanitize_html",
     "smart_split",
-    # Formatting Utils (TODO: Phase 3-5)
-    # "format_rsi_with_emoji",
-    # "enhance_text_with_emojis",
-    # "convert_ai_markdown_to_telegram_html",
-    # "format_articles_for_telegram",
-    # "format_price_with_currency",
-    # "format_funding_rate_with_emoji",
+    # Formatting Utils
+    "convert_ai_markdown_to_telegram_html",
+    "enhance_text_with_emojis",
+    "format_articles_for_telegram",
+    "format_funding_rate_with_emoji",
+    "format_price_with_currency",
+    "format_rsi_with_emoji",
     # Sending (TODO: Phase 4)
     "send_telegram_message",
     "send_telegram_document",
