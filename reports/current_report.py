@@ -13,6 +13,7 @@ from infra.telegram_logging_handler import app_logger
 from news.article_cache import CachedArticle, fetch_and_cache_articles_for_symbol
 from news.news_agent import GeminiClient, create_ai_client
 from shared_code.telegram import (
+    ARTICLE_CONTENT_PREVIEW_LENGTH,
     convert_ai_markdown_to_telegram_html,
     enhance_text_with_emojis,
     format_articles_for_telegram,
@@ -38,9 +39,7 @@ if TYPE_CHECKING:
     import logging
 
 
-# Article formatting constants
-ARTICLE_CONTENT_PREVIEW_LENGTH = 500
-ARTICLE_TITLE_MAX_LENGTH = 100  # Define system prompts for the AI analysis
+# Define system prompts for the AI analysis
 SYSTEM_PROMPT_SITUATION = """
 You are an expert cryptocurrency technical analyst performing in-depth market
 analysis. Using both technical data (price, volume, indicators) and recent news
