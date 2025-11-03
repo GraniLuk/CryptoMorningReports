@@ -253,7 +253,7 @@ async def process_daily_report(  # noqa: PLR0915
     daily_candles_by_symbol = {}
     for symbol in symbols:
         candles = fetch_daily_candles(symbol, start_date, today, conn)
-        daily_candles_by_symbol[symbol] = candles
+        daily_candles_by_symbol[symbol.symbol_id] = candles
     logger.info("✓ Daily candles: fetched for all %d symbols", len(symbols))
 
     # Fetch missing hourly candles for all symbols (last 24 hours)
@@ -283,7 +283,9 @@ async def process_daily_report(  # noqa: PLR0915
     # This avoids duplicate fetching and ensures candle IDs are properly set
 
     # Prepare symbols with their candles for RSI calculation
-    symbols_with_candles = [(symbol, daily_candles_by_symbol[symbol]) for symbol in symbols]
+    symbols_with_candles = [
+        (symbol, daily_candles_by_symbol[symbol.symbol_id]) for symbol in symbols
+    ]
 
     rsi_table = create_rsi_table(symbols_with_candles, conn, target_date=datetime.now(UTC).date())
     ma_average_table, ema_average_table = calculate_indicators(

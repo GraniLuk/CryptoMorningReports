@@ -258,10 +258,19 @@ def fetch_hourly_candles(
         repo = HourlyCandleRepository(conn)
         cached_candles = repo.get_candles(symbol, start_time, end_time)
 
-        # Add cached candles to dictionary
+        # Add cached candles to dictionary using full datetime as key
         for candle in cached_candles:
-            candle_end_date = _parse_candle_date(candle.end_date)
-            candle_dict[candle_end_date] = candle
+            # Parse end_date to datetime for consistent comparison
+            if isinstance(candle.end_date, str):
+                candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
+            elif isinstance(candle.end_date, datetime):
+                candle_datetime = candle.end_date
+            else:
+                # If it's a date object, skip it (shouldn't happen for hourly candles)
+                continue
+            # Ensure timezone aware and round to hour
+            candle_datetime = candle_datetime.replace(tzinfo=UTC, minute=0, second=0, microsecond=0)
+            candle_dict[candle_datetime] = candle
 
     # Identify missing timestamps
     missing_timestamps = [ts for ts in expected_timestamps if ts not in candle_dict]
@@ -305,15 +314,31 @@ def fetch_hourly_candles(
                 symbol, missing_timestamps[0], missing_timestamps[-1],
             )
 
-            # Add refetched candles with IDs to dictionary
+            # Add refetched candles with IDs to dictionary using full datetime as key
             for candle in refetched_candles:
-                candle_end_date = _parse_candle_date(candle.end_date)
-                candle_dict[candle_end_date] = candle
+                # Parse end_date to datetime for consistent comparison
+                if isinstance(candle.end_date, str):
+                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
+                elif isinstance(candle.end_date, datetime):
+                    candle_datetime = candle.end_date
+                else:
+                    continue
+                # Ensure timezone aware and round to hour
+                candle_datetime = candle_datetime.replace(tzinfo=UTC, minute=0, second=0, microsecond=0)
+                candle_dict[candle_datetime] = candle
         elif fetched_candles:
             # No database connection, just use fetched candles without IDs
             for candle in fetched_candles:
-                candle_end_date = _parse_candle_date(candle.end_date)
-                candle_dict[candle_end_date] = candle
+                # Parse end_date to datetime for consistent comparison
+                if isinstance(candle.end_date, str):
+                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
+                elif isinstance(candle.end_date, datetime):
+                    candle_datetime = candle.end_date
+                else:
+                    continue
+                # Ensure timezone aware and round to hour
+                candle_datetime = candle_datetime.replace(tzinfo=UTC, minute=0, second=0, microsecond=0)
+                candle_dict[candle_datetime] = candle
 
     # Return candles sorted by end_date
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
@@ -418,10 +443,22 @@ def fetch_fifteen_min_candles(
         repo = FifteenMinCandleRepository(conn)
         cached_candles = repo.get_candles(symbol, start_time, end_time)
 
-        # Add cached candles to dictionary
+        # Add cached candles to dictionary using full datetime as key
         for candle in cached_candles:
-            candle_end_date = _parse_candle_date(candle.end_date)
-            candle_dict[candle_end_date] = candle
+            # Parse end_date to datetime for consistent comparison
+            if isinstance(candle.end_date, str):
+                candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
+            elif isinstance(candle.end_date, datetime):
+                candle_datetime = candle.end_date
+            else:
+                # If it's a date object, skip it (shouldn't happen for 15-min candles)
+                continue
+            # Ensure timezone aware and round to 15 minutes
+            candle_minutes = (candle_datetime.minute // 15) * 15
+            candle_datetime = candle_datetime.replace(
+                tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0
+            )
+            candle_dict[candle_datetime] = candle
 
     # Identify missing timestamps
     missing_timestamps = [ts for ts in expected_timestamps if ts not in candle_dict]
@@ -462,15 +499,37 @@ def fetch_fifteen_min_candles(
                 symbol, missing_timestamps[0], missing_timestamps[-1],
             )
 
-            # Add refetched candles with IDs to dictionary
+            # Add refetched candles with IDs to dictionary using full datetime as key
             for candle in refetched_candles:
-                candle_end_date = _parse_candle_date(candle.end_date)
-                candle_dict[candle_end_date] = candle
+                # Parse end_date to datetime for consistent comparison
+                if isinstance(candle.end_date, str):
+                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
+                elif isinstance(candle.end_date, datetime):
+                    candle_datetime = candle.end_date
+                else:
+                    continue
+                # Ensure timezone aware and round to 15 minutes
+                candle_minutes = (candle_datetime.minute // 15) * 15
+                candle_datetime = candle_datetime.replace(
+                    tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0,
+                )
+                candle_dict[candle_datetime] = candle
         elif fetched_candles:
             # No database connection, just use fetched candles without IDs
             for candle in fetched_candles:
-                candle_end_date = _parse_candle_date(candle.end_date)
-                candle_dict[candle_end_date] = candle
+                # Parse end_date to datetime for consistent comparison
+                if isinstance(candle.end_date, str):
+                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
+                elif isinstance(candle.end_date, datetime):
+                    candle_datetime = candle.end_date
+                else:
+                    continue
+                # Ensure timezone aware and round to 15 minutes
+                candle_minutes = (candle_datetime.minute // 15) * 15
+                candle_datetime = candle_datetime.replace(
+                    tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0,
+                )
+                candle_dict[candle_datetime] = candle
 
     # Return candles sorted by end_date
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
@@ -519,10 +578,12 @@ def fetch_daily_candles(
     # If connection provided, try to get existing candles from database
     if conn:
         repo = DailyCandleRepository(conn)
+        # Use max.time() for end_date to capture candles stored at end of day (23:59:59.999999)
+        # Must include tzinfo=UTC for proper string comparison in SQLite
         cached_candles = repo.get_candles(
             symbol,
-            datetime.combine(start_date, datetime.min.time()),
-            datetime.combine(end_date, datetime.min.time()),
+            datetime.combine(start_date, datetime.min.time(), tzinfo=UTC),
+            datetime.combine(end_date, datetime.max.time(), tzinfo=UTC),
         )
 
         # Add cached candles to dictionary
@@ -569,10 +630,12 @@ def fetch_daily_candles(
 
             # Re-fetch saved candles to get database-assigned IDs
             # This is critical for RSI and other operations that need candle IDs
+            # Use max.time() for end_date to capture candles stored at end of day (23:59:59.999999)
+            # Must include tzinfo=UTC for proper string comparison in SQLite
             refetched_candles = repo.get_candles(
                 symbol,
-                datetime.combine(missing_dates[0], datetime.min.time()),
-                datetime.combine(missing_dates[-1], datetime.min.time()),
+                datetime.combine(missing_dates[0], datetime.min.time(), tzinfo=UTC),
+                datetime.combine(missing_dates[-1], datetime.max.time(), tzinfo=UTC),
             )
 
             # Add refetched candles with IDs to dictionary
