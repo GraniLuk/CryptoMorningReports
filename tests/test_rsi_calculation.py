@@ -326,7 +326,9 @@ def test_rsi_integration_with_database():
 
     if virtual:
         target_date = datetime.now(UTC).date()
-        table = create_rsi_table_for_symbol(virtual, conn, target_date)
+        start_date = target_date - timedelta(days=30)
+        candles = fetch_daily_candles(virtual, start_date, target_date, conn)
+        table = create_rsi_table_for_symbol(virtual, candles, conn)
 
         # Should return a valid PrettyTable or None
         assert table is not None or table is None  # Valid outputs
