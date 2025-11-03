@@ -342,9 +342,7 @@ class TestFormatArticlesForTelegram:
     def test_title_truncation_default(self):
         """Test that long titles are truncated at default length."""
         long_title = "A" * 150  # Longer than default ARTICLE_TITLE_MAX_LENGTH (100)
-        articles = [
-            MockArticle(long_title, "2024-01-15T10:00:00", "Source", "http://test.com")
-        ]
+        articles = [MockArticle(long_title, "2024-01-15T10:00:00", "Source", "http://test.com")]
         result = format_articles_for_telegram(articles)
         # Should be truncated to 100 chars + "..."
         assert "A" * 100 + "..." in result
@@ -353,17 +351,13 @@ class TestFormatArticlesForTelegram:
     def test_title_truncation_custom(self):
         """Test title truncation with custom max length."""
         long_title = "B" * 100
-        articles = [
-            MockArticle(long_title, "2024-01-15T10:00:00", "Source", "http://test.com")
-        ]
+        articles = [MockArticle(long_title, "2024-01-15T10:00:00", "Source", "http://test.com")]
         result = format_articles_for_telegram(articles, max_title_length=50)
         assert "B" * 50 + "..." in result
 
     def test_default_formatter_is_html(self):
         """Test that HTML formatter is used by default."""
-        articles = [
-            MockArticle("Test", "2024-01-15T10:00:00", "Source", "http://test.com")
-        ]
+        articles = [MockArticle("Test", "2024-01-15T10:00:00", "Source", "http://test.com")]
         result = format_articles_for_telegram(articles)
         # HTML tags should be present
         assert "<b>" in result
@@ -372,9 +366,7 @@ class TestFormatArticlesForTelegram:
 
     def test_invalid_date_format(self):
         """Test handling of invalid date formats."""
-        articles = [
-            MockArticle("Test", "invalid-date", "Source", "http://test.com")
-        ]
+        articles = [MockArticle("Test", "invalid-date", "Source", "http://test.com")]
         result = format_articles_for_telegram(articles)
         # Should fallback to the raw string
         assert "invalid-date" in result
@@ -462,14 +454,10 @@ class TestFormatFundingRateWithEmoji:
 
     def test_custom_thresholds(self):
         """Test with custom high/low thresholds."""
-        result = format_funding_rate_with_emoji(
-            0.005, high_threshold=0.005, low_threshold=-0.005
-        )
+        result = format_funding_rate_with_emoji(0.005, high_threshold=0.005, low_threshold=-0.005)
         assert result == "🔴 0.50%"
 
-        result = format_funding_rate_with_emoji(
-            -0.005, high_threshold=0.005, low_threshold=-0.005
-        )
+        result = format_funding_rate_with_emoji(-0.005, high_threshold=0.005, low_threshold=-0.005)
         assert result == "🟢 -0.50%"
 
     def test_without_percentage(self):

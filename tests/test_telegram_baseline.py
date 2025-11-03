@@ -18,12 +18,10 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from news.article_cache import CachedArticle  # noqa: E402
-from reports.current_report import (  # noqa: E402
-    convert_markdown_to_telegram_html,
-    format_articles_for_html,
-)
 from shared_code.telegram import (  # noqa: E402
+    convert_ai_markdown_to_telegram_html,
     enforce_markdown_v2,
+    format_articles_for_telegram,
     sanitize_html,
     smart_split,
 )
@@ -58,7 +56,7 @@ class TestTelegramBaseline:
 
     def test_smart_split_baseline_html(self):
         """Baseline test for smart_split with HTML content.
-        
+
         Note: This test documents the current behavior of smart_split, including
         potential edge cases where tags might not be perfectly preserved during
         splitting. This will be addressed in future phases.
@@ -78,7 +76,7 @@ class TestTelegramBaseline:
         reassembled = "\n\n".join(chunk.strip() for chunk in chunks)
         assert "<b>Header</b>" in reassembled
         assert "Paragraph text" in reassembled
-        
+
         # Verify messages are split reasonably (not just one giant chunk)
         if len(long_html) > 4096:
             assert len(chunks) > 1, "Long HTML should be split into multiple chunks"
@@ -192,7 +190,7 @@ class TestTelegramBaseline:
             ),
         ]
 
-        result = format_articles_for_html(articles)
+        result = format_articles_for_telegram(articles)
 
         # Verify header is present
         assert "📰 Recent News Articles" in result
@@ -247,7 +245,7 @@ Numbered list:
 3. Third
 """
 
-        result = convert_markdown_to_telegram_html(markdown)
+        result = convert_ai_markdown_to_telegram_html(markdown)
 
         # Verify headers are converted
         assert "<b>▓▓▓ Main Header ▓▓▓</b>" in result

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from infra.telegram_logging_handler import app_logger
+from shared_code.telegram import format_rsi_with_emoji
 from source_repository import SourceID, Symbol
 from technical_analysis.reports.rsi_multi_timeframe import get_rsi_for_symbol_timeframe
 from technical_analysis.repositories.daily_candle_repository import (
@@ -319,19 +320,7 @@ def format_current_data_for_telegram_html(symbol_data: dict[str, Any]) -> str:  
     latest_price = symbol_data.get("latest_price")
     price_str = f"${latest_price:,.4f}" if latest_price is not None else "N/A"
 
-    # Format RSI values with emojis
-    def format_rsi_with_emoji(rsi_value):
-        rsi_overbought_threshold = 70
-        rsi_oversold_threshold = 30
-        if rsi_value is None:
-            return "N/A"
-        rsi_str = f"{rsi_value:.2f}"
-        if rsi_value >= rsi_overbought_threshold:
-            return f"🔴 {rsi_str} (Overbought)"
-        if rsi_value <= rsi_oversold_threshold:
-            return f"🟢 {rsi_str} (Oversold)"
-        return f"🟡 {rsi_str}"
-
+    # Format RSI values with emojis using imported function
     daily_rsi = symbol_data.get("daily_rsi")
     hourly_rsi = symbol_data.get("hourly_rsi")
     fifteen_min_rsi = symbol_data.get("fifteen_min_rsi")

@@ -1,8 +1,6 @@
 """Current market report generation with news and analysis."""
 
-import html as html_module
 import os
-import re
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
@@ -14,7 +12,12 @@ from infra.configuration import is_article_cache_enabled
 from infra.telegram_logging_handler import app_logger
 from news.article_cache import CachedArticle, fetch_and_cache_articles_for_symbol
 from news.news_agent import GeminiClient, create_ai_client
-from shared_code.telegram import try_send_report_with_html_or_markdown
+from shared_code.telegram import (
+    convert_ai_markdown_to_telegram_html,
+    enhance_text_with_emojis,
+    format_articles_for_telegram,
+    try_send_report_with_html_or_markdown,
+)
 from source_repository import fetch_symbol_by_name
 from technical_analysis.daily_candle import fetch_daily_candles
 from technical_analysis.fifteen_min_candle import (
@@ -293,103 +296,9 @@ def format_articles_for_prompt(articles: list[CachedArticle]) -> str:
     return formatted
 
 
-def format_articles_for_html(articles: list[CachedArticle]) -> str:
-    """Format cached articles for HTML output in Telegram.
-
-    Args:
-        articles: List of CachedArticle instances
-
-    Returns:
-        HTML formatted string with article information
-    """
-    if not articles:
-        return ""
-
-    html = "<b>📰 Recent News Articles</b>\n\n"
-
-    for i, article in enumerate(articles, 1):
-        # Parse published date to make it more readable
-        try:
-            published_dt = datetime.fromisoformat(article.published)
-            time_str = published_dt.strftime("%Y-%m-%d %H:%M UTC")
-        except (ValueError, AttributeError):
-            time_str = article.published
-
-        # Truncate title if too long
-        title = (
-            article.title[:ARTICLE_TITLE_MAX_LENGTH]
-            if len(article.title) > ARTICLE_TITLE_MAX_LENGTH
-            else article.title
-        )
-        if len(article.title) > ARTICLE_TITLE_MAX_LENGTH:
-            title += "..."
-
-        html += f"<b>{i}. {title}</b>\n"
-        html += f"<i>🕒 {time_str} | 📡 {article.source}</i>\n"
-        html += f'<a href="{article.link}">Read more</a>\n\n'
-
-    return html
-
-
-def convert_markdown_to_telegram_html(markdown_text: str) -> str:
-    """Convert markdown text to Telegram-compatible HTML.
-
-    Supported Markdown Features:
-        - Headers: #, ##, ### converted to styled <b> and <u> HTML tags.
-        - Bold: **text** converted to <b>text</b>.
-        - Italic: *text* and _text_ converted to <i>text</i>.
-        - Inline code: `text` converted to <code>text</code>.
-        - Code blocks: ```text``` converted to <pre>text</pre>.
-        - Bullet points: - and * converted to •.
-        - Numbered lists: 1. 2. etc. converted to numbered HTML.
-    # Escape HTML special characters except those in tags we'll create
-    import html
-    html_text = html.escape(markdown_text)
-    Limitations:
-        - Nested markdown (e.g., bold inside italic) may not be fully supported.
-        - Complex tables, links, images, and advanced markdown extensions are not converted.
-        - Only basic markdown features are supported; unsupported features will remain unchanged.
-        - HTML escaping is minimal; ensure input is trusted if used in Telegram.
-
-    Args:
-        markdown_text: Markdown formatted text
-
-    Returns:
-        HTML formatted text compatible with Telegram
-
-    """
-    # First escape HTML special characters to prevent Telegram parsing errors
-    html_text = html_module.escape(markdown_text)
-
-    # Unescape characters we need for markdown processing
-    html_text = html_text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
-
-    # Convert headers
-    html_text = re.sub(r"^### (.+)$", r"<b><u>\1</u></b>", html_text, flags=re.MULTILINE)
-    html_text = re.sub(r"^## (.+)$", r"<b>═══ \1 ═══</b>", html_text, flags=re.MULTILINE)
-    html_text = re.sub(r"^# (.+)$", r"<b>▓▓▓ \1 ▓▓▓</b>", html_text, flags=re.MULTILINE)
-
-    # Convert bold text
-    html_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html_text)
-
-    # Convert italic text
-    html_text = re.sub(r"\*(.+?)\*", r"<i>\1</i>", html_text)
-    html_text = re.sub(r"_(.+?)_", r"<i>\1</i>", html_text)
-
-    # Convert inline code
-    html_text = re.sub(r"`(.+?)`", r"<code>\1</code>", html_text)
-
-    # Convert code blocks
-    html_text = re.sub(r"```[\w]*\n(.*?)\n```", r"<pre>\1</pre>", html_text, flags=re.DOTALL)
-
-    # Convert bullet points with emojis for better visibility
-    html_text = re.sub(r"^\s*[-*]\s+(.+)$", r"  • \1", html_text, flags=re.MULTILINE)
-
-    # Convert numbered lists
-    html_text = re.sub(r"^\s*(\d+)\.\s+(.+)$", r"  \1. \2", html_text, flags=re.MULTILINE)
-
-    # Add spacing around sections
-    return re.sub(r"(<b>═══.*?═══</b>)", r"\n\1\n", html_text)
+# Old functions moved to shared_code.telegram.formatting_utils:
+# - format_articles_for_html -> format_articles_for_telegram
+# - convert_markdown_to_telegram_html -> convert_ai_markdown_to_telegram_html
 
 
 async def _generate_ai_analysis(
@@ -625,43 +534,14 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
         # Get HTML formatted current data
         current_data_html = get_current_data_summary_table(symbol, conn)
 
-        # Ensure consistent emoji usage in analysis
-        def enforce_emoji_usage(text):
-            # Add emojis to section headers if missing
-            emoji_map = {
-                "Trend": "📈",
-                "Price": "💰",
-                "Target": "🎯",
-                "Risk": "⚠️",
-                "Support": "💰",
-                "Resistance": "💰",
-                "Trading": "💰",
-                "Volatility": "⚠️",
-                "Momentum": "📈",
-                "Opportunity": "🎯",
-            }
+        # Ensure consistent emoji usage in analysis using imported function
+        analysis_with_emojis = enhance_text_with_emojis(analysis)
 
-            def add_emoji(match):
-                header = match.group(1)
-                for key, emoji in emoji_map.items():
-                    if key.lower() in header.lower() and emoji not in header:
-                        return f"{emoji} {header}"
-                return header
+        # Convert AI analysis from markdown to HTML using imported function
+        analysis_html = convert_ai_markdown_to_telegram_html(analysis_with_emojis)
 
-            # Add emojis to markdown headers
-            return re.sub(
-                r"^(##+)\s*(.+)$",
-                lambda m: f"{m.group(1)} {add_emoji(m)}",
-                text,
-                flags=re.MULTILINE,
-            )
-
-        analysis_with_emojis = enforce_emoji_usage(analysis)
-        # Convert AI analysis from markdown to HTML
-        analysis_html = convert_markdown_to_telegram_html(analysis_with_emojis)
-
-        # Format articles for HTML output
-        articles_html = format_articles_for_html(articles)
+        # Format articles for HTML output using imported function
+        articles_html = format_articles_for_telegram(articles)
 
         # Combine all parts of the report
         full_report = report_title + report_date + current_data_html + "\n" + analysis_html

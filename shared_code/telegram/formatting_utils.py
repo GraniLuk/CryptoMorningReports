@@ -21,6 +21,7 @@ from .constants import (
 )
 from .formatters import TelegramFormatter, get_formatter
 
+
 try:
     from news.article_cache import CachedArticle
 except ImportError:
@@ -232,9 +233,7 @@ def format_articles_for_telegram(
 
         # Format article entry
         result += formatter.format_bold(f"{i}. {title}") + "\n"
-        result += (
-            formatter.format_italic(f"🕒 {time_str} | 📡 {article.source}") + "\n"
-        )
+        result += formatter.format_italic(f"🕒 {time_str} | 📡 {article.source}") + "\n"
         result += formatter.format_link("Read more", article.link) + "\n\n"
 
     return result
