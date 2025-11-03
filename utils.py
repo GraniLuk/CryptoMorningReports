@@ -1,7 +1,5 @@
 """Utility functions for the Crypto Morning Reports application."""
 
-from telegram import Bot
-
 
 def clean_symbol(symbol: str) -> str:
     """Clean and validate trading symbol string.
@@ -18,17 +16,3 @@ def clean_symbol(symbol: str) -> str:
     symbol = symbol.replace("-USD", "")
     symbol = symbol.replace("USDT", "")
     return symbol.replace("USD", "")
-
-
-async def send_telegram_message(telegram_token, chat_id, message):
-    """Send a message via Telegram bot.
-
-    Args:
-        telegram_token: Telegram bot token
-        chat_id: Chat ID to send message to
-        message: Message text to send
-
-    """
-    bot = Bot(token=telegram_token)
-    async with bot:  # This handles cleanup automatically
-        await bot.send_message(chat_id=chat_id.strip(), text=message)
