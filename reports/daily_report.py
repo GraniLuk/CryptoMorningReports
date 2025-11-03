@@ -246,14 +246,15 @@ async def process_daily_report(  # noqa: PLR0915
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
     logger.info("📊 Updating latest market data before analysis...")
 
-    # Fetch missing daily candles for all symbols (last 3 days)
+    # Fetch missing daily candles for all symbols (last 30 days for RSI calculation)
+    # RSI needs at least 14 periods, plus extra for Wilder's smoothing
     today = datetime.now(UTC).date()
-    start_date = today - timedelta(days=3)
-    daily_updated = 0
+    start_date = today - timedelta(days=30)
+    daily_candles_by_symbol = {}
     for symbol in symbols:
         candles = fetch_daily_candles(symbol, start_date, today, conn)
-        daily_updated += len(candles)
-    logger.info("✓ Daily candles: %d fetched/cached for all symbols", daily_updated)
+        daily_candles_by_symbol[symbol] = candles
+    logger.info("✓ Daily candles: fetched for all %d symbols", len(symbols))
 
     # Fetch missing hourly candles for all symbols (last 24 hours)
     end_time = datetime.now(UTC)
@@ -278,10 +279,13 @@ async def process_daily_report(  # noqa: PLR0915
     logger.info("✓ All candle data updates committed to database")
 
     # Generate all reports
-    # NOTE: fetch_daily_candles() removed - redundant with update_latest_daily_candles() above
-    # Calling it causes duplicate inserts → candle IDs change → RSI becomes orphaned
+    # NOTE: Candles are now fetched once and passed to RSI calculator
+    # This avoids duplicate fetching and ensures candle IDs are properly set
 
-    rsi_table = create_rsi_table(symbols, conn, target_date=datetime.now(UTC).date())
+    # Prepare symbols with their candles for RSI calculation
+    symbols_with_candles = [(symbol, daily_candles_by_symbol[symbol]) for symbol in symbols]
+
+    rsi_table = create_rsi_table(symbols_with_candles, conn, target_date=datetime.now(UTC).date())
     ma_average_table, ema_average_table = calculate_indicators(
         symbols,
         conn,

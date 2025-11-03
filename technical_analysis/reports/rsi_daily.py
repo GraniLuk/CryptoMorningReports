@@ -1,13 +1,13 @@
 """Daily RSI analysis and reporting for cryptocurrency markets."""
 
-from datetime import date, timedelta
+from datetime import date
 from typing import TYPE_CHECKING
 
 import pandas as pd
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from shared_code.price_checker import fetch_daily_candles
+from shared_code.common_price import Candle
 from source_repository import Symbol
 from technical_analysis.repositories.rsi_repository import (
     get_historical_rsi,
@@ -24,18 +24,23 @@ if TYPE_CHECKING:
 
 def create_rsi_table_for_symbol(
     symbol: Symbol,
+    candles: list[Candle],
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
-    target_date: date,
 ) -> PrettyTable | None:
-    """Create RSI table for a given symbol using daily candles data."""
+    """Create RSI table for a given symbol using provided daily candles.
+
+    Args:
+        symbol: Symbol object
+        candles: Pre-fetched list of daily candles (should cover at least 30 days)
+        conn: Database connection for saving RSI
+
+    Returns:
+        PrettyTable with RSI data or None if insufficient data
+
+    """
     all_values = pd.DataFrame()
 
     try:
-        # Get 30 days of data for 14-period RSI calculation
-        # Need extra data for Wilder's smoothing to stabilize (14 for SMA init + 14+ for smoothing)
-        start_date = target_date - timedelta(days=30)
-        candles = fetch_daily_candles(symbol, start_date, target_date, conn)
-
         if not candles:
             return None
 
@@ -128,21 +133,26 @@ def create_rsi_table_for_symbol(
 
 
 def create_rsi_table(
-    symbols: list[Symbol],
+    symbols_with_candles: list[tuple[Symbol, list[Candle]]],
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,
 ) -> PrettyTable:
-    """Create RSI table for given symbols using daily candles data."""
+    """Create RSI table for given symbols using pre-fetched daily candles.
+
+    Args:
+        symbols_with_candles: List of tuples (Symbol, list of Candle objects)
+                              Each candle list should cover at least 30 days
+        conn: Database connection for saving RSI
+        target_date: The date for which to calculate RSI
+
+    Returns:
+        PrettyTable with RSI data for all symbols
+
+    """
     all_values = pd.DataFrame()
 
-    for symbol in symbols:
+    for symbol, candles in symbols_with_candles:
         try:
-            # Get 30 days of data for 14-period RSI calculation
-            # Need extra data for Wilder's smoothing to stabilize
-            # (14 for SMA init + 14+ for smoothing)
-            start_date = target_date - timedelta(days=30)
-            candles = fetch_daily_candles(symbol, start_date, target_date, conn)
-
             if not candles:
                 continue
 

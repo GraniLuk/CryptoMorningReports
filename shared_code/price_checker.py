@@ -299,6 +299,19 @@ def fetch_hourly_candles(
             repo = HourlyCandleRepository(conn)
             for candle in fetched_candles:
                 repo.save_candle(symbol, candle, source=symbol.source_id.value)
+
+            # Re-fetch saved candles to get database-assigned IDs
+            refetched_candles = repo.get_candles(
+                symbol, missing_timestamps[0], missing_timestamps[-1],
+            )
+
+            # Add refetched candles with IDs to dictionary
+            for candle in refetched_candles:
+                candle_end_date = _parse_candle_date(candle.end_date)
+                candle_dict[candle_end_date] = candle
+        elif fetched_candles:
+            # No database connection, just use fetched candles without IDs
+            for candle in fetched_candles:
                 candle_end_date = _parse_candle_date(candle.end_date)
                 candle_dict[candle_end_date] = candle
 
@@ -443,6 +456,19 @@ def fetch_fifteen_min_candles(
             repo = FifteenMinCandleRepository(conn)
             for candle in fetched_candles:
                 repo.save_candle(symbol, candle, source=symbol.source_id.value)
+
+            # Re-fetch saved candles to get database-assigned IDs
+            refetched_candles = repo.get_candles(
+                symbol, missing_timestamps[0], missing_timestamps[-1],
+            )
+
+            # Add refetched candles with IDs to dictionary
+            for candle in refetched_candles:
+                candle_end_date = _parse_candle_date(candle.end_date)
+                candle_dict[candle_end_date] = candle
+        elif fetched_candles:
+            # No database connection, just use fetched candles without IDs
+            for candle in fetched_candles:
                 candle_end_date = _parse_candle_date(candle.end_date)
                 candle_dict[candle_end_date] = candle
 
@@ -536,12 +562,28 @@ def fetch_daily_candles(
                     fetched_candles.append(candle)
 
         # Save to database and add to dictionary
-        for candle in fetched_candles:
-            candle_date = _parse_candle_date(candle.end_date)
-            if conn:
-                repo = DailyCandleRepository(conn)
+        if conn:
+            repo = DailyCandleRepository(conn)
+            for candle in fetched_candles:
                 repo.save_candle(symbol, candle, source=symbol.source_id.value)
-            candle_dict[candle_date] = candle
+
+            # Re-fetch saved candles to get database-assigned IDs
+            # This is critical for RSI and other operations that need candle IDs
+            refetched_candles = repo.get_candles(
+                symbol,
+                datetime.combine(missing_dates[0], datetime.min.time()),
+                datetime.combine(missing_dates[-1], datetime.min.time()),
+            )
+
+            # Add refetched candles with IDs to dictionary
+            for candle in refetched_candles:
+                candle_date = _parse_candle_date(candle.end_date)
+                candle_dict[candle_date] = candle
+        else:
+            # No database connection, just use fetched candles without IDs
+            for candle in fetched_candles:
+                candle_date = _parse_candle_date(candle.end_date)
+                candle_dict[candle_date] = candle
 
     # Convert dictionary to sorted list
     return [candle_dict[d] for d in sorted(candle_dict.keys()) if d in candle_dict]
