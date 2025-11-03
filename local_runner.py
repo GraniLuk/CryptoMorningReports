@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from function_app import run_report
 from infra.sql_connection import connect_to_sql
+from infra.telegram_logging_handler import app_logger
 from reports.current_report import generate_crypto_situation_report
 
 
@@ -26,6 +27,19 @@ async def main():
     if len(sys.argv) > 1:
         report_type = sys.argv[1].lower()
         if report_type not in ["daily", "weekly", "current"]:
+            app_logger.error(
+                "Invalid report type '%s'\n"
+                "Usage:\n"
+                "  python local_runner.py [daily|weekly]\n"
+                "  python local_runner.py current <SYMBOL>\n"
+                "\n"
+                "Examples:\n"
+                "  python local_runner.py              # Run daily report\n"
+                "  python local_runner.py daily        # Run daily report\n"
+                "  python local_runner.py weekly       # Run weekly report\n"
+                "  python local_runner.py current ETH  # Run current report for ETH",
+                sys.argv[1],
+            )
             sys.exit(1)
 
     try:
@@ -33,6 +47,11 @@ async def main():
             # Current situation report
             min_args_for_current = 3
             if len(sys.argv) < min_args_for_current:
+                app_logger.error(
+                    "Symbol is required for current report\n"
+                    "Usage: python local_runner.py current <SYMBOL>\n"
+                    "Example: python local_runner.py current ETH",
+                )
                 sys.exit(1)
 
             symbol = sys.argv[2].upper()
