@@ -311,7 +311,9 @@ def fetch_hourly_candles(
 
             # Re-fetch saved candles to get database-assigned IDs
             refetched_candles = repo.get_candles(
-                symbol, missing_timestamps[0], missing_timestamps[-1],
+                symbol,
+                missing_timestamps[0],
+                missing_timestamps[-1],
             )
 
             # Add refetched candles with IDs to dictionary using full datetime as key
@@ -324,7 +326,9 @@ def fetch_hourly_candles(
                 else:
                     continue
                 # Ensure timezone aware and round to hour
-                candle_datetime = candle_datetime.replace(tzinfo=UTC, minute=0, second=0, microsecond=0)
+                candle_datetime = candle_datetime.replace(
+                    tzinfo=UTC, minute=0, second=0, microsecond=0
+                )
                 candle_dict[candle_datetime] = candle
         elif fetched_candles:
             # No database connection, just use fetched candles without IDs
@@ -337,7 +341,9 @@ def fetch_hourly_candles(
                 else:
                     continue
                 # Ensure timezone aware and round to hour
-                candle_datetime = candle_datetime.replace(tzinfo=UTC, minute=0, second=0, microsecond=0)
+                candle_datetime = candle_datetime.replace(
+                    tzinfo=UTC, minute=0, second=0, microsecond=0
+                )
                 candle_dict[candle_datetime] = candle
 
     # Return candles sorted by end_date
@@ -496,7 +502,9 @@ def fetch_fifteen_min_candles(
 
             # Re-fetch saved candles to get database-assigned IDs
             refetched_candles = repo.get_candles(
-                symbol, missing_timestamps[0], missing_timestamps[-1],
+                symbol,
+                missing_timestamps[0],
+                missing_timestamps[-1],
             )
 
             # Add refetched candles with IDs to dictionary using full datetime as key
@@ -511,7 +519,10 @@ def fetch_fifteen_min_candles(
                 # Ensure timezone aware and round to 15 minutes
                 candle_minutes = (candle_datetime.minute // 15) * 15
                 candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0,
+                    tzinfo=UTC,
+                    minute=candle_minutes,
+                    second=0,
+                    microsecond=0,
                 )
                 candle_dict[candle_datetime] = candle
         elif fetched_candles:
@@ -527,7 +538,10 @@ def fetch_fifteen_min_candles(
                 # Ensure timezone aware and round to 15 minutes
                 candle_minutes = (candle_datetime.minute // 15) * 15
                 candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0,
+                    tzinfo=UTC,
+                    minute=candle_minutes,
+                    second=0,
+                    microsecond=0,
                 )
                 candle_dict[candle_datetime] = candle
 
