@@ -36,11 +36,15 @@ class OllamaClient:
     def generate_text(self, prompt: str, temperature: float = 0.2) -> str:
         """Execute a raw Ollama prompt and return the response text."""
         try:
+            # Build options dict with temperature and timeout-related params
+            options = {
+                "temperature": temperature,
+            }
+            
             response = self._client.generate(
                 model=self._settings.model,
                 prompt=prompt,
-                options={"temperature": temperature},
-                timeout=self._settings.timeout,
+                options=options,
             )
         except Exception as exc:
             raise OllamaClientError(str(exc)) from exc

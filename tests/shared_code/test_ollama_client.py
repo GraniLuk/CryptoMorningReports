@@ -87,7 +87,7 @@ def test_ollama_client_generate_text_success(
     assert generate_kwargs["model"] == patched_settings.model
     assert generate_kwargs["prompt"] == "Prompt text"
     assert generate_kwargs["options"] == {"temperature": 0.55}
-    assert generate_kwargs["timeout"] == patched_settings.timeout
+    assert "timeout" not in generate_kwargs
 
 
 def test_ollama_client_generate_text_raises_on_failure(
