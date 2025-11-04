@@ -17,10 +17,13 @@ Key Functions:
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
+import os
 from pathlib import Path
 
 import frontmatter
 from slugify import slugify
+
+from infra.configuration import get_article_cache_root
 
 
 def parse_article_date(date_string: str) -> datetime:
@@ -82,7 +85,7 @@ def get_cache_directory(date: datetime | None = None) -> Path:
     if date is None:
         date = datetime.now(tz=UTC)
 
-    cache_root = Path(__file__).parent / "cache"
+    cache_root = get_article_cache_root()
     return cache_root / date.strftime("%Y-%m-%d")
 
 
@@ -94,8 +97,25 @@ def ensure_cache_directory(date: datetime | None = None) -> Path:
 
     Returns:
         Path object pointing to the created cache directory
+
+    Raises:
+        ValueError: If the cache root directory is not writable
     """
     cache_dir = get_cache_directory(date)
+
+    # Check if the cache root directory is writable
+    cache_root = get_article_cache_root()
+    if cache_root.exists() and not os.access(cache_root, os.W_OK):
+        msg = f"Cache root directory is not writable: {cache_root}"
+        raise ValueError(msg)
+    if not cache_root.exists():
+        # Try to create the root directory
+        try:
+            cache_root.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            msg = f"Cannot create cache root directory: {cache_root} - {e}"
+            raise ValueError(msg) from e
+
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
 
@@ -420,7 +440,7 @@ def get_cache_statistics() -> dict[str, int | float | str]:
     newest_time: datetime | None = None
 
     # Get cache root directory
-    cache_root = Path(__file__).parent / "cache"
+    cache_root = get_article_cache_root()
 
     # Check last 7 days (should be more than enough)
     for days_ago in range(7):

@@ -93,6 +93,14 @@ ONEDRIVE_REFRESH_TOKEN=...
 EMAIL_SENDER=...
 EMAIL_RECEIVER=...
 EMAIL_PASSWORD=...
+
+# Article Caching (optional)
+# ARTICLE_CACHE_ROOT=/path/to/custom/cache
+# ARTICLE_CACHE_ROOT=~/crypto_cache/articles  # Supports user home expansion
+# If not set, defaults to news/cache relative to project root
+#
+# For Azure Functions local.settings.json, add to Values section:
+# "ARTICLE_CACHE_ROOT": "/path/to/custom/cache"
 ```
 
 ## Troubleshooting

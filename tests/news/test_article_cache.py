@@ -4,9 +4,14 @@ This module contains comprehensive tests to verify that the article caching
 system works correctly, including saving, loading, and retrieving articles.
 """
 
+import os
 import shutil
+import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
+
+import pytest
 
 from news.article_cache import (
     CachedArticle,
@@ -228,6 +233,122 @@ def test_get_cached_articles_empty():
     print("✅ Get cached articles (empty) test passed")
 
 
+def test_get_cache_directory_defaults_to_local_cache():
+    """Test that get_cache_directory defaults to news/cache when ARTICLE_CACHE_ROOT is not set."""
+    # Ensure ARTICLE_CACHE_ROOT is not set
+    original_env = os.environ.get("ARTICLE_CACHE_ROOT")
+    if "ARTICLE_CACHE_ROOT" in os.environ:
+        del os.environ["ARTICLE_CACHE_ROOT"]
+
+    try:
+        test_date = datetime(2025, 1, 15, tzinfo=UTC)
+        cache_dir = get_cache_directory(test_date)
+
+        # Verify the path ends with news/cache/YYYY-MM-DD
+        expected_suffix = Path("news") / "cache" / "2025-01-15"
+        assert str(cache_dir).endswith(str(expected_suffix))
+
+        print("✅ Default cache directory test passed")
+    finally:
+        # Restore original environment
+        if original_env is not None:
+            os.environ["ARTICLE_CACHE_ROOT"] = original_env
+
+
+def test_get_cache_directory_respects_env_override():
+    """Test that get_cache_directory respects ARTICLE_CACHE_ROOT environment variable."""
+    # Set up temporary directory for testing
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_cache_root = Path(temp_dir) / "custom_cache"
+
+        # Set environment variable
+        original_env = os.environ.get("ARTICLE_CACHE_ROOT")
+        os.environ["ARTICLE_CACHE_ROOT"] = str(temp_cache_root)
+
+        try:
+            test_date = datetime(2025, 1, 15, tzinfo=UTC)
+            cache_dir = get_cache_directory(test_date)
+
+            # Verify the path uses the custom root
+            expected_path = temp_cache_root / "2025-01-15"
+            assert cache_dir == expected_path
+
+            print("✅ Environment override cache directory test passed")
+        finally:
+            # Restore original environment
+            if original_env is not None:
+                os.environ["ARTICLE_CACHE_ROOT"] = original_env
+            else:
+                del os.environ["ARTICLE_CACHE_ROOT"]
+
+
+def test_ensure_cache_directory_with_custom_root():
+    """Test that ensure_cache_directory works with custom ARTICLE_CACHE_ROOT."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_cache_root = Path(temp_dir) / "custom_cache"
+
+        # Set environment variable
+        original_env = os.environ.get("ARTICLE_CACHE_ROOT")
+        os.environ["ARTICLE_CACHE_ROOT"] = str(temp_cache_root)
+
+        try:
+            test_date = datetime(2025, 1, 15, tzinfo=UTC)
+            cache_dir = ensure_cache_directory(test_date)
+
+            # Verify directory was created
+            assert cache_dir.exists()
+            assert cache_dir.is_dir()
+
+            # Verify the custom root was used
+            expected_path = temp_cache_root / "2025-01-15"
+            assert cache_dir == expected_path
+
+            print("✅ Custom root cache directory creation test passed")
+        finally:
+            # Restore original environment
+            if original_env is not None:
+                os.environ["ARTICLE_CACHE_ROOT"] = original_env
+            else:
+                del os.environ["ARTICLE_CACHE_ROOT"]
+
+
+def test_ensure_cache_directory_unwritable_root():
+    """Test that ensure_cache_directory raises ValueError for unwritable root directory."""
+    # Skip on Windows as chmod doesn't work the same way
+    if sys.platform == "win32":
+        print("✅ Unwritable root directory test skipped on Windows")
+        return
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_cache_root = Path(temp_dir) / "unwritable_cache"
+
+        # Create the directory and make it unwritable
+        temp_cache_root.mkdir(parents=True, exist_ok=True)
+        temp_cache_root.chmod(0o444)  # Read-only
+
+        # Set environment variable
+        original_env = os.environ.get("ARTICLE_CACHE_ROOT")
+        os.environ["ARTICLE_CACHE_ROOT"] = str(temp_cache_root)
+
+        try:
+            test_date = datetime(2025, 1, 15, tzinfo=UTC)
+
+            # Should raise ValueError for unwritable directory
+            with pytest.raises(ValueError, match=r"not writable"):
+                ensure_cache_directory(test_date)
+
+            print("✅ Unwritable root directory test passed")
+        finally:
+            # Restore permissions for cleanup
+            temp_cache_root.chmod(0o755)
+
+            # Restore original environment
+            if original_env is not None:
+                os.environ["ARTICLE_CACHE_ROOT"] = original_env
+            else:
+                del os.environ["ARTICLE_CACHE_ROOT"]
+
+
 def run_all_tests():
     """Run all article cache tests."""
     print("\n🧪 Running Article Cache Tests\n" + "=" * 50)
@@ -240,6 +361,10 @@ def run_all_tests():
     test_article_exists_in_cache()
     test_load_nonexistent_article()
     test_get_cached_articles_empty()
+    test_get_cache_directory_defaults_to_local_cache()
+    test_get_cache_directory_respects_env_override()
+    test_ensure_cache_directory_with_custom_root()
+    test_ensure_cache_directory_unwritable_root()
 
     print("\n" + "=" * 50)
     print("✅ All article cache tests passed!\n")
