@@ -4,6 +4,7 @@ This module provides a factory function to create AI clients and maintains
 backward compatibility with legacy function interfaces.
 """
 
+from news.article_cache import CachedArticle, get_recent_articles
 from news.clients import GeminiClient, PerplexityClient
 
 
@@ -38,6 +39,12 @@ def highlight_articles(api_key, user_crypto_list, news_feeded, api_type="perplex
     """Highlight relevant articles from news feed based on user's crypto list."""
     client = create_ai_client(api_type, api_key)
     return client.highlight_articles(user_crypto_list, news_feeded)
+
+
+def get_relevant_cached_articles(hours: int = 24) -> list[CachedArticle]:
+    """Retrieve cached articles that remain relevant after AI preprocessing."""
+    cached_articles = get_recent_articles(hours=hours)
+    return [article for article in cached_articles if article.is_relevant]
 
 
 if __name__ == "__main__":

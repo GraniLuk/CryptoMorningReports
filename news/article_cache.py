@@ -61,8 +61,14 @@ class CachedArticle:
         link: Original article URL
         published: Publication timestamp (ISO 8601 format)
         fetched: Timestamp when article was fetched (ISO 8601 format)
-        content: Full article content (HTML or text)
+        content: Cleaned or AI-enhanced article content
         symbols: List of cryptocurrency symbols mentioned in the article
+        summary: AI-generated article summary
+        raw_content: Original scraped article text prior to AI cleanup
+        relevance_score: AI-assigned relevance score in range [0, 1]
+        is_relevant: Flag indicating if the article should be used for analysis
+        processed_at: Timestamp when AI processing occurred (ISO 8601)
+        analysis_notes: Additional AI-provided reasoning or metadata
     """
 
     source: str
@@ -72,6 +78,12 @@ class CachedArticle:
     fetched: str
     content: str
     symbols: list[str] = field(default_factory=list)
+    summary: str = ""
+    raw_content: str | None = None
+    relevance_score: float | None = None
+    is_relevant: bool = False
+    processed_at: str | None = None
+    analysis_notes: str = ""
 
 
 def get_cache_directory(date: datetime | None = None) -> Path:
@@ -156,6 +168,12 @@ def save_article_to_cache(article: CachedArticle, date: datetime | None = None) 
         "published": article.published,
         "fetched": article.fetched,
         "symbols": article.symbols,
+        "summary": article.summary,
+        "raw_content": article.raw_content,
+        "relevance_score": article.relevance_score,
+        "is_relevant": article.is_relevant,
+        "processed_at": article.processed_at,
+        "analysis_notes": article.analysis_notes,
     }
 
     # Create frontmatter post with content
@@ -188,14 +206,52 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
         symbols_value = post.get("symbols", [])
         symbols_list = list(symbols_value) if isinstance(symbols_value, list) else []
 
+        summary_value = post.get("summary", "")
+        summary = str(summary_value) if isinstance(summary_value, str) else ""
+
+        raw_content_value = post.get("raw_content")
+        raw_content = str(raw_content_value) if isinstance(raw_content_value, str) else None
+
+        relevance_value = post.get("relevance_score")
+        relevance_score = (
+            float(relevance_value)
+            if isinstance(relevance_value, (int, float))
+            else None
+        )
+
+        is_relevant_value = post.get("is_relevant", False)
+        is_relevant = bool(is_relevant_value)
+
+        processed_at_value = post.get("processed_at")
+        processed_at = (
+            str(processed_at_value)
+            if isinstance(processed_at_value, str)
+            else None
+        )
+
+        analysis_notes_value = post.get("analysis_notes", "")
+        analysis_notes = (
+            str(analysis_notes_value)
+            if isinstance(analysis_notes_value, str)
+            else ""
+        )
+
+        content_value = post.content if isinstance(post.content, str) else str(post.content)
+
         return CachedArticle(
             source=str(post.get("source", "")),
             title=str(post.get("title", "")),
             link=str(post.get("link", "")),
             published=str(post.get("published", "")),
             fetched=str(post.get("fetched", "")),
-            content=post.content,
+            content=content_value,
             symbols=symbols_list,
+            summary=summary,
+            raw_content=raw_content,
+            relevance_score=relevance_score,
+            is_relevant=is_relevant,
+            processed_at=processed_at,
+            analysis_notes=analysis_notes,
         )
     except (OSError, ValueError, KeyError, yaml.YAMLError):
         return None

@@ -17,8 +17,12 @@ from news.article_cache import (
     article_exists_in_cache,
     save_article_to_cache,
 )
+from news.article_processor import ArticleProcessingError, process_article_with_ollama
 from news.symbol_detector import detect_symbols_in_text
 from source_repository import fetch_symbols
+
+
+MAX_RELEVANT_ARTICLES = 10
 
 
 def get_news():
@@ -63,7 +67,7 @@ def get_news():
     return json.dumps(all_news, indent=2)
 
 
-def fetch_rss_news(feed_url, source, class_name):
+def fetch_rss_news(feed_url, source, class_name):  # noqa: PLR0912, PLR0915
     """Fetch and parse news articles from an RSS feed.
 
     If article caching is enabled, saves fetched articles to cache with detected symbols.
@@ -108,21 +112,68 @@ def fetch_rss_news(feed_url, source, class_name):
                 full_content = fetch_full_content(entry_link, class_name)
 
                 # Detect symbols in article text (title + content)
-                detected_symbols = []
+                detected_symbols: list[str] = []
                 if cache_enabled and symbols_list:
                     article_text = f"{entry_title} {full_content}"
                     detected_symbols = detect_symbols_in_text(article_text, symbols_list)
+
+                analysis_summary = ""
+                cleaned_content = full_content
+                relevance_score: float | None = None
+                is_relevant = True
+                analysis_notes = ""
+                processed_symbols = detected_symbols[:]
+                processed_at = current_time.isoformat()
+
+                focus_symbol_names = (
+                    [symbol.symbol_name for symbol in symbols_list]
+                    if symbols_list
+                    else None
+                )
+
+                if full_content and full_content.strip():
+                    try:
+                        analysis = process_article_with_ollama(
+                            title=entry_title,
+                            raw_content=full_content,
+                            focus_symbols=focus_symbol_names,
+                        )
+                    except ArticleProcessingError as exc:
+                        analysis_notes = f"processing_error: {exc}"
+                        app_logger.warning(
+                            "Ollama processing failed for %s: %s",
+                            entry_link,
+                            exc,
+                        )
+                    else:
+                        analysis_summary = analysis.summary
+                        cleaned_content = analysis.cleaned_content
+                        relevance_score = analysis.relevance_score
+                        is_relevant = analysis.is_relevant
+                        analysis_notes = analysis.reasoning
+                        if analysis.symbols:
+                            processed_symbols = analysis.symbols
+                    processed_symbols = processed_symbols or detected_symbols
+                else:
+                    is_relevant = False
+
+                processed_symbols = sorted({symbol.upper() for symbol in processed_symbols})
 
                 article_dict = {
                     "source": source,
                     "title": entry_title,
                     "link": entry_link,
                     "published": entry_published,
-                    "content": full_content,
+                    "content": cleaned_content,
+                    "summary": analysis_summary,
+                    "symbols": processed_symbols,
+                    "relevance_score": relevance_score,
+                    "is_relevant": is_relevant,
+                    "processed_at": processed_at,
+                    "analysis_notes": analysis_notes,
                 }
-                latest_news.append(article_dict)
 
-                # Save to cache if enabled
+                # Save to cache if enabled (always persist processed output)
                 if cache_enabled:
                     cached_article = CachedArticle(
                         source=source,
@@ -130,13 +181,26 @@ def fetch_rss_news(feed_url, source, class_name):
                         link=entry_link,
                         published=entry_published,
                         fetched=current_time.isoformat(),
-                        content=full_content,
-                        symbols=detected_symbols,
+                        content=cleaned_content,
+                        symbols=processed_symbols,
+                        summary=analysis_summary,
+                        raw_content=full_content,
+                        relevance_score=relevance_score,
+                        is_relevant=is_relevant,
+                        processed_at=processed_at,
+                        analysis_notes=analysis_notes,
                     )
                     save_article_to_cache(cached_article)
 
-            max_news_items = 10
-            if len(latest_news) >= max_news_items:
+                if not is_relevant:
+                    continue
+
+                latest_news.append(article_dict)
+
+                if len(latest_news) >= MAX_RELEVANT_ARTICLES:
+                    break
+
+            if len(latest_news) >= MAX_RELEVANT_ARTICLES:
                 break
 
     except (AttributeError, KeyError, ValueError, TypeError) as e:

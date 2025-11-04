@@ -33,16 +33,8 @@ class OllamaClient:
         """Return the Ollama model currently configured for requests."""
         return self._settings.model
 
-    def summarize_article(
-        self,
-        title: str,
-        raw_content: str,
-        max_words: int = 180,
-        temperature: float = 0.2,
-    ) -> str:
-        """Generate a concise summary for a crypto article."""
-        prompt = _build_summary_prompt(title=title, content=raw_content, max_words=max_words)
-
+    def generate_text(self, prompt: str, temperature: float = 0.2) -> str:
+        """Execute a raw Ollama prompt and return the response text."""
         try:
             response = self._client.generate(
                 model=self._settings.model,
@@ -53,12 +45,24 @@ class OllamaClient:
         except Exception as exc:
             raise OllamaClientError(str(exc)) from exc
 
-        summary = _extract_response_text(response)
-        if not summary:
-            msg = "Ollama returned an empty summary response"
+        text = _extract_response_text(response)
+        if not text:
+            msg = "Ollama returned an empty response"
             raise OllamaClientError(msg)
 
-        return summary
+        return text
+
+    def summarize_article(
+        self,
+        title: str,
+        raw_content: str,
+        max_words: int = 180,
+        temperature: float = 0.2,
+    ) -> str:
+        """Generate a concise summary for a crypto article."""
+        prompt = _build_summary_prompt(title=title, content=raw_content, max_words=max_words)
+
+        return self.generate_text(prompt, temperature=temperature)
 
 
 def _build_summary_prompt(*, title: str, content: str, max_words: int) -> str:
