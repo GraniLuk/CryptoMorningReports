@@ -108,6 +108,7 @@ _price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 def _parse_candle_datetime(
     candle_end_date: str | datetime | date,
+    *,
     round_to_hour: bool = True,
 ) -> datetime:
     """Parse candle end_date to datetime object with consistent timezone and rounding.
@@ -140,6 +141,7 @@ def _parse_candle_datetime(
 def _add_candles_to_dict(
     candle_dict: dict[datetime, Candle],
     candles: list[Candle],
+    *,
     round_to_hour: bool = True,
 ) -> None:
     """Add candles to dictionary using parsed datetime as key.
@@ -150,7 +152,7 @@ def _add_candles_to_dict(
         round_to_hour: Whether to round timestamps to hour
     """
     for candle in candles:
-        candle_datetime = _parse_candle_datetime(candle.end_date, round_to_hour)
+        candle_datetime = _parse_candle_datetime(candle.end_date, round_to_hour=round_to_hour)
         candle_dict[candle_datetime] = candle
 
 
@@ -176,24 +178,24 @@ def _fetch_missing_candles_batch(
         if timeframe == "hourly":
             from shared_code.binance import fetch_binance_hourly_klines_batch  # noqa: PLC0415
             return fetch_binance_hourly_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1]
+                symbol, missing_timestamps[0], missing_timestamps[-1],
             )
         if timeframe == "fifteen_min":
             from shared_code.binance import fetch_binance_fifteen_min_klines_batch  # noqa: PLC0415
             return fetch_binance_fifteen_min_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1]
+                symbol, missing_timestamps[0], missing_timestamps[-1],
             )
 
     if symbol.source_id == SourceID.KUCOIN:
         if timeframe == "hourly":
             from shared_code.kucoin import fetch_kucoin_hourly_klines_batch  # noqa: PLC0415
             return fetch_kucoin_hourly_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1]
+                symbol, missing_timestamps[0], missing_timestamps[-1],
             )
         if timeframe == "fifteen_min":
             from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch  # noqa: PLC0415
             return fetch_kucoin_fifteen_min_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1]
+                symbol, missing_timestamps[0], missing_timestamps[-1],
             )
 
     # Fallback to individual fetching for unsupported sources
