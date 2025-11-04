@@ -327,7 +327,7 @@ def fetch_hourly_candles(
                     continue
                 # Ensure timezone aware and round to hour
                 candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC, minute=0, second=0, microsecond=0
+                    tzinfo=UTC, minute=0, second=0, microsecond=0,
                 )
                 candle_dict[candle_datetime] = candle
         elif fetched_candles:
@@ -342,7 +342,7 @@ def fetch_hourly_candles(
                     continue
                 # Ensure timezone aware and round to hour
                 candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC, minute=0, second=0, microsecond=0
+                    tzinfo=UTC, minute=0, second=0, microsecond=0,
                 )
                 candle_dict[candle_datetime] = candle
 
@@ -462,7 +462,7 @@ def fetch_fifteen_min_candles(
             # Ensure timezone aware and round to 15 minutes
             candle_minutes = (candle_datetime.minute // 15) * 15
             candle_datetime = candle_datetime.replace(
-                tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0
+                tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0,
             )
             candle_dict[candle_datetime] = candle
 

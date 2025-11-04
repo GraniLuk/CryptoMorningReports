@@ -66,7 +66,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 2: Manual Article Caching with Symbol Detection
     # ========================================================================
-    print(f"\n📝 TEST 2: Article Caching with Symbol Detection")
+    print("\n📝 TEST 2: Article Caching with Symbol Detection")
     print("-" * 70)
 
     # Create test symbols
@@ -156,7 +156,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 3: Cache Retrieval by Symbol
     # ========================================================================
-    print(f"\n🔍 TEST 3: Retrieve Articles by Symbol")
+    print("\n🔍 TEST 3: Retrieve Articles by Symbol")
     print("-" * 70)
 
     symbols_to_test = ["BTC", "ETH", "SOL", "ADA", "XRP"]
@@ -171,7 +171,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 4: Recent Articles Retrieval
     # ========================================================================
-    print(f"\n📰 TEST 4: Retrieve All Recent Articles")
+    print("\n📰 TEST 4: Retrieve All Recent Articles")
     print("-" * 70)
 
     recent = get_recent_articles(hours=24)
@@ -180,7 +180,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 5: Cache Statistics
     # ========================================================================
-    print(f"\n📊 TEST 5: Cache Statistics")
+    print("\n📊 TEST 5: Cache Statistics")
     print("-" * 70)
 
     stats = get_cache_statistics()
@@ -193,7 +193,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 6: Error Handling - Corrupted Cache Files
     # ========================================================================
-    print(f"\n🔧 TEST 6: Error Handling - Corrupted Cache Files")
+    print("\n🔧 TEST 6: Error Handling - Corrupted Cache Files")
     print("-" * 70)
 
     # Create a corrupted cache file
@@ -222,7 +222,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 7: Error Handling - Missing Files
     # ========================================================================
-    print(f"\n🔧 TEST 7: Error Handling - Missing Files")
+    print("\n🔧 TEST 7: Error Handling - Missing Files")
     print("-" * 70)
 
     missing_file = cache_dir / "nonexistent_file.md"
@@ -236,7 +236,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 8: Old Article Cleanup
     # ========================================================================
-    print(f"\n🧹 TEST 8: Old Article Cleanup")
+    print("\n🧹 TEST 8: Old Article Cleanup")
     print("-" * 70)
 
     # Create an old article (50 hours ago)
@@ -267,7 +267,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 9: Fetch and Cache Integration
     # ========================================================================
-    print(f"\n📡 TEST 9: Fetch and Cache Integration (Auto-refresh)")
+    print("\n📡 TEST 9: Fetch and Cache Integration (Auto-refresh)")
     print("-" * 70)
 
     try:
@@ -284,7 +284,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 10: Final Cleanup
     # ========================================================================
-    print(f"\n🧹 TEST 10: Final Test Cleanup")
+    print("\n🧹 TEST 10: Final Test Cleanup")
     print("-" * 70)
 
     # Clean up test cache
