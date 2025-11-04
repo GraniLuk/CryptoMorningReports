@@ -8,15 +8,19 @@ Tests the complete workflow:
 5. Cache cleanup
 """
 
+import json
 import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import requests
 
+import requests
+
 from news.article_cache import (
     CachedArticle,
     cleanup_old_articles,
+    ensure_cache_directory,
     fetch_and_cache_articles_for_symbol,
     get_articles_for_symbol,
     get_cache_statistics,
@@ -35,16 +39,17 @@ def test_rss_feed_fetching():
     print("-" * 70)
 
     try:
-        articles = get_news()
+        articles_json = get_news()
+        articles = json.loads(articles_json)
         print(f"✅ Successfully fetched {len(articles)} articles from RSS feeds")
 
         if articles:
             print("\n   Sample articles:")
             for i, article in enumerate(articles[:3], 1):
-                symbols_list = article.get("symbols", [])  # type: ignore[union-attr]
+                symbols_list = article.get("symbols", [])
                 symbols_text = ", ".join(symbols_list) if symbols_list else "none"
-                print(f"   {i}. {article['title'][:60]}...")  # type: ignore[index]
-                print(f"      Source: {article['source']} | Symbols: {symbols_text}")  # type: ignore[index]
+                print(f"   {i}. {article['title'][:60]}...")
+                print(f"      Source: {article['source']} | Symbols: {symbols_text}")
         else:
             print("⚠️  No articles fetched (RSS feeds may be rate-limited or down)")
 
@@ -183,8 +188,10 @@ def test_cache_retrieval_and_statistics():
     print(f"   Cache path: {stats['cache_path']}")
 
 
-def test_error_handling_and_cleanup(now):
+def test_error_handling_and_cleanup(now=None):
     """Test error handling for corrupted/missing files and old article cleanup."""
+    if now is None:
+        now = datetime.now(tz=UTC)
     # ========================================================================
     # TEST 6: Error Handling - Corrupted Cache Files
     # ========================================================================
@@ -192,7 +199,7 @@ def test_error_handling_and_cleanup(now):
     print("-" * 70)
 
     # Create a corrupted cache file
-    cache_dir = Path(__file__).parent / "cache" / now.strftime("%Y-%m-%d")
+    cache_dir = ensure_cache_directory(now)
     corrupted_file = cache_dir / "corrupted_invalid-frontmatter.md"
 
     try:
@@ -277,12 +284,13 @@ def test_fetch_and_cache_integration():
         print(f"⚠️  Fetch and cache failed (may be rate-limited): {e}")
 
 
-def test_final_cleanup(test_cache):
+def test_final_cleanup():
     """Test final cleanup of test cache."""
     print("\n🧹 TEST 10: Final Test Cleanup")
     print("-" * 70)
 
     # Clean up test cache
+    test_cache = Path(__file__).parent / "cache"
     if test_cache.exists():
         shutil.rmtree(test_cache)
         print("✅ Test cache directory removed")
@@ -330,7 +338,7 @@ def test_full_workflow():
     # ========================================================================
     # TEST 10: Final Cleanup
     # ========================================================================
-    test_final_cleanup(test_cache)
+    test_final_cleanup()
 
     # ========================================================================
     # SUMMARY

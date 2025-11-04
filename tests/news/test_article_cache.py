@@ -30,8 +30,8 @@ def test_cache_directory_structure():
     test_date = datetime(2025, 1, 15, tzinfo=UTC)
     cache_dir = get_cache_directory(test_date)
 
-    # Verify the path structure
-    assert "cache" in str(cache_dir)
+    # Verify the path structure - should end with the date directory
+    assert str(cache_dir).endswith("2025-01-15")
     assert "2025-01-15" in str(cache_dir)
 
     print("✅ Cache directory structure test passed")
@@ -46,9 +46,9 @@ def test_ensure_cache_directory():
     assert cache_dir.exists()
     assert cache_dir.is_dir()
 
-    # Cleanup
+    # Cleanup - only remove the specific date directory, not the entire cache root
     if cache_dir.exists():
-        shutil.rmtree(cache_dir.parent)
+        shutil.rmtree(cache_dir)
 
     print("✅ Ensure cache directory test passed")
 
@@ -112,10 +112,10 @@ def test_save_and_load_article():
     assert loaded_article.content == original_article.content
     assert loaded_article.symbols == original_article.symbols
 
-    # Cleanup
+    # Cleanup - only remove the specific date directory
     cache_dir = get_cache_directory(test_date)
     if cache_dir.exists():
-        shutil.rmtree(cache_dir.parent)
+        shutil.rmtree(cache_dir)
 
     print("✅ Save and load article test passed")
 
@@ -170,10 +170,10 @@ def test_get_cached_articles():
     original_titles = {article.title for article in articles}
     assert cached_titles == original_titles
 
-    # Cleanup
+    # Cleanup - only remove the specific date directory
     cache_dir = get_cache_directory(test_date)
     if cache_dir.exists():
-        shutil.rmtree(cache_dir.parent)
+        shutil.rmtree(cache_dir)
 
     print(f"✅ Get cached articles test passed ({len(cached_articles)} articles)")
 
@@ -204,10 +204,10 @@ def test_article_exists_in_cache():
     # Different URL should not exist
     assert not article_exists_in_cache("https://example.com/different-url", test_date)
 
-    # Cleanup
+    # Cleanup - only remove the specific date directory
     cache_dir = get_cache_directory(test_date)
     if cache_dir.exists():
-        shutil.rmtree(cache_dir.parent)
+        shutil.rmtree(cache_dir)
 
     print("✅ Article exists in cache test passed")
 

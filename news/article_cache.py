@@ -21,6 +21,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 import frontmatter
+import yaml
 from slugify import slugify
 
 from infra.configuration import get_article_cache_root
@@ -196,7 +197,7 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
             content=post.content,
             symbols=symbols_list,
         )
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError, KeyError, yaml.YAMLError):
         return None
 
 
