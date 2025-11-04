@@ -1,5 +1,7 @@
 """Daily cryptocurrency market report generation and distribution."""
 
+import json
+import math
 import os
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -12,9 +14,10 @@ from integrations.onedrive_uploader import (
 )
 from integrations.pandoc_converter import convert_markdown_to_epub_async
 from launchpool.launchpool_report import check_gempool_articles
-from news.article_cache import cleanup_old_articles, get_cache_statistics
+from news.article_cache import CachedArticle, cleanup_old_articles, get_cache_statistics
 from news.news_agent import (
     get_detailed_crypto_analysis_with_news,
+    get_relevant_cached_articles,
     highlight_articles,
 )
 from news.rss_parser import get_news
@@ -81,8 +84,18 @@ async def _process_ai_analysis(
         logger.error("No API key found for %s", ai_api_type)
         return analysis_reported_with_news
 
-    # Process and send news reports
-    fetched_news = get_news()
+    # Refresh RSS feeds and build filtered news payload
+    get_news()
+    news_payload, news_stats = _collect_relevant_news(hours=24)
+    logger.info(
+        "News filtering stats - available: %d, truncated: %d, est_tokens: ~%d",
+        news_stats["articles_available"],
+        news_stats["articles_truncated"],
+        news_stats["estimated_tokens"],
+    )
+    if news_stats["articles_available"] == 0:
+        logger.warning("No relevant news articles available for AI analysis.")
+
     aggregated_data = get_aggregated_data(conn)
 
     # Reuse current_prices_section also for the news-enhanced analysis by
@@ -137,11 +150,16 @@ async def _process_ai_analysis(
     analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
         ai_api_key,
         aggregated_with_prices,
-        fetched_news,
+        news_payload,
         ai_api_type,
         conn,
     )
-    highlight_articles_message = highlight_articles(ai_api_key, symbols, fetched_news, ai_api_type)
+    highlight_articles_message = highlight_articles(
+        ai_api_key,
+        symbols,
+        news_payload,
+        ai_api_type,
+    )
 
     # --- OneDrive Uploads ---
     if not analysis_reported_with_news.startswith("Failed"):
@@ -211,6 +229,103 @@ async def _process_ai_analysis(
                 )
 
     return analysis_reported_with_news
+
+
+def _collect_relevant_news(*, hours: int) -> tuple[str, dict[str, float | int]]:
+    """Collect relevant cached articles and prepare payload for AI consumption."""
+    relevant_articles = get_relevant_cached_articles(hours=hours)
+    total_available = len(relevant_articles)
+
+    max_articles = max(int(os.environ.get("NEWS_ARTICLE_LIMIT", "20")), 0)
+    if max_articles > 0:
+        relevant_articles = relevant_articles[:max_articles]
+
+    payload: list[dict[str, object]] = []
+
+    total_summary_chars = 0
+    total_content_chars = 0
+    truncated_count = 0
+    max_content_chars = max(int(os.environ.get("NEWS_ARTICLE_MAX_CHARS", "2600")), 0)
+
+    for article in relevant_articles:
+        serialized, truncated, summary_chars, content_chars = _serialize_article(
+            article,
+            max_content_chars=max_content_chars,
+        )
+        payload.append(serialized)
+        total_summary_chars += summary_chars
+        total_content_chars += content_chars
+        if truncated:
+            truncated_count += 1
+
+    estimated_tokens = (
+        math.ceil((total_summary_chars + total_content_chars) / 4)
+        if payload
+        else 0
+    )
+    avg_summary = (total_summary_chars / len(payload)) if payload else 0.0
+    avg_content = (total_content_chars / len(payload)) if payload else 0.0
+
+    stats: dict[str, float | int] = {
+        "articles_available": total_available,
+        "articles_included": len(payload),
+        "articles_truncated": truncated_count,
+        "estimated_tokens": estimated_tokens,
+        "avg_summary_chars": round(avg_summary, 1),
+        "avg_content_chars": round(avg_content, 1),
+        "max_articles": max_articles,
+        "max_content_chars": max_content_chars,
+    }
+
+    return json.dumps(payload, indent=2), stats
+
+
+def _serialize_article(
+    article: CachedArticle,
+    *,
+    max_content_chars: int,
+) -> tuple[dict[str, object], bool, int, int]:
+    """Convert a cached article into an AI-friendly payload."""
+    summary = (article.summary or "").strip()
+    if not summary:
+        summary = _fallback_summary(article.content or article.raw_content or "")
+
+    content = (article.content or "").strip()
+    truncated = False
+    if content and max_content_chars > 0 and len(content) > max_content_chars:
+        trimmed = content[: max_content_chars - 3].rstrip()
+        if " " in trimmed:
+            trimmed = trimmed.rsplit(" ", 1)[0]
+        content = f"{trimmed}..."
+        truncated = True
+
+    payload = {
+        "source": article.source,
+        "title": article.title,
+        "link": article.link,
+        "published": article.published,
+        "symbols": article.symbols,
+        "summary": summary,
+        "content": content,
+        "relevance_score": article.relevance_score,
+        "analysis_notes": article.analysis_notes,
+        "processed_at": article.processed_at,
+    }
+
+    return payload, truncated, len(summary), len(content)
+
+
+def _fallback_summary(content: str, max_chars: int = 320) -> str:
+    """Create a fallback summary when no AI-generated summary is available."""
+    normalized = (content or "").strip().replace("\n", " ")
+    if not normalized:
+        return ""
+    if len(normalized) <= max_chars:
+        return normalized
+    snippet = normalized[: max_chars - 3].rstrip()
+    if " " in snippet:
+        snippet = snippet.rsplit(" ", 1)[0]
+    return f"{snippet}..."
 
 
 async def process_daily_report(  # noqa: PLR0915

@@ -15,8 +15,6 @@ from pathlib import Path
 
 import requests
 
-import requests
-
 from news.article_cache import (
     CachedArticle,
     cleanup_old_articles,
@@ -188,7 +186,7 @@ def test_cache_retrieval_and_statistics():
     print(f"   Cache path: {stats['cache_path']}")
 
 
-def test_error_handling_and_cleanup(now=None):
+def test_error_handling_and_cleanup(now):
     """Test error handling for corrupted/missing files and old article cleanup."""
     if now is None:
         now = datetime.now(tz=UTC)
