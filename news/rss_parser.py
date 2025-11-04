@@ -270,7 +270,7 @@ def _enrich_article_with_ai(
         )
 
     start_time = time.perf_counter()
-    
+
     try:
         analysis = process_article_with_ollama(
             title=title,

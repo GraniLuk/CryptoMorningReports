@@ -39,7 +39,7 @@ def process_article_with_ollama(
 ) -> ArticleProcessingResult:
     """Process an article with Ollama to produce summary and relevance signals."""
     start_time = time.perf_counter()
-    
+
     normalized_content = raw_content.strip()
     if not normalized_content:
         message = "Article content is empty; skipping AI processing."
@@ -63,7 +63,7 @@ def process_article_with_ollama(
 
     payload = _parse_json_response(response_text)
     result = _build_processing_result(payload, fallback_content=normalized_content)
-    
+
     elapsed_time = time.perf_counter() - start_time
     app_logger.info(
         "Ollama processed article '%s' in %.2fs (relevance: %.2f, relevant: %s)",
@@ -72,7 +72,7 @@ def process_article_with_ollama(
         result.relevance_score if result.relevance_score is not None else 0.0,
         result.is_relevant,
     )
-    
+
     return result
 
 

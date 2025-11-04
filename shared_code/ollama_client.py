@@ -40,7 +40,7 @@ class OllamaClient:
             options = {
                 "temperature": temperature,
             }
-            
+
             response = self._client.generate(
                 model=self._settings.model,
                 prompt=prompt,
