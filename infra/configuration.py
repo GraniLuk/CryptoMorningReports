@@ -16,6 +16,7 @@ Environment Variables:
 """
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -126,3 +127,30 @@ def get_article_cache_root() -> Path:
         cache_root = Path(__file__).resolve().parents[1] / "news" / "cache"
 
     return cache_root
+
+
+@dataclass(frozen=True)
+class OllamaSettings:
+    """Typed representation of Ollama configuration values."""
+
+    host: str
+    model: str
+    timeout: float
+
+
+def get_ollama_settings() -> OllamaSettings:
+    """Get Ollama client configuration with sensible defaults."""
+    host = os.getenv("OLLAMA_HOST", "http://localhost:11434").strip()
+    model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b").strip()
+    timeout_value = os.getenv("OLLAMA_TIMEOUT", "30").strip()
+
+    try:
+        timeout = float(timeout_value)
+    except ValueError:
+        timeout = 30.0
+
+    return OllamaSettings(
+        host=host or "http://localhost:11434",
+        model=model or "gpt-oss:20b",
+        timeout=timeout,
+    )

@@ -30,4 +30,5 @@ ruff
 cryptography==43.0.3
 plotly
 google-generativeai
+ollama
 pypandoc
