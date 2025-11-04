@@ -12,6 +12,8 @@ import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import requests
+
 from news.article_cache import (
     CachedArticle,
     cleanup_old_articles,
@@ -27,21 +29,8 @@ from news.symbol_detector import detect_symbols_in_text
 from source_repository import SourceID, Symbol
 
 
-def test_full_workflow():
-    """Test the complete RSS caching workflow from fetch to cleanup."""
-    print("\n" + "=" * 70)
-    print("🧪 COMPREHENSIVE END-TO-END INTEGRATION TEST")
-    print("=" * 70)
-
-    # Clean slate - remove test cache
-    test_cache = Path(__file__).parent / "cache"
-    if test_cache.exists():
-        shutil.rmtree(test_cache)
-        print("✓ Cleaned existing cache for fresh test\n")
-
-    # ========================================================================
-    # TEST 1: RSS Fetching
-    # ========================================================================
+def test_rss_feed_fetching():
+    """Test RSS feed fetching functionality."""
     print("📡 TEST 1: RSS Feed Fetching")
     print("-" * 70)
 
@@ -59,13 +48,13 @@ def test_full_workflow():
         else:
             print("⚠️  No articles fetched (RSS feeds may be rate-limited or down)")
 
-    except Exception as e:
+    except (OSError, ValueError, ConnectionError, requests.RequestException) as e:
         print(f"❌ RSS fetch failed: {e}")
         print("   Continuing with manual test data...\n")
 
-    # ========================================================================
-    # TEST 2: Manual Article Caching with Symbol Detection
-    # ========================================================================
+
+def test_manual_article_caching():
+    """Test manual article caching with symbol detection."""
     print("\n📝 TEST 2: Article Caching with Symbol Detection")
     print("-" * 70)
 
@@ -153,6 +142,9 @@ def test_full_workflow():
 
     print(f"\n✓ Total articles cached: {cached_count}")
 
+
+def test_cache_retrieval_and_statistics():
+    """Test cache retrieval by symbol, recent articles, and statistics."""
     # ========================================================================
     # TEST 3: Cache Retrieval by Symbol
     # ========================================================================
@@ -190,6 +182,9 @@ def test_full_workflow():
     print(f"   Newest: {stats['newest_article_hours']:.1f} hours ago")
     print(f"   Cache path: {stats['cache_path']}")
 
+
+def test_error_handling_and_cleanup(now):
+    """Test error handling for corrupted/missing files and old article cleanup."""
     # ========================================================================
     # TEST 6: Error Handling - Corrupted Cache Files
     # ========================================================================
@@ -211,7 +206,7 @@ def test_full_workflow():
         else:
             print("⚠️  Corrupted file was loaded (unexpected)")
 
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         print(f"✅ Caught exception for corrupted file: {type(e).__name__}")
 
     finally:
@@ -264,9 +259,9 @@ def test_full_workflow():
     stats_after = get_cache_statistics()
     print(f"   After cleanup: {stats_after['total_articles']} articles")
 
-    # ========================================================================
-    # TEST 9: Fetch and Cache Integration
-    # ========================================================================
+
+def test_fetch_and_cache_integration():
+    """Test the fetch and cache integration functionality."""
     print("\n📡 TEST 9: Fetch and Cache Integration (Auto-refresh)")
     print("-" * 70)
 
@@ -278,12 +273,12 @@ def test_full_workflow():
         if btc_articles:
             print(f"   Latest: {btc_articles[0].title[:60]}...")
 
-    except Exception as e:
+    except (OSError, ValueError, ConnectionError, requests.RequestException) as e:
         print(f"⚠️  Fetch and cache failed (may be rate-limited): {e}")
 
-    # ========================================================================
-    # TEST 10: Final Cleanup
-    # ========================================================================
+
+def test_final_cleanup(test_cache):
+    """Test final cleanup of test cache."""
     print("\n🧹 TEST 10: Final Test Cleanup")
     print("-" * 70)
 
@@ -291,6 +286,51 @@ def test_full_workflow():
     if test_cache.exists():
         shutil.rmtree(test_cache)
         print("✅ Test cache directory removed")
+
+
+def test_full_workflow():
+    """Test the complete RSS caching workflow from fetch to cleanup."""
+    print("\n" + "=" * 70)
+    print("🧪 COMPREHENSIVE END-TO-END INTEGRATION TEST")
+    print("=" * 70)
+
+    # Clean slate - remove test cache
+    test_cache = Path(__file__).parent / "cache"
+    if test_cache.exists():
+        shutil.rmtree(test_cache)
+        print("✓ Cleaned existing cache for fresh test\n")
+
+    now = datetime.now(tz=UTC)
+
+    # ========================================================================
+    # TEST 1: RSS Fetching
+    # ========================================================================
+    test_rss_feed_fetching()
+
+    # ========================================================================
+    # TEST 2: Manual Article Caching with Symbol Detection
+    # ========================================================================
+    test_manual_article_caching()
+
+    # ========================================================================
+    # TEST 3-5: Cache Retrieval and Statistics
+    # ========================================================================
+    test_cache_retrieval_and_statistics()
+
+    # ========================================================================
+    # TEST 6-8: Error Handling and Cleanup
+    # ========================================================================
+    test_error_handling_and_cleanup(now)
+
+    # ========================================================================
+    # TEST 9: Fetch and Cache Integration
+    # ========================================================================
+    test_fetch_and_cache_integration()
+
+    # ========================================================================
+    # TEST 10: Final Cleanup
+    # ========================================================================
+    test_final_cleanup(test_cache)
 
     # ========================================================================
     # SUMMARY

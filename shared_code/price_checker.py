@@ -106,21 +106,98 @@ if TYPE_CHECKING:
 _price_cache: dict[tuple[str, SourceID], TickerPrice] = {}
 
 
-def _parse_candle_date(candle_end_date: str | datetime | date) -> date:
-    """Parse candle end_date to date object for consistent comparison.
+def _parse_candle_datetime(
+    candle_end_date: str | datetime | date,
+    round_to_hour: bool = True,
+) -> datetime:
+    """Parse candle end_date to datetime object with consistent timezone and rounding.
 
     Args:
         candle_end_date: End date as string, datetime, or date object
+        round_to_hour: Whether to round to the nearest hour
 
     Returns:
-        date object
-
+        datetime object (timezone-aware, rounded if requested)
     """
     if isinstance(candle_end_date, str):
-        return datetime.fromisoformat(candle_end_date.replace("Z", "+00:00")).date()
-    if isinstance(candle_end_date, datetime):
-        return candle_end_date.date()
-    return candle_end_date
+        candle_datetime = datetime.fromisoformat(candle_end_date.replace("Z", "+00:00"))
+    elif isinstance(candle_end_date, datetime):
+        candle_datetime = candle_end_date
+    else:
+        # If it's a date object, convert to datetime at midnight
+        candle_datetime = datetime.combine(candle_end_date, datetime.min.time())
+
+    # Ensure timezone aware
+    candle_datetime = candle_datetime.replace(tzinfo=UTC)
+
+    if round_to_hour:
+        # Round to the nearest hour
+        candle_datetime = candle_datetime.replace(minute=0, second=0, microsecond=0)
+
+    return candle_datetime
+
+
+def _add_candles_to_dict(
+    candle_dict: dict[datetime, Candle],
+    candles: list[Candle],
+    round_to_hour: bool = True,
+) -> None:
+    """Add candles to dictionary using parsed datetime as key.
+
+    Args:
+        candle_dict: Dictionary to add candles to
+        candles: List of candles to add
+        round_to_hour: Whether to round timestamps to hour
+    """
+    for candle in candles:
+        candle_datetime = _parse_candle_datetime(candle.end_date, round_to_hour)
+        candle_dict[candle_datetime] = candle
+
+
+def _fetch_missing_candles_batch(
+    symbol: Symbol,
+    missing_timestamps: list[datetime],
+    timeframe: str,
+) -> list[Candle]:
+    """Fetch missing candles using batch API calls.
+
+    Args:
+        symbol: Symbol to fetch candles for
+        missing_timestamps: List of timestamps that need fetching
+        timeframe: 'hourly' or 'fifteen_min'
+
+    Returns:
+        List of fetched candles
+    """
+    if not missing_timestamps:
+        return []
+
+    if symbol.source_id == SourceID.BINANCE:
+        if timeframe == "hourly":
+            from shared_code.binance import fetch_binance_hourly_klines_batch  # noqa: PLC0415
+            return fetch_binance_hourly_klines_batch(
+                symbol, missing_timestamps[0], missing_timestamps[-1]
+            )
+        if timeframe == "fifteen_min":
+            from shared_code.binance import fetch_binance_fifteen_min_klines_batch  # noqa: PLC0415
+            return fetch_binance_fifteen_min_klines_batch(
+                symbol, missing_timestamps[0], missing_timestamps[-1]
+            )
+
+    if symbol.source_id == SourceID.KUCOIN:
+        if timeframe == "hourly":
+            from shared_code.kucoin import fetch_kucoin_hourly_klines_batch  # noqa: PLC0415
+            return fetch_kucoin_hourly_klines_batch(
+                symbol, missing_timestamps[0], missing_timestamps[-1]
+            )
+        if timeframe == "fifteen_min":
+            from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch  # noqa: PLC0415
+            return fetch_kucoin_fifteen_min_klines_batch(
+                symbol, missing_timestamps[0], missing_timestamps[-1]
+            )
+
+    # Fallback to individual fetching for unsupported sources
+    return []
 
 
 def fetch_daily_candle(
@@ -198,15 +275,6 @@ def fetch_hourly_candle(
     return candle
 
 
-def _fetch_hourly_candle_from_source(symbol: Symbol, timestamp: datetime) -> Candle | None:
-    """Fetch a single hourly candle from the appropriate source."""
-    if symbol.source_id == SourceID.KUCOIN:
-        return fetch_kucoin_hourly_kline(symbol, timestamp)
-    if symbol.source_id == SourceID.BINANCE:
-        return fetch_binance_hourly_kline(symbol, timestamp)
-    return None
-
-
 def fetch_hourly_candles(
     symbol: Symbol,
     start_time: datetime,
@@ -259,49 +327,14 @@ def fetch_hourly_candles(
         cached_candles = repo.get_candles(symbol, start_time, end_time)
 
         # Add cached candles to dictionary using full datetime as key
-        for candle in cached_candles:
-            # Parse end_date to datetime for consistent comparison
-            if isinstance(candle.end_date, str):
-                candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
-            elif isinstance(candle.end_date, datetime):
-                candle_datetime = candle.end_date
-            else:
-                # If it's a date object, skip it (shouldn't happen for hourly candles)
-                continue
-            # Ensure timezone aware and round to hour
-            candle_datetime = candle_datetime.replace(tzinfo=UTC, minute=0, second=0, microsecond=0)
-            candle_dict[candle_datetime] = candle
+        _add_candles_to_dict(candle_dict, cached_candles, round_to_hour=True)
 
     # Identify missing timestamps
     missing_timestamps = [ts for ts in expected_timestamps if ts not in candle_dict]
 
     if missing_timestamps:
         # Fetch missing candles using source-aware batch strategy
-        if symbol.source_id == SourceID.BINANCE:
-            # Use batch API for BINANCE (up to 1000 candles per call)
-            # Local import to avoid circular dependency between price_checker and binance
-            from shared_code.binance import fetch_binance_hourly_klines_batch  # noqa: PLC0415
-
-            batch_start = missing_timestamps[0]
-            batch_end = missing_timestamps[-1]
-            fetched_candles = fetch_binance_hourly_klines_batch(symbol, batch_start, batch_end)
-
-        elif symbol.source_id == SourceID.KUCOIN:
-            # Use batch API for KUCOIN (up to 1500 candles per call)
-            # Local import to avoid circular dependency between price_checker and kucoin
-            from shared_code.kucoin import fetch_kucoin_hourly_klines_batch  # noqa: PLC0415
-
-            batch_start = missing_timestamps[0]
-            batch_end = missing_timestamps[-1]
-            fetched_candles = fetch_kucoin_hourly_klines_batch(symbol, batch_start, batch_end)
-
-        else:
-            # Use individual fetching for other sources (fallback)
-            fetched_candles = []
-            for timestamp in missing_timestamps:
-                candle = _fetch_hourly_candle_from_source(symbol, timestamp)
-                if candle:
-                    fetched_candles.append(candle)
+        fetched_candles = _fetch_missing_candles_batch(symbol, missing_timestamps, "hourly")
 
         # Save fetched candles to database and add to dictionary
         if conn and fetched_candles:
@@ -317,34 +350,10 @@ def fetch_hourly_candles(
             )
 
             # Add refetched candles with IDs to dictionary using full datetime as key
-            for candle in refetched_candles:
-                # Parse end_date to datetime for consistent comparison
-                if isinstance(candle.end_date, str):
-                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
-                elif isinstance(candle.end_date, datetime):
-                    candle_datetime = candle.end_date
-                else:
-                    continue
-                # Ensure timezone aware and round to hour
-                candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC, minute=0, second=0, microsecond=0,
-                )
-                candle_dict[candle_datetime] = candle
+            _add_candles_to_dict(candle_dict, refetched_candles, round_to_hour=True)
         elif fetched_candles:
             # No database connection, just use fetched candles without IDs
-            for candle in fetched_candles:
-                # Parse end_date to datetime for consistent comparison
-                if isinstance(candle.end_date, str):
-                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
-                elif isinstance(candle.end_date, datetime):
-                    candle_datetime = candle.end_date
-                else:
-                    continue
-                # Ensure timezone aware and round to hour
-                candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC, minute=0, second=0, microsecond=0,
-                )
-                candle_dict[candle_datetime] = candle
+            _add_candles_to_dict(candle_dict, fetched_candles, round_to_hour=True)
 
     # Return candles sorted by end_date
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
@@ -451,19 +460,7 @@ def fetch_fifteen_min_candles(
 
         # Add cached candles to dictionary using full datetime as key
         for candle in cached_candles:
-            # Parse end_date to datetime for consistent comparison
-            if isinstance(candle.end_date, str):
-                candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
-            elif isinstance(candle.end_date, datetime):
-                candle_datetime = candle.end_date
-            else:
-                # If it's a date object, skip it (shouldn't happen for 15-min candles)
-                continue
-            # Ensure timezone aware and round to 15 minutes
-            candle_minutes = (candle_datetime.minute // 15) * 15
-            candle_datetime = candle_datetime.replace(
-                tzinfo=UTC, minute=candle_minutes, second=0, microsecond=0,
-            )
+            candle_datetime = _parse_candle_datetime(candle.end_date, round_to_hour=False)
             candle_dict[candle_datetime] = candle
 
     # Identify missing timestamps
@@ -471,28 +468,7 @@ def fetch_fifteen_min_candles(
 
     if missing_timestamps:
         # Fetch missing candles using source-aware batch strategy
-        if symbol.source_id == SourceID.BINANCE:
-            # Use batch API for BINANCE (up to 1000 candles per call)
-            # Local import to avoid circular dependency between price_checker and binance
-            from shared_code.binance import fetch_binance_fifteen_min_klines_batch  # noqa: PLC0415
-
-            batch_start = missing_timestamps[0]
-            batch_end = missing_timestamps[-1]
-            fetched_candles = fetch_binance_fifteen_min_klines_batch(symbol, batch_start, batch_end)
-
-        elif symbol.source_id == SourceID.KUCOIN:
-            # Use batch API for KUCOIN (up to 1500 candles per call)
-            # Local import to avoid circular dependency between price_checker and kucoin
-            from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch  # noqa: PLC0415
-
-            batch_start = missing_timestamps[0]
-            batch_end = missing_timestamps[-1]
-            fetched_candles = fetch_kucoin_fifteen_min_klines_batch(symbol, batch_start, batch_end)
-
-        else:
-            # Use individual fetching for other sources (fallback)
-            # Currently no other sources support 15-minute candles
-            fetched_candles = []
+        fetched_candles = _fetch_missing_candles_batch(symbol, missing_timestamps, "fifteen_min")
 
         # Save fetched candles to database and add to dictionary
         if conn and fetched_candles:
@@ -508,42 +484,10 @@ def fetch_fifteen_min_candles(
             )
 
             # Add refetched candles with IDs to dictionary using full datetime as key
-            for candle in refetched_candles:
-                # Parse end_date to datetime for consistent comparison
-                if isinstance(candle.end_date, str):
-                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
-                elif isinstance(candle.end_date, datetime):
-                    candle_datetime = candle.end_date
-                else:
-                    continue
-                # Ensure timezone aware and round to 15 minutes
-                candle_minutes = (candle_datetime.minute // 15) * 15
-                candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC,
-                    minute=candle_minutes,
-                    second=0,
-                    microsecond=0,
-                )
-                candle_dict[candle_datetime] = candle
+            _add_candles_to_dict(candle_dict, refetched_candles, round_to_hour=False)
         elif fetched_candles:
             # No database connection, just use fetched candles without IDs
-            for candle in fetched_candles:
-                # Parse end_date to datetime for consistent comparison
-                if isinstance(candle.end_date, str):
-                    candle_datetime = datetime.fromisoformat(candle.end_date.replace("Z", "+00:00"))
-                elif isinstance(candle.end_date, datetime):
-                    candle_datetime = candle.end_date
-                else:
-                    continue
-                # Ensure timezone aware and round to 15 minutes
-                candle_minutes = (candle_datetime.minute // 15) * 15
-                candle_datetime = candle_datetime.replace(
-                    tzinfo=UTC,
-                    minute=candle_minutes,
-                    second=0,
-                    microsecond=0,
-                )
-                candle_dict[candle_datetime] = candle
+            _add_candles_to_dict(candle_dict, fetched_candles, round_to_hour=False)
 
     # Return candles sorted by end_date
     return [candle_dict[timestamp] for timestamp in sorted(candle_dict.keys())]
@@ -602,7 +546,7 @@ def fetch_daily_candles(
 
         # Add cached candles to dictionary
         for candle in cached_candles:
-            candle_date = _parse_candle_date(candle.end_date)
+            candle_date = _parse_candle_datetime(candle.end_date, round_to_hour=True)
             candle_dict[candle_date] = candle
 
     # Identify missing dates
@@ -654,12 +598,12 @@ def fetch_daily_candles(
 
             # Add refetched candles with IDs to dictionary
             for candle in refetched_candles:
-                candle_date = _parse_candle_date(candle.end_date)
+                candle_date = _parse_candle_datetime(candle.end_date, round_to_hour=True)
                 candle_dict[candle_date] = candle
         else:
             # No database connection, just use fetched candles without IDs
             for candle in fetched_candles:
-                candle_date = _parse_candle_date(candle.end_date)
+                candle_date = _parse_candle_datetime(candle.end_date, round_to_hour=True)
                 candle_dict[candle_date] = candle
 
     # Convert dictionary to sorted list
