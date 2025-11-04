@@ -14,10 +14,10 @@ Key Functions:
 - `get_cache_statistics()` - Get cache statistics (count, size, age)
 """
 
+import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
-import os
 from pathlib import Path
 
 import frontmatter
