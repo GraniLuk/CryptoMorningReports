@@ -83,7 +83,7 @@ def check_single_feed(source: str, feed_info: dict[str, str]) -> dict[str, Any]:
         app_logger.info(f"\n{'=' * 80}\nTesting {source}...\n{'=' * 80}")
 
         # Fetch articles using the existing function
-        articles = fetch_rss_news(feed_info["url"], source, feed_info["class"])
+        articles: list[dict[str, Any]] = fetch_rss_news(feed_info["url"], source, feed_info["class"])
 
         if not articles:
             result["errors"].append("No articles returned")
@@ -104,7 +104,7 @@ def check_single_feed(source: str, feed_info: dict[str, str]) -> dict[str, Any]:
         }
 
         # Check content
-        content = first_article.get("content", "")
+        content: str = str(first_article.get("content", ""))
         if content in FAILED_CONTENT_MESSAGES:
             if content == "Failed to fetch full content":
                 error_msg = "Content fetching failed"
