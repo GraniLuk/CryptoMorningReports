@@ -292,12 +292,20 @@ def _serialize_article(
 
     content = (article.content or "").strip()
     truncated = False
+    original_length = len(content)
     if content and max_content_chars > 0 and len(content) > max_content_chars:
         trimmed = content[: max_content_chars - 3].rstrip()
         if " " in trimmed:
             trimmed = trimmed.rsplit(" ", 1)[0]
         content = f"{trimmed}..."
         truncated = True
+        app_logger.info(
+            "Truncated article '%s' from %d to %d chars (limit %d)",
+            article.title,
+            original_length,
+            len(content),
+            max_content_chars,
+        )
 
     payload = {
         "source": article.source,
