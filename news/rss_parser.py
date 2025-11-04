@@ -269,6 +269,8 @@ def _enrich_article_with_ai(
             notes="",
         )
 
+    start_time = time.perf_counter()
+    
     try:
         analysis = process_article_with_ollama(
             title=title,
@@ -276,8 +278,14 @@ def _enrich_article_with_ai(
             focus_symbols=focus_symbols,
         )
     except ArticleProcessingError as exc:
+        elapsed_time = time.perf_counter() - start_time
         notes = f"processing_error: {exc}"
-        app_logger.warning("Ollama processing failed for %s: %s", article_link, exc)
+        app_logger.warning(
+            "Ollama processing failed for %s after %.2fs: %s",
+            article_link,
+            elapsed_time,
+            exc,
+        )
         return ArticleEnrichmentResult(
             summary="",
             cleaned_content=full_content,

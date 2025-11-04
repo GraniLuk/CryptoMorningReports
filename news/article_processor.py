@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+from infra.telegram_logging_handler import app_logger
 from shared_code.ollama_client import OllamaClientError, get_ollama_client
 
 
@@ -36,6 +38,8 @@ def process_article_with_ollama(
     focus_symbols: Sequence[str] | None = None,
 ) -> ArticleProcessingResult:
     """Process an article with Ollama to produce summary and relevance signals."""
+    start_time = time.perf_counter()
+    
     normalized_content = raw_content.strip()
     if not normalized_content:
         message = "Article content is empty; skipping AI processing."
@@ -58,7 +62,18 @@ def process_article_with_ollama(
         raise ArticleProcessingError(str(exc)) from exc
 
     payload = _parse_json_response(response_text)
-    return _build_processing_result(payload, fallback_content=normalized_content)
+    result = _build_processing_result(payload, fallback_content=normalized_content)
+    
+    elapsed_time = time.perf_counter() - start_time
+    app_logger.info(
+        "Ollama processed article '%s' in %.2fs (relevance: %.2f, relevant: %s)",
+        title[:60],
+        elapsed_time,
+        result.relevance_score if result.relevance_score is not None else 0.0,
+        result.is_relevant,
+    )
+    
+    return result
 
 
 def _build_analysis_prompt(*, title: str, content: str, symbols_text: str) -> str:
