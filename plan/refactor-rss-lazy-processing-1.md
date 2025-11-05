@@ -4,7 +4,7 @@ version: 1.0
 date_created: 2025-11-05
 last_updated: 2025-11-05
 owner: CryptoMorningReports Team
-status: 'Planned'
+status: 'Phase 2 Complete'
 tags: ['refactor', 'performance', 'news', 'ollama', 'rss']
 ---
 
@@ -119,11 +119,11 @@ Wasted: ~60% of processing time on irrelevant articles
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-005 | Refactor `get_news()` to use two-stage processing: (1) collect entries, (2) process sorted entries | |  |
-| TASK-006 | Create `_collect_all_rss_entries()` function that fetches from all feeds and returns list of `RSSEntry` objects | |  |
-| TASK-007 | Implement per-feed error handling in `_collect_all_rss_entries()` to prevent one feed failure from blocking others | |  |
-| TASK-008 | Sort collected entries by `published_time` (newest first) before processing | |  |
-| TASK-009 | Add logging to show total entries collected and how many from each source | |  |
+| TASK-005 | Refactor `get_news()` to use two-stage processing: (1) collect entries, (2) process sorted entries | ✅ | 2025-11-05 |
+| TASK-006 | Create `_collect_all_rss_entries()` function that fetches from all feeds and returns list of `RSSEntry` objects | ✅ | 2025-11-05 |
+| TASK-007 | Implement per-feed error handling in `_collect_all_rss_entries()` to prevent one feed failure from blocking others | ✅ | 2025-11-05 |
+| TASK-008 | Sort collected entries by `published_time` (newest first) before processing | ✅ | 2025-11-05 |
+| TASK-009 | Add logging to show total entries collected and how many from each source | ✅ | 2025-11-05 |
 
 ### Implementation Phase 3: Lazy Processing with Early Stopping
 

@@ -41,17 +41,16 @@ class RSSEntry:
 MAX_RELEVANT_ARTICLES = 10
 
 
-def get_news():
-    """Fetch news articles from various cryptocurrency RSS feeds.
+def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> list[RSSEntry]:
+    """Collect RSS entries from all feeds without processing them.
 
-    Always fetches from RSS feeds to ensure latest articles are available.
-    The fetch_rss_news() method handles caching - it skips articles that
-    are already cached and only fetches/caches new ones.
+    Args:
+        cache_enabled: Whether article caching is enabled
+        current_time: Current datetime for age filtering
 
     Returns:
-        JSON string of fetched articles (newly cached ones only)
+        List of RSSEntry objects from all feeds, sorted by published_time (newest first)
     """
-    # Always fetch from RSS feeds - fetch_rss_news() handles duplicate checking
     feeds = {
         "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content"},
         "coindesk": {
@@ -76,11 +75,145 @@ def get_news():
         },
     }
 
-    all_news = []
-    for source, feed_info in feeds.items():
-        all_news.extend(fetch_rss_news(feed_info["url"], source, feed_info["class"]))
+    all_entries = []
+    feed_stats = {}
 
-    return json.dumps(all_news, indent=2)
+    for source, feed_info in feeds.items():
+        feed_entries = _collect_entries_from_feed(
+            feed_url=feed_info["url"],
+            source=source,
+            class_name=feed_info["class"],
+            cache_enabled=cache_enabled,
+            current_time=current_time,
+        )
+        all_entries.extend(feed_entries)
+        feed_stats[source] = len(feed_entries)
+
+    # Sort all entries by published time (newest first)
+    all_entries.sort(key=lambda entry: entry.published_time, reverse=True)
+
+    total_entries = len(all_entries)
+    app_logger.info(
+        f"Collected {total_entries} RSS entries from {len(feeds)} feeds: "
+        f"{', '.join(f'{source}={count}' for source, count in feed_stats.items())}",
+    )
+
+    return all_entries
+
+
+def _collect_entries_from_feed(
+    *,
+    feed_url: str,
+    source: str,
+    class_name: str,
+    cache_enabled: bool,
+    current_time: datetime,
+) -> list[RSSEntry]:
+    """Collect entries from a single RSS feed.
+
+    Args:
+        feed_url: URL of the RSS feed
+        source: Source name (e.g., 'coindesk')
+        class_name: CSS class for content extraction
+        cache_enabled: Whether caching is enabled
+        current_time: Current datetime
+
+    Returns:
+        List of RSSEntry objects from this feed
+    """
+    try:
+        feed = feedparser.parse(feed_url)
+        entries = []
+
+        for entry in feed.entries:
+            parsed_entry = _parse_rss_entry(
+                entry=entry,
+                source=source,
+                class_name=class_name,
+                current_time=current_time,
+            )
+
+            if parsed_entry is None:
+                continue
+
+            # Filter out entries that shouldn't be processed
+            if not _is_entry_processable(
+                entry=parsed_entry,
+                cache_enabled=cache_enabled,
+                current_time=current_time,
+            ):
+                continue
+
+            entries.append(parsed_entry)
+
+    except (AttributeError, KeyError, ValueError, TypeError) as e:
+        app_logger.warning(f"Failed to collect entries from {feed_url}: {e!s}")
+        return []
+    else:
+        return entries
+
+
+def get_news():
+    """Fetch news articles from various cryptocurrency RSS feeds using lazy evaluation.
+
+    Collects all RSS entries from all feeds first, sorts them by published time (newest first),
+    then processes entries one-by-one until finding 10 relevant articles. This optimizes
+    processing by avoiding unnecessary work on older/irrelevant articles.
+
+    Returns:
+        JSON string of fetched articles (newly cached ones only)
+    """
+    current_time = datetime.now(UTC)
+    cache_enabled = is_article_cache_enabled()
+    symbols_list = _load_symbols_for_detection(cache_enabled=cache_enabled)
+
+    # Phase 1: Collect all entries from all feeds
+    all_entries = _collect_all_rss_entries(
+        cache_enabled=cache_enabled,
+        current_time=current_time,
+    )
+
+    # Phase 2: Process entries in sorted order until we have enough relevant articles
+    latest_news: list[dict[str, object]] = []
+    total_processed = 0
+
+    for entry in all_entries:
+        total_processed += 1
+
+        # Process this entry
+        processed = _process_feed_entry(
+            entry=entry.raw_entry,
+            source=entry.source,
+            class_name=entry.class_name,
+            current_time=current_time,
+            cache_enabled=cache_enabled,
+            symbols_list=symbols_list,
+            current_index=total_processed,
+            total=len(all_entries),
+        )
+
+        if processed is None:
+            continue
+
+        cached_article, relevant_payload = processed
+
+        # Save to cache if enabled
+        if cache_enabled and cached_article is not None:
+            save_article_to_cache(cached_article)
+
+        # Add to results if relevant
+        if relevant_payload is not None:
+            latest_news.append(relevant_payload)
+
+            # Early stopping: we have enough relevant articles
+            if len(latest_news) >= MAX_RELEVANT_ARTICLES:
+                break
+
+    app_logger.info(
+        f"Processed {total_processed} articles, found {len(latest_news)} relevant articles",
+    )
+
+    return json.dumps(latest_news, indent=2)
 
 
 def fetch_rss_news(feed_url, source, class_name):
