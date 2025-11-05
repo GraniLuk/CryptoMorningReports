@@ -55,9 +55,6 @@ class RSSEntry:
     raw_entry: object
 
 
-MAX_RELEVANT_ARTICLES = 10
-
-
 def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> list[RSSEntry]:
     """Collect RSS entries from all feeds without processing them.
 
@@ -277,11 +274,15 @@ def get_news(target_relevant: int | None = None):
         target_relevant: Number of relevant articles to find. If None, uses NEWS_ARTICLE_LIMIT.
 
     Returns:
-        JSON string of fetched articles (newly cached ones only)
+        JSON string containing a list of newly cached relevant articles.
+        Each article includes metadata like title, link, published date, and detected symbols.
+        Only articles that were processed and cached during this call are returned.
+        The returned articles are sorted by relevance and recency.
     """
     if target_relevant is None:
         target_relevant = NEWS_ARTICLE_LIMIT
 
+    start_time = datetime.now(UTC)
     current_time = datetime.now(UTC)
     cache_enabled = is_article_cache_enabled()
     symbols_list = _load_symbols_for_detection(cache_enabled=cache_enabled)
@@ -293,7 +294,7 @@ def get_news(target_relevant: int | None = None):
     )
 
     # Phase 2: Process entries in sorted order until we have enough relevant articles
-    relevant_articles, _total_processed = _process_entries_until_target(
+    relevant_articles, total_processed = _process_entries_until_target(
         entries=all_entries,
         current_time=current_time,
         cache_enabled=cache_enabled,
@@ -301,11 +302,36 @@ def get_news(target_relevant: int | None = None):
         target_relevant=target_relevant,
     )
 
+    # Performance logging
+    end_time = datetime.now(UTC)
+    total_time = end_time - start_time
+    articles_found = len(relevant_articles)
+
+    from infra.telegram_logging_handler import app_logger  # noqa: PLC0415
+
+    app_logger.info(
+        f"RSS processing completed: {articles_found}/{target_relevant} target articles found, "
+        f"{total_processed} articles processed in {total_time.total_seconds():.1f}s "
+        f"(avg: {total_time.total_seconds()/max(total_processed, 1):.1f}s per article)"
+    )
+
+    if articles_found < target_relevant:
+        app_logger.warning(
+            f"RSS processing: Only found {articles_found}/{target_relevant} target articles. "
+            f"Consider increasing time window or checking feed availability."
+        )
+
     return json.dumps(relevant_articles, indent=2)
 
 
 def fetch_rss_news(feed_url, source, class_name):
-    """Fetch and parse news articles from an RSS feed."""
+    """Fetch and parse news articles from an RSS feed.
+
+    DEPRECATED: This function uses the old per-feed processing architecture.
+    Use get_news() instead, which provides optimized cross-feed sorting and lazy evaluation.
+
+    This function is kept for backward compatibility with existing tests.
+    """
     try:
         feed = feedparser.parse(feed_url)
         current_time = datetime.now(UTC)
