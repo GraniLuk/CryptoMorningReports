@@ -12,9 +12,11 @@ import json
 import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 import requests
 
+from news import article_processor as ap
 from news.article_cache import (
     CachedArticle,
     cleanup_old_articles,
@@ -31,8 +33,43 @@ from news.symbol_detector import detect_symbols_in_text
 from source_repository import SourceID, Symbol
 
 
-def test_rss_feed_fetching():
+class DummyOllamaClient:
+    """Simple stand-in for the Ollama SDK client."""
+
+    def __init__(self, response_text: str | None = None, *, should_fail: bool = False) -> None:
+        """Initialize the dummy client with a canned response or failure mode."""
+        self._response_text = response_text or "{}"
+        self._should_fail = should_fail
+        self.captured_prompt: str | None = None
+        self.captured_temperature: float | None = None
+
+    def generate_text(self, prompt: str, temperature: float = 0.2) -> str:
+        """Return the canned response, optionally raising to simulate errors."""
+        if self._should_fail:
+            message = "simulated failure"
+            raise ap.OllamaClientError(message)
+        self.captured_prompt = prompt
+        self.captured_temperature = temperature
+        return self._response_text
+
+
+@patch("news.article_processor.get_ollama_client")
+def test_rss_feed_fetching(mock_get_client):
     """Test RSS feed fetching functionality."""
+    # Set up the mock
+    mock_client = DummyOllamaClient(
+        response_text=json.dumps(
+            {
+                "summary": "BTC rallies on ETF flows",
+                "cleaned_content": "Clean paragraph",
+                "symbols": ["btc", "eth"],
+                "relevance_score": 1.4,
+                "is_relevant": True,
+                "reasoning": "High-volume breakout",
+            },
+        ),
+    )
+    mock_get_client.return_value = mock_client
     print("📡 TEST 1: RSS Feed Fetching")
     print("-" * 70)
 
@@ -186,10 +223,9 @@ def test_cache_retrieval_and_statistics():
     print(f"   Cache path: {stats['cache_path']}")
 
 
-def test_error_handling_and_cleanup(now):
+def test_error_handling_and_cleanup():
     """Test error handling for corrupted/missing files and old article cleanup."""
-    if now is None:
-        now = datetime.now(tz=UTC)
+    now = datetime.now(tz=UTC)
     # ========================================================================
     # TEST 6: Error Handling - Corrupted Cache Files
     # ========================================================================
@@ -265,8 +301,23 @@ def test_error_handling_and_cleanup(now):
     print(f"   After cleanup: {stats_after['total_articles']} articles")
 
 
-def test_fetch_and_cache_integration():
+@patch("news.article_processor.get_ollama_client")
+def test_fetch_and_cache_integration(mock_get_client):
     """Test the fetch and cache integration functionality."""
+    # Set up the mock
+    mock_client = DummyOllamaClient(
+        response_text=json.dumps(
+            {
+                "summary": "BTC rallies on ETF flows",
+                "cleaned_content": "Clean paragraph",
+                "symbols": ["btc", "eth"],
+                "relevance_score": 1.4,
+                "is_relevant": True,
+                "reasoning": "High-volume breakout",
+            },
+        ),
+    )
+    mock_get_client.return_value = mock_client
     print("\n📡 TEST 9: Fetch and Cache Integration (Auto-refresh)")
     print("-" * 70)
 
@@ -294,68 +345,91 @@ def test_final_cleanup():
         print("✅ Test cache directory removed")
 
 
-def test_full_workflow():
+def run_full_workflow():
     """Test the complete RSS caching workflow from fetch to cleanup."""
     print("\n" + "=" * 70)
     print("🧪 COMPREHENSIVE END-TO-END INTEGRATION TEST")
     print("=" * 70)
 
-    # Clean slate - remove test cache
-    test_cache = Path(__file__).parent / "cache"
-    if test_cache.exists():
-        shutil.rmtree(test_cache)
-        print("✓ Cleaned existing cache for fresh test\n")
+    # Set up Ollama mocking for the script run
+    dummy_client = DummyOllamaClient(
+        response_text=json.dumps(
+            {
+                "summary": "BTC rallies on ETF flows",
+                "cleaned_content": "Clean paragraph",
+                "symbols": ["btc", "eth"],
+                "relevance_score": 1.4,
+                "is_relevant": True,
+                "reasoning": "High-volume breakout",
+            },
+        ),
+    )
 
-    now = datetime.now(tz=UTC)
+    # Patch the Ollama client
+    import news.article_processor as ap
+    original_get_ollama_client = ap.get_ollama_client
+    ap.get_ollama_client = lambda: dummy_client
 
-    # ========================================================================
-    # TEST 1: RSS Fetching
-    # ========================================================================
-    test_rss_feed_fetching()
+    try:
+        # Clean slate - remove test cache
+        test_cache = Path(__file__).parent / "cache"
+        if test_cache.exists():
+            shutil.rmtree(test_cache)
+            print("✓ Cleaned existing cache for fresh test\n")
 
-    # ========================================================================
-    # TEST 2: Manual Article Caching with Symbol Detection
-    # ========================================================================
-    test_manual_article_caching()
+        now = datetime.now(tz=UTC)
 
-    # ========================================================================
-    # TEST 3-5: Cache Retrieval and Statistics
-    # ========================================================================
-    test_cache_retrieval_and_statistics()
+        # ========================================================================
+        # TEST 1: RSS Fetching
+        # ========================================================================
+        test_rss_feed_fetching()
 
-    # ========================================================================
-    # TEST 6-8: Error Handling and Cleanup
-    # ========================================================================
-    test_error_handling_and_cleanup(now)
+        # ========================================================================
+        # TEST 2: Manual Article Caching with Symbol Detection
+        # ========================================================================
+        test_manual_article_caching()
 
-    # ========================================================================
-    # TEST 9: Fetch and Cache Integration
-    # ========================================================================
-    test_fetch_and_cache_integration()
+        # ========================================================================
+        # TEST 3-5: Cache Retrieval and Statistics
+        # ========================================================================
+        test_cache_retrieval_and_statistics()
 
-    # ========================================================================
-    # TEST 10: Final Cleanup
-    # ========================================================================
-    test_final_cleanup()
+        # ========================================================================
+        # TEST 6-8: Error Handling and Cleanup
+        # ========================================================================
+        test_error_handling_and_cleanup()
 
-    # ========================================================================
-    # SUMMARY
-    # ========================================================================
-    print("\n" + "=" * 70)
-    print("✅ END-TO-END INTEGRATION TEST COMPLETE")
-    print("=" * 70)
-    print("\nAll major workflows tested:")
-    print("  ✓ RSS feed fetching")
-    print("  ✓ Article caching with symbol detection")
-    print("  ✓ Cache retrieval by symbol")
-    print("  ✓ Recent articles retrieval")
-    print("  ✓ Cache statistics")
-    print("  ✓ Error handling (corrupted files, missing files)")
-    print("  ✓ Old article cleanup")
-    print("  ✓ Fetch and cache integration")
-    print("  ✓ Test cleanup")
-    print()
+        # ========================================================================
+        # TEST 9: Fetch and Cache Integration
+        # ========================================================================
+        test_fetch_and_cache_integration()
+
+        # ========================================================================
+        # TEST 10: Final Cleanup
+        # ========================================================================
+        test_final_cleanup()
+
+        # ========================================================================
+        # SUMMARY
+        # ========================================================================
+        print("\n" + "=" * 70)
+        print("✅ END-TO-END INTEGRATION TEST COMPLETE")
+        print("=" * 70)
+        print("\nAll major workflows tested:")
+        print("  ✓ RSS feed fetching")
+        print("  ✓ Article caching with symbol detection")
+        print("  ✓ Cache retrieval by symbol")
+        print("  ✓ Recent articles retrieval")
+        print("  ✓ Cache statistics")
+        print("  ✓ Error handling (corrupted files, missing files)")
+        print("  ✓ Old article cleanup")
+        print("  ✓ Fetch and cache integration")
+        print("  ✓ Test cleanup")
+        print()
+    finally:
+        # Restore original function
+        ap.get_ollama_client = original_get_ollama_client
 
 
 if __name__ == "__main__":
-    test_full_workflow()
+    run_full_workflow()
