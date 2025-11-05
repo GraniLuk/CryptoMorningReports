@@ -68,8 +68,8 @@ def setup_logger():
     logger.setLevel(log_level)  # Set the logger's level to the lowest level you want to capture
 
     # Formatter
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    colored_formatter = ColoredFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(filename)s - %(levelname)s - %(message)s")
+    colored_formatter = ColoredFormatter("%(asctime)s - %(name)s - %(filename)s - %(levelname)s - %(message)s")
 
     # Console Handler
     console_handler = logging.StreamHandler()
