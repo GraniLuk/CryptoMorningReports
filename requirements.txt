@@ -27,7 +27,7 @@ python-slugify
 pytest
 pytest-cov
 ruff
-cryptography==43.0.3
+cryptography==46.0.3
 plotly
 google-generativeai
 ollama
