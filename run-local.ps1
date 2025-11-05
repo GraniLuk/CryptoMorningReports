@@ -3,13 +3,17 @@
 #   .\run-local.ps1                 # Daily report
 #   .\run-local.ps1 current BTC     # Current situation report for BTC
 #   .\run-local.ps1 weekly          # Weekly report
+#   .\run-local.ps1 -LogLevel DEBUG # Set log level to DEBUG
 
 param(
     [Parameter(Mandatory = $false)]
     [string]$ReportType = 'daily',
     
     [Parameter(Mandatory = $false)]
-    [string]$Symbol = ''
+    [string]$Symbol = '',
+    
+    [Parameter(Mandatory = $false)]
+    [string]$LogLevel = 'INFO'
 )
 
 Write-Host "🔧 Running Azure Function Locally" -ForegroundColor Cyan
@@ -51,8 +55,12 @@ else {
 }
 
 Write-Host ""
-Write-Host "�🚀 Running $ReportType report..." -ForegroundColor Green
+Write-Host "🚀 Running $ReportType report..." -ForegroundColor Green
 Write-Host ""
+
+# Set logging level environment variable
+$env:LOG_LEVEL = $LogLevel
+Write-Host "📝 Log level set to: $LogLevel" -ForegroundColor Blue
 
 # Run the local runner
 if ($ReportType -eq 'current' -or ($ReportType -eq 'offline' -and $Symbol)) {

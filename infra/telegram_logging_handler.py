@@ -61,15 +61,19 @@ class TelegramHandler(logging.Handler):
 def setup_logger():
     """Set up the application logger with console and Telegram handlers."""
     logger = logging.getLogger("AppLogger")
-    logger.setLevel(logging.INFO)  # Set the logger's level to the lowest level you want to capture
+    
+    # Get log level from environment variable, default to INFO
+    log_level_str = os.environ.get("LOG_LEVEL", "INFO").upper()
+    log_level = getattr(logging, log_level_str, logging.INFO)
+    logger.setLevel(log_level)  # Set the logger's level to the lowest level you want to capture
 
     # Formatter
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     colored_formatter = ColoredFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    # Console Handler (INFO level)
+    # Console Handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(log_level)
     console_handler.setFormatter(colored_formatter)
     logger.addHandler(console_handler)
 
