@@ -6,7 +6,8 @@ import time
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
-from news import article_cache
+from news import article_cache, rss_parser
+from news.article_cache import fetch_and_cache_articles_for_symbol
 from news.rss_parser import (
     RSSEntry,
     _collect_all_rss_entries,
@@ -292,7 +293,7 @@ class TestCollectAllRSSEntries:
 
     @patch("news.rss_parser.feedparser")
     @patch("news.rss_parser._collect_entries_from_feed")
-    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed, _mock_feedparser):
+    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed):
         """Test collection when all feeds return empty results."""
         mock_collect_feed.return_value = []
         current_time = datetime.now(UTC)
@@ -312,7 +313,8 @@ class TestCollectEntriesFromFeed:
     @patch("news.rss_parser._parse_rss_entry")
     @patch("news.rss_parser._is_entry_processable")
     @patch("news.rss_parser.app_logger")
-    def test_collect_entries_from_feed_success(self, _mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser):
+    def test_collect_entries_from_feed_success(self, mock_feedparser, mock_parse_entry,
+                                                     mock_is_processable):
         """Test successful collection from a single feed."""
         # Mock feed with entries
         mock_feed = Mock()
@@ -395,11 +397,14 @@ class TestComprehensiveLazyProcessing:
 
             # Add some content that might be relevant to crypto symbols
             if i % 3 == 0:
-                entry.summary = "Bitcoin and Ethereum showing strong performance in today's market. BTC up 5%, ETH up 3%."
+                entry.summary = ("Bitcoin and Ethereum showing strong performance in today's "
+                                "market. BTC up 5%, ETH up 3%.")
             elif i % 3 == 1:
-                entry.summary = "New developments in DeFi space with innovative protocols emerging."
+                entry.summary = ("New developments in DeFi space with innovative protocols "
+                                "emerging.")
             else:
-                entry.summary = "Market analysis shows increased institutional interest in digital assets."
+                entry.summary = ("Market analysis shows increased institutional interest in "
+                                "digital assets.")
 
             entries.append(entry)
 
@@ -465,9 +470,8 @@ class TestComprehensiveLazyProcessing:
                     source = "ambcrypto"
 
                 if source and source in mock_feeds:
-                    feed_entries = []
-                    for entry in mock_feeds[source].entries:
-                        feed_entries.append(Mock(
+                    return [
+                        Mock(
                             source=source,
                             title=entry.title,
                             link=entry.link,
@@ -475,8 +479,9 @@ class TestComprehensiveLazyProcessing:
                             published_str=entry.published,
                             class_name="test-class",
                             raw_entry=entry,
-                        ))
-                    return feed_entries
+                        )
+                        for entry in mock_feeds[source].entries
+                    ]
                 return []
 
             mock_collect_feed.side_effect = collect_feed_side_effect
@@ -489,13 +494,18 @@ class TestComprehensiveLazyProcessing:
 
             # Verify entries are sorted by published_time (newest first)
             for i in range(len(result) - 1):
-                assert result[i].published_time >= result[i + 1].published_time, \
-                    f"Entry {i} ({result[i].published_time}) should be newer than entry {i+1} ({result[i+1].published_time})"
+                assert result[i].published_time >= result[i + 1].published_time, (
+                    f"Entry {i} ({result[i].published_time}) should be newer than "
+                    f"entry {i+1} ({result[i+1].published_time})"
+                )
 
             # Verify we have entries from all 6 sources
             sources_found = {entry.source for entry in result}
-            expected_sources = {"decrypt", "coindesk", "newsBTC", "coinJournal", "coinpedia", "ambcrypto"}
-            assert sources_found == expected_sources, f"Expected sources {expected_sources}, got {sources_found}"
+            expected_sources = {"decrypt", "coindesk", "newsBTC", "coinJournal",
+                               "coinpedia", "ambcrypto"}
+            assert sources_found == expected_sources, (
+                f"Expected sources {expected_sources}, got {sources_found}"
+            )
 
     def test_early_stopping_behavior(self):
         """Test that processing stops after finding target relevant articles."""
@@ -541,15 +551,21 @@ class TestComprehensiveLazyProcessing:
             )
 
             # Should have found exactly 5 relevant articles
-            assert len(relevant_articles) == 5, f"Expected 5 relevant articles, got {len(relevant_articles)}"
+            assert len(relevant_articles) == 5, (
+                f"Expected 5 relevant articles, got {len(relevant_articles)}"
+            )
 
             # Should have processed exactly 5 articles (stopped early)
-            assert total_processed == 5, f"Expected to process 5 articles, but processed {total_processed}"
+            assert total_processed == 5, (
+                f"Expected to process 5 articles, but processed {total_processed}"
+            )
 
             # Verify the articles are the first 5 (most recent)
             expected_titles = [f"Article {i+1}" for i in range(5)]
             actual_titles = [article["title"] for article in relevant_articles]
-            assert actual_titles == expected_titles, f"Expected {expected_titles}, got {actual_titles}"
+            assert actual_titles == expected_titles, (
+                f"Expected {expected_titles}, got {actual_titles}"
+            )
 
     def test_cached_articles_are_skipped(self):
         """Test that articles already in cache are properly skipped during collection."""
@@ -581,7 +597,7 @@ class TestComprehensiveLazyProcessing:
              patch("news.rss_parser.article_exists_in_cache") as mock_cache_check:
 
             # Mock parsing to return RSSEntry objects
-            def parse_side_effect(entry, source, class_name, current_time):
+            def parse_side_effect(entry, source, class_name, _current_time):
                 published_time = datetime.fromisoformat(entry.published)
 
                 return RSSEntry(
@@ -614,10 +630,14 @@ class TestComprehensiveLazyProcessing:
             # Verify the returned entries are the non-cached ones
             expected_titles = ["Cached Article 3", "Cached Article 4", "Cached Article 5"]
             actual_titles = [entry.title for entry in result]
-            assert actual_titles == expected_titles, f"Expected {expected_titles}, got {actual_titles}"
+            assert actual_titles == expected_titles, (
+                f"Expected {expected_titles}, got {actual_titles}"
+            )
 
             # Verify cache check was called for all entries
-            assert mock_cache_check.call_count == 5, f"Expected 5 cache checks, got {mock_cache_check.call_count}"
+            assert mock_cache_check.call_count == 5, (
+                f"Expected 5 cache checks, got {mock_cache_check.call_count}"
+            )
 
     def test_24h_age_filtering(self):
         """Test that articles older than 24 hours are filtered out."""
@@ -652,7 +672,7 @@ class TestComprehensiveLazyProcessing:
              patch("news.rss_parser.article_exists_in_cache", return_value=False):
 
             # Mock parsing to return RSSEntry objects
-            def parse_side_effect(entry, source, class_name, current_time):
+            def parse_side_effect(entry, source, class_name, _current_time):
                 published_time = datetime.fromisoformat(entry.published)
 
                 return RSSEntry(
@@ -680,12 +700,14 @@ class TestComprehensiveLazyProcessing:
             # Verify the returned entries are the recent ones
             expected_titles = ["Age Test Article 1", "Age Test Article 2", "Age Test Article 5"]
             actual_titles = [entry.title for entry in result]
-            assert actual_titles == expected_titles, f"Expected {expected_titles}, got {actual_titles}"
+            assert actual_titles == expected_titles, (
+                f"Expected {expected_titles}, got {actual_titles}"
+            )
 
     def test_symbol_specific_filtering(self):
         """Test that articles are properly filtered by cryptocurrency symbol."""
         # Mock the function to return different results based on symbol
-        def mock_get_side_effect(symbol, hours=24):
+        def mock_get_side_effect(symbol, _hours=24):
             if symbol.upper() == "BTC":
                 return [
                     Mock(title="Bitcoin surges to new highs", symbols=["BTC"]),
@@ -700,7 +722,8 @@ class TestComprehensiveLazyProcessing:
                 return [Mock(title="Solana ecosystem grows rapidly", symbols=["SOL"])]
             return []
 
-        with patch.object(article_cache, "get_articles_for_symbol", side_effect=mock_get_side_effect):
+        with patch.object(article_cache, "get_articles_for_symbol",
+                         side_effect=mock_get_side_effect):
             # Test BTC filtering
             btc_articles = article_cache.get_articles_for_symbol("BTC", hours=24)
             assert len(btc_articles) == 2, f"Expected 2 BTC articles, got {len(btc_articles)}"
@@ -712,7 +735,8 @@ class TestComprehensiveLazyProcessing:
             eth_articles = article_cache.get_articles_for_symbol("ETH", hours=24)
             assert len(eth_articles) == 2, f"Expected 2 ETH articles, got {len(eth_articles)}"
             eth_titles = [article.title for article in eth_articles]
-            expected_eth = ["Ethereum network upgrade completed", "BTC and ETH correlation analysis"]
+            expected_eth = ["Ethereum network upgrade completed",
+                           "BTC and ETH correlation analysis"]
             assert eth_titles == expected_eth, f"Expected {expected_eth}, got {eth_titles}"
 
             # Test SOL filtering
@@ -726,12 +750,14 @@ class TestComprehensiveLazyProcessing:
 
     @patch.dict("os.environ", {"CURRENT_REPORT_ARTICLE_LIMIT": "5"})
     def test_current_report_article_limit_configuration(self):
-        """Test that CURRENT_REPORT_ARTICLE_LIMIT configuration is properly respected in lazy processing."""
-        import news.rss_parser
-        importlib.reload(news.rss_parser)
+        """Test that CURRENT_REPORT_ARTICLE_LIMIT configuration is properly respected.
+
+        in lazy processing.
+        """
+        importlib.reload(rss_parser)
 
         # Verify the configuration is loaded
-        assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
+        assert rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
 
         # Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT
         with patch("news.article_cache.get_articles_for_symbol") as mock_get_articles, \
@@ -740,7 +766,6 @@ class TestComprehensiveLazyProcessing:
             mock_get_news.return_value = None
             mock_get_articles.return_value = []
 
-            from news.article_cache import fetch_and_cache_articles_for_symbol
             result = fetch_and_cache_articles_for_symbol("BTC", hours=24)
 
             # Verify get_news was called with CURRENT_REPORT_ARTICLE_LIMIT
@@ -756,25 +781,27 @@ class TestComprehensiveLazyProcessing:
         """Test that CURRENT_REPORT_ARTICLE_LIMIT defaults to 3 when not set."""
         os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
 
-
-
-        import news.rss_parser
-        importlib.reload(news.rss_parser)
+        importlib.reload(rss_parser)
 
         # Verify the default value
-        assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 3
+        assert rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 3
 
     def test_shared_cache_integration_lazy_processing(self):
         """Test that lazy processing properly integrates with shared cache for current reports."""
         # Mock articles that would be cached during RSS processing
         mock_cached_articles = [
-            Mock(title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC)),
-            Mock(title="Ethereum upgrade completed", symbols=["ETH"], published_time=datetime.now(UTC)),
-            Mock(title="Solana network congestion", symbols=["SOL"], published_time=datetime.now(UTC)),
+            Mock(title="Bitcoin ETF approval news", symbols=["BTC"],
+                 published_time=datetime.now(UTC)),
+            Mock(title="Ethereum upgrade completed", symbols=["ETH"],
+                 published_time=datetime.now(UTC)),
+            Mock(title="Solana network congestion", symbols=["SOL"],
+                 published_time=datetime.now(UTC)),
         ]
 
-        # Test the integration: lazy processing should cache articles that are then available for current reports
-        with patch.object(article_cache, "get_articles_for_symbol", return_value=mock_cached_articles) as mock_get_articles, \
+        # Test the integration: lazy processing should cache articles that are then
+        # available for current reports
+        with patch.object(article_cache, "get_articles_for_symbol",
+                         return_value=mock_cached_articles) as mock_get_articles, \
              patch("news.rss_parser.get_news") as mock_get_news:
 
             mock_get_news.return_value = None  # RSS processing completes without error
@@ -783,7 +810,7 @@ class TestComprehensiveLazyProcessing:
             result = article_cache.fetch_and_cache_articles_for_symbol("BTC", hours=24)
 
             # Verify that get_news was called (lazy processing triggered)
-            mock_get_news.assert_called_once_with(target_relevant=3)  # Default CURRENT_REPORT_ARTICLE_LIMIT
+            mock_get_news.assert_called_once_with(target_relevant=3)  # Default limit
 
             # Verify that get_articles_for_symbol was called to retrieve from cache
             mock_get_articles.assert_called_once_with("BTC", 24)
