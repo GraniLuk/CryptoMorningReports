@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import ClassVar
 
 import requests
 
@@ -9,16 +10,17 @@ import requests
 class ColoredFormatter(logging.Formatter):
     """Custom formatter that adds colors to log levels."""
 
-    COLORS = {
+    COLORS: ClassVar[dict[str, str]] = {
         "DEBUG": "\033[36m",  # Cyan
         "INFO": "\033[32m",   # Green
         "WARNING": "\033[33m", # Yellow
         "ERROR": "\033[31m",   # Red
         "CRITICAL": "\033[35m", # Magenta
     }
-    RESET = "\033[0m"
+    RESET: ClassVar[str] = "\033[0m"
 
     def format(self, record):
+        """Format the log record with color codes for the level name."""
         color = self.COLORS.get(record.levelname, self.RESET)
         record.levelname = f"{color}{record.levelname}{self.RESET}"
         return super().format(record)
