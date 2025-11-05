@@ -1,6 +1,7 @@
 """RSS feed parsing and news article extraction."""
 
 import json
+import os
 import time  # Added for struct_time type checking
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -21,6 +22,20 @@ from news.article_cache import (
 from news.article_processor import ArticleProcessingError, process_article_with_ollama
 from news.symbol_detector import detect_symbols_in_text
 from source_repository import fetch_symbols
+
+
+# Configuration
+def _get_news_article_limit(default: int = 10) -> int:
+    value = os.getenv("NEWS_ARTICLE_LIMIT", str(default))
+    try:
+        return int(value)
+    except ValueError:
+        app_logger.warning(
+            f"Invalid NEWS_ARTICLE_LIMIT value '{value}', falling back to {default}."
+        )
+        return default
+
+NEWS_ARTICLE_LIMIT = _get_news_article_limit()
 
 
 @dataclass(slots=True)
@@ -153,12 +168,108 @@ def _collect_entries_from_feed(
         return entries
 
 
+def _process_entries_until_target(
+    *,
+    entries: list[RSSEntry],
+    current_time: datetime,
+    cache_enabled: bool,
+    symbols_list: list,
+    target_relevant: int,
+) -> tuple[list[dict[str, object]], int]:
+    """Process RSS entries until target number of relevant articles are found.
+
+    Args:
+        entries: List of RSSEntry objects to process (sorted by published_time)
+        current_time: Current datetime for processing
+        cache_enabled: Whether article caching is enabled
+        symbols_list: List of symbols for detection
+        target_relevant: Target number of relevant articles to find
+
+    Returns:
+        Tuple of (relevant_articles, total_processed)
+    """
+    relevant_articles: list[dict[str, object]] = []
+    total_processed = 0
+    start_time = datetime.now(UTC)
+
+    for entry in entries:
+        total_processed += 1
+        elapsed_seconds = (datetime.now(UTC) - start_time).total_seconds()
+
+        # Enhanced progress logging
+        app_logger.info(
+            f"🔄 Processing article {total_processed}/{len(entries)} ({entry.source}) | "
+            f"{len(relevant_articles)}/{target_relevant} relevant found | "
+            f"Elapsed: {elapsed_seconds:.1f}s",
+        )
+
+        # Process this entry
+        processed = _process_feed_entry(
+            entry=entry.raw_entry,
+            source=entry.source,
+            class_name=entry.class_name,
+            current_time=current_time,
+            cache_enabled=cache_enabled,
+            symbols_list=symbols_list,
+            current_index=total_processed,
+            total=len(entries),
+        )
+
+        if processed is None:
+            continue
+
+        cached_article, relevant_payload = processed
+
+        # Save to cache if enabled
+        if cache_enabled and cached_article is not None:
+            save_article_to_cache(cached_article)
+
+        # Add to results if relevant
+        if relevant_payload is not None:
+            relevant_articles.append(relevant_payload)
+
+            # Early stopping: we have enough relevant articles
+            if len(relevant_articles) >= target_relevant:
+                break
+
+    # Final summary logging
+    total_time = (datetime.now(UTC) - start_time).total_seconds()
+    estimated_saved_time = _estimate_time_saved(total_processed, len(entries), total_time)
+
+    app_logger.info(
+        f"✅ Completed: Processed {total_processed}/{len(entries)} articles in {total_time:.1f}s, "
+        f"found {len(relevant_articles)}/{target_relevant} relevant "
+        f"(saved ~{estimated_saved_time:.1f}s)",
+    )
+
+    return relevant_articles, total_processed
+
+
+def _estimate_time_saved(processed: int, total_available: int, actual_time: float) -> float:
+    """Estimate time saved by early stopping.
+
+    Args:
+        processed: Number of articles actually processed
+        total_available: Total articles available
+        actual_time: Time spent processing
+
+    Returns:
+        Estimated time that would have been spent processing remaining articles
+    """
+    if processed == 0:
+        return 0.0
+
+    avg_time_per_article = actual_time / processed
+    remaining_articles = total_available - processed
+    return avg_time_per_article * remaining_articles
+
+
 def get_news():
     """Fetch news articles from various cryptocurrency RSS feeds using lazy evaluation.
 
     Collects all RSS entries from all feeds first, sorts them by published time (newest first),
-    then processes entries one-by-one until finding 10 relevant articles. This optimizes
-    processing by avoiding unnecessary work on older/irrelevant articles.
+    then processes entries one-by-one until finding NEWS_ARTICLE_LIMIT relevant articles.
+    This optimizes processing by avoiding unnecessary work on older/irrelevant articles.
 
     Returns:
         JSON string of fetched articles (newly cached ones only)
@@ -174,46 +285,15 @@ def get_news():
     )
 
     # Phase 2: Process entries in sorted order until we have enough relevant articles
-    latest_news: list[dict[str, object]] = []
-    total_processed = 0
-
-    for entry in all_entries:
-        total_processed += 1
-
-        # Process this entry
-        processed = _process_feed_entry(
-            entry=entry.raw_entry,
-            source=entry.source,
-            class_name=entry.class_name,
-            current_time=current_time,
-            cache_enabled=cache_enabled,
-            symbols_list=symbols_list,
-            current_index=total_processed,
-            total=len(all_entries),
-        )
-
-        if processed is None:
-            continue
-
-        cached_article, relevant_payload = processed
-
-        # Save to cache if enabled
-        if cache_enabled and cached_article is not None:
-            save_article_to_cache(cached_article)
-
-        # Add to results if relevant
-        if relevant_payload is not None:
-            latest_news.append(relevant_payload)
-
-            # Early stopping: we have enough relevant articles
-            if len(latest_news) >= MAX_RELEVANT_ARTICLES:
-                break
-
-    app_logger.info(
-        f"Processed {total_processed} articles, found {len(latest_news)} relevant articles",
+    relevant_articles, _total_processed = _process_entries_until_target(
+        entries=all_entries,
+        current_time=current_time,
+        cache_enabled=cache_enabled,
+        symbols_list=symbols_list,
+        target_relevant=NEWS_ARTICLE_LIMIT,
     )
 
-    return json.dumps(latest_news, indent=2)
+    return json.dumps(relevant_articles, indent=2)
 
 
 def fetch_rss_news(feed_url, source, class_name):
