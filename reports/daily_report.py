@@ -43,6 +43,8 @@ from technical_analysis.volume_report import fetch_volume_report
 
 
 if TYPE_CHECKING:
+    from logging import Logger
+
     from source_repository import Symbol
 
 
@@ -86,7 +88,7 @@ async def _process_ai_analysis(
 
     # Refresh RSS feeds and build filtered news payload
     get_news()
-    news_payload, news_stats = _collect_relevant_news(hours=24)
+    news_payload, news_stats = _collect_relevant_news(hours=24, logger=logger)
     logger.info(
         "News filtering stats - available: %d, truncated: %d, est_tokens: ~%d",
         news_stats["articles_available"],
@@ -161,6 +163,17 @@ async def _process_ai_analysis(
         ai_api_type,
     )
 
+    # Add list of articles included in analysis
+    if not analysis_reported_with_news.startswith("Failed"):
+        try:
+            articles = json.loads(news_payload)
+            article_list = "\n\n## Articles Included in Analysis\n\n" + "\n".join(
+                f"- {art['title']} ({art['source']})" for art in articles
+            )
+            analysis_reported_with_news += article_list
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            logger.warning("Failed to parse news payload for article list: %s", e)
+
     # --- OneDrive Uploads ---
     if not analysis_reported_with_news.startswith("Failed"):
         onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}.md"
@@ -231,7 +244,7 @@ async def _process_ai_analysis(
     return analysis_reported_with_news
 
 
-def _collect_relevant_news(*, hours: int) -> tuple[str, dict[str, float | int]]:
+def _collect_relevant_news(*, hours: int, logger: "Logger") -> tuple[str, dict[str, float | int]]:
     """Collect relevant cached articles and prepare payload for AI consumption."""
     relevant_articles = get_relevant_cached_articles(hours=hours)
     total_available = len(relevant_articles)
@@ -239,6 +252,8 @@ def _collect_relevant_news(*, hours: int) -> tuple[str, dict[str, float | int]]:
     max_articles = max(int(os.environ.get("NEWS_ARTICLE_LIMIT", "20")), 0)
     if max_articles > 0:
         relevant_articles = relevant_articles[:max_articles]
+
+    logger.info("Articles included in daily report: %s", [a.title for a in relevant_articles])
 
     payload: list[dict[str, object]] = []
 

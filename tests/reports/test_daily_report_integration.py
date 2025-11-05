@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -59,7 +60,7 @@ def test_collect_relevant_news_limits_and_truncates(
     monkeypatch.setenv("NEWS_ARTICLE_MAX_CHARS", "60")
 
     with caplog.at_level("INFO"):
-        payload_json, stats = dr._collect_relevant_news(hours=12)
+        payload_json, stats = dr._collect_relevant_news(hours=12, logger=logging.getLogger())
 
     payload = json.loads(payload_json)
 
