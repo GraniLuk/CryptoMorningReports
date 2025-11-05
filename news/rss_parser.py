@@ -31,7 +31,7 @@ def _get_news_article_limit(default: int = 10) -> int:
         return int(value)
     except ValueError:
         app_logger.warning(
-            f"Invalid NEWS_ARTICLE_LIMIT value '{value}', falling back to {default}."
+            f"Invalid NEWS_ARTICLE_LIMIT value '{value}', falling back to {default}.",
         )
         return default
 
@@ -316,7 +316,7 @@ def fetch_rss_news(feed_url, source, class_name):
                 continue
 
             entries_to_process.append(entry)
-            if len(entries_to_process) >= MAX_RELEVANT_ARTICLES:
+            if len(entries_to_process) >= NEWS_ARTICLE_LIMIT:
                 break
 
         # Second pass: process entries with progress

@@ -1,4 +1,10 @@
-"""Test script to verify RSS feed functionality for all sources.
+"""Integration tests for RSS feed functionality.
+
+⚠️  WARNING: These tests perform real HTTP requests and Ollama processing.
+They are SLOW (~20+ minutes) and should NOT be run in CI/CD pipelines.
+
+For fast unit tests, use: tests/news/test_rss_feed_filtering.py
+For integration tests, run this script manually with: python tests/news/test_rss_feeds.py
 
 This script verifies that each RSS feed:
 1. Successfully fetches articles
