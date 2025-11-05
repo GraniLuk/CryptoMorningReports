@@ -83,7 +83,11 @@ def check_single_feed(source: str, feed_info: dict[str, str]) -> dict[str, Any]:
         app_logger.info(f"\n{'=' * 80}\nTesting {source}...\n{'=' * 80}")
 
         # Fetch articles using the existing function
-        articles: list[dict[str, Any]] = fetch_rss_news(feed_info["url"], source, feed_info["class"])
+        articles: list[dict[str, Any]] = fetch_rss_news(
+            feed_info["url"],
+            source,
+            feed_info["class"],
+        )
 
         if not articles:
             result["errors"].append("No articles returned")
