@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
+import time
 
 from news.rss_parser import RSSEntry, _is_entry_processable, _parse_rss_entry
 
@@ -367,3 +368,445 @@ class TestCollectEntriesFromFeed:
         mock_logger.warning.assert_called_once()
         log_call = mock_logger.warning.call_args[0][0]
         assert "Failed to collect entries from https://invalid-feed.com" in log_call
+
+
+class TestComprehensiveLazyProcessing:
+    """Comprehensive tests for the complete lazy processing pipeline with realistic data."""
+
+    def create_mock_feed_entries(self, source: str, count: int, base_time: datetime) -> list[Mock]:
+        """Create mock RSS entries for a feed with realistic data."""
+        entries = []
+
+        for i in range(count):
+            # Create entries with varying timestamps (newest first within feed)
+            published_time = base_time - timedelta(minutes=i * 30)  # 30 min intervals
+
+            entry = Mock()
+            entry.title = f"{source.upper()} Article {i+1}: Crypto Market Update"
+            entry.link = f"https://{source.lower()}.com/article-{i+1}"
+            entry.published = published_time.isoformat()
+            entry.published_parsed = time.struct_time((
+                published_time.year, published_time.month, published_time.day,
+                published_time.hour, published_time.minute, published_time.second,
+                -1, -1, -1
+            ))
+
+            # Add some content that might be relevant to crypto symbols
+            if i % 3 == 0:
+                entry.summary = f"Bitcoin and Ethereum showing strong performance in today's market. BTC up 5%, ETH up 3%."
+            elif i % 3 == 1:
+                entry.summary = f"New developments in DeFi space with innovative protocols emerging."
+            else:
+                entry.summary = f"Market analysis shows increased institutional interest in digital assets."
+
+            entries.append(entry)
+
+        return entries
+
+    def test_comprehensive_cross_feed_sorting(self):
+        """Test that 60 articles across 6 feeds are properly sorted by date (newest first)."""
+        from news.rss_parser import _collect_all_rss_entries
+
+        base_time = datetime.now(UTC)
+
+        # Create mock feeds with different base times to test cross-feed sorting
+        feed_data = {
+            "decrypt": {"count": 10, "base_offset": timedelta(hours=0)},      # newest
+            "coindesk": {"count": 10, "base_offset": timedelta(hours=1)},     # 1 hour older
+            "newsBTC": {"count": 10, "base_offset": timedelta(hours=2)},      # 2 hours older
+            "coinJournal": {"count": 10, "base_offset": timedelta(hours=3)},  # 3 hours older
+            "coinpedia": {"count": 10, "base_offset": timedelta(hours=4)},    # 4 hours older
+            "ambcrypto": {"count": 10, "base_offset": timedelta(hours=5)},    # oldest
+        }
+
+        mock_feeds = {}
+        for source, config in feed_data.items():
+            feed_time = base_time - config["base_offset"]
+            mock_feeds[source] = Mock()
+            mock_feeds[source].entries = self.create_mock_feed_entries(
+                source, config["count"], feed_time
+            )
+
+        with patch("news.rss_parser.feedparser.parse") as mock_feedparser, \
+             patch("news.rss_parser._collect_entries_from_feed") as mock_collect_feed:
+
+            # Mock feedparser to return our mock feeds
+            def feedparser_side_effect(url):
+                if "decrypt.co" in url:
+                    return mock_feeds["decrypt"]
+                elif "coindesk.com" in url:
+                    return mock_feeds["coindesk"]
+                elif "newsbtc.com" in url:
+                    return mock_feeds["newsBTC"]
+                elif "coinjournal.net" in url:
+                    return mock_feeds["coinJournal"]
+                elif "coinpedia.org" in url:
+                    return mock_feeds["coinpedia"]
+                elif "ambcrypto.com" in url:
+                    return mock_feeds["ambcrypto"]
+                else:
+                    return Mock(entries=[])
+
+            mock_feedparser.side_effect = feedparser_side_effect
+
+            # Mock _collect_entries_from_feed to return all entries for each feed
+            def collect_feed_side_effect(**kwargs):
+                source = None
+                if "decrypt.co" in kwargs["feed_url"]:
+                    source = "decrypt"
+                elif "coindesk.com" in kwargs["feed_url"]:
+                    source = "coindesk"
+                elif "newsbtc.com" in kwargs["feed_url"]:
+                    source = "newsBTC"
+                elif "coinjournal.net" in kwargs["feed_url"]:
+                    source = "coinJournal"
+                elif "coinpedia.org" in kwargs["feed_url"]:
+                    source = "coinpedia"
+                elif "ambcrypto.com" in kwargs["feed_url"]:
+                    source = "ambcrypto"
+
+                if source and source in mock_feeds:
+                    feed_entries = []
+                    for entry in mock_feeds[source].entries:
+                        feed_entries.append(Mock(
+                            source=source,
+                            title=entry.title,
+                            link=entry.link,
+                            published_time=datetime.fromisoformat(entry.published),
+                            published_str=entry.published,
+                            class_name="test-class",
+                            raw_entry=entry
+                        ))
+                    return feed_entries
+                return []
+
+            mock_collect_feed.side_effect = collect_feed_side_effect
+
+            # Collect all entries
+            result = _collect_all_rss_entries(cache_enabled=False, current_time=base_time)
+
+            # Should have collected entries from all feeds
+            assert len(result) == 60, f"Expected 60 entries, got {len(result)}"
+
+            # Verify entries are sorted by published_time (newest first)
+            for i in range(len(result) - 1):
+                assert result[i].published_time >= result[i + 1].published_time, \
+                    f"Entry {i} ({result[i].published_time}) should be newer than entry {i+1} ({result[i+1].published_time})"
+
+            # Verify we have entries from all 6 sources
+            sources_found = {entry.source for entry in result}
+            expected_sources = {"decrypt", "coindesk", "newsBTC", "coinJournal", "coinpedia", "ambcrypto"}
+            assert sources_found == expected_sources, f"Expected sources {expected_sources}, got {sources_found}"
+
+    def test_early_stopping_behavior(self):
+        """Test that processing stops after finding target relevant articles."""
+        from news.rss_parser import _process_entries_until_target, RSSEntry
+
+        # Create 20 test entries with varying relevance
+        base_time = datetime.now(UTC)
+        entries = []
+
+        for i in range(20):
+            # Create entries with decreasing timestamps
+            published_time = base_time - timedelta(minutes=i * 5)
+
+            entry = RSSEntry(
+                source="test",
+                title=f"Article {i+1}",
+                link=f"https://test.com/article-{i+1}",
+                published_time=published_time,
+                published_str=published_time.isoformat(),
+                class_name="test-class",
+                raw_entry=Mock()
+            )
+            entries.append(entry)
+
+        # Mock the processing function to return relevant results for first 7 entries
+        relevant_count = 0
+        def mock_process_entry(entry, **kwargs):
+            nonlocal relevant_count
+            relevant_count += 1
+            title = f"Article {relevant_count}"
+            if relevant_count <= 5:  # First 5 are relevant
+                return (Mock(), {"title": title, "is_relevant": True})
+            else:
+                return (Mock(), {"title": title, "is_relevant": False})
+
+        with patch("news.rss_parser._process_feed_entry", side_effect=mock_process_entry), \
+             patch("news.rss_parser.is_article_cache_enabled", return_value=False), \
+             patch("news.rss_parser._load_symbols_for_detection", return_value=["BTC"]):
+
+            relevant_articles, total_processed = _process_entries_until_target(
+                entries=entries,
+                current_time=base_time,
+                cache_enabled=False,
+                symbols_list=["BTC"],
+                target_relevant=5
+            )
+
+            # Should have found exactly 5 relevant articles
+            assert len(relevant_articles) == 5, f"Expected 5 relevant articles, got {len(relevant_articles)}"
+
+            # Should have processed exactly 5 articles (stopped early)
+            assert total_processed == 5, f"Expected to process 5 articles, but processed {total_processed}"
+
+            # Verify the articles are the first 5 (most recent)
+            expected_titles = [f"Article {i+1}" for i in range(5)]
+            actual_titles = [article["title"] for article in relevant_articles]
+            assert actual_titles == expected_titles, f"Expected {expected_titles}, got {actual_titles}"
+
+    def test_cached_articles_are_skipped(self):
+        """Test that articles already in cache are properly skipped during collection."""
+        from news.rss_parser import _collect_entries_from_feed
+
+        base_time = datetime.now(UTC)
+
+        # Create mock entries
+        mock_entries = []
+        for i in range(5):
+            entry = Mock()
+            entry.title = f"Cached Article {i+1}"
+            entry.link = f"https://test.com/cached-{i+1}"
+            entry.published = (base_time - timedelta(hours=i)).isoformat()
+            entry.published_parsed = time.struct_time((
+                (base_time - timedelta(hours=i)).year,
+                (base_time - timedelta(hours=i)).month,
+                (base_time - timedelta(hours=i)).day,
+                (base_time - timedelta(hours=i)).hour,
+                (base_time - timedelta(hours=i)).minute,
+                (base_time - timedelta(hours=i)).second,
+                -1, -1, -1
+            ))
+            mock_entries.append(entry)
+
+        mock_feed = Mock()
+        mock_feed.entries = mock_entries
+
+        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
+             patch("news.rss_parser._parse_rss_entry") as mock_parse, \
+             patch("news.rss_parser.article_exists_in_cache") as mock_cache_check:
+
+            # Mock parsing to return RSSEntry objects
+            def parse_side_effect(entry, source, class_name, current_time):
+                published_time = datetime.fromisoformat(entry.published)
+                from news.rss_parser import RSSEntry
+                return RSSEntry(
+                    source=source,
+                    title=entry.title,
+                    link=entry.link,
+                    published_time=published_time,
+                    published_str=entry.published,
+                    class_name=class_name,
+                    raw_entry=entry
+                )
+            mock_parse.side_effect = parse_side_effect
+
+            # Mock cache check - first 2 are cached, last 3 are not
+            def cache_side_effect(link):
+                return "cached-1" in link or "cached-2" in link
+            mock_cache_check.side_effect = cache_side_effect
+
+            result = _collect_entries_from_feed(
+                feed_url="https://test.com/feed",
+                source="test",
+                class_name="test-class",
+                cache_enabled=True,
+                current_time=base_time,
+            )
+
+            # Should only return 3 entries (last 3 are not cached)
+            assert len(result) == 3, f"Expected 3 entries, got {len(result)}"
+
+            # Verify the returned entries are the non-cached ones
+            expected_titles = ["Cached Article 3", "Cached Article 4", "Cached Article 5"]
+            actual_titles = [entry.title for entry in result]
+            assert actual_titles == expected_titles, f"Expected {expected_titles}, got {actual_titles}"
+
+            # Verify cache check was called for all entries
+            assert mock_cache_check.call_count == 5, f"Expected 5 cache checks, got {mock_cache_check.call_count}"
+
+    def test_24h_age_filtering(self):
+        """Test that articles older than 24 hours are filtered out."""
+        from news.rss_parser import _collect_entries_from_feed
+
+        base_time = datetime.now(UTC)
+
+        # Create mock entries with varying ages
+        mock_entries = []
+        for i in range(5):
+            entry = Mock()
+            entry.title = f"Age Test Article {i+1}"
+            entry.link = f"https://test.com/age-{i+1}"
+            # Article 0: 1 hour old (should be included)
+            # Article 1: 12 hours old (should be included)
+            # Article 2: 25 hours old (should be excluded)
+            # Article 3: 48 hours old (should be excluded)
+            # Article 4: 2 hours old (should be included)
+            ages_hours = [1, 12, 25, 48, 2]
+            published_time = base_time - timedelta(hours=ages_hours[i])
+            entry.published = published_time.isoformat()
+            entry.published_parsed = time.struct_time((
+                published_time.year, published_time.month, published_time.day,
+                published_time.hour, published_time.minute, published_time.second,
+                -1, -1, -1
+            ))
+            mock_entries.append(entry)
+
+        mock_feed = Mock()
+        mock_feed.entries = mock_entries
+
+        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
+             patch("news.rss_parser._parse_rss_entry") as mock_parse, \
+             patch("news.rss_parser.article_exists_in_cache", return_value=False):
+
+            # Mock parsing to return RSSEntry objects
+            def parse_side_effect(entry, source, class_name, current_time):
+                published_time = datetime.fromisoformat(entry.published)
+                from news.rss_parser import RSSEntry
+                return RSSEntry(
+                    source=source,
+                    title=entry.title,
+                    link=entry.link,
+                    published_time=published_time,
+                    published_str=entry.published,
+                    class_name=class_name,
+                    raw_entry=entry
+                )
+            mock_parse.side_effect = parse_side_effect
+
+            result = _collect_entries_from_feed(
+                feed_url="https://test.com/feed",
+                source="test",
+                class_name="test-class",
+                cache_enabled=True,
+                current_time=base_time,
+            )
+
+            # Should only return 3 entries (articles 0, 1, and 4 are within 24h)
+            assert len(result) == 3, f"Expected 3 entries within 24h, got {len(result)}"
+
+            # Verify the returned entries are the recent ones
+            expected_titles = ["Age Test Article 1", "Age Test Article 2", "Age Test Article 5"]
+            actual_titles = [entry.title for entry in result]
+            assert actual_titles == expected_titles, f"Expected {expected_titles}, got {actual_titles}"
+
+    def test_symbol_specific_filtering(self):
+        """Test that articles are properly filtered by cryptocurrency symbol."""
+        from news import article_cache
+
+        # Mock the function to return different results based on symbol
+        def mock_get_side_effect(symbol, hours=24):
+            if symbol.upper() == "BTC":
+                return [
+                    Mock(title="Bitcoin surges to new highs", symbols=["BTC"]),
+                    Mock(title="BTC and ETH correlation analysis", symbols=["BTC", "ETH"])
+                ]
+            elif symbol.upper() == "ETH":
+                return [
+                    Mock(title="Ethereum network upgrade completed", symbols=["ETH"]),
+                    Mock(title="BTC and ETH correlation analysis", symbols=["BTC", "ETH"])
+                ]
+            elif symbol.upper() == "SOL":
+                return [Mock(title="Solana ecosystem grows rapidly", symbols=["SOL"])]
+            else:
+                return []
+
+        with patch.object(article_cache, 'get_articles_for_symbol', side_effect=mock_get_side_effect):
+            # Test BTC filtering
+            btc_articles = article_cache.get_articles_for_symbol("BTC", hours=24)
+            assert len(btc_articles) == 2, f"Expected 2 BTC articles, got {len(btc_articles)}"
+            btc_titles = [article.title for article in btc_articles]
+            expected_btc = ["Bitcoin surges to new highs", "BTC and ETH correlation analysis"]
+            assert btc_titles == expected_btc, f"Expected {expected_btc}, got {btc_titles}"
+
+            # Test ETH filtering
+            eth_articles = article_cache.get_articles_for_symbol("ETH", hours=24)
+            assert len(eth_articles) == 2, f"Expected 2 ETH articles, got {len(eth_articles)}"
+            eth_titles = [article.title for article in eth_articles]
+            expected_eth = ["Ethereum network upgrade completed", "BTC and ETH correlation analysis"]
+            assert eth_titles == expected_eth, f"Expected {expected_eth}, got {eth_titles}"
+
+            # Test SOL filtering
+            sol_articles = article_cache.get_articles_for_symbol("SOL", hours=24)
+            assert len(sol_articles) == 1, f"Expected 1 SOL article, got {len(sol_articles)}"
+            assert sol_articles[0].title == "Solana ecosystem grows rapidly"
+
+            # Test symbol with no articles
+            xyz_articles = article_cache.get_articles_for_symbol("XYZ", hours=24)
+            assert len(xyz_articles) == 0, f"Expected 0 XYZ articles, got {len(xyz_articles)}"
+
+    @patch.dict("os.environ", {"CURRENT_REPORT_ARTICLE_LIMIT": "5"})
+    def test_current_report_article_limit_configuration(self):
+        """Test that CURRENT_REPORT_ARTICLE_LIMIT configuration is properly respected in lazy processing."""
+        import importlib
+        import news.rss_parser
+        importlib.reload(news.rss_parser)
+
+        # Verify the configuration is loaded
+        assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
+
+        # Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT
+        with patch("news.article_cache.get_articles_for_symbol") as mock_get_articles, \
+             patch("news.rss_parser.get_news") as mock_get_news:
+
+            mock_get_news.return_value = None
+            mock_get_articles.return_value = []
+
+            from news.article_cache import fetch_and_cache_articles_for_symbol
+            result = fetch_and_cache_articles_for_symbol("BTC", hours=24)
+
+            # Verify get_news was called with CURRENT_REPORT_ARTICLE_LIMIT
+            mock_get_news.assert_called_once_with(target_relevant=5)
+
+            # Verify get_articles_for_symbol was called with correct parameters
+            mock_get_articles.assert_called_once_with("BTC", 24)
+
+            # Verify return value
+            assert result == []
+
+    def test_current_report_article_limit_default(self):
+        """Test that CURRENT_REPORT_ARTICLE_LIMIT defaults to 3 when not set."""
+        import os
+        os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
+
+        import importlib
+        import news.rss_parser
+        importlib.reload(news.rss_parser)
+
+        # Verify the default value
+        assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 3
+
+    def test_shared_cache_integration_lazy_processing(self):
+        """Test that lazy processing properly integrates with shared cache for current reports."""
+        from news import article_cache
+
+        # Mock articles that would be cached during RSS processing
+        mock_cached_articles = [
+            Mock(title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC)),
+            Mock(title="Ethereum upgrade completed", symbols=["ETH"], published_time=datetime.now(UTC)),
+            Mock(title="Solana network congestion", symbols=["SOL"], published_time=datetime.now(UTC))
+        ]
+
+        # Test the integration: lazy processing should cache articles that are then available for current reports
+        with patch.object(article_cache, 'get_articles_for_symbol', return_value=mock_cached_articles) as mock_get_articles, \
+             patch("news.rss_parser.get_news") as mock_get_news:
+
+            mock_get_news.return_value = None  # RSS processing completes without error
+
+            # Simulate current report requesting articles for BTC
+            result = article_cache.fetch_and_cache_articles_for_symbol("BTC", hours=24)
+
+            # Verify that get_news was called (lazy processing triggered)
+            mock_get_news.assert_called_once_with(target_relevant=3)  # Default CURRENT_REPORT_ARTICLE_LIMIT
+
+            # Verify that get_articles_for_symbol was called to retrieve from cache
+            mock_get_articles.assert_called_once_with("BTC", 24)
+
+            # Verify the result contains the expected cached articles
+            assert result == mock_cached_articles
+            assert len(result) == 3
+
+            # Verify the articles have the expected symbols
+            btc_articles = [article for article in result if "BTC" in article.symbols]
+            assert len(btc_articles) == 1
+            assert btc_articles[0].title == "Bitcoin ETF approval news"
