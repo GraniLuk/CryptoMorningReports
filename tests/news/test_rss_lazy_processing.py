@@ -1,10 +1,20 @@
 """Unit tests for RSS lazy processing functionality."""
 
+import importlib
+import os
 import time
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
-from news.rss_parser import RSSEntry, _is_entry_processable, _parse_rss_entry
+from news import article_cache
+from news.rss_parser import (
+    RSSEntry,
+    _collect_all_rss_entries,
+    _collect_entries_from_feed,
+    _is_entry_processable,
+    _parse_rss_entry,
+    _process_entries_until_target,
+)
 
 
 class TestRSSEntry:
@@ -228,8 +238,6 @@ class TestCollectAllRSSEntries:
     @patch("news.rss_parser.app_logger")
     def test_collect_all_rss_entries_success(self, mock_logger, mock_collect_feed, mock_feedparser):
         """Test successful collection from all feeds."""
-        from news.rss_parser import _collect_all_rss_entries
-
         # Mock feedparser (not used in this test since we mock _collect_entries_from_feed)
         mock_feedparser.parse.return_value = Mock()
 
@@ -284,10 +292,8 @@ class TestCollectAllRSSEntries:
 
     @patch("news.rss_parser.feedparser")
     @patch("news.rss_parser._collect_entries_from_feed")
-    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed, mock_feedparser):
+    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed, _mock_feedparser):
         """Test collection when all feeds return empty results."""
-        from news.rss_parser import _collect_all_rss_entries
-
         mock_collect_feed.return_value = []
         current_time = datetime.now(UTC)
 
@@ -306,10 +312,8 @@ class TestCollectEntriesFromFeed:
     @patch("news.rss_parser._parse_rss_entry")
     @patch("news.rss_parser._is_entry_processable")
     @patch("news.rss_parser.app_logger")
-    def test_collect_entries_from_feed_success(self, mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser):
+    def test_collect_entries_from_feed_success(self, _mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser):
         """Test successful collection from a single feed."""
-        from news.rss_parser import _collect_entries_from_feed
-
         # Mock feed with entries
         mock_feed = Mock()
         mock_entry1 = Mock()
@@ -348,8 +352,6 @@ class TestCollectEntriesFromFeed:
     @patch("news.rss_parser.app_logger")
     def test_collect_entries_from_feed_parse_error(self, mock_logger, mock_feedparser):
         """Test handling of feed parsing errors."""
-        from news.rss_parser import _collect_entries_from_feed
-
         # Mock feedparser to raise an exception
         mock_feedparser.parse.side_effect = ValueError("Invalid feed")
 
@@ -405,8 +407,6 @@ class TestComprehensiveLazyProcessing:
 
     def test_comprehensive_cross_feed_sorting(self):
         """Test that 60 articles across 6 feeds are properly sorted by date (newest first)."""
-        from news.rss_parser import _collect_all_rss_entries
-
         base_time = datetime.now(UTC)
 
         # Create mock feeds with different base times to test cross-feed sorting
@@ -499,8 +499,6 @@ class TestComprehensiveLazyProcessing:
 
     def test_early_stopping_behavior(self):
         """Test that processing stops after finding target relevant articles."""
-        from news.rss_parser import RSSEntry, _process_entries_until_target
-
         # Create 20 test entries with varying relevance
         base_time = datetime.now(UTC)
         entries = []
@@ -522,7 +520,7 @@ class TestComprehensiveLazyProcessing:
 
         # Mock the processing function to return relevant results for first 7 entries
         relevant_count = 0
-        def mock_process_entry(entry, **kwargs):
+        def mock_process_entry(_entry, **_kwargs):
             nonlocal relevant_count
             relevant_count += 1
             title = f"Article {relevant_count}"
@@ -555,8 +553,6 @@ class TestComprehensiveLazyProcessing:
 
     def test_cached_articles_are_skipped(self):
         """Test that articles already in cache are properly skipped during collection."""
-        from news.rss_parser import _collect_entries_from_feed
-
         base_time = datetime.now(UTC)
 
         # Create mock entries
@@ -587,7 +583,7 @@ class TestComprehensiveLazyProcessing:
             # Mock parsing to return RSSEntry objects
             def parse_side_effect(entry, source, class_name, current_time):
                 published_time = datetime.fromisoformat(entry.published)
-                from news.rss_parser import RSSEntry
+
                 return RSSEntry(
                     source=source,
                     title=entry.title,
@@ -625,8 +621,6 @@ class TestComprehensiveLazyProcessing:
 
     def test_24h_age_filtering(self):
         """Test that articles older than 24 hours are filtered out."""
-        from news.rss_parser import _collect_entries_from_feed
-
         base_time = datetime.now(UTC)
 
         # Create mock entries with varying ages
@@ -660,7 +654,7 @@ class TestComprehensiveLazyProcessing:
             # Mock parsing to return RSSEntry objects
             def parse_side_effect(entry, source, class_name, current_time):
                 published_time = datetime.fromisoformat(entry.published)
-                from news.rss_parser import RSSEntry
+
                 return RSSEntry(
                     source=source,
                     title=entry.title,
@@ -690,8 +684,6 @@ class TestComprehensiveLazyProcessing:
 
     def test_symbol_specific_filtering(self):
         """Test that articles are properly filtered by cryptocurrency symbol."""
-        from news import article_cache
-
         # Mock the function to return different results based on symbol
         def mock_get_side_effect(symbol, hours=24):
             if symbol.upper() == "BTC":
@@ -735,8 +727,6 @@ class TestComprehensiveLazyProcessing:
     @patch.dict("os.environ", {"CURRENT_REPORT_ARTICLE_LIMIT": "5"})
     def test_current_report_article_limit_configuration(self):
         """Test that CURRENT_REPORT_ARTICLE_LIMIT configuration is properly respected in lazy processing."""
-        import importlib
-
         import news.rss_parser
         importlib.reload(news.rss_parser)
 
@@ -764,10 +754,9 @@ class TestComprehensiveLazyProcessing:
 
     def test_current_report_article_limit_default(self):
         """Test that CURRENT_REPORT_ARTICLE_LIMIT defaults to 3 when not set."""
-        import os
         os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
 
-        import importlib
+
 
         import news.rss_parser
         importlib.reload(news.rss_parser)
@@ -777,8 +766,6 @@ class TestComprehensiveLazyProcessing:
 
     def test_shared_cache_integration_lazy_processing(self):
         """Test that lazy processing properly integrates with shared cache for current reports."""
-        from news import article_cache
-
         # Mock articles that would be cached during RSS processing
         mock_cached_articles = [
             Mock(title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC)),

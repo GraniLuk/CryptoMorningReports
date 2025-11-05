@@ -25,17 +25,6 @@ from source_repository import fetch_symbols
 
 
 # Configuration
-def _get_news_article_limit(default: int = 10) -> int:
-    value = os.getenv("NEWS_ARTICLE_LIMIT", str(default))
-    try:
-        return int(value)
-    except ValueError:
-        app_logger.warning(
-            f"Invalid NEWS_ARTICLE_LIMIT value '{value}', falling back to {default}.",
-        )
-        return default
-
-# Configuration
 NEWS_ARTICLE_LIMIT = int(os.getenv("NEWS_ARTICLE_LIMIT", "10"))
 CURRENT_REPORT_ARTICLE_LIMIT = int(os.getenv("CURRENT_REPORT_ARTICLE_LIMIT", "3"))
 
@@ -263,7 +252,7 @@ def _estimate_time_saved(processed: int, total_available: int, actual_time: floa
     return avg_time_per_article * remaining_articles
 
 
-def get_news(target_relevant: int | None = None):
+def get_news(target_relevant: int | None = None) -> str:
     """Fetch news articles from various cryptocurrency RSS feeds using lazy evaluation.
 
     Collects all RSS entries from all feeds first, sorts them by published time (newest first),

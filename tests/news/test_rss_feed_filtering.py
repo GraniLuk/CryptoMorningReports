@@ -1,10 +1,14 @@
 """Unit tests for RSS feed functionality with mocked external dependencies."""
 
+import importlib
+import os
 import time
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
-from news.rss_parser import _collect_entries_from_feed, fetch_rss_news
+import news.rss_parser
+from news.article_cache import fetch_and_cache_articles_for_symbol
+from news.rss_parser import _collect_entries_from_feed, fetch_rss_news, get_news
 
 
 class Test24HFiltering:
@@ -108,9 +112,11 @@ class Test24HFiltering:
 
         with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
              patch("news.rss_parser.is_article_cache_enabled", return_value=True), \
-             patch("news.rss_parser.article_exists_in_cache", side_effect=lambda link: link == "https://example.com/cached"), \
+             patch("news.rss_parser.article_exists_in_cache",
+                   side_effect=lambda link: link == "https://example.com/cached"), \
              patch("news.rss_parser._load_symbols_for_detection", return_value=[]), \
-             patch("news.rss_parser._process_feed_entry", return_value=(None, {"title": "Fresh Article", "is_relevant": True})):
+             patch("news.rss_parser._process_feed_entry",
+                   return_value=(None, {"title": "Fresh Article", "is_relevant": True})):
 
             result = fetch_rss_news("https://example.com/feed", "test", "test-class")
 
@@ -219,9 +225,6 @@ class TestCurrentReportLimits:
     def test_current_report_article_limit_from_env(self):
         """Test that CURRENT_REPORT_ARTICLE_LIMIT is read from environment."""
         # Force reimport to pick up env var
-        import importlib
-
-        import news.rss_parser
         importlib.reload(news.rss_parser)
 
         assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
@@ -229,12 +232,8 @@ class TestCurrentReportLimits:
     def test_current_report_article_limit_default(self):
         """Test that CURRENT_REPORT_ARTICLE_LIMIT defaults to 3."""
         # Remove env var if it exists and force reimport
-        import os
         os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
 
-        import importlib
-
-        import news.rss_parser
         importlib.reload(news.rss_parser)
 
         assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 3
@@ -243,10 +242,9 @@ class TestCurrentReportLimits:
     @patch("news.rss_parser._process_entries_until_target")
     @patch("news.rss_parser.is_article_cache_enabled", return_value=False)
     @patch("news.rss_parser._load_symbols_for_detection", return_value=[])
-    def test_get_news_uses_custom_target_relevant(self, mock_load_symbols, mock_cache_enabled, mock_process, mock_collect):
+    def test_get_news_uses_custom_target_relevant(self, _mock_load_symbols, _mock_cache_enabled,
+                                                          mock_process, mock_collect):
         """Test that get_news() accepts and uses custom target_relevant parameter."""
-        from news.rss_parser import get_news
-
         mock_collect.return_value = []
         mock_process.return_value = ([], 0)
 
@@ -260,10 +258,9 @@ class TestCurrentReportLimits:
 
     @patch("news.rss_parser.get_news")
     @patch("news.article_cache.get_articles_for_symbol")
-    def test_fetch_and_cache_articles_for_symbol_integration(self, mock_get_articles, mock_get_news):
+    def test_fetch_and_cache_articles_for_symbol_integration(self, mock_get_articles,
+                                                          mock_get_news):
         """Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT."""
-        from news.article_cache import fetch_and_cache_articles_for_symbol
-
         # Mock the dependencies
         mock_get_news.return_value = None
         mock_get_articles.return_value = []
