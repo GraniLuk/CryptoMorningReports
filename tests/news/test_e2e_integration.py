@@ -366,7 +366,6 @@ def run_full_workflow():
     )
 
     # Patch the Ollama client
-    import news.article_processor as ap
     original_get_ollama_client = ap.get_ollama_client
     ap.get_ollama_client = lambda: dummy_client
 
@@ -376,8 +375,6 @@ def run_full_workflow():
         if test_cache.exists():
             shutil.rmtree(test_cache)
             print("✓ Cleaned existing cache for fresh test\n")
-
-        now = datetime.now(tz=UTC)
 
         # ========================================================================
         # TEST 1: RSS Fetching
