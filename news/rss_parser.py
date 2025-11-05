@@ -76,11 +76,25 @@ def fetch_rss_news(feed_url, source, class_name):
         cache_enabled = is_article_cache_enabled()
         symbols_list = _load_symbols_for_detection(cache_enabled=cache_enabled)
 
-        latest_news: list[dict[str, object]] = []
+        # First pass: collect up to MAX_RELEVANT_ARTICLES valid entries
+        entries_to_process = []
         for entry in feed.entries:
-            if len(latest_news) >= MAX_RELEVANT_ARTICLES:
+            entry_link, _, _ = _extract_entry_fields(entry)
+            if cache_enabled and article_exists_in_cache(entry_link):
+                continue
+
+            published_time = _resolve_published_time(entry, current_time)
+            if current_time - published_time > timedelta(days=1):
+                continue
+
+            entries_to_process.append(entry)
+            if len(entries_to_process) >= MAX_RELEVANT_ARTICLES:
                 break
 
+        # Second pass: process entries with progress
+        latest_news: list[dict[str, object]] = []
+        total_to_process = len(entries_to_process)
+        for entry_index, entry in enumerate(entries_to_process):
             processed = _process_feed_entry(
                 entry=entry,
                 source=source,
@@ -88,6 +102,8 @@ def fetch_rss_news(feed_url, source, class_name):
                 current_time=current_time,
                 cache_enabled=cache_enabled,
                 symbols_list=symbols_list,
+                current_index=entry_index + 1,
+                total=total_to_process,
             )
 
             if processed is None:
@@ -157,6 +173,8 @@ def _process_feed_entry(
     current_time: datetime,
     cache_enabled: bool,
     symbols_list: list,
+    current_index: int,
+    total: int,
 ) -> tuple[CachedArticle | None, dict[str, object] | None] | None:
     entry_link, entry_title, entry_published = _extract_entry_fields(entry)
 
@@ -182,6 +200,8 @@ def _process_feed_entry(
         focus_symbols=focus_symbols,
         detected_symbols=detected_symbols,
         article_link=entry_link,
+        current_index=current_index,
+        total=total,
     )
 
     normalized_symbols = _normalize_symbols(enrichment.symbols or detected_symbols)
@@ -258,6 +278,8 @@ def _enrich_article_with_ai(
     focus_symbols: list[str] | None,
     detected_symbols: list[str],
     article_link: str,
+    current_index: int,
+    total: int,
 ) -> ArticleEnrichmentResult:
     if not full_content or not full_content.strip():
         return ArticleEnrichmentResult(
@@ -269,6 +291,7 @@ def _enrich_article_with_ai(
             notes="",
         )
 
+    app_logger.info(f"🔄 Processing article {current_index}/{total}: {title[:50]}...")
     start_time = time.perf_counter()
 
     try:
