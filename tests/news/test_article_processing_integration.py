@@ -130,6 +130,8 @@ def test_enrich_article_with_ai_uses_ai_payload(monkeypatch: pytest.MonkeyPatch)
         focus_symbols=["btc"],
         detected_symbols=["ETH"],
         article_link="https://example.com/article",
+        current_index=1,
+        total=1,
     )
 
     assert enrichment.summary == "Summary"
@@ -154,6 +156,8 @@ def test_enrich_article_with_ai_falls_back_on_failure(monkeypatch: pytest.Monkey
         focus_symbols=None,
         detected_symbols=["SOL"],
         article_link="https://example.com/article",
+        current_index=1,
+        total=1,
     )
 
     assert enrichment.summary == ""
