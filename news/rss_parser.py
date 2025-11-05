@@ -312,13 +312,13 @@ def get_news(target_relevant: int | None = None):
     app_logger.info(
         f"RSS processing completed: {articles_found}/{target_relevant} target articles found, "
         f"{total_processed} articles processed in {total_time.total_seconds():.1f}s "
-        f"(avg: {total_time.total_seconds()/max(total_processed, 1):.1f}s per article)"
+        f"(avg: {total_time.total_seconds()/max(total_processed, 1):.1f}s per article)",
     )
 
     if articles_found < target_relevant:
         app_logger.warning(
             f"RSS processing: Only found {articles_found}/{target_relevant} target articles. "
-            f"Consider increasing time window or checking feed availability."
+            f"Consider increasing time window or checking feed availability.",
         )
 
     return json.dumps(relevant_articles, indent=2)

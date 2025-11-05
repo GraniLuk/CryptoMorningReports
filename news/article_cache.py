@@ -402,7 +402,10 @@ def fetch_and_cache_articles_for_symbol(
         List of CachedArticle instances that mention the symbol,
         sorted by published date (newest first)
     """
-    from news.rss_parser import get_news, CURRENT_REPORT_ARTICLE_LIMIT  # noqa: PLC0415 - avoid circular dependency
+    from news.rss_parser import (  # noqa: PLC0415 - avoid circular dependency
+        CURRENT_REPORT_ARTICLE_LIMIT,
+        get_news,
+    )
 
     # Fetch fresh articles from RSS feeds (will cache new ones automatically)
     # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT

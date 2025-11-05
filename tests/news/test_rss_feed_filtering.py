@@ -220,6 +220,7 @@ class TestCurrentReportLimits:
         """Test that CURRENT_REPORT_ARTICLE_LIMIT is read from environment."""
         # Force reimport to pick up env var
         import importlib
+
         import news.rss_parser
         importlib.reload(news.rss_parser)
 
@@ -232,6 +233,7 @@ class TestCurrentReportLimits:
         os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
 
         import importlib
+
         import news.rss_parser
         importlib.reload(news.rss_parser)
 
