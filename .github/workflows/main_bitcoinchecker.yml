@@ -40,7 +40,7 @@ jobs:
           pip freeze > requirements.txt
 
       - name: Install Node.js for Pyright
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '18'
 
