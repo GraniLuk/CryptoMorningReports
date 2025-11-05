@@ -23,10 +23,10 @@ jobs:
       pull-requests: write  # Required for PR comments
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python version
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -40,7 +40,7 @@ jobs:
           pip freeze > requirements.txt
 
       - name: Install Node.js for Pyright
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '18'
 
@@ -85,7 +85,7 @@ jobs:
     
       - name: Upload artifact for deployment job
         if: steps.run_tests.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: python-app
           path: release.zip
