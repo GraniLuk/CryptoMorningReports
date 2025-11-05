@@ -23,6 +23,21 @@ from news.symbol_detector import detect_symbols_in_text
 from source_repository import fetch_symbols
 
 
+@dataclass(slots=True)
+class RSSEntry:
+    """Represents a parsed RSS entry from any feed source.
+
+    Used for cross-feed aggregation and sorting before processing.
+    """
+    source: str
+    title: str
+    link: str
+    published_time: datetime
+    published_str: str
+    class_name: str
+    raw_entry: object
+
+
 MAX_RELEVANT_ARTICLES = 10
 
 
@@ -151,6 +166,65 @@ class ArticleEnrichmentResult:
     relevance_score: float | None
     is_relevant: bool
     notes: str
+
+
+def _parse_rss_entry(
+    entry: object,
+    source: str,
+    class_name: str,
+    current_time: datetime,
+) -> RSSEntry | None:
+    """Parse a raw RSS entry into a normalized RSSEntry object.
+
+    Args:
+        entry: Raw feedparser entry object
+        source: RSS feed source name (e.g., 'coindesk', 'decrypt')
+        class_name: CSS class name for content extraction
+        current_time: Current datetime for fallback published time
+
+    Returns:
+        RSSEntry object if parsing successful, None if entry is invalid
+    """
+    try:
+        entry_link, entry_title, entry_published = _extract_entry_fields(entry)
+
+        # Validate required fields
+        if not entry_link or entry_link == "None" or not entry_title:
+            return None
+
+        published_time = _resolve_published_time(entry, current_time)
+
+        return RSSEntry(
+            source=source,
+            title=entry_title,
+            link=entry_link,
+            published_time=published_time,
+            published_str=entry_published,
+            class_name=class_name,
+            raw_entry=entry,
+        )
+    except (AttributeError, KeyError, ValueError, TypeError) as e:
+        app_logger.warning(f"Failed to parse RSS entry from {source}: {e!s}")
+        return None
+
+
+def _is_entry_processable(entry: RSSEntry, *, cache_enabled: bool, current_time: datetime) -> bool:
+    """Check if an RSS entry should be processed for AI analysis.
+
+    Args:
+        entry: RSSEntry object to check
+        cache_enabled: Whether article caching is enabled
+        current_time: Current datetime for age checking
+
+    Returns:
+        True if entry should be processed, False otherwise
+    """
+    # Skip if already cached
+    if cache_enabled and article_exists_in_cache(entry.link):
+        return False
+
+    # Skip if older than 24 hours
+    return current_time - entry.published_time <= timedelta(days=1)
 
 
 def _load_symbols_for_detection(*, cache_enabled: bool) -> list:

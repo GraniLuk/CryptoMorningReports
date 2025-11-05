@@ -108,10 +108,10 @@ Wasted: ~60% of processing time on irrelevant articles
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-001 | Create `RSSEntry` dataclass in `rss_parser.py` to hold parsed RSS entry data (source, title, link, published_time, published_str, class_name, raw_entry) | |  |
-| TASK-002 | Add helper function `_parse_rss_entry()` to extract and normalize entry fields with published datetime | |  |
-| TASK-003 | Add helper function `_is_entry_processable()` to check if entry should be processed (not cached, within 24h) | |  |
-| TASK-004 | Add unit tests for `RSSEntry` creation and entry filtering logic | |  |
+| TASK-001 | Create `RSSEntry` dataclass in `rss_parser.py` to hold parsed RSS entry data (source, title, link, published_time, published_str, class_name, raw_entry) | ✅ | 2025-11-05 |
+| TASK-002 | Add helper function `_parse_rss_entry()` to extract and normalize entry fields with published datetime | ✅ | 2025-11-05 |
+| TASK-003 | Add helper function `_is_entry_processable()` to check if entry should be processed (not cached, within 24h) | ✅ | 2025-11-05 |
+| TASK-004 | Add unit tests for `RSSEntry` creation and entry filtering logic | ✅ | 2025-11-05 |
 
 ### Implementation Phase 2: Cross-Feed Aggregation
 
