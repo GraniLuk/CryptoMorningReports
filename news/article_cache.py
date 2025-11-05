@@ -390,7 +390,7 @@ def fetch_and_cache_articles_for_symbol(
     """Fetch fresh RSS articles, cache new ones, and return all articles for a symbol.
 
     This function ensures the cache is up-to-date by:
-    1. Fetching fresh articles from RSS feeds
+    1. Fetching fresh articles from RSS feeds (limited to CURRENT_REPORT_ARTICLE_LIMIT)
     2. Caching any new articles (skips duplicates)
     3. Returning all cached articles for the specified symbol
 
@@ -402,11 +402,12 @@ def fetch_and_cache_articles_for_symbol(
         List of CachedArticle instances that mention the symbol,
         sorted by published date (newest first)
     """
-    from news.rss_parser import get_news  # noqa: PLC0415 - avoid circular dependency
+    from news.rss_parser import get_news, CURRENT_REPORT_ARTICLE_LIMIT  # noqa: PLC0415 - avoid circular dependency
 
     # Fetch fresh articles from RSS feeds (will cache new ones automatically)
+    # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
     try:
-        get_news()
+        get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
     except Exception as e:  # noqa: BLE001
         # Log error but continue - we can still return cached articles
         from infra.telegram_logging_handler import (  # noqa: PLC0415

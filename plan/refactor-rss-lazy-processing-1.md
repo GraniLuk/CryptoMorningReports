@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2025-11-05
 last_updated: 2025-11-05
 owner: CryptoMorningReports Team
-status: 'Phase 3 Complete'
+status: 'Phase 4 Complete'
 tags: ['refactor', 'performance', 'news', 'ollama', 'rss']
 ---
 
 # Introduction
 
-![Status: Phase 3 Complete](https://img.shields.io/badge/status-Phase%203%20Complete-brightgreen)
+![Status: Phase 4 Complete](https://img.shields.io/badge/status-Phase%204%20Complete-brightgreen)
 
 This plan addresses a critical performance bottleneck in the RSS news processing pipeline. Currently, the system processes up to 60 articles with Ollama (10 per feed × 6 feeds) even though only 10 relevant articles are needed for final Gemini analysis. Articles are not sorted by date across feeds, leading to potential processing of older articles while newer ones are ignored.
 
@@ -144,12 +144,12 @@ Wasted: ~60% of processing time on irrelevant articles
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-016 | Add `CURRENT_REPORT_ARTICLE_LIMIT` environment variable configuration (default: 3) | |  |
-| TASK-017 | Update `fetch_and_cache_articles_for_symbol()` in `article_cache.py` to leverage optimized `get_news()` pipeline | |  |
-| TASK-018 | Ensure symbol-specific filtering happens AFTER cache lookup (filter from already-processed articles) | |  |
+| TASK-016 | Add `CURRENT_REPORT_ARTICLE_LIMIT` environment variable configuration (default: 3) | ✅ | 2025-11-05 |
+| TASK-017 | Update `fetch_and_cache_articles_for_symbol()` in `article_cache.py` to leverage optimized `get_news()` pipeline | ✅ | 2025-11-05 |
+| TASK-018 | Ensure symbol-specific filtering happens AFTER cache lookup (filter from already-processed articles) | ✅ | 2025-11-05 |
 | TASK-019 | Update `current_report.py` to respect `CURRENT_REPORT_ARTICLE_LIMIT` when formatting articles | |  |
 | TASK-020 | Add logging in `current_report.py`: `"Found {total} cached articles for {symbol}, using top {limit}"` | |  |
-| TASK-021 | Test that current report gets newest relevant articles for requested symbol from the shared cache | |  |
+| TASK-021 | Test that current report gets newest relevant articles for requested symbol from the shared cache | ✅ | 2025-11-05 |
 
 ### Implementation Phase 5: Optimization and Cleanup
 

@@ -35,7 +35,9 @@ def _get_news_article_limit(default: int = 10) -> int:
         )
         return default
 
-NEWS_ARTICLE_LIMIT = _get_news_article_limit()
+# Configuration
+NEWS_ARTICLE_LIMIT = int(os.getenv("NEWS_ARTICLE_LIMIT", "10"))
+CURRENT_REPORT_ARTICLE_LIMIT = int(os.getenv("CURRENT_REPORT_ARTICLE_LIMIT", "3"))
 
 
 @dataclass(slots=True)
@@ -264,16 +266,22 @@ def _estimate_time_saved(processed: int, total_available: int, actual_time: floa
     return avg_time_per_article * remaining_articles
 
 
-def get_news():
+def get_news(target_relevant: int | None = None):
     """Fetch news articles from various cryptocurrency RSS feeds using lazy evaluation.
 
     Collects all RSS entries from all feeds first, sorts them by published time (newest first),
-    then processes entries one-by-one until finding NEWS_ARTICLE_LIMIT relevant articles.
+    then processes entries one-by-one until finding target_relevant relevant articles.
     This optimizes processing by avoiding unnecessary work on older/irrelevant articles.
+
+    Args:
+        target_relevant: Number of relevant articles to find. If None, uses NEWS_ARTICLE_LIMIT.
 
     Returns:
         JSON string of fetched articles (newly cached ones only)
     """
+    if target_relevant is None:
+        target_relevant = NEWS_ARTICLE_LIMIT
+
     current_time = datetime.now(UTC)
     cache_enabled = is_article_cache_enabled()
     symbols_list = _load_symbols_for_detection(cache_enabled=cache_enabled)
@@ -290,7 +298,7 @@ def get_news():
         current_time=current_time,
         cache_enabled=cache_enabled,
         symbols_list=symbols_list,
-        target_relevant=NEWS_ARTICLE_LIMIT,
+        target_relevant=target_relevant,
     )
 
     return json.dumps(relevant_articles, indent=2)

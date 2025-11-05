@@ -38,9 +38,13 @@ KUCOIN_API_SECRET=<kucoin_api_secret>
 KUCOIN_API_PASSPHRASE=<kucoin_api_passphrase>
 PERPLEXITY_API_KEY=<perplexity_api_key>
 PANDOC_DOWNLOAD_DIR=<optional_custom_path>
+NEWS_ARTICLE_LIMIT=10
+CURRENT_REPORT_ARTICLE_LIMIT=3
 ```
 
 > ℹ️ `PANDOC_DOWNLOAD_DIR` is optional. If omitted, the function uses a cache folder under the script root.
+> ℹ️ `NEWS_ARTICLE_LIMIT` controls how many relevant news articles are processed during daily news aggregation (default: 10).
+> ℹ️ `CURRENT_REPORT_ARTICLE_LIMIT` controls how many relevant news articles are processed for individual symbol reports (default: 3).
 
 #### Telegram Configuration
 

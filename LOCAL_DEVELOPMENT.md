@@ -101,6 +101,10 @@ EMAIL_PASSWORD=...
 #
 # For Azure Functions local.settings.json, add to Values section:
 # "ARTICLE_CACHE_ROOT": "/path/to/custom/cache"
+
+# RSS News Processing Limits
+NEWS_ARTICLE_LIMIT=10          # Number of relevant articles to process for daily news aggregation
+CURRENT_REPORT_ARTICLE_LIMIT=3 # Number of relevant articles to process for individual symbol reports
 ```
 
 ## Troubleshooting
