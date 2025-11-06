@@ -1,5 +1,5 @@
 # Schedule Crypto Daily Report - Windows Task Scheduler Setup
-# This script creates a scheduled task to run the daily report every day at 5:00 AM
+# This script creates a scheduled task to run the daily report every day at 4:00 AM
 
 $TaskName = "CryptoDailyReport"
 $TaskDescription = "Runs crypto daily report with fresh market data analysis"
@@ -75,7 +75,7 @@ $Action = New-ScheduledTaskAction `
     -WorkingDirectory $ScriptPath
 
 # Create trigger - Daily at 5:00 AM
-$Trigger = New-ScheduledTaskTrigger -Daily -At "05:00AM"
+$Trigger = New-ScheduledTaskTrigger -Daily -At "04:00AM"
 
 # Create settings
 $Settings = New-ScheduledTaskSettingsSet `
@@ -109,12 +109,12 @@ try {
     Write-Host ""
     Write-Host "📋 Task Details:" -ForegroundColor Cyan
     Write-Host "  Name:        $TaskName" -ForegroundColor Gray
-    Write-Host "  Schedule:    Daily at 5:00 AM" -ForegroundColor Gray
+    Write-Host "  Schedule:    Daily at 4:00 AM" -ForegroundColor Gray
     Write-Host "  User:        $env:USERNAME" -ForegroundColor Gray
     Write-Host "  Script:      $PythonScriptPath" -ForegroundColor Gray
     Write-Host "  Python:      $VenvPython" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "🔍 What happens at 5:00 AM daily:" -ForegroundColor Cyan
+    Write-Host "🔍 What happens at 4:00 AM daily:" -ForegroundColor Cyan
     Write-Host "  1. Updates latest 3 days of market data from Binance" -ForegroundColor Gray
     Write-Host "  2. Calculates fresh RSI, MA, MACD indicators" -ForegroundColor Gray
     Write-Host "  3. Generates AI analysis with real-time news" -ForegroundColor Gray
