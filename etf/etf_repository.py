@@ -79,7 +79,10 @@ class ETFRepository:
                         UPDATE SET Coin = ?, Issuer = ?, Price = ?, AUM = ?,
                                  Flows = ?, FlowsChange = ?, Volume = ?
                     WHEN NOT MATCHED THEN
-                        INSERT (Ticker, Coin, Issuer, Price, AUM, Flows, FlowsChange, Volume, FetchDate)
+                        INSERT (
+                            Ticker, Coin, Issuer, Price, AUM, Flows,
+                            FlowsChange, Volume, FetchDate
+                        )
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """,
                     (
@@ -181,11 +184,12 @@ class ETFRepository:
                 })
 
             app_logger.info(f"Retrieved {len(results)} ETF flows for {coin} on {latest_date}")
-            return results
 
         except Exception as e:
             app_logger.error(f"Error fetching latest ETF flows for {coin}: {e!s}")
             raise
+        else:
+            return results
 
     def get_weekly_etf_flows(
         self,
@@ -251,11 +255,12 @@ class ETFRepository:
                 f"Aggregated ETF flows for {coin}: "
                 f"${result['total_flows']:,.0f} over {result['days_count']} days",
             )
-            return result
 
         except Exception as e:
             app_logger.error(f"Error fetching weekly ETF flows for {coin}: {e!s}")
             raise
+        else:
+            return result
 
     def get_etf_flows_by_issuer(
         self,
@@ -334,8 +339,9 @@ class ETFRepository:
                 f"Retrieved ETF flows by issuer for {coin} on {fetch_date}: "
                 f"{len(results)} issuers",
             )
-            return results
 
         except Exception as e:
             app_logger.error(f"Error fetching ETF flows by issuer for {coin}: {e!s}")
             raise
+        else:
+            return results

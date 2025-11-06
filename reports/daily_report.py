@@ -6,7 +6,8 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from etf.etf_report import fetch_etf_summary_report
+from etf.etf_report import fetch_etf_summary_report, update_etf_data
+from etf.etf_repository import ETFRepository
 from infra.configuration import get_telegram_parse_mode
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
@@ -81,8 +82,6 @@ def _build_etf_flows_section(conn) -> str:
         Formatted ETF flows section for AI analysis
     """
     try:
-        from etf.etf_repository import ETFRepository
-
         repo = ETFRepository(conn)
 
         # Get BTC and ETH ETF flows
@@ -97,7 +96,11 @@ def _build_etf_flows_section(conn) -> str:
 
         # BTC ETF flows
         if btc_flows:
-            total_btc_daily = sum(float(etf.get("flows", 0) or 0) for etf in btc_flows if etf.get("flows") is not None)
+            total_btc_daily = sum(
+                float(etf.get("flows", 0) or 0)
+                for etf in btc_flows
+                if etf.get("flows") is not None
+            )
             btc_weekly_total = btc_weekly.get("total_flows", 0) if btc_weekly else 0
             lines.append(f"BTC ETF Daily Flows: ${total_btc_daily:,.0f}")
             lines.append(f"BTC ETF 7-Day Total: ${btc_weekly_total:,.0f}")
@@ -106,7 +109,11 @@ def _build_etf_flows_section(conn) -> str:
 
         # ETH ETF flows
         if eth_flows:
-            total_eth_daily = sum(float(etf.get("flows", 0) or 0) for etf in eth_flows if etf.get("flows") is not None)
+            total_eth_daily = sum(
+                float(etf.get("flows", 0) or 0)
+                for etf in eth_flows
+                if etf.get("flows") is not None
+            )
             eth_weekly_total = eth_weekly.get("total_flows", 0) if eth_weekly else 0
             lines.append(f"ETH ETF Daily Flows: ${total_eth_daily:,.0f}")
             lines.append(f"ETH ETF 7-Day Total: ${eth_weekly_total:,.0f}")
@@ -115,7 +122,10 @@ def _build_etf_flows_section(conn) -> str:
 
         # Add interpretation guidance
         lines.append("")
-        lines.append("Interpretation: Positive flows indicate institutional buying (bullish), negative flows indicate selling (bearish).")
+        lines.append(
+            "Interpretation: Positive flows indicate institutional buying (bullish), "
+            "negative flows indicate selling (bearish).",
+        )
 
         return "\n".join(lines) + "\n\n"
 
@@ -478,8 +488,6 @@ async def process_daily_report(  # noqa: PLR0915
     # Fetch ETF data for institutional analysis
     logger.info("📊 Fetching latest ETF data for institutional analysis...")
     try:
-        from etf.etf_report import update_etf_data
-
         update_etf_data(conn)
     except Exception as e:
         logger.error(f"⚠️ ETF data update failed: {e!s}")

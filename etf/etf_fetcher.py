@@ -1,6 +1,7 @@
 """ETF data fetcher for DefiLlama API integration."""
 
 import time
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
 
@@ -24,7 +25,11 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
     """
     # Headers to mimic a real browser and bypass Cloudflare
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
@@ -39,7 +44,10 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
 
     for attempt in range(max_retries):
         try:
-            app_logger.info(f"Fetching ETF data from DefiLlama API (attempt {attempt + 1}/{max_retries})")
+            app_logger.info(
+                f"Fetching ETF data from DefiLlama API "
+                f"(attempt {attempt + 1}/{max_retries})",
+            )
 
             # Make API request with headers and timeout
             response = requests.get(ETF_API_URL, headers=headers, timeout=30)
@@ -68,7 +76,10 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
                     time.sleep(sleep_time)
                     continue
                 # Use mock data as fallback
-                app_logger.warning("JSON parsing failed after all retries, using mock data as fallback")
+                app_logger.warning(
+                    "JSON parsing failed after all retries, "
+                    "using mock data as fallback",
+                )
                 return _get_mock_etf_data()
 
             # Validate response structure
@@ -80,7 +91,10 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
                     time.sleep(sleep_time)
                     continue
                 # Use mock data as fallback
-                app_logger.warning("Response validation failed after all retries, using mock data as fallback")
+                app_logger.warning(
+                    "Response validation failed after all retries, "
+                    "using mock data as fallback",
+                )
                 return _get_mock_etf_data()
 
             # Validate that we have ETF data
@@ -101,7 +115,10 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
                     time.sleep(sleep_time)
                     continue
                 # Use mock data as fallback
-                app_logger.warning("Data validation failed after all retries, using mock data as fallback")
+                app_logger.warning(
+                    "Data validation failed after all retries, "
+                    "using mock data as fallback",
+                )
                 return _get_mock_etf_data()
 
             # Log success statistics
@@ -112,8 +129,6 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
                 f"Successfully fetched {len(data)} ETFs: "
                 f"{btc_count} BTC ETFs, {eth_count} ETH ETFs",
             )
-
-            return data
 
         except requests.exceptions.Timeout:
             app_logger.error(f"Timeout fetching ETF data (attempt {attempt + 1})")
@@ -145,6 +160,8 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
             # Use mock data as fallback
             app_logger.warning("Unexpected error after all retries, using mock data as fallback")
             return _get_mock_etf_data()
+        else:
+            return data
 
     # All retries exhausted
     app_logger.error("Failed to fetch ETF data after all retry attempts")
@@ -250,13 +267,13 @@ def _safe_float_parse(value: Any) -> float | None:
         result = float(value)
 
         # Check for NaN or Infinity
-        if not (result == result) or abs(result) == float("inf"):  # NaN check: x != x
+        if result != result or abs(result) == float("inf"):  # NaN check: x != x
             return None
-
-        return result
 
     except (ValueError, TypeError, OverflowError):
         return None
+    else:
+        return result
 
 
 def get_etf_summary_stats(etf_data: dict[str, list[dict[str, Any]]]) -> dict[str, dict[str, Any]]:
@@ -283,7 +300,7 @@ def get_etf_summary_stats(etf_data: dict[str, list[dict[str, Any]]]) -> dict[str
 
         total_flows = sum(etf["flows"] for etf in etfs if etf["flows"] is not None)
         total_aum = sum(etf["aum"] for etf in etfs if etf["aum"] is not None)
-        issuers = list(set(etf["issuer"] for etf in etfs if etf["issuer"]))
+        issuers = {etf["issuer"] for etf in etfs if etf["issuer"]}
 
         summary[coin] = {
             "count": len(etfs),
@@ -302,10 +319,8 @@ def _get_mock_etf_data() -> list[dict[str, Any]]:
     Returns:
         List of mock ETF data dictionaries
     """
-    from datetime import datetime
-
     # Current timestamp
-    current_timestamp = int(datetime.now().timestamp())
+    current_timestamp = int(datetime.now(UTC).timestamp())
 
     mock_data = [
         {

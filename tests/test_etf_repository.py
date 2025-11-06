@@ -3,6 +3,7 @@
 import os
 import sqlite3
 import tempfile
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -211,8 +212,7 @@ class TestETFRepository:
             repo = ETFRepository(mock_sqlite_conn)
 
             # Insert test data for multiple days (use recent dates)
-            from datetime import date, timedelta
-            base_date = date.today() - timedelta(days=6)  # Start 6 days ago
+            base_date = datetime.now(UTC).date() - timedelta(days=6)  # Start 6 days ago
             test_etfs = []
 
             for i in range(7):

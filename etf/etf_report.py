@@ -1,10 +1,11 @@
 """ETF inflows and outflows report generation."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from prettytable import PrettyTable
 
+from etf.etf_fetcher import fetch_defillama_etf_data, parse_etf_data
 from etf.etf_repository import ETFRepository
 from infra.telegram_logging_handler import app_logger
 
@@ -33,20 +34,17 @@ def update_etf_data(
         True if data is available (cached or fetched), False otherwise
     """
     try:
-        from etf.etf_fetcher import fetch_defillama_etf_data, parse_etf_data
-
         repo = ETFRepository(conn)
-        today = datetime.now().date().isoformat()
+        today = datetime.now(UTC).date().isoformat()
 
         # Check if we already have data for today
         existing_btc = repo.get_latest_etf_flows("BTC")
         existing_eth = repo.get_latest_etf_flows("ETH")
 
-        if existing_btc and existing_eth:
-            # Check if the data is from today
-            if existing_btc and existing_btc[0].get("fetch_date") == today:
-                app_logger.info("✓ ETF data already cached for today, skipping API fetch")
-                return True
+        if (existing_btc and existing_eth and
+            existing_btc[0].get("fetch_date") == today):
+            app_logger.info("✓ ETF data already cached for today, skipping API fetch")
+            return True
 
         # Fetch fresh data from API
         app_logger.info("📊 Fetching latest ETF data from DefiLlama API...")
@@ -83,17 +81,18 @@ def update_etf_data(
                             fetch_date=etf["fetch_date"],
                         )
                         total_saved += 1
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         app_logger.error(f"Failed to save {coin} ETF {etf['ticker']}: {e!s}")
                         continue
 
         conn.commit()
         app_logger.info(f"✓ ETF data update complete: {total_saved} records saved")
-        return total_saved > 0
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error updating ETF data: {e!s}")
         return False
+    else:
+        return total_saved > 0
 
 
 def fetch_etf_summary_report(
@@ -163,12 +162,13 @@ def fetch_etf_summary_report(
             ])
 
         app_logger.info("Generated ETF summary report for BTC and ETH")
-        return etf_table
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error generating ETF summary report: {e!s}")
         # Return error table
         etf_table.add_row(["Error", str(e)[:20], "N/A"])
+        return etf_table
+    else:
         return etf_table
 
 
@@ -186,7 +186,8 @@ def fetch_etf_report(
         PrettyTable with ETF flow data formatted for display
     """
     if coin.upper() not in ["BTC", "ETH"]:
-        raise ValueError(f"Invalid coin: {coin}. Must be 'BTC' or 'ETH'")
+        msg = f"Invalid coin: {coin}. Must be 'BTC' or 'ETH'"
+        raise ValueError(msg)
 
     coin = coin.upper()
     etf_table = PrettyTable()
@@ -223,7 +224,7 @@ def fetch_etf_report(
 
         # Add individual ETF rows
         total_daily_flows = 0
-        total_weekly_flows = 0 if weekly_flows else 0
+        total_weekly_flows = 0
 
         for etf in latest_flows:
             ticker = etf["ticker"]
@@ -271,7 +272,12 @@ def fetch_etf_report(
         total_weekly_str = _format_currency(total_weekly_flows)
 
         # Add directional indicator
-        direction_indicator = "↑ INFLOW" if total_daily_flows > 0 else "↓ OUTFLOW" if total_daily_flows < 0 else "→ NEUTRAL"
+        if total_daily_flows > 0:
+            direction_indicator = "↑ INFLOW"
+        elif total_daily_flows < 0:
+            direction_indicator = "↓ OUTFLOW"
+        else:
+            direction_indicator = "→ NEUTRAL"
 
         etf_table.add_row([
             f"TOTAL {coin}",
@@ -288,12 +294,12 @@ def fetch_etf_report(
             f"total daily flows: {total_daily_str}",
         )
 
-        return etf_table
-
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error generating ETF report for {coin}: {e!s}")
         # Return error table
         etf_table.add_row(["Error", str(e)[:20], "N/A", "N/A", "N/A", "N/A"])
+        return etf_table
+    else:
         return etf_table
 
 
@@ -372,15 +378,15 @@ def get_etf_flow_summary(coin: str, daily_flows: float, weekly_flows: float) -> 
     daily_str = _format_currency(daily_flows).replace("↑ ", "").replace("↓ ", "")
     weekly_str = _format_currency(weekly_flows).replace("↑ ", "").replace("↓ ", "")
 
+    institution_type = (
+        "accumulation" if daily_flows > 0 else
+        "distribution" if daily_flows < 0 else
+        "stability"
+    )
     return (
         f"{coin} ETF flows show {sentiment} sentiment with {direction} of "
         f"{daily_str} today and {weekly_str} over the past week, indicating "
-        f"institutional {'accumulation' if daily_flows > 0 else 'distribution' if daily_flows < 0 else 'stability'}."
+        f"institutional {institution_type}."
     )
 
 
-if __name__ == "__main__":
-    # Test the report generation with no connection
-    report = fetch_etf_report(None, "BTC")
-    print("ETF Report Test:")
-    print(report)
