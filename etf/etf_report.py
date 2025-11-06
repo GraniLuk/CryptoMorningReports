@@ -8,6 +8,7 @@ from prettytable import PrettyTable
 from etf.etf_repository import ETFRepository
 from infra.telegram_logging_handler import app_logger
 
+
 if TYPE_CHECKING:
     import pyodbc
 
@@ -112,7 +113,7 @@ def fetch_etf_summary_report(
     etf_table.field_names = [
         "Asset",
         "Daily Flows",
-        "7-Day Total"
+        "7-Day Total",
     ]
 
     if conn is None:
@@ -137,14 +138,14 @@ def fetch_etf_summary_report(
                 etf_table.add_row([
                     coin,
                     "$0",
-                    "$0"
+                    "$0",
                 ])
                 continue
 
             # Calculate total daily flows
             total_daily_flows = sum(
-                float(etf.get("flows", 0) or 0) 
-                for etf in latest_flows 
+                float(etf.get("flows", 0) or 0)
+                for etf in latest_flows
                 if etf.get("flows") is not None
             )
 
@@ -158,7 +159,7 @@ def fetch_etf_summary_report(
             etf_table.add_row([
                 coin,
                 daily_flows_str,
-                weekly_total_str
+                weekly_total_str,
             ])
 
         app_logger.info("Generated ETF summary report for BTC and ETH")
@@ -173,7 +174,7 @@ def fetch_etf_summary_report(
 
 def fetch_etf_report(
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
-    coin: str = "BTC"
+    coin: str = "BTC",
 ) -> PrettyTable:
     """Fetch and generate an ETF inflows/outflows report for a specific coin.
 
@@ -197,7 +198,7 @@ def fetch_etf_report(
         "Price",
         "Daily Flows",
         "7-Day Total",
-        "AUM ($B)"
+        "AUM ($B)",
     ]
 
     if conn is None:
@@ -250,7 +251,7 @@ def fetch_etf_report(
                 price_str,
                 daily_flows_str,
                 weekly_total_str,
-                aum_str
+                aum_str,
             ])
 
             total_daily_flows += daily_flows or 0
@@ -263,7 +264,7 @@ def fetch_etf_report(
             "=" * 8,
             "=" * 12,
             "=" * 12,
-            "=" * 10
+            "=" * 10,
         ])
 
         total_daily_str = _format_currency(total_daily_flows)
@@ -278,13 +279,13 @@ def fetch_etf_report(
             "",
             total_daily_str,
             total_weekly_str,
-            ""
+            "",
         ])
 
         app_logger.info(
             f"Generated ETF report for {coin}: "
             f"{len(latest_flows)} ETFs, "
-            f"total daily flows: {total_daily_str}"
+            f"total daily flows: {total_daily_str}",
         )
 
         return etf_table
@@ -323,10 +324,9 @@ def _format_currency(amount: float) -> str:
     # Add directional indicator
     if amount > 0:
         return f"↑ {formatted}"  # Green for inflows
-    elif amount < 0:
+    if amount < 0:
         return f"↓ {formatted}"  # Red for outflows
-    else:
-        return formatted
+    return formatted
 
 
 def _format_large_number(amount: float) -> str:
@@ -343,10 +343,9 @@ def _format_large_number(amount: float) -> str:
 
     if amount >= 1_000_000_000:  # Billions
         return f"${amount / 1_000_000_000:.1f}B"
-    elif amount >= 1_000_000:  # Millions
+    if amount >= 1_000_000:  # Millions
         return f"${amount / 1_000_000:.0f}M"
-    else:
-        return f"${amount:,.0f}"
+    return f"${amount:,.0f}"
 
 
 def get_etf_flow_summary(coin: str, daily_flows: float, weekly_flows: float) -> str:

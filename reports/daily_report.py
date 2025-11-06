@@ -6,6 +6,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from etf.etf_report import fetch_etf_summary_report
 from infra.configuration import get_telegram_parse_mode
 from infra.telegram_logging_handler import app_logger
 from integrations.email_sender import send_email_with_epub_attachment
@@ -30,7 +31,6 @@ from shared_code.price_checker import (
 from shared_code.telegram import send_telegram_document, send_telegram_message
 from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
-from etf.etf_report import fetch_etf_summary_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report

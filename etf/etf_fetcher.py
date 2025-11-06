@@ -2,17 +2,18 @@
 
 import time
 from http import HTTPStatus
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 
 from infra.telegram_logging_handler import app_logger
 
+
 # DefiLlama ETF API endpoint
 ETF_API_URL = "https://defillama.com/api/etfs"
 
 
-def fetch_defillama_etf_data(max_retries: int = 3) -> List[Dict[str, Any]] | None:
+def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | None:
     """Fetch ETF data from DefiLlama API.
 
     Args:
@@ -45,7 +46,7 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> List[Dict[str, Any]] | Non
 
             if response.status_code != HTTPStatus.OK:
                 app_logger.error(
-                    f"DefiLlama API returned HTTP {response.status_code}: {response.text}"
+                    f"DefiLlama API returned HTTP {response.status_code}: {response.text}",
                 )
                 if attempt < max_retries - 1:
                     sleep_time = 2 ** attempt  # Exponential backoff
@@ -109,7 +110,7 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> List[Dict[str, Any]] | Non
 
             app_logger.info(
                 f"Successfully fetched {len(data)} ETFs: "
-                f"{btc_count} BTC ETFs, {eth_count} ETH ETFs"
+                f"{btc_count} BTC ETFs, {eth_count} ETH ETFs",
             )
 
             return data
@@ -151,7 +152,7 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> List[Dict[str, Any]] | Non
     return _get_mock_etf_data()
 
 
-def parse_etf_data(etf_data: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+def parse_etf_data(etf_data: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Parse and organize ETF data by coin type.
 
     Args:
@@ -249,7 +250,7 @@ def _safe_float_parse(value: Any) -> float | None:
         result = float(value)
 
         # Check for NaN or Infinity
-        if not (result == result) or abs(result) == float('inf'):  # NaN check: x != x
+        if not (result == result) or abs(result) == float("inf"):  # NaN check: x != x
             return None
 
         return result
@@ -258,7 +259,7 @@ def _safe_float_parse(value: Any) -> float | None:
         return None
 
 
-def get_etf_summary_stats(etf_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Dict[str, Any]]:
+def get_etf_summary_stats(etf_data: dict[str, list[dict[str, Any]]]) -> dict[str, dict[str, Any]]:
     """Generate summary statistics for ETF data.
 
     Args:
@@ -295,7 +296,7 @@ def get_etf_summary_stats(etf_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str
     return summary
 
 
-def _get_mock_etf_data() -> List[Dict[str, Any]]:
+def _get_mock_etf_data() -> list[dict[str, Any]]:
     """Return mock ETF data for fallback when API is unavailable.
 
     Returns:
@@ -316,7 +317,7 @@ def _get_mock_etf_data() -> List[Dict[str, Any]]:
             "Flows": 50000000,
             "FlowsChange": 10000000,
             "Volume": 200000000,
-            "Date": current_timestamp
+            "Date": current_timestamp,
         },
         {
             "Ticker": "GBTC",
@@ -327,7 +328,7 @@ def _get_mock_etf_data() -> List[Dict[str, Any]]:
             "Flows": 25000000,
             "FlowsChange": 5000000,
             "Volume": 150000000,
-            "Date": current_timestamp
+            "Date": current_timestamp,
         },
         {
             "Ticker": "ETHE",
@@ -338,7 +339,7 @@ def _get_mock_etf_data() -> List[Dict[str, Any]]:
             "Flows": 30000000,
             "FlowsChange": 8000000,
             "Volume": 120000000,
-            "Date": current_timestamp
+            "Date": current_timestamp,
         },
         {
             "Ticker": "ETHW",
@@ -349,8 +350,8 @@ def _get_mock_etf_data() -> List[Dict[str, Any]]:
             "Flows": 15000000,
             "FlowsChange": 3000000,
             "Volume": 80000000,
-            "Date": current_timestamp
-        }
+            "Date": current_timestamp,
+        },
     ]
 
     app_logger.info(f"Using mock ETF data with {len(mock_data)} entries")

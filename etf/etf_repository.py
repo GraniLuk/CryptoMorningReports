@@ -1,10 +1,10 @@
 """ETF (Exchange-Traded Fund) data repository for database operations."""
 
 import os
-from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from infra.telegram_logging_handler import app_logger
+
 
 if TYPE_CHECKING:
     import pyodbc
@@ -190,7 +190,7 @@ class ETFRepository:
     def get_weekly_etf_flows(
         self,
         coin: str,
-        days: int = 7
+        days: int = 7,
     ) -> dict[str, float | int] | None:
         """Get aggregated ETF flows for a coin over the specified number of days.
 
@@ -260,7 +260,7 @@ class ETFRepository:
     def get_etf_flows_by_issuer(
         self,
         coin: str,
-        fetch_date: str | None = None
+        fetch_date: str | None = None,
     ) -> list[dict[str, str | float | None]] | None:
         """Get ETF flows grouped by issuer for a specific coin and date.
 

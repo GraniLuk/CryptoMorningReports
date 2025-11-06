@@ -1,11 +1,9 @@
 """Test script for ETF report functionality."""
 
 import sys
-from datetime import datetime
 
+from etf.etf_report import fetch_etf_summary_report, update_etf_data
 from infra.sql_connection import connect_to_sql_sqlite
-from etf.etf_report import update_etf_data, fetch_etf_summary_report
-from infra.telegram_logging_handler import app_logger
 
 
 def test_etf_functionality():

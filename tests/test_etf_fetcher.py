@@ -1,23 +1,21 @@
 """Integration tests for ETF fetcher functionality."""
 
-import json
 from unittest.mock import MagicMock, patch
 
-import pytest
 import requests
 
 from etf.etf_fetcher import (
-    fetch_defillama_etf_data,
-    parse_etf_data,
-    get_etf_summary_stats,
     _safe_float_parse,
+    fetch_defillama_etf_data,
+    get_etf_summary_stats,
+    parse_etf_data,
 )
 
 
 class TestETFFetcher:
     """Test cases for ETF fetcher functions."""
 
-    @patch('etf.etf_fetcher.requests.get')
+    @patch("etf.etf_fetcher.requests.get")
     def test_fetch_defillama_etf_data_success(self, mock_get):
         """Test successful API fetch."""
         # Mock successful response
@@ -33,7 +31,7 @@ class TestETFFetcher:
                 "Flows": 50000000,
                 "FlowsChange": 10000000,
                 "Volume": 200000000,
-                "Date": 1705276800  # 2024-01-15
+                "Date": 1705276800,  # 2024-01-15
             },
             {
                 "Ticker": "ETHE",
@@ -44,8 +42,8 @@ class TestETFFetcher:
                 "Flows": 25000000,
                 "FlowsChange": 5000000,
                 "Volume": 100000000,
-                "Date": 1705276800
-            }
+                "Date": 1705276800,
+            },
         ]
         mock_get.return_value = mock_response
 
@@ -56,7 +54,7 @@ class TestETFFetcher:
         assert result[0]["Ticker"] == "IBIT"
         assert result[1]["Ticker"] == "ETHE"
 
-    @patch('etf.etf_fetcher.requests.get')
+    @patch("etf.etf_fetcher.requests.get")
     def test_fetch_defillama_etf_data_http_error(self, mock_get):
         """Test API fetch with HTTP error - should fallback to mock data."""
         mock_response = MagicMock()
@@ -72,7 +70,7 @@ class TestETFFetcher:
         assert len(result) == 4  # Mock data has 4 ETFs
         assert all(etf["Coin"] in ["BTC", "ETH"] for etf in result)
 
-    @patch('etf.etf_fetcher.requests.get')
+    @patch("etf.etf_fetcher.requests.get")
     def test_fetch_defillama_etf_data_timeout(self, mock_get):
         """Test API fetch with timeout - should fallback to mock data."""
         mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
@@ -85,7 +83,7 @@ class TestETFFetcher:
         assert len(result) == 4  # Mock data has 4 ETFs
         assert all(etf["Coin"] in ["BTC", "ETH"] for etf in result)
 
-    @patch('etf.etf_fetcher.requests.get')
+    @patch("etf.etf_fetcher.requests.get")
     def test_fetch_defillama_etf_data_invalid_json(self, mock_get):
         """Test API fetch with invalid JSON response - should fallback to mock data."""
         mock_response = MagicMock()
@@ -101,7 +99,7 @@ class TestETFFetcher:
         assert len(result) == 4  # Mock data has 4 ETFs
         assert all(etf["Coin"] in ["BTC", "ETH"] for etf in result)
 
-    @patch('etf.etf_fetcher.requests.get')
+    @patch("etf.etf_fetcher.requests.get")
     def test_fetch_defillama_etf_data_empty_response(self, mock_get):
         """Test API fetch with empty response."""
         mock_response = MagicMock()
@@ -125,7 +123,7 @@ class TestETFFetcher:
                 "Flows": 50000000,
                 "FlowsChange": 10000000,
                 "Volume": 200000000,
-                "Date": 1705276800  # 2024-01-15
+                "Date": 1705276800,  # 2024-01-15
             },
             {
                 "Ticker": "ETHE",
@@ -136,7 +134,7 @@ class TestETFFetcher:
                 "Flows": 25000000,
                 "FlowsChange": 5000000,
                 "Volume": 100000000,
-                "Date": 1705276800
+                "Date": 1705276800,
             },
             {
                 "Ticker": "FBTC",
@@ -147,8 +145,8 @@ class TestETFFetcher:
                 "Flows": 30000000,
                 "FlowsChange": 5000000,
                 "Volume": 150000000,
-                "Date": 1705276800
-            }
+                "Date": 1705276800,
+            },
         ]
 
         result = parse_etf_data(raw_data)
@@ -191,8 +189,8 @@ class TestETFFetcher:
                 "Flows": 10000,
                 "FlowsChange": 1000,
                 "Volume": 50000,
-                "Date": 1705276800
-            }
+                "Date": 1705276800,
+            },
         ]
 
         result = parse_etf_data(raw_data)
@@ -211,8 +209,8 @@ class TestETFFetcher:
                 "Price": 42.50,
                 "AUM": 1000000000,
                 "Flows": 50000000,
-                "Date": 1705276800
-            }
+                "Date": 1705276800,
+            },
         ]
 
         result = parse_etf_data(raw_data)
@@ -229,15 +227,15 @@ class TestETFFetcher:
                     "coin": "BTC",
                     "issuer": "BlackRock",
                     "flows": 50000000,
-                    "aum": 1000000000
+                    "aum": 1000000000,
                 },
                 {
                     "ticker": "FBTC",
                     "coin": "BTC",
                     "issuer": "Fidelity",
                     "flows": 30000000,
-                    "aum": 800000000
-                }
+                    "aum": 800000000,
+                },
             ],
             "ETH": [
                 {
@@ -245,9 +243,9 @@ class TestETFFetcher:
                     "coin": "ETH",
                     "issuer": "Grayscale",
                     "flows": 25000000,
-                    "aum": 500000000
-                }
-            ]
+                    "aum": 500000000,
+                },
+            ],
         }
 
         result = get_etf_summary_stats(etf_data)
@@ -281,8 +279,8 @@ class TestETFFetcher:
         assert _safe_float_parse("nan") is None
         assert _safe_float_parse("NaN") is None
         assert _safe_float_parse("null") is None
-        assert _safe_float_parse(float('nan')) is None
-        assert _safe_float_parse(float('inf')) is None
+        assert _safe_float_parse(float("nan")) is None
+        assert _safe_float_parse(float("inf")) is None
 
         # Edge cases
         assert _safe_float_parse("  42.5  ") == 42.5  # Whitespace
