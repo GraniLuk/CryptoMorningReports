@@ -17,15 +17,15 @@ ROOT = str(Path(__file__).parent.parent.parent.parent.resolve())
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from news.article_cache import CachedArticle
-from shared_code.telegram import (
+from news.article_cache import CachedArticle  # noqa: E402
+from shared_code.telegram import (  # noqa: E402
     convert_ai_markdown_to_telegram_html,
     enforce_markdown_v2,
     format_articles_for_telegram,
     sanitize_html,
     smart_split,
 )
-from technical_analysis.reports.current_data_table import (
+from technical_analysis.reports.current_data_table import (  # noqa: E402
     format_current_data_for_telegram_html,
 )
 

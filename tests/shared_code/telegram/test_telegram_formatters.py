@@ -15,7 +15,7 @@ ROOT = str(Path(__file__).parent.parent.parent.parent.resolve())
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from shared_code.telegram import (
+from shared_code.telegram import (  # noqa: E402
     HTMLFormatter,
     MarkdownV2Formatter,
     get_formatter,

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from infra.sql_connection import SQLiteConnectionWrapper
 
 
-def get_rsi_for_symbol_timeframe(
+def get_rsi_for_symbol_timeframe(  # noqa: PLR0915,PLR0912
     symbol: Symbol,
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframe: str = "daily",

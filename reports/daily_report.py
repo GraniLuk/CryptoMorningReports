@@ -132,12 +132,12 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
 
         return "\n".join(lines) + "\n\n"
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error building ETF flows section: {e!s}")
         return "ETF Flows: Data unavailable\n\n"
 
 
-async def _process_ai_analysis(
+async def _process_ai_analysis(  # noqa: PLR0915
     ai_api_key,
     ai_api_type,
     symbols,
@@ -423,7 +423,7 @@ def _fallback_summary(content: str, max_chars: int = 320) -> str:
     return f"{snippet}..."
 
 
-async def process_daily_report(
+async def process_daily_report(  # noqa: PLR0915
     conn,
     telegram_enabled,
     telegram_token,
@@ -450,7 +450,7 @@ async def process_daily_report(
             stats["total_articles"],
             stats["total_size_mb"],
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("⚠️ Article cache cleanup failed: %s", e)
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis

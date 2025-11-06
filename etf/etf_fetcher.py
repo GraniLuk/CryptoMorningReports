@@ -14,7 +14,7 @@ from infra.telegram_logging_handler import app_logger
 ETF_API_URL = "https://defillama.com/api/etfs"
 
 
-def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | None:
+def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | None:  # noqa: PLR0915,PLR0912
     """Fetch ETF data from DefiLlama API.
 
     Args:
@@ -150,7 +150,7 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
                 continue
             return None
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             app_logger.error(f"Unexpected error fetching ETF data: {e!s}")
             if attempt < max_retries - 1:
                 sleep_time = 2 ** attempt
@@ -230,7 +230,7 @@ def parse_etf_data(etf_data: list[dict[str, Any]]) -> dict[str, list[dict[str, A
             else:  # ETH
                 eth_etfs.append(etf_entry)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             app_logger.error(f"Error parsing ETF entry {etf.get('Ticker', 'unknown')}: {e!s}")
             continue
 

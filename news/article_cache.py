@@ -402,7 +402,7 @@ def fetch_and_cache_articles_for_symbol(
         List of CachedArticle instances that mention the symbol,
         sorted by published date (newest first)
     """
-    from news.rss_parser import (
+    from news.rss_parser import (  # noqa: PLC0415 - avoid circular dependency
         CURRENT_REPORT_ARTICLE_LIMIT,
         get_news,
     )
@@ -411,9 +411,9 @@ def fetch_and_cache_articles_for_symbol(
     # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
     try:
         get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # Log error but continue - we can still return cached articles
-        from infra.telegram_logging_handler import (
+        from infra.telegram_logging_handler import (  # noqa: PLC0415
             app_logger,
         )
 
@@ -464,9 +464,9 @@ def cleanup_old_articles(max_age_hours: int = 24) -> int:
                     markdown_file.unlink()
                     deleted_count += 1
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # Log warning but continue cleanup
-                from infra.telegram_logging_handler import (
+                from infra.telegram_logging_handler import (  # noqa: PLC0415
                     app_logger,
                 )
 
@@ -476,7 +476,7 @@ def cleanup_old_articles(max_age_hours: int = 24) -> int:
         try:
             if cache_dir.exists() and not any(cache_dir.iterdir()):
                 cache_dir.rmdir()
-        except OSError:
+        except OSError:  # noqa: S110
             pass  # Directory not empty or other error, skip
 
     return deleted_count
@@ -535,7 +535,7 @@ def get_cache_statistics() -> dict[str, int | float | str]:
                 if newest_time is None or published_dt > newest_time:
                     newest_time = published_dt
 
-            except Exception:
+            except Exception:  # noqa: BLE001,S110
                 # Skip invalid articles
                 pass
 

@@ -176,24 +176,24 @@ def _fetch_missing_candles_batch(
 
     if symbol.source_id == SourceID.BINANCE:
         if timeframe == "hourly":
-            from shared_code.binance import fetch_binance_hourly_klines_batch
+            from shared_code.binance import fetch_binance_hourly_klines_batch  # noqa: PLC0415
             return fetch_binance_hourly_klines_batch(
                 symbol, missing_timestamps[0], missing_timestamps[-1],
             )
         if timeframe == "fifteen_min":
-            from shared_code.binance import fetch_binance_fifteen_min_klines_batch
+            from shared_code.binance import fetch_binance_fifteen_min_klines_batch  # noqa: PLC0415
             return fetch_binance_fifteen_min_klines_batch(
                 symbol, missing_timestamps[0], missing_timestamps[-1],
             )
 
     if symbol.source_id == SourceID.KUCOIN:
         if timeframe == "hourly":
-            from shared_code.kucoin import fetch_kucoin_hourly_klines_batch
+            from shared_code.kucoin import fetch_kucoin_hourly_klines_batch  # noqa: PLC0415
             return fetch_kucoin_hourly_klines_batch(
                 symbol, missing_timestamps[0], missing_timestamps[-1],
             )
         if timeframe == "fifteen_min":
-            from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch
+            from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch  # noqa: PLC0415
             return fetch_kucoin_fifteen_min_klines_batch(
                 symbol, missing_timestamps[0], missing_timestamps[-1],
             )
@@ -559,7 +559,7 @@ def fetch_daily_candles(
         if symbol.source_id == SourceID.BINANCE:
             # Use batch API for BINANCE (up to 1000 candles per call)
             # Local import to avoid circular dependency between price_checker and binance
-            from shared_code.binance import fetch_binance_daily_klines_batch
+            from shared_code.binance import fetch_binance_daily_klines_batch  # noqa: PLC0415
 
             batch_start = missing_dates[0]
             batch_end = missing_dates[-1]
@@ -568,7 +568,7 @@ def fetch_daily_candles(
         elif symbol.source_id == SourceID.KUCOIN:
             # Use batch API for KUCOIN (up to 1500 candles per call)
             # Local import to avoid circular dependency between price_checker and kucoin
-            from shared_code.kucoin import fetch_kucoin_daily_klines_batch
+            from shared_code.kucoin import fetch_kucoin_daily_klines_batch  # noqa: PLC0415
 
             batch_start = missing_dates[0]
             batch_end = missing_dates[-1]

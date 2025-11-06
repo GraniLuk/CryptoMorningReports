@@ -62,7 +62,7 @@ def _detect_golden_death_cross(
     return ""
 
 
-def calculate_indicators(
+def calculate_indicators(  # noqa: PLR0915
     symbols: list[Symbol],
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     target_date: date,

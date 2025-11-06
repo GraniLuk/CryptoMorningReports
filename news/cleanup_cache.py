@@ -92,7 +92,7 @@ def cleanup_cache(max_age_hours: int, dry_run: bool = False) -> int:
                             f"({age_hours:.1f}h old)",
                         )
 
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
 
         print(f"\nWould delete: {would_delete} articles")
