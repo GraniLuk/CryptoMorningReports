@@ -30,7 +30,7 @@ from shared_code.price_checker import (
 from shared_code.telegram import send_telegram_document, send_telegram_message
 from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
-from etf.etf_report import fetch_etf_report
+from etf.etf_report import fetch_etf_summary_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
@@ -512,8 +512,7 @@ async def process_daily_report(  # noqa: PLR0915
     )
     sopr_table = fetch_sopr_metrics(conn)
     derivatives_table = fetch_derivatives_report(symbols, conn)
-    btc_etf_table = fetch_etf_report(conn, "BTC")
-    eth_etf_table = fetch_etf_report(conn, "ETH")
+    etf_summary_table = fetch_etf_summary_report(conn)
 
     # Format messages
     today_date = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -571,8 +570,7 @@ async def process_daily_report(  # noqa: PLR0915
     derivatives_report = (
         f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
     )
-    btc_etf_report = f"BTC ETF Inflows/Outflows: <pre>{btc_etf_table}</pre>"
-    eth_etf_report = f"ETH ETF Inflows/Outflows: <pre>{eth_etf_table}</pre>"
+    etf_report = f"ETF Institutional Flows: <pre>{etf_summary_table}</pre>"
 
     # Configure AI API settings
     ai_api_type, ai_api_key = _configure_ai_api()
@@ -647,14 +645,7 @@ async def process_daily_report(  # noqa: PLR0915
         enabled=telegram_enabled,
         token=telegram_token,
         chat_id=telegram_chat_id,
-        message=btc_etf_report,
-        parse_mode=telegram_parse_mode,
-    )
-    await send_telegram_message(
-        enabled=telegram_enabled,
-        token=telegram_token,
-        chat_id=telegram_chat_id,
-        message=eth_etf_report,
+        message=etf_report,
         parse_mode=telegram_parse_mode,
     )
 

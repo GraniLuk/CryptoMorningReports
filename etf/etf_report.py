@@ -95,6 +95,82 @@ def update_etf_data(
         return False
 
 
+def fetch_etf_summary_report(
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+) -> PrettyTable:
+    """Fetch and generate a simplified ETF summary report for BTC and ETH.
+
+    Args:
+        conn: Database connection (can be None for testing)
+
+    Returns:
+        PrettyTable with aggregated ETF flow data for BTC and ETH
+    """
+    etf_table = PrettyTable()
+
+    # Set table headers - simplified view with only totals
+    etf_table.field_names = [
+        "Asset",
+        "Daily Flows",
+        "7-Day Total"
+    ]
+
+    if conn is None:
+        # Return empty table for testing when no connection
+        app_logger.warning("No database connection provided for ETF summary report")
+        etf_table.add_row(["No data", "N/A", "N/A"])
+        return etf_table
+
+    try:
+        repo = ETFRepository(conn)
+
+        # Process both BTC and ETH
+        for coin in ["BTC", "ETH"]:
+            # Get latest daily flows
+            latest_flows = repo.get_latest_etf_flows(coin)
+
+            # Get 7-day aggregated flows
+            weekly_flows = repo.get_weekly_etf_flows(coin, days=7)
+
+            if not latest_flows:
+                # Show zero flows if no data
+                etf_table.add_row([
+                    coin,
+                    "$0",
+                    "$0"
+                ])
+                continue
+
+            # Calculate total daily flows
+            total_daily_flows = sum(
+                float(etf.get("flows", 0) or 0) 
+                for etf in latest_flows 
+                if etf.get("flows") is not None
+            )
+
+            # Get weekly total
+            total_weekly_flows = weekly_flows.get("total_flows", 0) if weekly_flows else 0
+
+            # Format values
+            daily_flows_str = _format_currency(total_daily_flows)
+            weekly_total_str = _format_currency(total_weekly_flows)
+
+            etf_table.add_row([
+                coin,
+                daily_flows_str,
+                weekly_total_str
+            ])
+
+        app_logger.info("Generated ETF summary report for BTC and ETH")
+        return etf_table
+
+    except Exception as e:
+        app_logger.error(f"Error generating ETF summary report: {e!s}")
+        # Return error table
+        etf_table.add_row(["Error", str(e)[:20], "N/A"])
+        return etf_table
+
+
 def fetch_etf_report(
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     coin: str = "BTC"

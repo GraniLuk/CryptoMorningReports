@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 from infra.sql_connection import connect_to_sql_sqlite
-from etf.etf_report import update_etf_data, fetch_etf_report
+from etf.etf_report import update_etf_data, fetch_etf_summary_report
 from infra.telegram_logging_handler import app_logger
 
 
@@ -39,31 +39,19 @@ def test_etf_functionality():
     print()
 
     # Test BTC ETF report
-    print("3. Testing BTC ETF report generation...")
+    print("3. Testing ETF summary report generation...")
     try:
-        btc_report = fetch_etf_report(conn, "BTC")
-        print("✅ BTC ETF report generated successfully:")
-        print(btc_report)
+        etf_summary = fetch_etf_summary_report(conn)
+        print("✅ ETF summary report generated successfully:")
+        print(etf_summary)
     except Exception as e:
-        print(f"❌ BTC ETF report generation failed: {e}")
-        import traceback
-        traceback.print_exc()
-    print()
-
-    # Test ETH ETF report
-    print("4. Testing ETH ETF report generation...")
-    try:
-        eth_report = fetch_etf_report(conn, "ETH")
-        print("✅ ETH ETF report generated successfully:")
-        print(eth_report)
-    except Exception as e:
-        print(f"❌ ETH ETF report generation failed: {e}")
+        print(f"❌ ETF summary report generation failed: {e}")
         import traceback
         traceback.print_exc()
     print()
 
     # Verify data in database
-    print("5. Verifying data in database...")
+    print("4. Verifying data in database...")
     try:
         from etf.etf_repository import ETFRepository
         repo = ETFRepository(conn)
