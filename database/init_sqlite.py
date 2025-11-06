@@ -236,6 +236,52 @@ def create_sqlite_database(db_path="./local_crypto.db"):
         )
     """)
 
+    # Create OpenInterest table for derivatives data
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS OpenInterest (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            SymbolID INTEGER NOT NULL,
+            OpenInterest REAL,
+            OpenInterestValue REAL,
+            IndicatorDate TEXT NOT NULL,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (SymbolID) REFERENCES Symbols(SymbolID),
+            UNIQUE(SymbolID, IndicatorDate)
+        )
+    """)
+
+    # Create FundingRate table for derivatives data
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS FundingRate (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            SymbolID INTEGER NOT NULL,
+            FundingRate REAL,
+            FundingTime TEXT,
+            IndicatorDate TEXT NOT NULL,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (SymbolID) REFERENCES Symbols(SymbolID),
+            UNIQUE(SymbolID, IndicatorDate)
+        )
+    """)
+
+    # Create ETFFlows table for ETF inflows/outflows tracking
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ETFFlows (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Ticker TEXT NOT NULL,
+            Coin TEXT NOT NULL,
+            Issuer TEXT,
+            Price REAL,
+            AUM REAL,
+            Flows REAL,
+            FlowsChange REAL,
+            Volume REAL,
+            FetchDate TEXT NOT NULL,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(Ticker, FetchDate)
+        )
+    """)
+
     # Create indexes for better query performance
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_hourly_symbol_date ON HourlyCandles(SymbolID, EndDate)",
@@ -274,6 +320,8 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_macd_symbol_date ON MACD(SymbolID, IndicatorDate)",
     )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_etf_coin_date ON ETFFlows(Coin, FetchDate)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_etf_ticker_date ON ETFFlows(Ticker, FetchDate)")
 
     # Insert default symbols (with SourceID and CoinGeckoName for compatibility)
     default_symbols = [
