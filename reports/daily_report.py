@@ -30,6 +30,7 @@ from shared_code.price_checker import (
 from shared_code.telegram import send_telegram_document, send_telegram_message
 from source_repository import Symbol, fetch_symbols
 from stepn.stepn_report import fetch_stepn_report
+from etf.etf_report import fetch_etf_report
 from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
@@ -68,6 +69,59 @@ def _configure_ai_api():
         app_logger.error(f"No API key found for {ai_api_type}")
 
     return ai_api_type, ai_api_key
+
+
+def _build_etf_flows_section(conn) -> str:
+    """Build ETF flows section for AI analysis context.
+
+    Args:
+        conn: Database connection
+
+    Returns:
+        Formatted ETF flows section for AI analysis
+    """
+    try:
+        from etf.etf_repository import ETFRepository
+
+        repo = ETFRepository(conn)
+
+        # Get BTC and ETH ETF flows
+        btc_flows = repo.get_latest_etf_flows("BTC")
+        eth_flows = repo.get_latest_etf_flows("ETH")
+
+        # Get weekly aggregated flows
+        btc_weekly = repo.get_weekly_etf_flows("BTC", days=7)
+        eth_weekly = repo.get_weekly_etf_flows("ETH", days=7)
+
+        lines = ["ETF Institutional Flows (Daily & 7-Day Aggregates):"]
+
+        # BTC ETF flows
+        if btc_flows:
+            total_btc_daily = sum(float(etf.get("flows", 0) or 0) for etf in btc_flows if etf.get("flows") is not None)
+            btc_weekly_total = btc_weekly.get("total_flows", 0) if btc_weekly else 0
+            lines.append(f"BTC ETF Daily Flows: ${total_btc_daily:,.0f}")
+            lines.append(f"BTC ETF 7-Day Total: ${btc_weekly_total:,.0f}")
+        else:
+            lines.append("BTC ETF Daily Flows: No data available")
+
+        # ETH ETF flows
+        if eth_flows:
+            total_eth_daily = sum(float(etf.get("flows", 0) or 0) for etf in eth_flows if etf.get("flows") is not None)
+            eth_weekly_total = eth_weekly.get("total_flows", 0) if eth_weekly else 0
+            lines.append(f"ETH ETF Daily Flows: ${total_eth_daily:,.0f}")
+            lines.append(f"ETH ETF 7-Day Total: ${eth_weekly_total:,.0f}")
+        else:
+            lines.append("ETH ETF Daily Flows: No data available")
+
+        # Add interpretation guidance
+        lines.append("")
+        lines.append("Interpretation: Positive flows indicate institutional buying (bullish), negative flows indicate selling (bearish).")
+
+        return "\n".join(lines) + "\n\n"
+
+    except Exception as e:
+        app_logger.error(f"Error building ETF flows section: {e!s}")
+        return "ETF Flows: Data unavailable\n\n"
 
 
 async def _process_ai_analysis(
@@ -149,6 +203,11 @@ async def _process_ai_analysis(
 
     aggregated_formatted = format_aggregated(aggregated_data)
     aggregated_with_prices = current_prices_section + aggregated_formatted
+
+    # Add ETF flows data for institutional sentiment analysis
+    etf_flows_section = _build_etf_flows_section(conn)
+    aggregated_with_prices += etf_flows_section
+
     analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
         ai_api_key,
         aggregated_with_prices,
@@ -416,6 +475,15 @@ async def process_daily_report(  # noqa: PLR0915
     conn.commit()
     logger.info("✓ All candle data updates committed to database")
 
+    # Fetch ETF data for institutional analysis
+    logger.info("📊 Fetching latest ETF data for institutional analysis...")
+    try:
+        from etf.etf_report import update_etf_data
+
+        update_etf_data(conn)
+    except Exception as e:
+        logger.error(f"⚠️ ETF data update failed: {e!s}")
+
     # Generate all reports
     # NOTE: Candles are now fetched once and passed to RSI calculator
     # This avoids duplicate fetching and ensures candle IDs are properly set
@@ -444,6 +512,8 @@ async def process_daily_report(  # noqa: PLR0915
     )
     sopr_table = fetch_sopr_metrics(conn)
     derivatives_table = fetch_derivatives_report(symbols, conn)
+    btc_etf_table = fetch_etf_report(conn, "BTC")
+    eth_etf_table = fetch_etf_report(conn, "ETH")
 
     # Format messages
     today_date = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -501,6 +571,8 @@ async def process_daily_report(  # noqa: PLR0915
     derivatives_report = (
         f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
     )
+    btc_etf_report = f"BTC ETF Inflows/Outflows: <pre>{btc_etf_table}</pre>"
+    eth_etf_report = f"ETH ETF Inflows/Outflows: <pre>{eth_etf_table}</pre>"
 
     # Configure AI API settings
     ai_api_type, ai_api_key = _configure_ai_api()
@@ -568,6 +640,21 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=derivatives_report,
+        parse_mode=telegram_parse_mode,
+    )
+
+    await send_telegram_message(
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=btc_etf_report,
+        parse_mode=telegram_parse_mode,
+    )
+    await send_telegram_message(
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=eth_etf_report,
         parse_mode=telegram_parse_mode,
     )
 

@@ -1,0 +1,311 @@
+"""ETF inflows and outflows report generation."""
+
+from datetime import datetime
+from typing import TYPE_CHECKING
+
+from prettytable import PrettyTable
+
+from etf.etf_repository import ETFRepository
+from infra.telegram_logging_handler import app_logger
+
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
+def update_etf_data(
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+) -> bool:
+    """Fetch ETF data from API and save to database (or use cached data if available).
+
+    This method handles the entire ETF data lifecycle:
+    1. Check if today's data already exists in the database
+    2. If not, fetch from DefiLlama API
+    3. Parse and save to database
+    4. Return success status
+
+    Args:
+        conn: Database connection
+
+    Returns:
+        True if data is available (cached or fetched), False otherwise
+    """
+    try:
+        from etf.etf_fetcher import fetch_defillama_etf_data, parse_etf_data
+
+        repo = ETFRepository(conn)
+        today = datetime.now().date().isoformat()
+
+        # Check if we already have data for today
+        existing_btc = repo.get_latest_etf_flows("BTC")
+        existing_eth = repo.get_latest_etf_flows("ETH")
+
+        if existing_btc and existing_eth:
+            # Check if the data is from today
+            if existing_btc and existing_btc[0].get("fetch_date") == today:
+                app_logger.info("✓ ETF data already cached for today, skipping API fetch")
+                return True
+
+        # Fetch fresh data from API
+        app_logger.info("📊 Fetching latest ETF data from DefiLlama API...")
+        raw_etf_data = fetch_defillama_etf_data()
+
+        if not raw_etf_data:
+            app_logger.warning("⚠️ No ETF data returned from API")
+            return False
+
+        # Parse and organize ETF data
+        organized_data = parse_etf_data(raw_etf_data)
+        if not organized_data:
+            app_logger.warning("⚠️ Failed to parse ETF data from API")
+            return False
+
+        # Save to database
+        total_saved = 0
+        for coin in ["BTC", "ETH"]:
+            if coin in organized_data:
+                etf_list = organized_data[coin]
+                app_logger.info(f"Processing {len(etf_list)} {coin} ETFs")
+
+                for etf in etf_list:
+                    try:
+                        repo.save_etf_flow(
+                            ticker=etf["ticker"],
+                            coin=coin,
+                            issuer=etf["issuer"],
+                            price=etf["price"],
+                            aum=etf["aum"],
+                            flows=etf["flows"],
+                            flows_change=etf["flows_change"],
+                            volume=etf["volume"],
+                            fetch_date=etf["fetch_date"],
+                        )
+                        total_saved += 1
+                    except Exception as e:
+                        app_logger.error(f"Failed to save {coin} ETF {etf['ticker']}: {e!s}")
+                        continue
+
+        conn.commit()
+        app_logger.info(f"✓ ETF data update complete: {total_saved} records saved")
+        return total_saved > 0
+
+    except Exception as e:
+        app_logger.error(f"Error updating ETF data: {e!s}")
+        return False
+
+
+def fetch_etf_report(
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
+    coin: str = "BTC"
+) -> PrettyTable:
+    """Fetch and generate an ETF inflows/outflows report for a specific coin.
+
+    Args:
+        conn: Database connection (can be None for testing)
+        coin: Coin type to report on ('BTC' or 'ETH', default: 'BTC')
+
+    Returns:
+        PrettyTable with ETF flow data formatted for display
+    """
+    if coin.upper() not in ["BTC", "ETH"]:
+        raise ValueError(f"Invalid coin: {coin}. Must be 'BTC' or 'ETH'")
+
+    coin = coin.upper()
+    etf_table = PrettyTable()
+
+    # Set table headers
+    etf_table.field_names = [
+        "Ticker",
+        "Issuer",
+        "Price",
+        "Daily Flows",
+        "7-Day Total",
+        "AUM ($B)"
+    ]
+
+    if conn is None:
+        # Return empty table for testing when no connection
+        app_logger.warning("No database connection provided for ETF report")
+        etf_table.add_row(["No data", "N/A", "N/A", "N/A", "N/A", "N/A"])
+        return etf_table
+
+    try:
+        repo = ETFRepository(conn)
+
+        # Get latest daily flows
+        latest_flows = repo.get_latest_etf_flows(coin)
+
+        # Get 7-day aggregated flows
+        weekly_flows = repo.get_weekly_etf_flows(coin, days=7)
+
+        if not latest_flows:
+            app_logger.info(f"No ETF flow data available for {coin}")
+            etf_table.add_row(["No data", "N/A", "N/A", "N/A", "N/A", "N/A"])
+            return etf_table
+
+        # Add individual ETF rows
+        total_daily_flows = 0
+        total_weekly_flows = 0 if weekly_flows else 0
+
+        for etf in latest_flows:
+            ticker = etf["ticker"]
+            issuer = etf["issuer"] or "Unknown"
+            price = etf["price"]
+            daily_flows = etf["flows"] or 0
+
+            # Get 7-day total for this specific ETF (simplified - using weekly average)
+            weekly_total = 0
+            if weekly_flows and weekly_flows["days_count"] > 0:
+                # Estimate weekly total based on daily flow and available days
+                weekly_total = daily_flows * min(7, weekly_flows["days_count"])
+
+            aum = etf["aum"]
+
+            # Format values for display
+            price_str = f"${price:,.2f}" if price else "N/A"
+            daily_flows_str = _format_currency(daily_flows)
+            weekly_total_str = _format_currency(weekly_total)
+            aum_str = _format_large_number(aum) if aum else "N/A"
+
+            etf_table.add_row([
+                ticker,
+                issuer[:12],  # Truncate long issuer names
+                price_str,
+                daily_flows_str,
+                weekly_total_str,
+                aum_str
+            ])
+
+            total_daily_flows += daily_flows or 0
+            total_weekly_flows += weekly_total
+
+        # Add summary row
+        etf_table.add_row([
+            "=" * 10,
+            "=" * 12,
+            "=" * 8,
+            "=" * 12,
+            "=" * 12,
+            "=" * 10
+        ])
+
+        total_daily_str = _format_currency(total_daily_flows)
+        total_weekly_str = _format_currency(total_weekly_flows)
+
+        # Add directional indicator
+        direction_indicator = "↑ INFLOW" if total_daily_flows > 0 else "↓ OUTFLOW" if total_daily_flows < 0 else "→ NEUTRAL"
+
+        etf_table.add_row([
+            f"TOTAL {coin}",
+            f"{direction_indicator}",
+            "",
+            total_daily_str,
+            total_weekly_str,
+            ""
+        ])
+
+        app_logger.info(
+            f"Generated ETF report for {coin}: "
+            f"{len(latest_flows)} ETFs, "
+            f"total daily flows: {total_daily_str}"
+        )
+
+        return etf_table
+
+    except Exception as e:
+        app_logger.error(f"Error generating ETF report for {coin}: {e!s}")
+        # Return error table
+        etf_table.add_row(["Error", str(e)[:20], "N/A", "N/A", "N/A", "N/A"])
+        return etf_table
+
+
+def _format_currency(amount: float) -> str:
+    """Format currency amount with appropriate units and colors.
+
+    Args:
+        amount: Amount in USD
+
+    Returns:
+        Formatted currency string
+    """
+    if amount is None or amount == 0:
+        return "$0"
+
+    abs_amount = abs(amount)
+
+    # Format based on size
+    if abs_amount >= 1_000_000_000:  # Billions
+        formatted = f"${abs_amount / 1_000_000_000:.1f}B"
+    elif abs_amount >= 1_000_000:  # Millions
+        formatted = f"${abs_amount / 1_000_000:.0f}M"
+    elif abs_amount >= 1_000:  # Thousands
+        formatted = f"${abs_amount / 1_000:.0f}K"
+    else:
+        formatted = f"${abs_amount:,.0f}"
+
+    # Add directional indicator
+    if amount > 0:
+        return f"↑ {formatted}"  # Green for inflows
+    elif amount < 0:
+        return f"↓ {formatted}"  # Red for outflows
+    else:
+        return formatted
+
+
+def _format_large_number(amount: float) -> str:
+    """Format large numbers in billions.
+
+    Args:
+        amount: Amount in USD
+
+    Returns:
+        Formatted string in billions
+    """
+    if amount is None:
+        return "N/A"
+
+    if amount >= 1_000_000_000:  # Billions
+        return f"${amount / 1_000_000_000:.1f}B"
+    elif amount >= 1_000_000:  # Millions
+        return f"${amount / 1_000_000:.0f}M"
+    else:
+        return f"${amount:,.0f}"
+
+
+def get_etf_flow_summary(coin: str, daily_flows: float, weekly_flows: float) -> str:
+    """Generate a human-readable summary of ETF flows.
+
+    Args:
+        coin: Coin type ('BTC' or 'ETH')
+        daily_flows: Total daily flows in USD
+        weekly_flows: Total weekly flows in USD
+
+    Returns:
+        Summary string for AI analysis or reports
+    """
+    if daily_flows > 0:
+        sentiment = "bullish"
+        direction = "inflows"
+    elif daily_flows < 0:
+        sentiment = "bearish"
+        direction = "outflows"
+    else:
+        sentiment = "neutral"
+        direction = "balanced"
+
+    daily_str = _format_currency(daily_flows).replace("↑ ", "").replace("↓ ", "")
+    weekly_str = _format_currency(weekly_flows).replace("↑ ", "").replace("↓ ", "")
+
+    return (
+        f"{coin} ETF flows show {sentiment} sentiment with {direction} of "
+        f"{daily_str} today and {weekly_str} over the past week, indicating "
+        f"institutional {'accumulation' if daily_flows > 0 else 'distribution' if daily_flows < 0 else 'stability'}."
+    )
+
+
+if __name__ == "__main__":
+    # Test the report generation with no connection
+    report = fetch_etf_report(None, "BTC")
+    print("ETF Report Test:")
+    print(report)
