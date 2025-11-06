@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from infra.sql_connection import SQLiteConnectionWrapper
 
 
-def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
+def get_rsi_for_symbol_timeframe(
     symbol: Symbol,
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
     timeframe: str = "daily",
@@ -125,7 +125,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
         # Type check to ensure df.index is DatetimeIndex
         if not isinstance(df.index, pd.DatetimeIndex):
             msg = "Index must be DatetimeIndex"
-            raise TypeError(msg)  # noqa: TRY301
+            raise TypeError(msg)
         # Cast to DatetimeIndex for type checker
         datetime_index = pd.DatetimeIndex(df.index)
 
@@ -172,7 +172,7 @@ def get_rsi_for_symbol_timeframe(  # noqa: PLR0915, PLR0912
                 # Type check to ensure idx is a valid index type
                 if not isinstance(idx, (pd.Timestamp, str, int)):
                     msg = f"Unexpected index type: {type(idx)}"
-                    raise TypeError(msg)  # noqa: TRY301
+                    raise TypeError(msg)
 
                 candle_id = int(row["Id"])  # Note: column name is 'Id' not 'ID'
                 try:

@@ -11,7 +11,7 @@ ROOT = str(Path(__file__).parent.parent.parent.parent.resolve())
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from shared_code.telegram import enforce_markdown_v2, smart_split  # noqa: E402
+from shared_code.telegram import enforce_markdown_v2, smart_split
 
 
 class TestTelegramUtils(unittest.TestCase):

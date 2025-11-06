@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     pass
 
 
-def run_backtest(  # noqa: PLR0915
+def run_backtest(
     symbol: Symbol,
     candles_data: list[dict],
     rsi_value: int,

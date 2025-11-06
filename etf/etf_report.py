@@ -10,6 +10,12 @@ from etf.etf_repository import ETFRepository
 from infra.telegram_logging_handler import app_logger
 
 
+# Currency formatting constants
+BILLION_THRESHOLD = 1_000_000_000
+MILLION_THRESHOLD = 1_000_000
+THOUSAND_THRESHOLD = 1_000
+
+
 if TYPE_CHECKING:
     import pyodbc
 
@@ -81,14 +87,14 @@ def update_etf_data(
                             fetch_date=etf["fetch_date"],
                         )
                         total_saved += 1
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         app_logger.error(f"Failed to save {coin} ETF {etf['ticker']}: {e!s}")
                         continue
 
         conn.commit()
         app_logger.info(f"✓ ETF data update complete: {total_saved} records saved")
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         app_logger.error(f"Error updating ETF data: {e!s}")
         return False
     else:
@@ -163,7 +169,7 @@ def fetch_etf_summary_report(
 
         app_logger.info("Generated ETF summary report for BTC and ETH")
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         app_logger.error(f"Error generating ETF summary report: {e!s}")
         # Return error table
         etf_table.add_row(["Error", str(e)[:20], "N/A"])
@@ -294,7 +300,7 @@ def fetch_etf_report(
             f"total daily flows: {total_daily_str}",
         )
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         app_logger.error(f"Error generating ETF report for {coin}: {e!s}")
         # Return error table
         etf_table.add_row(["Error", str(e)[:20], "N/A", "N/A", "N/A", "N/A"])
@@ -318,12 +324,12 @@ def _format_currency(amount: float) -> str:
     abs_amount = abs(amount)
 
     # Format based on size
-    if abs_amount >= 1_000_000_000:  # Billions
-        formatted = f"${abs_amount / 1_000_000_000:.1f}B"
-    elif abs_amount >= 1_000_000:  # Millions
-        formatted = f"${abs_amount / 1_000_000:.0f}M"
-    elif abs_amount >= 1_000:  # Thousands
-        formatted = f"${abs_amount / 1_000:.0f}K"
+    if abs_amount >= BILLION_THRESHOLD:
+        formatted = f"${abs_amount / BILLION_THRESHOLD:.1f}B"
+    elif abs_amount >= MILLION_THRESHOLD:
+        formatted = f"${abs_amount / MILLION_THRESHOLD:.0f}M"
+    elif abs_amount >= THOUSAND_THRESHOLD:
+        formatted = f"${abs_amount / THOUSAND_THRESHOLD:.0f}K"
     else:
         formatted = f"${abs_amount:,.0f}"
 
@@ -347,10 +353,10 @@ def _format_large_number(amount: float) -> str:
     if amount is None:
         return "N/A"
 
-    if amount >= 1_000_000_000:  # Billions
-        return f"${amount / 1_000_000_000:.1f}B"
-    if amount >= 1_000_000:  # Millions
-        return f"${amount / 1_000_000:.0f}M"
+    if amount >= BILLION_THRESHOLD:
+        return f"${amount / BILLION_THRESHOLD:.1f}B"
+    if amount >= MILLION_THRESHOLD:
+        return f"${amount / MILLION_THRESHOLD:.0f}M"
     return f"${amount:,.0f}"
 
 

@@ -205,12 +205,10 @@ def parse_etf_data(etf_data: list[dict[str, Any]]) -> dict[str, list[dict[str, A
             # Parse date (DefiLlama uses Unix timestamp)
             date_timestamp = etf.get("Date")
             if isinstance(date_timestamp, (int, float)):
-                from datetime import datetime
-                fetch_date = datetime.fromtimestamp(date_timestamp).strftime("%Y-%m-%d")
+                fetch_date = datetime.fromtimestamp(date_timestamp, tz=UTC).strftime("%Y-%m-%d")
             else:
                 # Fallback to current date if no timestamp
-                from datetime import date
-                fetch_date = date.today().isoformat()
+                fetch_date = datetime.now(UTC).date().isoformat()
 
             # Create structured ETF entry
             etf_entry = {
@@ -244,7 +242,7 @@ def parse_etf_data(etf_data: list[dict[str, Any]]) -> dict[str, list[dict[str, A
     }
 
 
-def _safe_float_parse(value: Any) -> float | None:
+def _safe_float_parse(value: float | int | str | None) -> float | None:
     """Safely parse a value to float, handling None, NaN, and invalid strings.
 
     Args:

@@ -335,7 +335,7 @@ def fetch_kucoin_daily_klines_batch(
         )
         return sorted(candles, key=lambda c: c.end_date)
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         app_logger.error(f"Error fetching KuCoin daily batch for {symbol.symbol_name}: {e!s}")
         return []
 
@@ -407,7 +407,7 @@ def fetch_kucoin_hourly_klines_batch(
         )
         return sorted(candles, key=lambda c: c.end_date)
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         app_logger.error(f"Error fetching KuCoin hourly batch for {symbol.symbol_name}: {e!s}")
         return []
 
@@ -479,6 +479,6 @@ def fetch_kucoin_fifteen_min_klines_batch(
         )
         return sorted(candles, key=lambda c: c.end_date)
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         app_logger.error(f"Error fetching KuCoin 15-min batch for {symbol.symbol_name}: {e!s}")
         return []

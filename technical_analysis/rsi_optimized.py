@@ -115,7 +115,7 @@ def get_optimized_rsi_for_symbol_timeframe(
                 # Type check to ensure idx is a valid index type
                 if not isinstance(idx, (pd.Timestamp, str, int)):
                     msg = f"Unexpected index type: {type(idx)}"
-                    raise TypeError(msg)  # noqa: TRY301
+                    raise TypeError(msg)
 
                 candle_id = int(row["SymbolId"])
 

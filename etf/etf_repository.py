@@ -170,9 +170,8 @@ class ETFRepository:
             if not rows:
                 return None
 
-            results = []
-            for row in rows:
-                results.append({
+            results = [
+                {
                     "ticker": row[0],
                     "issuer": row[1],
                     "price": row[2],
@@ -181,7 +180,9 @@ class ETFRepository:
                     "flows_change": row[5],
                     "volume": row[6],
                     "fetch_date": row[7],
-                })
+                }
+                for row in rows
+            ]
 
             app_logger.info(f"Retrieved {len(results)} ETF flows for {coin} on {latest_date}")
 
@@ -210,7 +211,7 @@ class ETFRepository:
         try:
             if self.is_sqlite:
                 # SQLite: Use date() function for date arithmetic
-                query = f"""
+                query = """
                     SELECT
                         SUM(Flows) as total_flows,
                         AVG(Flows) as avg_daily_flows,
@@ -219,11 +220,11 @@ class ETFRepository:
                         MAX(FetchDate) as end_date
                     FROM ETFFlows
                     WHERE Coin = ?
-                      AND FetchDate >= date('now', '-{days} days')
+                      AND FetchDate >= date('now', '-' || ? || ' days')
                 """
             else:
                 # Azure SQL: Use DATEADD function
-                query = f"""
+                query = """
                     SELECT
                         SUM(Flows) as total_flows,
                         AVG(CAST(Flows AS FLOAT)) as avg_daily_flows,
@@ -232,10 +233,10 @@ class ETFRepository:
                         MAX(FetchDate) as end_date
                     FROM ETFFlows
                     WHERE Coin = ?
-                      AND FetchDate >= DATEADD(DAY, -{days}, CAST(GETDATE() AS DATE))
+                      AND FetchDate >= DATEADD(DAY, -?, CAST(GETDATE() AS DATE))
                 """
 
-            cursor.execute(query, (coin,))
+            cursor.execute(query, (coin, days))
             row = cursor.fetchone()
 
             if not row or row[0] is None:
@@ -324,16 +325,17 @@ class ETFRepository:
             if not rows:
                 return None
 
-            results = []
-            for row in rows:
-                results.append({
+            results = [
+                {
                     "issuer": row[0],
                     "total_flows": row[1],
                     "etf_count": row[2],
                     "avg_price": row[3],
                     "total_aum": row[4],
                     "fetch_date": fetch_date,
-                })
+                }
+                for row in rows
+            ]
 
             app_logger.info(
                 f"Retrieved ETF flows by issuer for {coin} on {fetch_date}: "

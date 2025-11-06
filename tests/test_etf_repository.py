@@ -4,6 +4,7 @@ import os
 import sqlite3
 import tempfile
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -48,7 +49,7 @@ class TestETFRepository:
         yield db_path
 
         # Cleanup
-        os.unlink(db_path)
+        Path(db_path).unlink()
 
     @pytest.fixture
     def mock_sqlite_conn(self, temp_db):

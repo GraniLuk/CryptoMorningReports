@@ -296,7 +296,7 @@ def get_news(target_relevant: int | None = None) -> str:
     total_time = end_time - start_time
     articles_found = len(relevant_articles)
 
-    from infra.telegram_logging_handler import app_logger  # noqa: PLC0415
+    from infra.telegram_logging_handler import app_logger
 
     app_logger.info(
         f"RSS processing completed: {articles_found}/{target_relevant} target articles found, "

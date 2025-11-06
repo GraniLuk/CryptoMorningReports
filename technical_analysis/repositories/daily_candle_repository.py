@@ -59,7 +59,7 @@ class DailyCandleRepository(CandleRepository):
                 Last = excluded.Last,
                 Volume = excluded.Volume,
                 VolumeQuote = excluded.VolumeQuote
-            """  # noqa: S608
+            """
             self.conn.execute(
                 sql,
                 (
@@ -88,7 +88,7 @@ class DailyCandleRepository(CandleRepository):
                 INSERT (SymbolID, SourceID, Date, EndDate, [Open], [Close],
                         High, Low, Last, Volume, VolumeQuote)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """  # noqa: S608
+            """
             self.conn.execute(
                 sql,
                 (
@@ -132,7 +132,7 @@ class DailyCandleRepository(CandleRepository):
             ,[VolumeQuote]
         FROM {self.table_name}
         WHERE SymbolID = ? AND Date = ?
-        """  # noqa: S608
+        """
         row = self.conn.execute(sql, (symbol.symbol_id, date_value)).fetchone()
         if row:
             return Candle(

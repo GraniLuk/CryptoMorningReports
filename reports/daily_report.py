@@ -47,6 +47,9 @@ from technical_analysis.volume_report import fetch_volume_report
 if TYPE_CHECKING:
     from logging import Logger
 
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
     from source_repository import Symbol
 
 
@@ -72,7 +75,7 @@ def _configure_ai_api():
     return ai_api_type, ai_api_key
 
 
-def _build_etf_flows_section(conn) -> str:
+def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper") -> str:
     """Build ETF flows section for AI analysis context.
 
     Args:
@@ -420,7 +423,7 @@ def _fallback_summary(content: str, max_chars: int = 320) -> str:
     return f"{snippet}..."
 
 
-async def process_daily_report(  # noqa: PLR0915
+async def process_daily_report(
     conn,
     telegram_enabled,
     telegram_token,
@@ -447,7 +450,7 @@ async def process_daily_report(  # noqa: PLR0915
             stats["total_articles"],
             stats["total_size_mb"],
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.warning("⚠️ Article cache cleanup failed: %s", e)
 
     # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
@@ -489,8 +492,8 @@ async def process_daily_report(  # noqa: PLR0915
     logger.info("📊 Fetching latest ETF data for institutional analysis...")
     try:
         update_etf_data(conn)
-    except Exception as e:
-        logger.error(f"⚠️ ETF data update failed: {e!s}")
+    except Exception:
+        logger.exception("⚠️ ETF data update failed")
 
     # Generate all reports
     # NOTE: Candles are now fetched once and passed to RSI calculator

@@ -121,7 +121,7 @@ def _extract_moving_averages(
     return ma_data
 
 
-def get_current_data_for_symbol(  # noqa: PLR0915, PLR0912
+def get_current_data_for_symbol(
     symbol: Symbol,
     conn: "pyodbc.Connection | SQLiteConnectionWrapper | None",
 ) -> dict[str, Any]:
@@ -308,7 +308,7 @@ def get_current_data_for_symbol(  # noqa: PLR0915, PLR0912
     return data
 
 
-def format_current_data_for_telegram(  # noqa: PLR0915
+def format_current_data_for_telegram(
     symbol_data: dict[str, Any],
     formatter: TelegramFormatter | None = None,
 ) -> str:

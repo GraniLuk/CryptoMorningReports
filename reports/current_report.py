@@ -385,7 +385,7 @@ async def _generate_ai_analysis(
         return error_msg
 
 
-async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915, PLR0912
+async def generate_crypto_situation_report(conn, symbol_name):
     """Generate a comprehensive situation report for a specific cryptocurrency in HTML format.
 
     Args:
