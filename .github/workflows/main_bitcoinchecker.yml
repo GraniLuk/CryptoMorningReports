@@ -39,6 +39,14 @@ jobs:
           # Freeze dependencies to ensure version consistency
           pip freeze > requirements.txt
 
+      - name: Setup SQLite database for tests
+        run: |
+          source venv/bin/activate
+          export DATABASE_TYPE=sqlite
+          export SQLITE_DB_PATH=./local_crypto.db
+          python database/init_sqlite.py
+          echo "✅ SQLite database initialized for tests"
+
       - name: Install Node.js for Pyright
         uses: actions/setup-node@v6
         with:
@@ -60,6 +68,9 @@ jobs:
 
       - name: Run tests
         id: run_tests
+        env:
+          DATABASE_TYPE: sqlite
+          SQLITE_DB_PATH: ./local_crypto.db
         run: |
           source venv/bin/activate
           python -m pytest tests/ --junitxml=test-results.xml --timeout=30
