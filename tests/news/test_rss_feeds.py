@@ -38,7 +38,7 @@ def mock_ollama_processing(monkeypatch):
     """Mock Ollama processing to avoid real API calls during tests."""
     from datetime import UTC, datetime
     from time import struct_time
-    
+
     # Mock process_article_with_ollama to return a mock result
     # Need to mock where it's used, not where it's defined
     def mock_process_article(*args, **kwargs):
@@ -50,11 +50,11 @@ def mock_ollama_processing(monkeypatch):
             is_relevant=True,
             reasoning="Mocked reasoning for test purposes",
         )
-    
+
     # Mock fetch_full_content to return mock content
     def mock_fetch_full_content(url, css_class):
         return "Mock full content for testing purposes. This is a longer piece of content that simulates a real article fetched from the web."
-    
+
     # Mock feedparser.parse to return mock RSS data
     def mock_feedparser_parse(url):
         class MockEntry:
@@ -67,25 +67,25 @@ def mock_ollama_processing(monkeypatch):
                 self.published_parsed = struct_time((
                     now.year, now.month, now.day,
                     now.hour, now.minute, now.second,
-                    now.weekday(), now.timetuple().tm_yday, 0
+                    now.weekday(), now.timetuple().tm_yday, 0,
                 ))
-        
+
         class MockFeed:
             def __init__(self):
                 self.entries = [MockEntry(i) for i in range(1, 4)]
-        
+
         return MockFeed()
-    
+
     # Mock article cache functions to avoid database interactions
     def mock_article_exists_in_cache(url):
         return False  # Always return False so articles are processed
-    
+
     def mock_save_article_to_cache(article):
         pass  # No-op
-    
+
     def mock_is_article_cache_enabled():
         return False  # Disable cache for tests
-    
+
     # Patch where the function is used, not where it's defined
     monkeypatch.setattr("news.rss_parser.process_article_with_ollama", mock_process_article)
     monkeypatch.setattr("news.rss_parser.fetch_full_content", mock_fetch_full_content)
@@ -417,7 +417,7 @@ def test_24h_filtering_pytest(mock_ollama_processing):
 def test_full_content_fetching_pytest(mock_ollama_processing):
     """Pytest version of full content fetching test."""
     # Patch fetch_full_content in this module's namespace
-    with patch('tests.news.test_rss_feeds.fetch_full_content') as mock_fetch:
+    with patch("tests.news.test_rss_feeds.fetch_full_content") as mock_fetch:
         mock_fetch.return_value = "Mock full content for testing purposes. This is a longer piece of content."
         result = check_full_content_fetching(mock_ollama_processing)
         assert len(result["per_source"]) > 0
