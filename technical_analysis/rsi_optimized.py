@@ -16,6 +16,14 @@ from technical_analysis.repositories.rsi_repository import (
 from technical_analysis.rsi import calculate_rsi_using_rma
 
 
+class UnexpectedIndexTypeError(TypeError):
+    """Raised when iterating over unexpected index types."""
+    def __init__(self, idx):
+        """Initialize the exception with the unexpected index value."""
+        self.index = idx
+        super().__init__(f"Unexpected index type: {type(idx)}")
+
+
 if TYPE_CHECKING:
     import pyodbc
 
@@ -114,8 +122,7 @@ def get_optimized_rsi_for_symbol_timeframe(
             for idx, row in missing_rows.iterrows():
                 # Type check to ensure idx is a valid index type
                 if not isinstance(idx, (pd.Timestamp, str, int)):
-                    msg = f"Unexpected index type: {type(idx)}"
-                    raise TypeError(msg)
+                    raise UnexpectedIndexTypeError(idx)
 
                 candle_id = int(row["SymbolId"])
 
