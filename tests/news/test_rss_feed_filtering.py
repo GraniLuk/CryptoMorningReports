@@ -6,10 +6,19 @@ import time
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
+import pytest
+
 import news.rss_parser
 from news import article_processor as ap
 from news.article_cache import fetch_and_cache_articles_for_symbol
 from news.rss_parser import _collect_entries_from_feed, fetch_rss_news, get_news
+
+
+@pytest.fixture(autouse=True)
+def mock_network_calls():
+    """Auto-mock all network calls to avoid timeouts in all tests in this file."""
+    with patch("news.rss_parser.fetch_full_content", return_value="Mock content for testing"):
+        yield
 
 
 class Test24HFiltering:

@@ -26,6 +26,7 @@ python-frontmatter
 python-slugify
 pytest
 pytest-cov
+pytest-timeout
 ruff
 cryptography==46.0.3
 plotly
