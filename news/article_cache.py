@@ -25,6 +25,7 @@ import yaml
 from slugify import slugify
 
 from infra.configuration import get_article_cache_root
+from infra.telegram_logging_handler import app_logger
 
 
 def parse_article_date(date_string: str) -> datetime:
@@ -330,8 +331,11 @@ def get_articles_for_symbol(
                     published_dt = parse_article_date(article.published)
                     if published_dt >= cutoff_time:
                         articles_with_symbol.append(article)
-                except (ValueError, AttributeError):
+                except (ValueError, AttributeError) as e:
                     # If date parsing fails, skip this article
+                    app_logger.warning(
+                        f"Failed to parse date for article '{article.title}': {e!s}",
+                    )
                     continue
 
     # Sort by published date, newest first
@@ -370,8 +374,11 @@ def get_recent_articles(hours: int = 24) -> list[CachedArticle]:
                 published_dt = parse_article_date(article.published)
                 if published_dt >= cutoff_time:
                     recent_articles.append(article)
-            except (ValueError, AttributeError):
+            except (ValueError, AttributeError) as e:
                 # If date parsing fails, skip this article
+                app_logger.warning(
+                    f"Failed to parse date for article '{article.title}': {e!s}",
+                )
                 continue
 
     # Sort by published date, newest first
