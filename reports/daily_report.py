@@ -153,8 +153,7 @@ async def _process_ai_analysis(  # noqa: PLR0915
         logger.error("No API key found for %s", ai_api_type)
         return analysis_reported_with_news
 
-    # Refresh RSS feeds and build filtered news payload
-    get_news()
+    # Build filtered news payload from cached articles (already processed by Ollama earlier)
     news_payload, news_stats = _collect_relevant_news(hours=24, logger=logger)
     logger.info(
         "News filtering stats - available: %d, truncated: %d, est_tokens: ~%d",
@@ -453,8 +452,13 @@ async def process_daily_report(  # noqa: PLR0915
     except Exception as e:  # noqa: BLE001
         logger.warning("⚠️ Article cache cleanup failed: %s", e)
 
-    # ✅ UPDATE LATEST DATA FIRST - Ensures fresh market data for analysis
-    logger.info("📊 Updating latest market data before analysis...")
+    # 📰 FETCH RSS NEWS EARLY - Ollama processing happens here (~30 min)
+    logger.info("📰 Fetching and processing RSS news with Ollama...")
+    get_news()
+    logger.info("✓ RSS news fetched and processed")
+
+    # ✅ UPDATE LATEST DATA - Ensures fresh market data for analysis
+    logger.info("📊 Updating latest market data...")
 
     # Fetch missing daily candles for all symbols (last 30 days for RSI calculation)
     # RSI needs at least 14 periods, plus extra for Wilder's smoothing
