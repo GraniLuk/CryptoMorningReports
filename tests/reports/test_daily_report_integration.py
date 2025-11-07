@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 from datetime import UTC, datetime
+from logging import Logger
 from typing import Any
 
 import pytest
@@ -95,7 +96,7 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setenv("DAILY_REPORT_EMAIL_RECIPIENTS", "test@example.com")
 
-    def fake_collect(*, hours: int, logger) -> tuple[str, dict[str, int]]:
+    def fake_collect(*, hours: int, logger: Logger) -> tuple[str, dict[str, int]]:
         collected["news_hours"] = hours
         return (
             '[{"source":"test"}]',

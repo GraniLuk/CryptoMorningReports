@@ -19,6 +19,7 @@ Run this script to verify RSS feeds are working before implementing caching.
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from time import struct_time
 from typing import Any
 from unittest.mock import patch
 
@@ -36,15 +37,16 @@ MIN_CONTENT_LENGTH = 100
 @pytest.fixture
 def mock_ollama_processing(monkeypatch):
     """Mock Ollama processing to avoid real API calls during tests."""
-    from datetime import UTC, datetime
-    from time import struct_time
 
     # Mock process_article_with_ollama to return a mock result
     # Need to mock where it's used, not where it's defined
-    def mock_process_article(*args, **kwargs):
+    def mock_process_article(*_args, **_kwargs):
         return ap.ArticleProcessingResult(
             summary="Test summary for mocked article processing.",
-            cleaned_content="This is a mocked cleaned content that simulates what Ollama would return. It's long enough to pass validation checks.",
+            cleaned_content=(
+                "This is a mocked cleaned content that simulates what Ollama "
+                "would return. It's long enough to pass validation checks."
+            ),
             symbols=["BTC", "ETH"],
             relevance_score=0.9,
             is_relevant=True,
@@ -52,11 +54,14 @@ def mock_ollama_processing(monkeypatch):
         )
 
     # Mock fetch_full_content to return mock content
-    def mock_fetch_full_content(url, css_class):
-        return "Mock full content for testing purposes. This is a longer piece of content that simulates a real article fetched from the web."
+    def mock_fetch_full_content(_url, _css_class):
+        return (
+            "Mock full content for testing purposes. This is a longer piece "
+            "of content that simulates a real article fetched from the web."
+        )
 
     # Mock feedparser.parse to return mock RSS data
-    def mock_feedparser_parse(url):
+    def mock_feedparser_parse(_url):
         class MockEntry:
             def __init__(self, num):
                 self.link = f"https://test.com/article{num}"
@@ -77,10 +82,10 @@ def mock_ollama_processing(monkeypatch):
         return MockFeed()
 
     # Mock article cache functions to avoid database interactions
-    def mock_article_exists_in_cache(url):
+    def mock_article_exists_in_cache(_url):
         return False  # Always return False so articles are processed
 
-    def mock_save_article_to_cache(article):
+    def mock_save_article_to_cache(_article):
         pass  # No-op
 
     def mock_is_article_cache_enabled():
@@ -216,7 +221,7 @@ def check_single_feed(source: str, feed_info: dict[str, str]) -> dict[str, Any]:
     return result
 
 
-def check_24h_filtering(mock_ollama_processing=None) -> dict[str, Any]:
+def check_24h_filtering(_mock_ollama_processing: Any | None = None) -> dict[str, Any]:
     """Check that 24-hour filtering logic works correctly.
 
     Returns:
@@ -261,7 +266,7 @@ def check_24h_filtering(mock_ollama_processing=None) -> dict[str, Any]:
     return result
 
 
-def check_full_content_fetching(mock_ollama_processing=None) -> dict[str, Any]:
+def check_full_content_fetching(_mock_ollama_processing: Any | None = None) -> dict[str, Any]:
     """Check full content fetching with different class selectors.
 
     Returns:
@@ -380,7 +385,10 @@ def main() -> None:
         reasoning="Test reasoning",
     )
 
-    with patch("news.rss_parser.process_article_with_ollama", lambda *args, **kwargs: mock_result):
+    with patch(
+        "news.rss_parser.process_article_with_ollama",
+        lambda *_args, **_kwargs: mock_result,
+    ):
         all_results = []
 
         # Test each feed individually
@@ -394,7 +402,8 @@ def main() -> None:
 
         # Test full content fetching
         content_result = check_full_content_fetching(None)  # Mock is handled by context manager
-        app_logger.info(f"Full content fetching tested for {len(content_result['per_source'])} sources")
+        sources_count = len(content_result["per_source"])
+        app_logger.info(f"Full content fetching tested for {sources_count} sources")
 
         # Print summary
         print_summary(all_results)
@@ -407,23 +416,29 @@ if __name__ == "__main__":
 
 
 # Pytest test functions
-def test_24h_filtering_pytest(mock_ollama_processing):
+def test_24h_filtering_pytest(mock_ollama_processing: Any) -> None:
     """Pytest version of 24h filtering test."""
     result = check_24h_filtering(mock_ollama_processing)
     assert result["success"] is True or "No articles" in result["details"]
 
 
-@pytest.mark.skip(reason="Integration test that makes real network calls - use test_individual_feeds_pytest instead")
-def test_full_content_fetching_pytest(mock_ollama_processing):
+@pytest.mark.skip(
+    reason="Integration test that makes real network calls "
+    "- use test_individual_feeds_pytest instead",
+)
+def test_full_content_fetching_pytest(mock_ollama_processing: Any) -> None:
     """Pytest version of full content fetching test."""
     # Patch fetch_full_content in this module's namespace
     with patch("tests.news.test_rss_feeds.fetch_full_content") as mock_fetch:
-        mock_fetch.return_value = "Mock full content for testing purposes. This is a longer piece of content."
+        mock_fetch.return_value = (
+            "Mock full content for testing purposes. "
+            "This is a longer piece of content."
+        )
         result = check_full_content_fetching(mock_ollama_processing)
         assert len(result["per_source"]) > 0
 
 
-def test_individual_feeds_pytest(mock_ollama_processing):
+def test_individual_feeds_pytest(mock_ollama_processing: Any) -> None:
     """Pytest version of individual feed tests."""
     # Test just one feed to keep test time reasonable
     source = "decrypt"

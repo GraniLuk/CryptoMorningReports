@@ -293,7 +293,9 @@ class TestCollectAllRSSEntries:
 
     @patch("news.rss_parser.feedparser")
     @patch("news.rss_parser._collect_entries_from_feed")
-    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed, mock_feedparser):
+    def test_collect_all_rss_entries_empty_feeds(
+        self, mock_collect_feed, _mock_feedparser,
+    ):
         """Test collection when all feeds return empty results."""
         mock_collect_feed.return_value = []
         current_time = datetime.now(UTC)
@@ -313,7 +315,9 @@ class TestCollectEntriesFromFeed:
     @patch("news.rss_parser._parse_rss_entry")
     @patch("news.rss_parser._is_entry_processable")
     @patch("news.rss_parser.app_logger")
-    def test_collect_entries_from_feed_success(self, mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser):
+    def test_collect_entries_from_feed_success(
+        self, _mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser,
+    ):
         """Test successful collection from a single feed."""
         # Mock feed with entries
         mock_feed = Mock()
@@ -529,7 +533,8 @@ class TestComprehensiveLazyProcessing:
 
         # Mock the processing function to return relevant results for first 7 entries
         relevant_count = 0
-        def mock_process_entry(*args, **kwargs):
+
+        def mock_process_entry(*_args, **_kwargs):
             nonlocal relevant_count
             relevant_count += 1
             title = f"Article {relevant_count}"
@@ -708,7 +713,7 @@ class TestComprehensiveLazyProcessing:
     def test_symbol_specific_filtering(self):
         """Test that articles are properly filtered by cryptocurrency symbol."""
         # Mock the function to return different results based on symbol
-        def mock_get_side_effect(symbol, hours=24):
+        def mock_get_side_effect(symbol, **kwargs):
             if symbol.upper() == "BTC":
                 return [
                     Mock(title="Bitcoin surges to new highs", symbols=["BTC"]),
