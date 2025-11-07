@@ -1,5 +1,6 @@
 """ETF data fetcher for DefiLlama API integration."""
 
+import math
 import time
 from datetime import UTC, datetime
 from http import HTTPStatus
@@ -14,7 +15,7 @@ from infra.telegram_logging_handler import app_logger
 ETF_API_URL = "https://defillama.com/api/etfs"
 
 
-def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | None:  # noqa: PLR0915,PLR0912
+def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | None:
     """Fetch ETF data from DefiLlama API.
 
     Args:
@@ -23,8 +24,60 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
     Returns:
         List of ETF data dictionaries or None if failed
     """
-    # Headers to mimic a real browser and bypass Cloudflare
-    headers = {
+    headers = _get_api_headers()
+
+    for attempt in range(max_retries):
+        try:
+            app_logger.info(
+                f"Fetching ETF data from DefiLlama API (attempt {attempt + 1}/{max_retries})",
+            )
+
+            response = requests.get(ETF_API_URL, headers=headers, timeout=30)
+
+            # Handle HTTP errors
+            result = _handle_http_response(response, attempt, max_retries)
+            if result is not None:
+                return result
+
+            # Parse and validate JSON
+            data = _parse_and_validate_json(response, attempt, max_retries)
+            if data is None:
+                continue
+
+            # Validate ETF data structure
+            if not _validate_etf_data_structure(data, attempt, max_retries):
+                continue
+
+        except requests.exceptions.Timeout:
+            if not _handle_retry(attempt, max_retries, "Timeout fetching ETF data"):
+                return _get_mock_etf_data()
+            continue
+
+        except requests.exceptions.RequestException as e:
+            app_logger.error(f"Network error fetching ETF data: {e!s}")
+            if not _handle_retry(attempt, max_retries, None):
+                return None
+            continue
+
+        except Exception as e:  # noqa: BLE001
+            if not _handle_retry(attempt, max_retries, f"Unexpected error: {e!s}"):
+                return _get_mock_etf_data()
+            continue
+
+        else:
+            # Log success and return data
+            _log_success_statistics(data)
+            return data
+
+    # All retries exhausted
+    app_logger.error("Failed to fetch ETF data after all retry attempts")
+    app_logger.warning("Using mock ETF data as fallback")
+    return _get_mock_etf_data()
+
+
+def _get_api_headers() -> dict[str, str]:
+    """Get headers to mimic a real browser and bypass Cloudflare."""
+    return {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -42,131 +95,140 @@ def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | Non
         "Cache-Control": "max-age=0",
     }
 
-    for attempt in range(max_retries):
-        try:
-            app_logger.info(
-                f"Fetching ETF data from DefiLlama API "
-                f"(attempt {attempt + 1}/{max_retries})",
-            )
 
-            # Make API request with headers and timeout
-            response = requests.get(ETF_API_URL, headers=headers, timeout=30)
+def _handle_http_response(
+    response: requests.Response,
+    attempt: int,
+    max_retries: int,
+) -> list[dict[str, Any]] | None:
+    """Handle HTTP response status codes.
 
-            if response.status_code != HTTPStatus.OK:
-                app_logger.error(
-                    f"DefiLlama API returned HTTP {response.status_code}: {response.text}",
-                )
-                if attempt < max_retries - 1:
-                    sleep_time = 2 ** attempt  # Exponential backoff
-                    app_logger.info(f"Retrying in {sleep_time} seconds...")
-                    time.sleep(sleep_time)
-                    continue
-                # Use mock data as fallback
-                app_logger.warning("All HTTP error retries failed, using mock data as fallback")
-                return _get_mock_etf_data()
+    Returns:
+        Mock data if final attempt failed, None to continue retry loop
+    """
+    if response.status_code == HTTPStatus.OK:
+        return None  # Continue with normal processing
 
-            # Parse JSON response
-            try:
-                data = response.json()
-            except ValueError as e:
-                app_logger.error(f"Failed to parse JSON response: {e!s}")
-                if attempt < max_retries - 1:
-                    sleep_time = 2 ** attempt
-                    app_logger.info(f"Retrying in {sleep_time} seconds...")
-                    time.sleep(sleep_time)
-                    continue
-                # Use mock data as fallback
-                app_logger.warning(
-                    "JSON parsing failed after all retries, "
-                    "using mock data as fallback",
-                )
-                return _get_mock_etf_data()
+    app_logger.error(
+        f"DefiLlama API returned HTTP {response.status_code}: {response.text}",
+    )
 
-            # Validate response structure
-            if not isinstance(data, list):
-                app_logger.error(f"Unexpected response format: expected list, got {type(data)}")
-                if attempt < max_retries - 1:
-                    sleep_time = 2 ** attempt
-                    app_logger.info(f"Retrying in {sleep_time} seconds...")
-                    time.sleep(sleep_time)
-                    continue
-                # Use mock data as fallback
-                app_logger.warning(
-                    "Response validation failed after all retries, "
-                    "using mock data as fallback",
-                )
-                return _get_mock_etf_data()
+    if attempt < max_retries - 1:
+        _retry_with_backoff(attempt)
+        return None
 
-            # Validate that we have ETF data
-            if not data:
-                app_logger.warning("DefiLlama API returned empty ETF data")
-                return []
-
-            # Basic validation of first ETF entry
-            first_etf = data[0]
-            required_fields = ["Ticker", "Coin", "Flows", "Date"]
-            missing_fields = [field for field in required_fields if field not in first_etf]
-
-            if missing_fields:
-                app_logger.error(f"ETF data missing required fields: {missing_fields}")
-                if attempt < max_retries - 1:
-                    sleep_time = 2 ** attempt
-                    app_logger.info(f"Retrying in {sleep_time} seconds...")
-                    time.sleep(sleep_time)
-                    continue
-                # Use mock data as fallback
-                app_logger.warning(
-                    "Data validation failed after all retries, "
-                    "using mock data as fallback",
-                )
-                return _get_mock_etf_data()
-
-            # Log success statistics
-            btc_count = sum(1 for etf in data if etf.get("Coin") == "BTC")
-            eth_count = sum(1 for etf in data if etf.get("Coin") == "ETH")
-
-            app_logger.info(
-                f"Successfully fetched {len(data)} ETFs: "
-                f"{btc_count} BTC ETFs, {eth_count} ETH ETFs",
-            )
-
-        except requests.exceptions.Timeout:
-            app_logger.error(f"Timeout fetching ETF data (attempt {attempt + 1})")
-            if attempt < max_retries - 1:
-                sleep_time = 2 ** attempt
-                app_logger.info(f"Retrying in {sleep_time} seconds...")
-                time.sleep(sleep_time)
-                continue
-            # Use mock data as fallback
-            app_logger.warning("Timeout occurred after all retries, using mock data as fallback")
-            return _get_mock_etf_data()
-
-        except requests.exceptions.RequestException as e:
-            app_logger.error(f"Network error fetching ETF data: {e!s}")
-            if attempt < max_retries - 1:
-                sleep_time = 2 ** attempt
-                app_logger.info(f"Retrying in {sleep_time} seconds...")
-                time.sleep(sleep_time)
-                continue
-            return None
-
-        except Exception as e:  # noqa: BLE001
-            app_logger.error(f"Unexpected error fetching ETF data: {e!s}")
-            if attempt < max_retries - 1:
-                sleep_time = 2 ** attempt
-                app_logger.info(f"Retrying in {sleep_time} seconds...")
-                time.sleep(sleep_time)
-                continue
-            # Use mock data as fallback
-            app_logger.warning("Unexpected error after all retries, using mock data as fallback")
-            return _get_mock_etf_data()
-        else:
-            return data
-
-    # All retries exhausted
-    app_logger.error("Failed to fetch ETF data after all retry attempts")
-    app_logger.warning("Using mock ETF data as fallback")
+    app_logger.warning("All HTTP error retries failed, using mock data as fallback")
     return _get_mock_etf_data()
+
+
+def _parse_and_validate_json(
+    response: requests.Response,
+    attempt: int,
+    max_retries: int,
+) -> list[dict[str, Any]] | None:
+    """Parse JSON response and validate structure.
+
+    Returns:
+        Parsed data if successful, None if should retry
+    """
+    try:
+        data = response.json()
+    except ValueError as e:
+        app_logger.error(f"Failed to parse JSON response: {e!s}")
+        if attempt >= max_retries - 1:
+            app_logger.warning(
+                "JSON parsing failed after all retries, using mock data as fallback",
+            )
+            return _get_mock_etf_data()
+        _retry_with_backoff(attempt)
+        return None
+
+    # Validate response is a list
+    if not isinstance(data, list):
+        app_logger.error(f"Unexpected response format: expected list, got {type(data)}")
+        if attempt >= max_retries - 1:
+            app_logger.warning(
+                "Response validation failed after all retries, using mock data as fallback",
+            )
+            return _get_mock_etf_data()
+        _retry_with_backoff(attempt)
+        return None
+
+    # Empty data is valid but noteworthy
+    if not data:
+        app_logger.warning("DefiLlama API returned empty ETF data")
+
+    return data
+
+
+def _validate_etf_data_structure(
+    data: list[dict[str, Any]],
+    attempt: int,
+    max_retries: int,
+) -> bool:
+    """Validate that ETF data has required fields.
+
+    Returns:
+        True if validation passed, False if should retry
+    """
+    if not data:
+        return True  # Empty data is valid
+
+    first_etf = data[0]
+    required_fields = ["Ticker", "Coin", "Flows", "Date"]
+    missing_fields = [field for field in required_fields if field not in first_etf]
+
+    if not missing_fields:
+        return True
+
+    app_logger.error(f"ETF data missing required fields: {missing_fields}")
+
+    if attempt >= max_retries - 1:
+        app_logger.warning(
+            "Data validation failed after all retries, using mock data as fallback",
+        )
+        return False
+
+    _retry_with_backoff(attempt)
+    return False
+
+
+def _log_success_statistics(data: list[dict[str, Any]]) -> None:
+    """Log statistics about successfully fetched ETF data."""
+    btc_count = sum(1 for etf in data if etf.get("Coin") == "BTC")
+    eth_count = sum(1 for etf in data if etf.get("Coin") == "ETH")
+
+    app_logger.info(
+        f"Successfully fetched {len(data)} ETFs: {btc_count} BTC ETFs, {eth_count} ETH ETFs",
+    )
+
+
+def _handle_retry(attempt: int, max_retries: int, error_msg: str | None) -> bool:
+    """Handle retry logic with exponential backoff.
+
+    Args:
+        attempt: Current attempt number
+        max_retries: Maximum retry attempts
+        error_msg: Optional error message to log
+
+    Returns:
+        True if should continue retry loop, False if exhausted
+    """
+    if error_msg:
+        app_logger.error(f"{error_msg} (attempt {attempt + 1})")
+
+    if attempt < max_retries - 1:
+        _retry_with_backoff(attempt)
+        return True
+
+    return False
+
+
+def _retry_with_backoff(attempt: int) -> None:
+    """Sleep with exponential backoff before retry."""
+    sleep_time = 2**attempt
+    app_logger.info(f"Retrying in {sleep_time} seconds...")
+    time.sleep(sleep_time)
 
 
 def parse_etf_data(etf_data: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
@@ -265,7 +327,7 @@ def _safe_float_parse(value: float | int | str | None) -> float | None:
         result = float(value)
 
         # Check for NaN or Infinity
-        if result != result or abs(result) == float("inf"):  # NaN check: x != x
+        if math.isnan(result) or math.isinf(result):
             return None
 
     except (ValueError, TypeError, OverflowError):
