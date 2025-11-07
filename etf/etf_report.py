@@ -234,17 +234,18 @@ def fetch_etf_report(
 
         for etf in latest_flows:
             ticker = etf["ticker"]
-            issuer = etf["issuer"] or "Unknown"
+            issuer = str(etf["issuer"] or "Unknown")
             price = etf["price"]
-            daily_flows = etf["flows"] or 0
+            daily_flows = float(etf["flows"] or 0)
 
             # Get 7-day total for this specific ETF (simplified - using weekly average)
             weekly_total = 0
-            if weekly_flows and weekly_flows["days_count"] > 0:
+            days_count = weekly_flows.get("days_count", 0) if isinstance(weekly_flows, dict) else 0
+            if days_count > 0:
                 # Estimate weekly total based on daily flow and available days
-                weekly_total = daily_flows * min(7, weekly_flows["days_count"])
+                weekly_total = daily_flows * min(7, days_count)
 
-            aum = etf["aum"]
+            aum = float(etf["aum"]) if etf["aum"] is not None else None
 
             # Format values for display
             price_str = f"${price:,.2f}" if price else "N/A"
@@ -318,7 +319,7 @@ def _format_currency(amount: float) -> str:
     Returns:
         Formatted currency string
     """
-    if amount is None or amount == 0:
+    if amount == 0:
         return "$0"
 
     abs_amount = abs(amount)
@@ -350,9 +351,6 @@ def _format_large_number(amount: float) -> str:
     Returns:
         Formatted string in billions
     """
-    if amount is None:
-        return "N/A"
-
     if amount >= BILLION_THRESHOLD:
         return f"${amount / BILLION_THRESHOLD:.1f}B"
     if amount >= MILLION_THRESHOLD:
