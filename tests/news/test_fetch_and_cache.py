@@ -1,8 +1,8 @@
 """Test the fetch_and_cache_articles_for_symbol function."""
 
-import json
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -11,50 +11,38 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from news import article_processor as ap
+from news import rss_parser
 from news.article_cache import fetch_and_cache_articles_for_symbol
 
 
-class DummyOllamaClient:
-    """Simple stand-in for the Ollama SDK client to avoid slow API calls in tests."""
+@pytest.fixture
+def mock_ollama_processing(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    """Patch process_article_with_ollama to avoid real Ollama calls."""
+    mock_result = ap.ArticleProcessingResult(
+        summary="Market update on crypto prices",
+        cleaned_content="Clean article content about cryptocurrency markets.",
+        symbols=["BTC", "ETH"],
+        relevance_score=0.9,
+        is_relevant=True,
+        reasoning="Article discusses major cryptocurrencies",
+    )
 
-    def __init__(self, response_text: str | None = None, *, should_fail: bool = False) -> None:
-        """Initialize the dummy client with a canned response or failure mode."""
-        self._response_text = response_text or "{}"
-        self._should_fail = should_fail
-        self.captured_prompt: str | None = None
-        self.captured_temperature: float | None = None
-
-    def generate_text(self, prompt: str, temperature: float = 0.2) -> str:
-        """Return the canned response, optionally raising to simulate errors."""
-        if self._should_fail:
-            message = "simulated failure"
-            raise ap.OllamaClientError(message)
-        self.captured_prompt = prompt
-        self.captured_temperature = temperature
-        return self._response_text
+    mock_process = Mock(return_value=mock_result)
+    monkeypatch.setattr(rss_parser, "process_article_with_ollama", mock_process)
+    return mock_process
 
 
 @pytest.fixture
-def mock_ollama_client(monkeypatch: pytest.MonkeyPatch) -> DummyOllamaClient:
-    """Patch the Ollama client factory to return a dummy implementation."""
-    client = DummyOllamaClient(
-        response_text=json.dumps(
-            {
-                "summary": "Market update on crypto prices",
-                "cleaned_content": "Clean article content about cryptocurrency markets.",
-                "symbols": ["BTC", "ETH"],
-                "relevance_score": 0.9,
-                "is_relevant": True,
-                "reasoning": "Article discusses major cryptocurrencies",
-            },
-        ),
-    )
-
-    monkeypatch.setattr(ap, "get_ollama_client", lambda: client)
-    return client
+def mock_get_news(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    """Patch get_news to avoid real RSS fetching and web scraping."""
+    # Return empty JSON array - we don't need articles from get_news
+    # because the test will use pre-existing cached articles
+    mock_news = Mock(return_value="[]")
+    monkeypatch.setattr(rss_parser, "get_news", mock_news)
+    return mock_news
 
 
-def test_fetch_and_cache_for_symbol():
+def test_fetch_and_cache_for_symbol(mock_ollama_processing: Mock, mock_get_news: Mock):
     """Test fetching fresh articles and caching them for a specific symbol."""
     print("\n🧪 Testing fetch_and_cache_articles_for_symbol with mocked Ollama")
     print("=" * 50)
@@ -95,21 +83,23 @@ def test_fetch_and_cache_for_symbol():
 
 
 if __name__ == "__main__":
-    # When running directly, we need to manually patch the Ollama client
+    # When running directly, we need to manually patch both functions
     from unittest import mock
 
-    client = DummyOllamaClient(
-        response_text=json.dumps(
-            {
-                "summary": "Market update on crypto prices",
-                "cleaned_content": "Clean article content about cryptocurrency markets.",
-                "symbols": ["BTC", "ETH"],
-                "relevance_score": 0.9,
-                "is_relevant": True,
-                "reasoning": "Article discusses major cryptocurrencies",
-            },
-        ),
+    mock_result = ap.ArticleProcessingResult(
+        summary="Market update on crypto prices",
+        cleaned_content="Clean article content about cryptocurrency markets.",
+        symbols=["BTC", "ETH"],
+        relevance_score=0.9,
+        is_relevant=True,
+        reasoning="Article discusses major cryptocurrencies",
     )
 
-    with mock.patch.object(ap, "get_ollama_client", return_value=client):
-        test_fetch_and_cache_for_symbol()
+    mock_process = Mock(return_value=mock_result)
+    mock_news = Mock(return_value="[]")
+
+    with (
+        mock.patch.object(rss_parser, "process_article_with_ollama", mock_process),
+        mock.patch.object(rss_parser, "get_news", mock_news),
+    ):
+        test_fetch_and_cache_for_symbol(mock_process, mock_news)

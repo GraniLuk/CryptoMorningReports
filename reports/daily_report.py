@@ -137,7 +137,7 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
         return "ETF Flows: Data unavailable\n\n"
 
 
-async def _process_ai_analysis(  # noqa: PLR0915
+async def _process_ai_analysis(
     ai_api_key,
     ai_api_type,
     symbols,
