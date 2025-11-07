@@ -243,9 +243,7 @@ class TestCurrentReportLimits:
     @patch("news.rss_parser.is_article_cache_enabled", return_value=False)
     @patch("news.rss_parser._load_symbols_for_detection", return_value=[])
     def test_get_news_uses_custom_target_relevant(
-        self, _mock_load_symbols,
-        _mock_cache_enabled,
-        mock_process, mock_collect,
+        self, mock_process, mock_collect,
     ):
         """Test that get_news() accepts and uses custom target_relevant parameter."""
         mock_collect.return_value = []
