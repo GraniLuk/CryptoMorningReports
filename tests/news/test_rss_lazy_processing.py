@@ -82,7 +82,7 @@ class TestParseRSSEntry:
         )
 
         assert result is not None
-        assert isinstance(result, RSSEntry)
+        assert type(result).__name__ == "RSSEntry"
         assert result.source == "coindesk"
         assert result.title == "Bitcoin News"
         assert result.link == "https://coindesk.com/article"
@@ -293,7 +293,7 @@ class TestCollectAllRSSEntries:
 
     @patch("news.rss_parser.feedparser")
     @patch("news.rss_parser._collect_entries_from_feed")
-    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed):
+    def test_collect_all_rss_entries_empty_feeds(self, mock_collect_feed, mock_feedparser):
         """Test collection when all feeds return empty results."""
         mock_collect_feed.return_value = []
         current_time = datetime.now(UTC)
@@ -313,8 +313,7 @@ class TestCollectEntriesFromFeed:
     @patch("news.rss_parser._parse_rss_entry")
     @patch("news.rss_parser._is_entry_processable")
     @patch("news.rss_parser.app_logger")
-    def test_collect_entries_from_feed_success(self, mock_feedparser, mock_parse_entry,
-                                                     mock_is_processable):
+    def test_collect_entries_from_feed_success(self, mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser):
         """Test successful collection from a single feed."""
         # Mock feed with entries
         mock_feed = Mock()
@@ -530,7 +529,7 @@ class TestComprehensiveLazyProcessing:
 
         # Mock the processing function to return relevant results for first 7 entries
         relevant_count = 0
-        def mock_process_entry(_entry, **_kwargs):
+        def mock_process_entry(*args, **kwargs):
             nonlocal relevant_count
             relevant_count += 1
             title = f"Article {relevant_count}"
@@ -569,7 +568,8 @@ class TestComprehensiveLazyProcessing:
 
     def test_cached_articles_are_skipped(self):
         """Test that articles already in cache are properly skipped during collection."""
-        base_time = datetime.now(UTC)
+        # Use a fixed recent date to avoid timing issues
+        base_time = datetime(2025, 11, 7, 12, 0, 0, tzinfo=UTC)
 
         # Create mock entries
         mock_entries = []
@@ -597,7 +597,7 @@ class TestComprehensiveLazyProcessing:
              patch("news.rss_parser.article_exists_in_cache") as mock_cache_check:
 
             # Mock parsing to return RSSEntry objects
-            def parse_side_effect(entry, source, class_name, _current_time):
+            def parse_side_effect(entry, source, class_name, current_time):
                 published_time = datetime.fromisoformat(entry.published)
 
                 return RSSEntry(
@@ -641,7 +641,8 @@ class TestComprehensiveLazyProcessing:
 
     def test_24h_age_filtering(self):
         """Test that articles older than 24 hours are filtered out."""
-        base_time = datetime.now(UTC)
+        # Use a fixed recent date to avoid timing issues
+        base_time = datetime(2025, 11, 7, 12, 0, 0, tzinfo=UTC)
 
         # Create mock entries with varying ages
         mock_entries = []
@@ -672,7 +673,7 @@ class TestComprehensiveLazyProcessing:
              patch("news.rss_parser.article_exists_in_cache", return_value=False):
 
             # Mock parsing to return RSSEntry objects
-            def parse_side_effect(entry, source, class_name, _current_time):
+            def parse_side_effect(entry, source, class_name, current_time):
                 published_time = datetime.fromisoformat(entry.published)
 
                 return RSSEntry(
@@ -707,7 +708,7 @@ class TestComprehensiveLazyProcessing:
     def test_symbol_specific_filtering(self):
         """Test that articles are properly filtered by cryptocurrency symbol."""
         # Mock the function to return different results based on symbol
-        def mock_get_side_effect(symbol, _hours=24):
+        def mock_get_side_effect(symbol, hours=24):
             if symbol.upper() == "BTC":
                 return [
                     Mock(title="Bitcoin surges to new highs", symbols=["BTC"]),

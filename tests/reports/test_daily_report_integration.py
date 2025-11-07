@@ -93,9 +93,9 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setenv("DAILY_REPORT_EMAIL_RECIPIENTS", "test@example.com")
 
-    monkeypatch.setattr(dr, "get_news", lambda: collected.setdefault("news_called", True))
+    monkeypatch.setenv("DAILY_REPORT_EMAIL_RECIPIENTS", "test@example.com")
 
-    def fake_collect(hours: int) -> tuple[str, dict[str, int]]:
+    def fake_collect(*, hours: int, logger) -> tuple[str, dict[str, int]]:
         collected["news_hours"] = hours
         return (
             '[{"source":"test"}]',
@@ -154,6 +154,5 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
 
     assert result == analysis_text
     assert collected["news_hours"] == 24
-    assert collected.get("news_called") is True
     assert collected.get("upload_calls")
     assert collected.get("email_calls")

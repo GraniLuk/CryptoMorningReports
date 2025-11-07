@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 import news.rss_parser
+from news import article_processor as ap
 from news.article_cache import fetch_and_cache_articles_for_symbol
 from news.rss_parser import _collect_entries_from_feed, fetch_rss_news, get_news
 
@@ -98,14 +99,14 @@ class Test24HFiltering:
         cached_entry = Mock()
         cached_entry.link = "https://example.com/cached"
         cached_entry.title = "Cached Article"
-        cached_entry.published = "2025-11-05T12:00:00+00:00"
-        cached_entry.published_parsed = time.struct_time((2025, 11, 5, 12, 0, 0, -1, -1, -1))
+        cached_entry.published = "2025-11-07T12:00:00+00:00"
+        cached_entry.published_parsed = time.struct_time((2025, 11, 7, 12, 0, 0, -1, -1, -1))
 
         fresh_entry = Mock()
         fresh_entry.link = "https://example.com/fresh"
         fresh_entry.title = "Fresh Article"
-        fresh_entry.published = "2025-11-05T13:00:00+00:00"
-        fresh_entry.published_parsed = time.struct_time((2025, 11, 5, 13, 0, 0, -1, -1, -1))
+        fresh_entry.published = "2025-11-07T13:00:00+00:00"
+        fresh_entry.published_parsed = time.struct_time((2025, 11, 7, 13, 0, 0, -1, -1, -1))
 
         mock_feed = Mock()
         mock_feed.entries = [cached_entry, fresh_entry]
@@ -115,8 +116,15 @@ class Test24HFiltering:
              patch("news.rss_parser.article_exists_in_cache",
                    side_effect=lambda link: link == "https://example.com/cached"), \
              patch("news.rss_parser._load_symbols_for_detection", return_value=[]), \
-             patch("news.rss_parser._process_feed_entry",
-                   return_value=(None, {"title": "Fresh Article", "is_relevant": True})):
+             patch("news.rss_parser.process_article_with_ollama",
+                   return_value=ap.ArticleProcessingResult(
+                       summary="Test summary",
+                       cleaned_content="Test content",
+                       symbols=["BTC"],
+                       relevance_score=0.9,
+                       is_relevant=True,
+                       reasoning="Test reasoning",
+                   )):
 
             result = fetch_rss_news("https://example.com/feed", "test", "test-class")
 
@@ -243,7 +251,7 @@ class TestCurrentReportLimits:
     @patch("news.rss_parser.is_article_cache_enabled", return_value=False)
     @patch("news.rss_parser._load_symbols_for_detection", return_value=[])
     def test_get_news_uses_custom_target_relevant(
-        self, mock_process, mock_collect,
+        self, mock_load_symbols, mock_cache_enabled, mock_process, mock_collect,
     ):
         """Test that get_news() accepts and uses custom target_relevant parameter."""
         mock_collect.return_value = []
