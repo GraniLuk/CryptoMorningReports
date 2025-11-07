@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 
+from infra.telegram_logging_handler import app_logger
 from news.article_cache import cleanup_old_articles, get_cache_statistics
 
 
@@ -92,8 +93,10 @@ def cleanup_cache(max_age_hours: int, dry_run: bool = False) -> int:
                             f"({age_hours:.1f}h old)",
                         )
 
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as e:  # noqa: BLE001
+                    app_logger.warning(
+                        f"Failed to process cache file {markdown_file}: {e!s}",
+                    )
 
         print(f"\nWould delete: {would_delete} articles")
         total_articles = int(stats_before["total_articles"])
