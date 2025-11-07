@@ -44,6 +44,9 @@ def mock_get_news(monkeypatch: pytest.MonkeyPatch) -> Mock:
 
 def test_fetch_and_cache_for_symbol(mock_ollama_processing: Mock, mock_get_news: Mock):
     """Test fetching fresh articles and caching them for a specific symbol."""
+    # Ensure mocks are applied (fixtures are injected via parameters)
+    assert mock_ollama_processing is not None
+    assert mock_get_news is not None
     print("\n🧪 Testing fetch_and_cache_articles_for_symbol with mocked Ollama")
     print("=" * 50)
 
