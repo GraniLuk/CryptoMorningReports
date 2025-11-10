@@ -120,6 +120,7 @@ def test_enrich_article_with_ai_uses_ai_payload(monkeypatch: pytest.MonkeyPatch)
         relevance_score=0.7,
         is_relevant=True,
         reasoning="Looks actionable",
+        elapsed_time=0.5,
     )
 
     monkeypatch.setattr(rp, "process_article_with_ollama", lambda *_args, **_kwargs: analysis)
@@ -130,8 +131,6 @@ def test_enrich_article_with_ai_uses_ai_payload(monkeypatch: pytest.MonkeyPatch)
         focus_symbols=["btc"],
         detected_symbols=["ETH"],
         article_link="https://example.com/article",
-        current_index=1,
-        total=1,
     )
 
     assert enrichment.summary == "Summary"
@@ -140,10 +139,12 @@ def test_enrich_article_with_ai_uses_ai_payload(monkeypatch: pytest.MonkeyPatch)
     assert enrichment.relevance_score == 0.7
     assert enrichment.is_relevant is True
     assert enrichment.notes == "Looks actionable"
+    assert enrichment.elapsed_time == 0.5
 
 
 def test_enrich_article_with_ai_falls_back_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """If AI processing fails, the pipeline should still flag relevance."""
+
     def raise_error(*_args: Any, **_kwargs: Any) -> ArticleProcessingResult:
         message = "timeout"
         raise ArticleProcessingError(message)
@@ -156,8 +157,6 @@ def test_enrich_article_with_ai_falls_back_on_failure(monkeypatch: pytest.Monkey
         focus_symbols=None,
         detected_symbols=["SOL"],
         article_link="https://example.com/article",
-        current_index=1,
-        total=1,
     )
 
     assert enrichment.summary == ""

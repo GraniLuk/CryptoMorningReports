@@ -51,6 +51,7 @@ def mock_ollama_processing(monkeypatch):
             relevance_score=0.9,
             is_relevant=True,
             reasoning="Mocked reasoning for test purposes",
+            elapsed_time=1.5,
         )
 
     # Mock fetch_full_content to return mock content
@@ -69,11 +70,19 @@ def mock_ollama_processing(monkeypatch):
                 self.published = "Thu, 07 Nov 2025 12:00:00 +0000"
                 # Create a struct_time for current time
                 now = datetime.now(UTC)
-                self.published_parsed = struct_time((
-                    now.year, now.month, now.day,
-                    now.hour, now.minute, now.second,
-                    now.weekday(), now.timetuple().tm_yday, 0,
-                ))
+                self.published_parsed = struct_time(
+                    (
+                        now.year,
+                        now.month,
+                        now.day,
+                        now.hour,
+                        now.minute,
+                        now.second,
+                        now.weekday(),
+                        now.timetuple().tm_yday,
+                        0,
+                    ),
+                )
 
         class MockFeed:
             def __init__(self):
@@ -383,6 +392,7 @@ def main() -> None:
         relevance_score=0.9,
         is_relevant=True,
         reasoning="Test reasoning",
+        elapsed_time=2.0,
     )
 
     with patch(
@@ -431,8 +441,7 @@ def test_full_content_fetching_pytest(mock_ollama_processing: Any) -> None:
     # Patch fetch_full_content in this module's namespace
     with patch("tests.news.test_rss_feeds.fetch_full_content") as mock_fetch:
         mock_fetch.return_value = (
-            "Mock full content for testing purposes. "
-            "This is a longer piece of content."
+            "Mock full content for testing purposes. This is a longer piece of content."
         )
         result = check_full_content_fetching(mock_ollama_processing)
         assert len(result["per_source"]) > 0
@@ -446,4 +455,3 @@ def test_individual_feeds_pytest(mock_ollama_processing: Any) -> None:
     result = check_single_feed(source, feed_info)
     assert result["success"] is True
     assert result["article_count"] > 0
-

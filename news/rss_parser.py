@@ -31,6 +31,7 @@ class RSSEntry:
 
     Used for cross-feed aggregation and sorting before processing.
     """
+
     source: str
     title: str
     link: str
@@ -178,14 +179,6 @@ def _process_entries_until_target(
 
     for entry in entries:
         total_processed += 1
-        elapsed_seconds = (datetime.now(UTC) - start_time).total_seconds()
-
-        # Enhanced progress logging
-        app_logger.info(
-            f"🔄 Processing article {total_processed}/{len(entries)} ({entry.source}) | "
-            f"{len(relevant_articles)}/{target_relevant} relevant found | "
-            f"Elapsed: {elapsed_seconds:.1f}s",
-        )
 
         # Process this entry
         processed = _process_feed_entry(
@@ -195,8 +188,6 @@ def _process_entries_until_target(
             current_time=current_time,
             cache_enabled=cache_enabled,
             symbols_list=symbols_list,
-            current_index=total_processed,
-            total=len(entries),
         )
 
         if processed is None:
@@ -211,6 +202,18 @@ def _process_entries_until_target(
         # Add to results if relevant
         if relevant_payload is not None:
             relevant_articles.append(relevant_payload)
+
+            # Log processed article
+            elapsed_time = _extract_elapsed_time(relevant_payload)
+            human_time = _format_elapsed_time(elapsed_time)
+            relevance_score = relevant_payload.get("relevance_score") or 0.0
+            is_relevant = relevant_payload.get("is_relevant", False)
+            app_logger.info(
+                f"✅ {relevant_payload['source']} | {relevant_payload['title']} | "
+                f"{human_time} | {len(relevant_articles)}/{target_relevant} relevant | "
+                f"relevance: {relevance_score:.2f}, relevant: {is_relevant} | "
+                f"{relevant_payload['link']}",
+            )
 
             # Early stopping: we have enough relevant articles
             if len(relevant_articles) >= target_relevant:
@@ -297,7 +300,7 @@ def get_news(target_relevant: int | None = None) -> str:
     app_logger.info(
         f"RSS processing completed: {articles_found}/{target_relevant} target articles found, "
         f"{total_processed} articles processed in {total_time.total_seconds():.1f}s "
-        f"(avg: {total_time.total_seconds()/max(total_processed, 1):.1f}s per article)",
+        f"(avg: {total_time.total_seconds() / max(total_processed, 1):.1f}s per article)",
     )
 
     if articles_found < target_relevant:
@@ -370,8 +373,7 @@ def fetch_rss_news(feed_url, source, class_name):
 
         # Second pass: process entries with progress
         latest_news: list[dict[str, object]] = []
-        total_to_process = len(entries_to_process)
-        for entry_index, entry in enumerate(entries_to_process):
+        for entry in entries_to_process:
             processed = _process_feed_entry(
                 entry=entry,
                 source=source,
@@ -379,8 +381,6 @@ def fetch_rss_news(feed_url, source, class_name):
                 current_time=current_time,
                 cache_enabled=cache_enabled,
                 symbols_list=symbols_list,
-                current_index=entry_index + 1,
-                total=total_to_process,
             )
 
             if processed is None:
@@ -428,6 +428,7 @@ class ArticleEnrichmentResult:
     relevance_score: float | None
     is_relevant: bool
     notes: str
+    elapsed_time: float  # Time in seconds taken to process the article with AI
 
 
 def _parse_rss_entry(
@@ -509,8 +510,6 @@ def _process_feed_entry(
     current_time: datetime,
     cache_enabled: bool,
     symbols_list: list,
-    current_index: int,
-    total: int,
 ) -> tuple[CachedArticle | None, dict[str, object] | None] | None:
     entry_link, entry_title, entry_published = _extract_entry_fields(entry)
 
@@ -536,8 +535,6 @@ def _process_feed_entry(
         focus_symbols=focus_symbols,
         detected_symbols=detected_symbols,
         article_link=entry_link,
-        current_index=current_index,
-        total=total,
     )
 
     normalized_symbols = _normalize_symbols(enrichment.symbols or detected_symbols)
@@ -555,6 +552,7 @@ def _process_feed_entry(
         "is_relevant": enrichment.is_relevant,
         "processed_at": processed_at,
         "analysis_notes": enrichment.notes,
+        "elapsed_time": enrichment.elapsed_time,
     }
 
     cached_article = None
@@ -614,8 +612,6 @@ def _enrich_article_with_ai(
     focus_symbols: list[str] | None,
     detected_symbols: list[str],
     article_link: str,
-    current_index: int,
-    total: int,
 ) -> ArticleEnrichmentResult:
     if not full_content or not full_content.strip():
         return ArticleEnrichmentResult(
@@ -625,9 +621,9 @@ def _enrich_article_with_ai(
             relevance_score=None,
             is_relevant=False,
             notes="",
+            elapsed_time=0.0,
         )
 
-    app_logger.info(f"🔄 Processing article {current_index}/{total}: {title[:50]}...")
     start_time = time.perf_counter()
 
     try:
@@ -652,6 +648,7 @@ def _enrich_article_with_ai(
             relevance_score=None,
             is_relevant=True,
             notes=notes,
+            elapsed_time=elapsed_time,
         )
 
     resolved_symbols = list(analysis.symbols) if analysis.symbols else detected_symbols[:]
@@ -662,16 +659,35 @@ def _enrich_article_with_ai(
         relevance_score=analysis.relevance_score,
         is_relevant=analysis.is_relevant,
         notes=analysis.reasoning,
+        elapsed_time=analysis.elapsed_time,
     )
 
 
 def _normalize_symbols(symbols: list[str]) -> list[str]:
     normalized = {
-        symbol.strip().upper()
-        for symbol in symbols
-        if isinstance(symbol, str) and symbol.strip()
+        symbol.strip().upper() for symbol in symbols if isinstance(symbol, str) and symbol.strip()
     }
     return sorted(normalized)
+
+
+def _extract_elapsed_time(payload: dict) -> float:
+    """Extract and convert elapsed_time from payload safely."""
+    elapsed_time_raw = payload.get("elapsed_time", 0.0)
+    if isinstance(elapsed_time_raw, (int, float)):
+        return float(elapsed_time_raw)
+    try:
+        return float(elapsed_time_raw)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _format_elapsed_time(seconds: float) -> str:
+    """Format elapsed time in human readable format (e.g., '3m 25s')."""
+    minutes = int(seconds // 60)
+    remaining_seconds = int(seconds % 60)
+    if minutes > 0:
+        return f"{minutes}m {remaining_seconds}s"
+    return f"{remaining_seconds}s"
 
 
 if __name__ == "__main__":

@@ -40,10 +40,19 @@ class Test24HFiltering:
         recent_entry.published = "2025-11-05T12:00:00+00:00"
         # Set published_parsed to 1 hour ago
         one_hour_ago = now - timedelta(hours=1)
-        recent_entry.published_parsed = time.struct_time((
-            one_hour_ago.year, one_hour_ago.month, one_hour_ago.day,
-            one_hour_ago.hour, one_hour_ago.minute, one_hour_ago.second, -1, -1, -1,
-        ))
+        recent_entry.published_parsed = time.struct_time(
+            (
+                one_hour_ago.year,
+                one_hour_ago.month,
+                one_hour_ago.day,
+                one_hour_ago.hour,
+                one_hour_ago.minute,
+                one_hour_ago.second,
+                -1,
+                -1,
+                -1,
+            ),
+        )
 
         old_entry = Mock()
         old_entry.link = "https://example.com/old"
@@ -51,20 +60,32 @@ class Test24HFiltering:
         old_entry.published = "2025-11-03T12:00:00+00:00"
         # Set published_parsed to 48 hours ago (should be filtered out)
         two_days_ago = now - timedelta(hours=48)
-        old_entry.published_parsed = time.struct_time((
-            two_days_ago.year, two_days_ago.month, two_days_ago.day,
-            two_days_ago.hour, two_days_ago.minute, two_days_ago.second, -1, -1, -1,
-        ))
+        old_entry.published_parsed = time.struct_time(
+            (
+                two_days_ago.year,
+                two_days_ago.month,
+                two_days_ago.day,
+                two_days_ago.hour,
+                two_days_ago.minute,
+                two_days_ago.second,
+                -1,
+                -1,
+                -1,
+            ),
+        )
 
         mock_feed = Mock()
         mock_feed.entries = [recent_entry, old_entry]
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser.is_article_cache_enabled", return_value=False), \
-             patch("news.rss_parser._load_symbols_for_detection", return_value=[]), \
-                          patch("news.rss_parser._process_feed_entry",
-                   return_value=(None, {"title": "Recent Article", "is_relevant": True})):
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser.is_article_cache_enabled", return_value=False),
+            patch("news.rss_parser._load_symbols_for_detection", return_value=[]),
+            patch(
+                "news.rss_parser._process_feed_entry",
+                return_value=(None, {"title": "Recent Article", "is_relevant": True}),
+            ),
+        ):
             result = fetch_rss_news("https://example.com/feed", "test", "test-class")
 
             # Should return 1 article (the recent one, old one filtered out)
@@ -92,15 +113,19 @@ class Test24HFiltering:
         mock_feed = Mock()
         mock_feed.entries = [old_entry1, old_entry2]
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser.is_article_cache_enabled", return_value=False), \
-             patch("news.rss_parser._load_symbols_for_detection", return_value=[]), \
-             patch("news.rss_parser.datetime") as mock_datetime:
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser.is_article_cache_enabled", return_value=False),
+            patch("news.rss_parser._load_symbols_for_detection", return_value=[]),
+            patch("news.rss_parser.datetime") as mock_datetime,
+        ):
             # Mock datetime.now to return our fixed time
             mock_datetime.now.return_value = current_time
-            mock_datetime.side_effect = lambda *args, **kwargs: \
-                datetime(*args, **kwargs, tzinfo=UTC) if args or kwargs else current_time
+            mock_datetime.side_effect = (
+                lambda *args, **kwargs: datetime(*args, **kwargs, tzinfo=UTC)
+                if args or kwargs
+                else current_time
+            )
 
             result = fetch_rss_news("https://example.com/feed", "test", "test-class")
 
@@ -119,10 +144,19 @@ class Test24HFiltering:
         cached_entry.published = "2025-11-07T12:00:00+00:00"
         # Set published_parsed to 2 hours ago
         two_hours_ago = now - timedelta(hours=2)
-        cached_entry.published_parsed = time.struct_time((
-            two_hours_ago.year, two_hours_ago.month, two_hours_ago.day,
-            two_hours_ago.hour, two_hours_ago.minute, two_hours_ago.second, -1, -1, -1,
-        ))
+        cached_entry.published_parsed = time.struct_time(
+            (
+                two_hours_ago.year,
+                two_hours_ago.month,
+                two_hours_ago.day,
+                two_hours_ago.hour,
+                two_hours_ago.minute,
+                two_hours_ago.second,
+                -1,
+                -1,
+                -1,
+            ),
+        )
 
         fresh_entry = Mock()
         fresh_entry.link = "https://example.com/fresh"
@@ -130,29 +164,44 @@ class Test24HFiltering:
         fresh_entry.published = "2025-11-07T13:00:00+00:00"
         # Set published_parsed to 1 hour ago
         one_hour_ago = now - timedelta(hours=1)
-        fresh_entry.published_parsed = time.struct_time((
-            one_hour_ago.year, one_hour_ago.month, one_hour_ago.day,
-            one_hour_ago.hour, one_hour_ago.minute, one_hour_ago.second, -1, -1, -1,
-        ))
+        fresh_entry.published_parsed = time.struct_time(
+            (
+                one_hour_ago.year,
+                one_hour_ago.month,
+                one_hour_ago.day,
+                one_hour_ago.hour,
+                one_hour_ago.minute,
+                one_hour_ago.second,
+                -1,
+                -1,
+                -1,
+            ),
+        )
 
         mock_feed = Mock()
         mock_feed.entries = [cached_entry, fresh_entry]
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser.is_article_cache_enabled", return_value=True), \
-             patch("news.rss_parser.article_exists_in_cache",
-                   side_effect=lambda link: link == "https://example.com/cached"), \
-             patch("news.rss_parser._load_symbols_for_detection", return_value=[]), \
-             patch("news.rss_parser.process_article_with_ollama",
-                   return_value=ap.ArticleProcessingResult(
-                       summary="Test summary",
-                       cleaned_content="Test content",
-                       symbols=["BTC"],
-                       relevance_score=0.9,
-                       is_relevant=True,
-                       reasoning="Test reasoning",
-                   )):
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser.is_article_cache_enabled", return_value=True),
+            patch(
+                "news.rss_parser.article_exists_in_cache",
+                side_effect=lambda link: link == "https://example.com/cached",
+            ),
+            patch("news.rss_parser._load_symbols_for_detection", return_value=[]),
+            patch(
+                "news.rss_parser.process_article_with_ollama",
+                return_value=ap.ArticleProcessingResult(
+                    summary="Test summary",
+                    cleaned_content="Test content",
+                    symbols=["BTC"],
+                    relevance_score=0.9,
+                    is_relevant=True,
+                    reasoning="Test reasoning",
+                    elapsed_time=0.0,
+                ),
+            ),
+        ):
             result = fetch_rss_news("https://example.com/feed", "test", "test-class")
 
             # Should return 1 article (the fresh one, cached one skipped)
@@ -167,8 +216,8 @@ class Test24HFiltering:
             entry = Mock()
             entry.link = f"https://example.com/article{i}"
             entry.title = f"Article {i}"
-            entry.published = f"2025-11-05T{i+10:02d}:00:00+00:00"
-            entry.published_parsed = (2025, 11, 5, i+10, 0, 0, 0, 0, 0)
+            entry.published = f"2025-11-05T{i + 10:02d}:00:00+00:00"
+            entry.published_parsed = (2025, 11, 5, i + 10, 0, 0, 0, 0, 0)
             entries.append(entry)
 
         mock_feed = Mock()
@@ -185,11 +234,12 @@ class Test24HFiltering:
                 return (None, None)
             return (None, None)
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser.is_article_cache_enabled", return_value=False), \
-             patch("news.rss_parser._load_symbols_for_detection", return_value=[]), \
-             patch("news.rss_parser._process_feed_entry", side_effect=mock_process_feed_entry):
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser.is_article_cache_enabled", return_value=False),
+            patch("news.rss_parser._load_symbols_for_detection", return_value=[]),
+            patch("news.rss_parser._process_feed_entry", side_effect=mock_process_feed_entry),
+        ):
             result = fetch_rss_news("https://example.com/feed", "test", "test-class")
 
             # Should return exactly NEWS_ARTICLE_LIMIT (10) articles
@@ -220,9 +270,10 @@ class TestCollectEntriesFromFeed:
         mock_feed = Mock()
         mock_feed.entries = [entry1, entry2]
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser.is_article_cache_enabled", return_value=False):
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser.is_article_cache_enabled", return_value=False),
+        ):
             result = _collect_entries_from_feed(
                 feed_url="https://example.com/feed",
                 source="test",
@@ -240,7 +291,6 @@ class TestCollectEntriesFromFeed:
         current_time = datetime.now(UTC)
 
         with patch("news.rss_parser.feedparser.parse", side_effect=ValueError("Invalid feed")):
-
             result = _collect_entries_from_feed(
                 feed_url="https://invalid-feed.com",
                 source="test",
@@ -280,7 +330,11 @@ class TestCurrentReportLimits:
     @patch("news.rss_parser.is_article_cache_enabled", return_value=False)
     @patch("news.rss_parser._load_symbols_for_detection", return_value=[])
     def test_get_news_uses_custom_target_relevant(
-        self, _mock_load_symbols, _mock_cache_enabled, mock_process, mock_collect,
+        self,
+        _mock_load_symbols,
+        _mock_cache_enabled,
+        mock_process,
+        mock_collect,
     ):
         """Test that get_news() accepts and uses custom target_relevant parameter."""
         mock_collect.return_value = []
@@ -296,8 +350,9 @@ class TestCurrentReportLimits:
 
     @patch("news.rss_parser.get_news")
     @patch("news.rss_parser.get_articles_for_symbol")
-    def test_fetch_and_cache_articles_for_symbol_integration(self, mock_get_articles,
-                                                          mock_get_news):
+    def test_fetch_and_cache_articles_for_symbol_integration(
+        self, mock_get_articles, mock_get_news,
+    ):
         """Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT."""
         # Mock the dependencies
         mock_get_news.return_value = None

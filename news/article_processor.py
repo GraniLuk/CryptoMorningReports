@@ -8,7 +8,6 @@ import time
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
-from infra.telegram_logging_handler import app_logger
 from shared_code.ollama_client import OllamaClientError, get_ollama_client
 
 
@@ -30,6 +29,7 @@ class ArticleProcessingResult:
     relevance_score: float | None
     is_relevant: bool
     reasoning: str
+    elapsed_time: float
 
 
 def process_article_with_ollama(
@@ -62,16 +62,8 @@ def process_article_with_ollama(
         raise ArticleProcessingError(str(exc)) from exc
 
     payload = _parse_json_response(response_text)
-    result = _build_processing_result(payload, fallback_content=normalized_content)
-
     elapsed_time = time.perf_counter() - start_time
-    app_logger.info(
-        "Ollama processed article '%s' in %.2fs (relevance: %.2f, relevant: %s)",
-        title[:60],
-        elapsed_time,
-        result.relevance_score if result.relevance_score is not None else 0.0,
-        result.is_relevant,
-    )
+    result = _build_processing_result(payload, fallback_content=normalized_content, elapsed_time=elapsed_time)
 
     return result
 
@@ -122,6 +114,7 @@ def _build_processing_result(
     payload: dict[str, object],
     *,
     fallback_content: str,
+    elapsed_time: float,
 ) -> ArticleProcessingResult:
     summary = _coerce_str(payload.get("summary"))
     cleaned_content = _coerce_str(payload.get("cleaned_content")) or fallback_content
@@ -156,6 +149,7 @@ def _build_processing_result(
         relevance_score=relevance_score,
         is_relevant=relevant_flag,
         reasoning=reasoning,
+        elapsed_time=elapsed_time,
     )
 
 

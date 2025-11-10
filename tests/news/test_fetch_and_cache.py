@@ -25,6 +25,7 @@ def mock_ollama_processing(monkeypatch: pytest.MonkeyPatch) -> Mock:
         relevance_score=0.9,
         is_relevant=True,
         reasoning="Article discusses major cryptocurrencies",
+        elapsed_time=1.0,
     )
 
     mock_process = Mock(return_value=mock_result)
@@ -96,6 +97,7 @@ if __name__ == "__main__":
         relevance_score=0.9,
         is_relevant=True,
         reasoning="Article discusses major cryptocurrencies",
+        elapsed_time=1.0,
     )
 
     mock_process = Mock(return_value=mock_result)
