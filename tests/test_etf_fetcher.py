@@ -6,7 +6,7 @@ import requests
 
 from etf.etf_fetcher import (
     _safe_float_parse,
-    fetch_defillama_etf_data,
+    fetch_etf_data,
     get_etf_summary_stats,
     parse_etf_data,
 )
@@ -15,101 +15,82 @@ from etf.etf_fetcher import (
 class TestETFFetcher:
     """Test cases for ETF fetcher functions."""
 
-    @patch("etf.etf_fetcher.requests.get")
-    def test_fetch_defillama_etf_data_success(self, mock_get):
+    @patch("etf.etf_fetcher.yf.download")
+    def test_fetch_etf_data_success(self, mock_download):
         """Test successful API fetch."""
-        # Mock successful response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [
-            {
-                "Ticker": "IBIT",
-                "Coin": "BTC",
-                "Issuer": "BlackRock",
-                "Price": 42.50,
-                "AUM": 1000000000,
-                "Flows": 50000000,
-                "FlowsChange": 10000000,
-                "Volume": 200000000,
-                "Date": 1705276800,  # 2024-01-15
-            },
-            {
-                "Ticker": "ETHE",
-                "Coin": "ETH",
-                "Issuer": "Grayscale",
-                "Price": 25.30,
-                "AUM": 500000000,
-                "Flows": 25000000,
-                "FlowsChange": 5000000,
-                "Volume": 100000000,
-                "Date": 1705276800,
-            },
-        ]
-        mock_get.return_value = mock_response
+        # Mock successful response from yfinance with multi-index columns
+        import pandas as pd
 
-        result = fetch_defillama_etf_data()
+        # YFinance returns multi-indexed columns: (ticker, field)
+        # Create sample data for IBIT and ETHE
+        dates = pd.date_range("2024-01-15", periods=1)
+        mock_data = pd.DataFrame(
+            {
+                ("IBIT", "Close"): [42.50],
+                ("IBIT", "Volume"): [200000000],
+                ("ETHE", "Close"): [25.30],
+                ("ETHE", "Volume"): [100000000],
+            },
+            index=dates,
+        )
+
+        mock_download.return_value = mock_data
+
+        result = fetch_etf_data()
 
         assert result is not None
         assert len(result) == 2
-        assert result[0]["Ticker"] == "IBIT"
-        assert result[1]["Ticker"] == "ETHE"
+        # Find IBIT and ETHE in results (order may vary)
+        ibit = next((r for r in result if r["Ticker"] == "IBIT"), None)
+        ethe = next((r for r in result if r["Ticker"] == "ETHE"), None)
+        assert ibit is not None
+        assert ethe is not None
+        assert ibit["Price"] == 42.50
+        assert ethe["Price"] == 25.30
 
-    @patch("etf.etf_fetcher.requests.get")
-    def test_fetch_defillama_etf_data_http_error(self, mock_get):
-        """Test API fetch with HTTP error - should fallback to mock data."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_get.return_value = mock_response
+    @patch("etf.etf_fetcher.yf.download")
+    def test_fetch_etf_data_http_error(self, mock_download):
+        """Test API fetch with error - should return None (no mock fallback)."""
+        # Simulate yfinance raising an exception
+        mock_download.side_effect = Exception("YFinance error")
 
-        result = fetch_defillama_etf_data()
+        result = fetch_etf_data()
 
-        # Should return mock data as fallback
-        assert result is not None
-        assert isinstance(result, list)
-        assert len(result) == 4  # Mock data has 4 ETFs
-        assert all(etf["Coin"] in ["BTC", "ETH"] for etf in result)
+        # Should return None on error (we removed mock data fallback)
+        assert result is None
 
-    @patch("etf.etf_fetcher.requests.get")
-    def test_fetch_defillama_etf_data_timeout(self, mock_get):
-        """Test API fetch with timeout - should fallback to mock data."""
-        mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
+    @patch("etf.etf_fetcher.yf.download")
+    def test_fetch_etf_data_timeout(self, mock_download):
+        """Test API fetch with timeout - should return None (no mock fallback)."""
+        mock_download.side_effect = Exception("Timeout")
 
-        result = fetch_defillama_etf_data()
+        result = fetch_etf_data()
 
-        # Should return mock data as fallback
-        assert result is not None
-        assert isinstance(result, list)
-        assert len(result) == 4  # Mock data has 4 ETFs
-        assert all(etf["Coin"] in ["BTC", "ETH"] for etf in result)
+        # Should return None on error (we removed mock data fallback)
+        assert result is None
 
-    @patch("etf.etf_fetcher.requests.get")
-    def test_fetch_defillama_etf_data_invalid_json(self, mock_get):
-        """Test API fetch with invalid JSON response - should fallback to mock data."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.side_effect = ValueError("Invalid JSON")
-        mock_get.return_value = mock_response
+    @patch("etf.etf_fetcher.yf.download")
+    def test_fetch_etf_data_invalid_json(self, mock_download):
+        """Test API fetch with invalid data - should return None (no mock fallback)."""
+        # Simulate yfinance returning invalid data (e.g., not a DataFrame)
+        mock_download.return_value = None
 
-        result = fetch_defillama_etf_data()
+        result = fetch_etf_data()
 
-        # Should return mock data as fallback
-        assert result is not None
-        assert isinstance(result, list)
-        assert len(result) == 4  # Mock data has 4 ETFs
-        assert all(etf["Coin"] in ["BTC", "ETH"] for etf in result)
+        # Should return None on error (we removed mock data fallback)
+        assert result is None
 
-    @patch("etf.etf_fetcher.requests.get")
-    def test_fetch_defillama_etf_data_empty_response(self, mock_get):
+    @patch("etf.etf_fetcher.yf.download")
+    def test_fetch_defillama_etf_data_empty_response(self, mock_download):
         """Test API fetch with empty response."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = []
-        mock_get.return_value = mock_response
+        import pandas as pd
 
-        result = fetch_defillama_etf_data()
+        mock_download.return_value = pd.DataFrame([])
 
-        assert result == []
+        result = fetch_etf_data()
+
+        # Empty DataFrame should return None (not empty list)
+        assert result is None
 
     def test_parse_etf_data(self):
         """Test parsing ETF data into organized structure."""
@@ -256,7 +237,7 @@ class TestETFFetcher:
         btc_stats = result["BTC"]
         assert btc_stats["count"] == 2
         assert btc_stats["total_flows"] == 80000000  # 50M + 30M
-        assert btc_stats["avg_flows"] == 40000000    # 80M / 2
+        assert btc_stats["avg_flows"] == 40000000  # 80M / 2
         assert btc_stats["total_aum"] == 1800000000  # 1B + 800M
         assert "BlackRock" in btc_stats["issuers"]
         assert "Fidelity" in btc_stats["issuers"]

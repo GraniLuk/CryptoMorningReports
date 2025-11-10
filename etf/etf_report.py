@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from prettytable import PrettyTable
 
-from etf.etf_fetcher import fetch_defillama_etf_data, parse_etf_data
+from etf.etf_fetcher import fetch_etf_data, parse_etf_data
 from etf.etf_repository import ETFRepository
 from infra.telegram_logging_handler import app_logger
 
@@ -29,7 +29,7 @@ def update_etf_data(
 
     This method handles the entire ETF data lifecycle:
     1. Check if today's data already exists in the database
-    2. If not, fetch from DefiLlama API
+    2. If not, fetch from YFinance API
     3. Parse and save to database
     4. Return success status
 
@@ -47,23 +47,27 @@ def update_etf_data(
         existing_btc = repo.get_latest_etf_flows("BTC")
         existing_eth = repo.get_latest_etf_flows("ETH")
 
-        if (existing_btc and existing_eth and
-            existing_btc[0].get("fetch_date") == today):
+        if existing_btc and existing_eth and existing_btc[0].get("fetch_date") == today:
             app_logger.info("✓ ETF data already cached for today, skipping API fetch")
             return True
 
         # Fetch fresh data from API
-        app_logger.info("📊 Fetching latest ETF data from DefiLlama API...")
-        raw_etf_data = fetch_defillama_etf_data()
+        app_logger.info("📊 Fetching latest ETF data from YFinance API (batch mode)...")
+        raw_etf_data = fetch_etf_data()
 
         if not raw_etf_data:
-            app_logger.warning("⚠️ No ETF data returned from API")
+            app_logger.error(
+                "❌ Failed to fetch ETF data from YFinance API. "
+                "ETF report will be empty. Check logs for details.",
+            )
             return False
 
         # Parse and organize ETF data
         organized_data = parse_etf_data(raw_etf_data)
         if not organized_data:
-            app_logger.warning("⚠️ Failed to parse ETF data from API")
+            app_logger.error(
+                "❌ Failed to parse ETF data from API response. ETF report will be empty.",
+            )
             return False
 
         # Save to database
@@ -91,14 +95,18 @@ def update_etf_data(
                         app_logger.error(f"Failed to save {coin} ETF {etf['ticker']}: {e!s}")
                         continue
 
+        if total_saved == 0:
+            app_logger.error("❌ No ETF records were saved to database. ETF report will be empty.")
+            return False
+
         conn.commit()
         app_logger.info(f"✓ ETF data update complete: {total_saved} records saved")
 
     except Exception as e:  # noqa: BLE001
-        app_logger.error(f"Error updating ETF data: {e!s}")
+        app_logger.error(f"❌ Unexpected error updating ETF data: {e!s}. ETF report will be empty.")
         return False
     else:
-        return total_saved > 0
+        return True
 
 
 def fetch_etf_summary_report(
@@ -139,12 +147,15 @@ def fetch_etf_summary_report(
             weekly_flows = repo.get_weekly_etf_flows(coin, days=7)
 
             if not latest_flows:
-                # Show zero flows if no data
-                etf_table.add_row([
-                    coin,
-                    "$0",
-                    "$0",
-                ])
+                # Show that no data is available (not zero flows)
+                app_logger.warning(f"No ETF data available for {coin}")
+                etf_table.add_row(
+                    [
+                        coin,
+                        "No data",
+                        "No data",
+                    ],
+                )
                 continue
 
             # Calculate total daily flows
@@ -161,11 +172,13 @@ def fetch_etf_summary_report(
             daily_flows_str = _format_currency(total_daily_flows)
             weekly_total_str = _format_currency(total_weekly_flows)
 
-            etf_table.add_row([
-                coin,
-                daily_flows_str,
-                weekly_total_str,
-            ])
+            etf_table.add_row(
+                [
+                    coin,
+                    daily_flows_str,
+                    weekly_total_str,
+                ],
+            )
 
         app_logger.info("Generated ETF summary report for BTC and ETH")
 
@@ -253,27 +266,31 @@ def fetch_etf_report(
             weekly_total_str = _format_currency(weekly_total)
             aum_str = _format_large_number(aum) if aum else "N/A"
 
-            etf_table.add_row([
-                ticker,
-                issuer[:12],  # Truncate long issuer names
-                price_str,
-                daily_flows_str,
-                weekly_total_str,
-                aum_str,
-            ])
+            etf_table.add_row(
+                [
+                    ticker,
+                    issuer[:12],  # Truncate long issuer names
+                    price_str,
+                    daily_flows_str,
+                    weekly_total_str,
+                    aum_str,
+                ],
+            )
 
             total_daily_flows += daily_flows or 0
             total_weekly_flows += weekly_total
 
         # Add summary row
-        etf_table.add_row([
-            "=" * 10,
-            "=" * 12,
-            "=" * 8,
-            "=" * 12,
-            "=" * 12,
-            "=" * 10,
-        ])
+        etf_table.add_row(
+            [
+                "=" * 10,
+                "=" * 12,
+                "=" * 8,
+                "=" * 12,
+                "=" * 12,
+                "=" * 10,
+            ],
+        )
 
         total_daily_str = _format_currency(total_daily_flows)
         total_weekly_str = _format_currency(total_weekly_flows)
@@ -286,14 +303,16 @@ def fetch_etf_report(
         else:
             direction_indicator = "→ NEUTRAL"
 
-        etf_table.add_row([
-            f"TOTAL {coin}",
-            f"{direction_indicator}",
-            "",
-            total_daily_str,
-            total_weekly_str,
-            "",
-        ])
+        etf_table.add_row(
+            [
+                f"TOTAL {coin}",
+                f"{direction_indicator}",
+                "",
+                total_daily_str,
+                total_weekly_str,
+                "",
+            ],
+        )
 
         app_logger.info(
             f"Generated ETF report for {coin}: "
@@ -382,15 +401,14 @@ def get_etf_flow_summary(coin: str, daily_flows: float, weekly_flows: float) -> 
     daily_str = _format_currency(daily_flows).replace("↑ ", "").replace("↓ ", "")
     weekly_str = _format_currency(weekly_flows).replace("↑ ", "").replace("↓ ", "")
 
-    institution_type = (
-        "accumulation" if daily_flows > 0 else
-        "distribution" if daily_flows < 0 else
-        "stability"
-    )
+    if daily_flows > 0:
+        institution_type = "accumulation"
+    elif daily_flows < 0:
+        institution_type = "distribution"
+    else:
+        institution_type = "stability"
     return (
         f"{coin} ETF flows show {sentiment} sentiment with {direction} of "
         f"{daily_str} today and {weekly_str} over the past week, indicating "
         f"institutional {institution_type}."
     )
-
-

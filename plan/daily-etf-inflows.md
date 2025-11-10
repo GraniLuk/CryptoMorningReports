@@ -1,24 +1,26 @@
 ---
 goal: Implement ETF Daily Inflows/Outflows Tracking for BTC and ETH
-version: 1.0
+version: 1.1
 date_created: 2025-11-06
-last_updated: 2025-11-06
+last_updated: 2025-11-10
 owner: CryptoMorningReports Team
-status: Planned
+status: In Progress - Migrating from DefiLlama to YFinance
 tags: [feature, etf, data-integration, telegram, ai-analysis]
 ---
 
 # ETF Inflows/Outflows Feature Implementation Plan
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
 
-This plan outlines the implementation of ETF (Exchange-Traded Fund) daily inflows and outflows tracking for Bitcoin and Ethereum using the DefiLlama ETF API. The feature will integrate seamlessly with the existing daily report infrastructure, providing institutional sentiment indicators through ETF flow data.
+**UPDATE 2025-11-10:** The original DefiLlama ETF API endpoint (`https://defillama.com/api/etfs`) does not exist. The feature has been migrated to use **YFinance** as the data source for ETF prices, AUM, and volume data. Flow data is not directly available from YFinance and may require calculation from historical AUM changes.
+
+This plan outlines the implementation of ETF (Exchange-Traded Fund) daily inflows and outflows tracking for Bitcoin and Ethereum. The feature integrates with the existing daily report infrastructure, providing institutional sentiment indicators through ETF flow data.
 
 ## 1. Requirements & Constraints
 
 ### Requirements
 
-- **REQ-001**: Fetch ETF data from DefiLlama API endpoint `https://defillama.com/api/etfs`
+- **REQ-001**: ~~Fetch ETF data from DefiLlama API endpoint `https://defillama.com/api/etfs`~~ **UPDATED:** Fetch ETF price, AUM, and volume data from YFinance API
 - **REQ-002**: Track daily inflows/outflows for both BTC and ETH ETFs
 - **REQ-003**: Store ETF flow data in a dedicated database table with proper schema
 - **REQ-004**: Display today's inflows and 7-day aggregated values in the daily report
@@ -28,6 +30,7 @@ This plan outlines the implementation of ETF (Exchange-Traded Fund) daily inflow
 - **REQ-008**: Support both SQLite (local) and Azure SQL (production) databases
 - **REQ-009**: Handle API failures gracefully with proper error logging
 - **REQ-010**: Include issuer-level breakdown (BlackRock, Fidelity, Grayscale, etc.)
+- **REQ-011**: **NEW:** Implement rate limiting to avoid YFinance API restrictions (0.5s delay between requests)
 
 ### Security Requirements
 

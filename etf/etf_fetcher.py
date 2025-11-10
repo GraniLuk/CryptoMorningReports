@@ -1,241 +1,189 @@
-"""ETF data fetcher for DefiLlama API integration."""
+"""ETF data fetcher using YFinance API integration."""
 
 import math
-import time
 from datetime import UTC, datetime
-from http import HTTPStatus
 from typing import Any
 
-import requests
+import pandas as pd
+import yfinance as yf
 
 from infra.telegram_logging_handler import app_logger
 
 
-# DefiLlama ETF API endpoint
-ETF_API_URL = "https://defillama.com/api/etfs"
+# ETF ticker symbols by coin type
+BTC_ETF_TICKERS = {
+    "IBIT": "BlackRock",
+    "FBTC": "Fidelity",
+    "GBTC": "Grayscale",
+    "ARKB": "ARK Invest",
+    "BITB": "Bitwise",
+    "HODL": "VanEck",
+    "BTCO": "Invesco",
+    "BRRR": "Valkyrie",
+    "EZBC": "Franklin",
+}
+
+ETH_ETF_TICKERS = {
+    "ETHA": "BlackRock",
+    "FETH": "Fidelity",
+    "ETHE": "Grayscale",
+    "ETHW": "Bitwise",
+    "ETHV": "VanEck",
+    "QETH": "Invesco",
+}
 
 
-def fetch_defillama_etf_data(max_retries: int = 3) -> list[dict[str, Any]] | None:
-    """Fetch ETF data from DefiLlama API.
+def fetch_yfinance_etf_data() -> list[dict[str, Any]] | None:
+    """Fetch ETF data from YFinance API using batch download.
 
-    Args:
-        max_retries: Maximum number of retry attempts (default: 3)
+    WARNING: YFinance batch download does NOT provide ETF AUM or flow data.
+    This will result in missing/zero flow and AUM values in the database,
+    which defeats the purpose of ETF flow tracking. Consider integrating
+    an alternative data source for ETF flows and AUM if tracking is required.
+
+    Uses yf.download() to fetch all tickers in a single API call,
+    which is much more efficient and avoids rate limiting.
 
     Returns:
         List of ETF data dictionaries or None if failed
     """
-    headers = _get_api_headers()
-
-    for attempt in range(max_retries):
-        try:
-            app_logger.info(
-                f"Fetching ETF data from DefiLlama API (attempt {attempt + 1}/{max_retries})",
-            )
-
-            response = requests.get(ETF_API_URL, headers=headers, timeout=30)
-
-            # Handle HTTP errors
-            result = _handle_http_response(response, attempt, max_retries)
-            if result is not None:
-                return result
-
-            # Parse and validate JSON
-            data = _parse_and_validate_json(response, attempt, max_retries)
-            if data is None:
-                continue
-
-            # Validate ETF data structure
-            if not _validate_etf_data_structure(data, attempt, max_retries):
-                continue
-
-        except requests.exceptions.Timeout:
-            if not _handle_retry(attempt, max_retries, "Timeout fetching ETF data"):
-                return _get_mock_etf_data()
-            continue
-
-        except requests.exceptions.RequestException as e:
-            app_logger.error(f"Network error fetching ETF data: {e!s}")
-            if not _handle_retry(attempt, max_retries, None):
-                return None
-            continue
-
-        except Exception as e:  # noqa: BLE001
-            if not _handle_retry(attempt, max_retries, f"Unexpected error: {e!s}"):
-                return _get_mock_etf_data()
-            continue
-
-        else:
-            # Log success and return data
-            _log_success_statistics(data)
-            return data
-
-    # All retries exhausted
-    app_logger.error("Failed to fetch ETF data after all retry attempts")
-    app_logger.warning("Using mock ETF data as fallback")
-    return _get_mock_etf_data()
-
-
-def _get_api_headers() -> dict[str, str]:
-    """Get headers to mimic a real browser and bypass Cloudflare."""
-    return {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "DNT": "1",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Cache-Control": "max-age=0",
-    }
-
-
-def _handle_http_response(
-    response: requests.Response,
-    attempt: int,
-    max_retries: int,
-) -> list[dict[str, Any]] | None:
-    """Handle HTTP response status codes.
-
-    Returns:
-        Mock data if final attempt failed, None to continue retry loop
-    """
-    if response.status_code == HTTPStatus.OK:
-        return None  # Continue with normal processing
-
-    app_logger.error(
-        f"DefiLlama API returned HTTP {response.status_code}: {response.text}",
-    )
-
-    if attempt < max_retries - 1:
-        _retry_with_backoff(attempt)
-        return None
-
-    app_logger.warning("All HTTP error retries failed, using mock data as fallback")
-    return _get_mock_etf_data()
-
-
-def _parse_and_validate_json(
-    response: requests.Response,
-    attempt: int,
-    max_retries: int,
-) -> list[dict[str, Any]] | None:
-    """Parse JSON response and validate structure.
-
-    Returns:
-        Parsed data if successful, None if should retry
-    """
     try:
-        data = response.json()
-    except ValueError as e:
-        app_logger.error(f"Failed to parse JSON response: {e!s}")
-        if attempt >= max_retries - 1:
-            app_logger.warning(
-                "JSON parsing failed after all retries, using mock data as fallback",
-            )
-            return _get_mock_etf_data()
-        _retry_with_backoff(attempt)
-        return None
+        app_logger.info("Fetching ETF data from YFinance API (batch mode)...")
 
-    # Validate response is a list
-    if not isinstance(data, list):
-        app_logger.error(f"Unexpected response format: expected list, got {type(data)}")
-        if attempt >= max_retries - 1:
-            app_logger.warning(
-                "Response validation failed after all retries, using mock data as fallback",
-            )
-            return _get_mock_etf_data()
-        _retry_with_backoff(attempt)
-        return None
+        # Combine all tickers
+        all_tickers = list(BTC_ETF_TICKERS.keys()) + list(ETH_ETF_TICKERS.keys())
+        ticker_list = ", ".join(all_tickers)
+        app_logger.info(f"Fetching {len(all_tickers)} ETF tickers in batch: {ticker_list}")
 
-    # Empty data is valid but noteworthy
-    if not data:
-        app_logger.warning("DefiLlama API returned empty ETF data")
-
-    return data
-
-
-def _validate_etf_data_structure(
-    data: list[dict[str, Any]],
-    attempt: int,
-    max_retries: int,
-) -> bool:
-    """Validate that ETF data has required fields.
-
-    Returns:
-        True if validation passed, False if should retry
-    """
-    if not data:
-        return True  # Empty data is valid
-
-    first_etf = data[0]
-    required_fields = ["Ticker", "Coin", "Flows", "Date"]
-    missing_fields = [field for field in required_fields if field not in first_etf]
-
-    if not missing_fields:
-        return True
-
-    app_logger.error(f"ETF data missing required fields: {missing_fields}")
-
-    if attempt >= max_retries - 1:
-        app_logger.warning(
-            "Data validation failed after all retries, using mock data as fallback",
+        # Batch download - single API call for all tickers
+        # period="1d" gets the most recent trading day
+        # group_by='ticker' organizes data by ticker symbol
+        data = yf.download(
+            tickers=all_tickers,
+            period="1d",
+            group_by="ticker",
+            progress=False,
         )
-        return False
 
-    _retry_with_backoff(attempt)
-    return False
+        if data is None or data.empty:
+            app_logger.error("No data returned from YFinance batch download")
+            return None
+
+        # Parse the batch data
+        etf_data = []
+        current_timestamp = int(datetime.now(UTC).timestamp())
+
+        # Process BTC ETFs
+        for ticker, issuer in BTC_ETF_TICKERS.items():
+            etf_info = _parse_ticker_data(ticker, "BTC", issuer, data, current_timestamp)
+            if etf_info:
+                etf_data.append(etf_info)
+
+        # Process ETH ETFs
+        for ticker, issuer in ETH_ETF_TICKERS.items():
+            etf_info = _parse_ticker_data(ticker, "ETH", issuer, data, current_timestamp)
+            if etf_info:
+                etf_data.append(etf_info)
+
+        if not etf_data:
+            app_logger.error("No valid ETF data parsed from batch download")
+            return None
+
+    except Exception as e:  # noqa: BLE001
+        app_logger.error(f"Error fetching ETF data from YFinance: {e!s}")
+        return None
+
+    else:
+        app_logger.info(f"✓ Successfully fetched {len(etf_data)} ETF records from YFinance")
+        return etf_data
 
 
-def _log_success_statistics(data: list[dict[str, Any]]) -> None:
-    """Log statistics about successfully fetched ETF data."""
-    btc_count = sum(1 for etf in data if etf.get("Coin") == "BTC")
-    eth_count = sum(1 for etf in data if etf.get("Coin") == "ETH")
-
-    app_logger.info(
-        f"Successfully fetched {len(data)} ETFs: {btc_count} BTC ETFs, {eth_count} ETH ETFs",
-    )
-
-
-def _handle_retry(attempt: int, max_retries: int, error_msg: str | None) -> bool:
-    """Handle retry logic with exponential backoff.
+def _parse_ticker_data(
+    ticker: str,
+    coin: str,
+    issuer: str,
+    data: pd.DataFrame,
+    timestamp: int,
+) -> dict[str, Any] | None:
+    """Parse data for a single ticker from batch download results.
 
     Args:
-        attempt: Current attempt number
-        max_retries: Maximum retry attempts
-        error_msg: Optional error message to log
+        ticker: ETF ticker symbol
+        coin: Coin type ('BTC' or 'ETH')
+        issuer: ETF issuer name
+        data: Batch download DataFrame from yfinance
+        timestamp: Current Unix timestamp
 
     Returns:
-        True if should continue retry loop, False if exhausted
+        Dictionary with ETF data or None if failed
     """
-    if error_msg:
-        app_logger.error(f"{error_msg} (attempt {attempt + 1})")
+    try:
+        # For multi-ticker downloads, data is organized as:
+        # data[ticker]['Close'], data[ticker]['Volume'], etc.
+        if ticker not in data.columns.get_level_values(0):
+            app_logger.debug(f"No data available for {ticker}")
+            return None
 
-    if attempt < max_retries - 1:
-        _retry_with_backoff(attempt)
-        return True
+        ticker_data = data[ticker]
 
-    return False
+        # Get the most recent closing price
+        if "Close" in ticker_data.columns and not ticker_data["Close"].empty:
+            price = float(ticker_data["Close"].iloc[-1])
+        else:
+            app_logger.debug(f"No closing price for {ticker}")
+            return None
+
+        # Get volume if available
+        volume = None
+        if "Volume" in ticker_data.columns and not ticker_data["Volume"].empty:
+            volume = float(ticker_data["Volume"].iloc[-1])
+
+        # Note: YFinance batch download doesn't provide AUM or flow data
+        # These would need to be fetched separately or calculated
+        aum = None
+        flows = None
+        flows_change = None
+        app_logger.warning(
+            f"AUM and flows data are not available for {ticker} from YFinance batch download. "
+            "Consider integrating an alternative data source for ETF flows and AUM."
+        )
+
+        app_logger.debug(f"Parsed {ticker}: price=${price:.2f}, volume={volume}")
+
+    except Exception as e:  # noqa: BLE001
+        app_logger.debug(f"Error parsing {ticker}: {e!s}")
+        return None
+    else:
+        return {
+            "Ticker": ticker,
+            "Coin": coin,
+            "Issuer": issuer,
+            "Price": price,
+            "AUM": aum,
+            "Flows": flows,
+            "FlowsChange": flows_change,
+            "Volume": volume,
+            "Date": timestamp,
+        }
 
 
-def _retry_with_backoff(attempt: int) -> None:
-    """Sleep with exponential backoff before retry."""
-    sleep_time = 2**attempt
-    app_logger.info(f"Retrying in {sleep_time} seconds...")
-    time.sleep(sleep_time)
+def fetch_etf_data() -> list[dict[str, Any]] | None:
+    """Fetch ETF data from YFinance API.
+
+    This is the main entry point for fetching ETF data. It uses YFinance's
+    batch download capability to fetch all ETF tickers in a single API call.
+
+    Returns:
+        List of ETF data dictionaries or None if failed
+    """
+    return fetch_yfinance_etf_data()
 
 
 def parse_etf_data(etf_data: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Parse and organize ETF data by coin type.
 
     Args:
-        etf_data: Raw ETF data from DefiLlama API
+        etf_data: Raw ETF data from YFinance API
 
     Returns:
         Dictionary with 'BTC' and 'ETH' keys containing filtered ETF lists
@@ -371,63 +319,3 @@ def get_etf_summary_stats(etf_data: dict[str, list[dict[str, Any]]]) -> dict[str
         }
 
     return summary
-
-
-def _get_mock_etf_data() -> list[dict[str, Any]]:
-    """Return mock ETF data for fallback when API is unavailable.
-
-    Returns:
-        List of mock ETF data dictionaries
-    """
-    # Current timestamp
-    current_timestamp = int(datetime.now(UTC).timestamp())
-
-    mock_data = [
-        {
-            "Ticker": "IBIT",
-            "Coin": "BTC",
-            "Issuer": "BlackRock",
-            "Price": 42.50,
-            "AUM": 1000000000,
-            "Flows": 50000000,
-            "FlowsChange": 10000000,
-            "Volume": 200000000,
-            "Date": current_timestamp,
-        },
-        {
-            "Ticker": "GBTC",
-            "Coin": "BTC",
-            "Issuer": "Grayscale",
-            "Price": 38.75,
-            "AUM": 800000000,
-            "Flows": 25000000,
-            "FlowsChange": 5000000,
-            "Volume": 150000000,
-            "Date": current_timestamp,
-        },
-        {
-            "Ticker": "ETHE",
-            "Coin": "ETH",
-            "Issuer": "Grayscale",
-            "Price": 25.30,
-            "AUM": 500000000,
-            "Flows": 30000000,
-            "FlowsChange": 8000000,
-            "Volume": 120000000,
-            "Date": current_timestamp,
-        },
-        {
-            "Ticker": "ETHW",
-            "Coin": "ETH",
-            "Issuer": "Bitwise",
-            "Price": 22.15,
-            "AUM": 300000000,
-            "Flows": 15000000,
-            "FlowsChange": 3000000,
-            "Volume": 80000000,
-            "Date": current_timestamp,
-        },
-    ]
-
-    app_logger.info(f"Using mock ETF data with {len(mock_data)} entries")
-    return mock_data
