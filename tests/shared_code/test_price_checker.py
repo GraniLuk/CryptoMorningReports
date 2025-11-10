@@ -289,7 +289,8 @@ def test_fifteen_min_candles_both_sources():
         conn.close()
 
 
-def test_database_storage():
+@patch("shared_code.binance.fetch_binance_daily_klines_batch")
+def test_database_storage(mock_fetch):
     """TEST-008: Verify database correctly stores all fetched candles."""
     load_dotenv()
     conn = connect_to_sql()
@@ -304,33 +305,31 @@ def test_database_storage():
         today = datetime.now(UTC).date()
         start_date = today - timedelta(days=3)
 
-        # Mock the Binance batch fetch function
-        with patch("shared_code.binance.fetch_binance_daily_klines_batch") as mock_fetch:
-            # Create mock candles to return
-            mock_candles = []
-            current_time = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
-            for _ in range(4):
-                end_time = datetime.combine(current_time.date(), datetime.max.time(), tzinfo=UTC)
-                mock_candles.append(
-                    Candle(
-                        end_date=end_time.isoformat(),
-                        source=SourceID.BINANCE.value,
-                        open=50000.0,
-                        close=50100.0,
-                        symbol=binance_symbol.symbol_name,
-                        low=49900.0,
-                        high=50200.0,
-                        last=50100.0,
-                        volume=1000.0,
-                        volume_quote=50000000.0,
-                    ),
-                )
-                current_time += timedelta(days=1)
+        # Create mock candles to return
+        mock_candles = []
+        current_time = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
+        for _ in range(4):
+            end_time = datetime.combine(current_time.date(), datetime.max.time(), tzinfo=UTC)
+            mock_candles.append(
+                Candle(
+                    end_date=end_time.isoformat(),
+                    source=SourceID.BINANCE.value,
+                    open=50000.0,
+                    close=50100.0,
+                    symbol=binance_symbol.symbol_name,
+                    low=49900.0,
+                    high=50200.0,
+                    last=50100.0,
+                    volume=1000.0,
+                    volume_quote=50000000.0,
+                ),
+            )
+            current_time += timedelta(days=1)
 
-            mock_fetch.return_value = mock_candles
+        mock_fetch.return_value = mock_candles
 
-            candles_before = fetch_daily_candles(binance_symbol, start_date, today, conn)
-            count_before = len(candles_before)
+        candles_before = fetch_daily_candles(binance_symbol, start_date, today, conn)
+        count_before = len(candles_before)
 
         # Fetch again (should use cache, no API call)
         candles_after = fetch_daily_candles(binance_symbol, start_date, today, conn)
