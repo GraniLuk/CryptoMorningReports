@@ -321,9 +321,10 @@ def test_error_handling_and_cleanup():
 
 
 @patch("news.article_processor.get_ollama_client")
-def test_fetch_and_cache_integration(mock_get_client):
+@patch("news.rss_parser.feedparser.parse")
+def test_fetch_and_cache_integration(mock_feedparser, mock_get_client):
     """Test the fetch and cache integration functionality."""
-    # Set up the mock
+    # Set up the Ollama mock
     mock_client = DummyOllamaClient(
         response_text=json.dumps(
             {
@@ -337,6 +338,28 @@ def test_fetch_and_cache_integration(mock_get_client):
         ),
     )
     mock_get_client.return_value = mock_client
+
+    # Mock RSS feed response
+    mock_feed = type(
+        "obj",
+        (object,),
+        {
+            "entries": [
+                type(
+                    "obj",
+                    (object,),
+                    {
+                        "title": "Bitcoin Breaks $50K",
+                        "link": "https://example.com/btc-article",
+                        "published_parsed": (2025, 11, 10, 12, 0, 0, 0, 0, 0),
+                        "summary": "BTC reaches new highs",
+                    },
+                )(),
+            ],
+        },
+    )()
+    mock_feedparser.return_value = mock_feed
+
     print("\n📡 TEST 9: Fetch and Cache Integration (Auto-refresh)")
     print("-" * 70)
 
