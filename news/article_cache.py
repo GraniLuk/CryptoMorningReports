@@ -381,9 +381,6 @@ def fetch_and_cache_articles_for_symbol(
         get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
     except Exception as e:  # noqa: BLE001
         # Log error but continue - we can still return cached articles
-        from infra.telegram_logging_handler import (  # noqa: PLC0415
-            app_logger,
-        )
 
         app_logger.warning(f"Error fetching fresh RSS articles: {e!s}")
 
