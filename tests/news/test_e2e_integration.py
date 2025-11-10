@@ -21,14 +21,13 @@ from news.article_cache import (
     CachedArticle,
     cleanup_old_articles,
     ensure_cache_directory,
-    fetch_and_cache_articles_for_symbol,
     get_articles_for_symbol,
     get_cache_statistics,
     get_recent_articles,
     load_article_from_cache,
     save_article_to_cache,
 )
-from news.rss_parser import get_news
+from news.rss_parser import fetch_and_cache_articles_for_symbol, get_news
 from news.symbol_detector import detect_symbols_in_text
 from source_repository import SourceID, Symbol
 

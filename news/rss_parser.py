@@ -1,7 +1,6 @@
 """RSS feed parsing and news article extraction."""
 
 import json
-import os
 import time  # Added for struct_time type checking
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -17,16 +16,13 @@ from infra.telegram_logging_handler import app_logger
 from news.article_cache import (
     CachedArticle,
     article_exists_in_cache,
+    get_articles_for_symbol,
     save_article_to_cache,
 )
 from news.article_processor import ArticleProcessingError, process_article_with_ollama
+from news.constants import CURRENT_REPORT_ARTICLE_LIMIT, NEWS_ARTICLE_LIMIT
 from news.symbol_detector import detect_symbols_in_text
 from source_repository import fetch_symbols
-
-
-# Configuration
-NEWS_ARTICLE_LIMIT = int(os.getenv("NEWS_ARTICLE_LIMIT", "10"))
-CURRENT_REPORT_ARTICLE_LIMIT = int(os.getenv("CURRENT_REPORT_ARTICLE_LIMIT", "3"))
 
 
 @dataclass(slots=True)
@@ -311,6 +307,36 @@ def get_news(target_relevant: int | None = None) -> str:
         )
 
     return json.dumps(relevant_articles, indent=2)
+
+
+def fetch_and_cache_articles_for_symbol(
+    symbol: str,
+    hours: int = 24,
+) -> list[CachedArticle]:
+    """Fetch fresh RSS articles, cache new ones, and return all articles for a symbol.
+
+    This function ensures the cache is up-to-date by:
+    1. Fetching fresh articles from RSS feeds (limited to CURRENT_REPORT_ARTICLE_LIMIT)
+    2. Caching any new articles (skips duplicates)
+    3. Returning all cached articles for the specified symbol
+
+    Args:
+        symbol: Cryptocurrency symbol to search for (e.g., 'BTC', 'ETH')
+        hours: Number of hours to look back. Defaults to 24.
+
+    Returns:
+        List of CachedArticle instances that mention the symbol,
+        sorted by published date (newest first)
+    """
+    # Fetch fresh articles from RSS feeds (will cache new ones automatically)
+    # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
+    try:
+        get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
+    except (OSError, ValueError, KeyError) as e:
+        app_logger.warning(f"Error fetching fresh RSS articles: {e!s}")
+
+    # Return all cached articles for the symbol
+    return get_articles_for_symbol(symbol, hours)
 
 
 def fetch_rss_news(feed_url, source, class_name):

@@ -10,7 +10,7 @@ This ensures reports always have the latest news without manual RSS fetching.
 
 from datetime import UTC, datetime
 
-from news.article_cache import fetch_and_cache_articles_for_symbol
+from news.rss_parser import fetch_and_cache_articles_for_symbol
 
 
 def demonstrate_auto_fetch():

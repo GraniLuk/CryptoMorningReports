@@ -6,8 +6,7 @@ import time
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
-from news import article_cache, rss_parser
-from news.article_cache import fetch_and_cache_articles_for_symbol
+from news import article_cache, constants, rss_parser
 from news.rss_parser import (
     RSSEntry,
     _collect_all_rss_entries,
@@ -15,6 +14,7 @@ from news.rss_parser import (
     _is_entry_processable,
     _parse_rss_entry,
     _process_entries_until_target,
+    fetch_and_cache_articles_for_symbol,
 )
 
 
@@ -760,13 +760,15 @@ class TestComprehensiveLazyProcessing:
 
         in lazy processing.
         """
+        importlib.reload(constants)
         importlib.reload(rss_parser)
+        importlib.reload(article_cache)
 
         # Verify the configuration is loaded
         assert rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
 
         # Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT
-        with patch("news.article_cache.get_articles_for_symbol") as mock_get_articles, \
+        with patch("news.rss_parser.get_articles_for_symbol") as mock_get_articles, \
              patch("news.rss_parser.get_news") as mock_get_news:
 
             mock_get_news.return_value = None
@@ -787,7 +789,9 @@ class TestComprehensiveLazyProcessing:
         """Test that CURRENT_REPORT_ARTICLE_LIMIT defaults to 3 when not set."""
         os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
 
+        importlib.reload(constants)
         importlib.reload(rss_parser)
+        importlib.reload(article_cache)
 
         # Verify the default value
         assert rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 3
@@ -806,14 +810,14 @@ class TestComprehensiveLazyProcessing:
 
         # Test the integration: lazy processing should cache articles that are then
         # available for current reports
-        with patch.object(article_cache, "get_articles_for_symbol",
-                         return_value=mock_cached_articles) as mock_get_articles, \
+        with patch("news.rss_parser.get_articles_for_symbol",
+                   return_value=mock_cached_articles) as mock_get_articles, \
              patch("news.rss_parser.get_news") as mock_get_news:
 
             mock_get_news.return_value = None  # RSS processing completes without error
 
             # Simulate current report requesting articles for BTC
-            result = article_cache.fetch_and_cache_articles_for_symbol("BTC", hours=24)
+            result = fetch_and_cache_articles_for_symbol("BTC", hours=24)
 
             # Verify that get_news was called (lazy processing triggered)
             mock_get_news.assert_called_once_with(target_relevant=3)  # Default limit

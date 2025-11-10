@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from news import article_processor as ap
 from news import rss_parser
-from news.article_cache import fetch_and_cache_articles_for_symbol
+from news.rss_parser import fetch_and_cache_articles_for_symbol
 
 
 @pytest.fixture

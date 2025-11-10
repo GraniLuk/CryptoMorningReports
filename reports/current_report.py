@@ -10,8 +10,9 @@ import requests
 
 from infra.configuration import get_telegram_parse_mode, is_article_cache_enabled
 from infra.telegram_logging_handler import app_logger
-from news.article_cache import CachedArticle, fetch_and_cache_articles_for_symbol
+from news.article_cache import CachedArticle
 from news.news_agent import GeminiClient, create_ai_client
+from news.rss_parser import fetch_and_cache_articles_for_symbol
 from shared_code.telegram import (
     ARTICLE_CONTENT_PREVIEW_LENGTH,
     convert_ai_markdown_to_telegram_html,

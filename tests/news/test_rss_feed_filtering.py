@@ -8,10 +8,15 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+import news.constants
 import news.rss_parser
 from news import article_processor as ap
-from news.article_cache import fetch_and_cache_articles_for_symbol
-from news.rss_parser import _collect_entries_from_feed, fetch_rss_news, get_news
+from news.rss_parser import (
+    _collect_entries_from_feed,
+    fetch_and_cache_articles_for_symbol,
+    fetch_rss_news,
+    get_news,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -255,6 +260,7 @@ class TestCurrentReportLimits:
     def test_current_report_article_limit_from_env(self):
         """Test that CURRENT_REPORT_ARTICLE_LIMIT is read from environment."""
         # Force reimport to pick up env var
+        importlib.reload(news.constants)
         importlib.reload(news.rss_parser)
 
         assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
@@ -264,6 +270,7 @@ class TestCurrentReportLimits:
         # Remove env var if it exists and force reimport
         os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
 
+        importlib.reload(news.constants)
         importlib.reload(news.rss_parser)
 
         assert news.rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 3
@@ -288,7 +295,7 @@ class TestCurrentReportLimits:
         assert call_args[1]["target_relevant"] == 7
 
     @patch("news.rss_parser.get_news")
-    @patch("news.article_cache.get_articles_for_symbol")
+    @patch("news.rss_parser.get_articles_for_symbol")
     def test_fetch_and_cache_articles_for_symbol_integration(self, mock_get_articles,
                                                           mock_get_news):
         """Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT."""
