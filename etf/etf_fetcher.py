@@ -145,7 +145,7 @@ def _parse_ticker_data(
         flows_change = None
         app_logger.warning(
             f"AUM and flows data are not available for {ticker} from YFinance batch download. "
-            "Consider integrating an alternative data source for ETF flows and AUM."
+            "Consider integrating an alternative data source for ETF flows and AUM.",
         )
 
         app_logger.debug(f"Parsed {ticker}: price=${price:.2f}, volume={volume}")

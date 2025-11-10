@@ -1,8 +1,8 @@
 """Integration tests for ETF fetcher functionality."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import requests
+import pandas as pd
 
 from etf.etf_fetcher import (
     _safe_float_parse,
@@ -19,7 +19,6 @@ class TestETFFetcher:
     def test_fetch_etf_data_success(self, mock_download):
         """Test successful API fetch."""
         # Mock successful response from yfinance with multi-index columns
-        import pandas as pd
 
         # YFinance returns multi-indexed columns: (ticker, field)
         # Create sample data for IBIT and ETHE
@@ -83,8 +82,6 @@ class TestETFFetcher:
     @patch("etf.etf_fetcher.yf.download")
     def test_fetch_defillama_etf_data_empty_response(self, mock_download):
         """Test API fetch with empty response."""
-        import pandas as pd
-
         mock_download.return_value = pd.DataFrame([])
 
         result = fetch_etf_data()
