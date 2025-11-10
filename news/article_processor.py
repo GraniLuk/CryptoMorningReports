@@ -63,9 +63,10 @@ def process_article_with_ollama(
 
     payload = _parse_json_response(response_text)
     elapsed_time = time.perf_counter() - start_time
-    result = _build_processing_result(payload, fallback_content=normalized_content, elapsed_time=elapsed_time)
 
-    return result
+    return _build_processing_result(
+        payload, fallback_content=normalized_content, elapsed_time=elapsed_time,
+    )
 
 
 def _build_analysis_prompt(*, title: str, content: str, symbols_text: str) -> str:
@@ -84,8 +85,8 @@ def _build_analysis_prompt(*, title: str, content: str, symbols_text: str) -> st
         "4. Score relevance between 0 and 1 for today's trading decisions.\n"
         "5. Mark is_relevant true only if the article offers actionable or time-sensitive info.\n"
         "6. Keep reasoning short and describe why the score was chosen.\n"
-    "Output JSON with keys: summary, cleaned_content, symbols,\n"
-    "relevance_score, is_relevant, reasoning.\n"
+        "Output JSON with keys: summary, cleaned_content, symbols,\n"
+        "relevance_score, is_relevant, reasoning.\n"
         "Do not wrap the JSON in markdown or add commentary.\n"
         f"{focus_section}\n"
         f"Title: {title.strip()}\n"
@@ -157,9 +158,7 @@ def _normalize_symbol_list(symbols: Iterable[str] | None) -> list[str]:
     if not symbols:
         return []
     normalized = {
-        symbol.strip().upper()
-        for symbol in symbols
-        if isinstance(symbol, str) and symbol.strip()
+        symbol.strip().upper() for symbol in symbols if isinstance(symbol, str) and symbol.strip()
     }
     return sorted(normalized)
 
