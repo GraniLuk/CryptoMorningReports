@@ -233,7 +233,7 @@ def test_error_handling_and_cleanup():
     print("-" * 70)
 
     # Create a corrupted cache file
-    cache_dir = ensure_cache_directory(now)
+    cache_dir = ensure_cache_directory()
     corrupted_file = cache_dir / "corrupted_invalid-frontmatter.md"
 
     try:
@@ -286,7 +286,7 @@ def test_error_handling_and_cleanup():
         content="This article should be deleted by cleanup.",
         symbols=["BTC"],
     )
-    save_article_to_cache(old_article, date=old_time)
+    save_article_to_cache(old_article)
 
     # Check stats before cleanup
     stats_before = get_cache_statistics()

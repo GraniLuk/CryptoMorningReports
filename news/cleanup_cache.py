@@ -65,32 +65,27 @@ def cleanup_cache(max_age_hours: int, dry_run: bool = False) -> int:
         from news.article_cache import (
             get_cache_directory,
             load_article_from_cache,
+            parse_article_date,
         )
 
         would_delete = 0
         cutoff_time = datetime.now(tz=UTC) - timedelta(hours=max_age_hours)
-        days_to_check = (max_age_hours // 24) + 3
 
-        for days_ago in range(days_to_check):
-            check_date = datetime.now(tz=UTC) - timedelta(days=days_ago)
-            cache_dir = get_cache_directory(check_date)
+        cache_dir = get_cache_directory()
 
-            if not cache_dir.exists():
-                continue
-
+        if cache_dir.exists():
             for markdown_file in cache_dir.glob("*.md"):
                 try:
                     article = load_article_from_cache(markdown_file)
                     if article is None:
                         continue
 
-                    published_dt = datetime.fromisoformat(article.published)
+                    published_dt = parse_article_date(article.published)
                     if published_dt < cutoff_time:
                         would_delete += 1
                         age_hours = (datetime.now(tz=UTC) - published_dt).total_seconds() / 3600
                         print(
-                            f"  ❌ Would delete: {article.title[:50]}... "
-                            f"({age_hours:.1f}h old)",
+                            f"  ❌ Would delete: {article.title[:50]}... ({age_hours:.1f}h old)",
                         )
 
                 except Exception as e:  # noqa: BLE001

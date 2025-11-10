@@ -87,38 +87,27 @@ class CachedArticle:
     analysis_notes: str = ""
 
 
-def get_cache_directory(date: datetime | None = None) -> Path:
-    """Get the cache directory path for a specific date.
-
-    Args:
-        date: Date for the cache directory. Defaults to today.
+def get_cache_directory() -> Path:
+    """Get the cache directory path.
 
     Returns:
-        Path object pointing to the cache directory (news/cache/YYYY-MM-DD/)
+        Path object pointing to the cache directory (news/cache/)
     """
-    if date is None:
-        date = datetime.now(tz=UTC)
-
-    cache_root = get_article_cache_root()
-    return cache_root / date.strftime("%Y-%m-%d")
+    return get_article_cache_root()
 
 
-def ensure_cache_directory(date: datetime | None = None) -> Path:
-    """Ensure the cache directory exists for a specific date.
-
-    Args:
-        date: Date for the cache directory. Defaults to today.
+def ensure_cache_directory() -> Path:
+    """Ensure the cache directory exists.
 
     Returns:
-        Path object pointing to the created cache directory
+        Path object pointing to the cache directory
 
     Raises:
         ValueError: If the cache root directory is not writable
     """
-    cache_dir = get_cache_directory(date)
+    cache_root = get_article_cache_root()
 
     # Check if the cache root directory is writable
-    cache_root = get_article_cache_root()
     if cache_root.exists() and not os.access(cache_root, os.W_OK):
         msg = f"Cache root directory is not writable: {cache_root}"
         raise ValueError(msg)
@@ -130,8 +119,7 @@ def ensure_cache_directory(date: datetime | None = None) -> Path:
             msg = f"Cannot create cache root directory: {cache_root} - {e}"
             raise ValueError(msg) from e
 
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    return cache_dir
+    return cache_root
 
 
 def get_article_filename(article: CachedArticle) -> str:
@@ -147,17 +135,16 @@ def get_article_filename(article: CachedArticle) -> str:
     return f"{article.source}_{slug}.md"
 
 
-def save_article_to_cache(article: CachedArticle, date: datetime | None = None) -> Path:
+def save_article_to_cache(article: CachedArticle) -> Path:
     """Save an article to the cache as a markdown file with YAML frontmatter.
 
     Args:
         article: CachedArticle instance to save
-        date: Date for the cache directory. Defaults to today.
 
     Returns:
         Path to the saved file
     """
-    cache_dir = ensure_cache_directory(date)
+    cache_dir = ensure_cache_directory()
     filename = get_article_filename(article)
     filepath = cache_dir / filename
 
@@ -215,27 +202,17 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
 
         relevance_value = post.get("relevance_score")
         relevance_score = (
-            float(relevance_value)
-            if isinstance(relevance_value, (int, float))
-            else None
+            float(relevance_value) if isinstance(relevance_value, (int, float)) else None
         )
 
         is_relevant_value = post.get("is_relevant", False)
         is_relevant = bool(is_relevant_value)
 
         processed_at_value = post.get("processed_at")
-        processed_at = (
-            str(processed_at_value)
-            if isinstance(processed_at_value, str)
-            else None
-        )
+        processed_at = str(processed_at_value) if isinstance(processed_at_value, str) else None
 
         analysis_notes_value = post.get("analysis_notes", "")
-        analysis_notes = (
-            str(analysis_notes_value)
-            if isinstance(analysis_notes_value, str)
-            else ""
-        )
+        analysis_notes = str(analysis_notes_value) if isinstance(analysis_notes_value, str) else ""
 
         content_value = post.content if isinstance(post.content, str) else str(post.content)
 
@@ -258,16 +235,13 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
         return None
 
 
-def get_cached_articles(date: datetime | None = None) -> list[CachedArticle]:
-    """Retrieve all cached articles for a specific date.
-
-    Args:
-        date: Date to retrieve articles for. Defaults to today.
+def get_cached_articles() -> list[CachedArticle]:
+    """Retrieve all cached articles.
 
     Returns:
         List of CachedArticle instances
     """
-    cache_dir = get_cache_directory(date)
+    cache_dir = get_cache_directory()
 
     if not cache_dir.exists():
         return []
@@ -281,17 +255,16 @@ def get_cached_articles(date: datetime | None = None) -> list[CachedArticle]:
     return articles
 
 
-def article_exists_in_cache(link: str, date: datetime | None = None) -> bool:
+def article_exists_in_cache(link: str) -> bool:
     """Check if an article with a specific URL exists in the cache.
 
     Args:
         link: Article URL to check
-        date: Date to check in. Defaults to today.
 
     Returns:
         True if article exists in cache, False otherwise
     """
-    cached_articles = get_cached_articles(date)
+    cached_articles = get_cached_articles()
     return any(article.link == link for article in cached_articles)
 
 
@@ -315,28 +288,24 @@ def get_articles_for_symbol(
     # Normalize symbol to uppercase for comparison
     symbol_upper = symbol.upper()
 
-    # Collect articles from recent days
+    # Collect articles from cache
     articles_with_symbol = []
-    days_to_check = (hours // 24) + 2  # Check enough days to cover the time range
+    all_articles = get_cached_articles()
 
-    for days_ago in range(days_to_check):
-        check_date = now - timedelta(days=days_ago)
-        daily_articles = get_cached_articles(check_date)
-
-        for article in daily_articles:
-            # Check if symbol is in the article's symbol list
-            if symbol_upper in [s.upper() for s in article.symbols]:
-                # Parse published date and check if within time range
-                try:
-                    published_dt = parse_article_date(article.published)
-                    if published_dt >= cutoff_time:
-                        articles_with_symbol.append(article)
-                except (ValueError, AttributeError) as e:
-                    # If date parsing fails, skip this article
-                    app_logger.warning(
-                        f"Failed to parse date for article '{article.title}': {e!s}",
-                    )
-                    continue
+    for article in all_articles:
+        # Check if symbol is in the article's symbol list
+        if symbol_upper in [s.upper() for s in article.symbols]:
+            # Parse published date and check if within time range
+            try:
+                published_dt = parse_article_date(article.published)
+                if published_dt >= cutoff_time:
+                    articles_with_symbol.append(article)
+            except (ValueError, AttributeError) as e:
+                # If date parsing fails, skip this article
+                app_logger.warning(
+                    f"Failed to parse date for article '{article.title}': {e!s}",
+                )
+                continue
 
     # Sort by published date, newest first
     articles_with_symbol.sort(
@@ -360,26 +329,22 @@ def get_recent_articles(hours: int = 24) -> list[CachedArticle]:
     now = datetime.now(tz=UTC)
     cutoff_time = now - timedelta(hours=hours)
 
-    # Collect articles from recent days
+    # Collect articles from cache
     recent_articles = []
-    days_to_check = (hours // 24) + 2  # Check enough days to cover the time range
+    all_articles = get_cached_articles()
 
-    for days_ago in range(days_to_check):
-        check_date = now - timedelta(days=days_ago)
-        daily_articles = get_cached_articles(check_date)
-
-        for article in daily_articles:
-            # Parse published date and check if within time range
-            try:
-                published_dt = parse_article_date(article.published)
-                if published_dt >= cutoff_time:
-                    recent_articles.append(article)
-            except (ValueError, AttributeError) as e:
-                # If date parsing fails, skip this article
-                app_logger.warning(
-                    f"Failed to parse date for article '{article.title}': {e!s}",
-                )
-                continue
+    for article in all_articles:
+        # Parse published date and check if within time range
+        try:
+            published_dt = parse_article_date(article.published)
+            if published_dt >= cutoff_time:
+                recent_articles.append(article)
+        except (ValueError, AttributeError) as e:
+            # If date parsing fails, skip this article
+            app_logger.warning(
+                f"Failed to parse date for article '{article.title}': {e!s}",
+            )
+            continue
 
     # Sort by published date, newest first
     recent_articles.sort(
@@ -442,51 +407,37 @@ def cleanup_old_articles(max_age_hours: int = 24) -> int:
     deleted_count = 0
     cutoff_time = datetime.now(tz=UTC) - timedelta(hours=max_age_hours)
 
-    # Calculate how many days to check (add buffer for timezone differences)
-    days_to_check = (max_age_hours // 24) + 3
+    cache_dir = get_cache_directory()
 
-    for days_ago in range(days_to_check):
-        check_date = datetime.now(tz=UTC) - timedelta(days=days_ago)
-        cache_dir = get_cache_directory(check_date)
+    # Skip if directory doesn't exist
+    if not cache_dir.exists():
+        return 0
 
-        # Skip if directory doesn't exist
-        if not cache_dir.exists():
-            continue
+    # Get all markdown files
+    markdown_files = list(cache_dir.glob("*.md"))
 
-        # Get all markdown files for this date
-        markdown_files = list(cache_dir.glob("*.md"))
-
-        for markdown_file in markdown_files:
-            try:
-                article = load_article_from_cache(markdown_file)
-
-                # Skip if article failed to load
-                if article is None:
-                    continue
-
-                # Parse published date and check if older than cutoff
-                published_dt = parse_article_date(article.published)
-                if published_dt < cutoff_time:
-                    # Delete the markdown file
-                    markdown_file.unlink()
-                    deleted_count += 1
-
-            except Exception as e:  # noqa: BLE001
-                # Log warning but continue cleanup
-                from infra.telegram_logging_handler import (  # noqa: PLC0415
-                    app_logger,
-                )
-
-                app_logger.warning(f"Error processing {markdown_file}: {e!s}")
-
-        # Remove empty date directories
+    for markdown_file in markdown_files:
         try:
-            if cache_dir.exists() and not any(cache_dir.iterdir()):
-                cache_dir.rmdir()
-        except OSError:  # noqa: S110
-            pass  # Directory not empty or other error, skip
+            article = load_article_from_cache(markdown_file)
 
-    return deleted_count
+            # Skip if article failed to load
+            if article is None:
+                continue
+
+            # Parse published date and check if older than cutoff
+            published_dt = parse_article_date(article.published)
+            if published_dt < cutoff_time:
+                # Delete the markdown file
+                markdown_file.unlink()
+                deleted_count += 1
+
+        except Exception as e:  # noqa: BLE001
+            # Log warning but continue cleanup
+            from infra.telegram_logging_handler import (  # noqa: PLC0415
+                app_logger,
+            )
+
+            app_logger.warning(f"Error processing {markdown_file}: {e!s}")
 
     return deleted_count
 
@@ -507,44 +458,45 @@ def get_cache_statistics() -> dict[str, int | float | str]:
     oldest_time: datetime | None = None
     newest_time: datetime | None = None
 
-    # Get cache root directory
-    cache_root = get_article_cache_root()
+    # Get cache directory
+    cache_dir = get_cache_directory()
 
-    # Check last 7 days (should be more than enough)
-    for days_ago in range(7):
-        check_date = datetime.now(tz=UTC) - timedelta(days=days_ago)
-        cache_dir = get_cache_directory(check_date)
+    # Skip if directory doesn't exist
+    if not cache_dir.exists():
+        return {
+            "total_articles": 0,
+            "total_size_mb": 0.0,
+            "oldest_article_hours": 0.0,
+            "newest_article_hours": 0.0,
+            "cache_path": str(cache_dir),
+        }
 
-        # Skip if directory doesn't exist
-        if not cache_dir.exists():
-            continue
+    # Get all markdown files
+    markdown_files = list(cache_dir.glob("*.md"))
 
-        # Get all markdown files for this date
-        markdown_files = list(cache_dir.glob("*.md"))
+    for markdown_file in markdown_files:
+        try:
+            article = load_article_from_cache(markdown_file)
 
-        for markdown_file in markdown_files:
-            try:
-                article = load_article_from_cache(markdown_file)
+            # Skip if article failed to load
+            if article is None:
+                continue
 
-                # Skip if article failed to load
-                if article is None:
-                    continue
+            total_articles += 1
 
-                total_articles += 1
+            # Calculate file size
+            total_size_bytes += markdown_file.stat().st_size
 
-                # Calculate file size
-                total_size_bytes += markdown_file.stat().st_size
+            # Track oldest/newest
+            published_dt = parse_article_date(article.published)
+            if oldest_time is None or published_dt < oldest_time:
+                oldest_time = published_dt
+            if newest_time is None or published_dt > newest_time:
+                newest_time = published_dt
 
-                # Track oldest/newest
-                published_dt = parse_article_date(article.published)
-                if oldest_time is None or published_dt < oldest_time:
-                    oldest_time = published_dt
-                if newest_time is None or published_dt > newest_time:
-                    newest_time = published_dt
-
-            except Exception:  # noqa: BLE001,S110
-                # Skip invalid articles
-                pass
+        except Exception:  # noqa: BLE001,S110
+            # Skip invalid articles
+            pass
 
     # Calculate age in hours
     now = datetime.now(tz=UTC)
@@ -556,5 +508,5 @@ def get_cache_statistics() -> dict[str, int | float | str]:
         "total_size_mb": round(total_size_bytes / (1024 * 1024), 2),
         "oldest_article_hours": round(oldest_hours, 1),
         "newest_article_hours": round(newest_hours, 1),
-        "cache_path": str(cache_root),
+        "cache_path": str(cache_dir),
     }

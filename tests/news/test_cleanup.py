@@ -65,11 +65,11 @@ def test_cleanup_and_statistics() -> None:
             symbols=["BNB"],
         )
 
-        # Save all articles (explicitly using their published dates)
+        # Save all articles
         print("Saving test articles...")
-        save_article_to_cache(recent_article, now - timedelta(hours=2))
-        save_article_to_cache(old_article, now - timedelta(hours=26))
-        save_article_to_cache(very_old_article, now - timedelta(hours=50))
+        save_article_to_cache(recent_article)
+        save_article_to_cache(old_article)
+        save_article_to_cache(very_old_article)
         print("✓ 3 articles saved\n")
 
         # Get initial statistics
