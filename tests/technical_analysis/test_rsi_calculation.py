@@ -4,16 +4,13 @@ This module tests RSI calculations using different methods (RMA/EMA) and compare
 results with known TradingView values to ensure accuracy.
 """
 
+import random
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 import pytest
-from dotenv import load_dotenv
 
-from infra.sql_connection import connect_to_sql
-from shared_code.price_checker import fetch_daily_candles
-from source_repository import fetch_symbols
-from technical_analysis.reports.rsi_daily import create_rsi_table_for_symbol
+from shared_code.common_price import Candle
 from technical_analysis.rsi import calculate_rsi_using_ema, calculate_rsi_using_rma
 
 
@@ -102,21 +99,49 @@ class TestRSIAgainstTradingView:
     @pytest.fixture
     def get_virtual_data(self):
         """Fixture to fetch VIRTUAL symbol data from database."""
-        load_dotenv()
-        conn = connect_to_sql()
-        symbols = fetch_symbols(conn)
-        virtual = next((s for s in symbols if s.symbol_name == "VIRTUAL"), None)
 
-        if virtual is None:
-            pytest.skip("VIRTUAL symbol not found in database")
+        # Mock symbol
+        class MockSymbol:
+            symbol_name = "VIRTUAL"
+            source_id = 1  # BINANCE
+
+        virtual = MockSymbol()
 
         # Fetch data for today and past 30+ days to ensure enough data for RSI
         # Need at least 28+ days: 14 for initial SMA + 14+ for Wilder's smoothing to stabilize
         target_date = datetime.now(UTC).date()
         start_date = target_date - timedelta(days=35)
-        candles = fetch_daily_candles(virtual, start_date, target_date, conn)
 
-        return candles, virtual, target_date
+        # Create mock candles with realistic price data
+        mock_candles = []
+        current_date = start_date
+        price = 100.0  # starting price
+        random.seed(42)  # for reproducible tests
+
+        while current_date <= target_date:
+            # Simple random walk for price variation
+            change = random.uniform(-2, 2)  # noqa: S311 - random used for test data generation, not cryptography
+            price += change
+            price = max(price, 0.01)  # prevent negative prices
+
+            end_datetime = datetime.combine(current_date, datetime.max.time(), tzinfo=UTC)
+
+            candle = Candle(
+                symbol="VIRTUAL",
+                source=1,  # BINANCE
+                end_date=end_datetime.isoformat(),
+                close=price,
+                high=price + abs(change) + 0.5,
+                low=max(price - abs(change) - 0.5, 0.01),
+                last=price,
+                volume=1000.0,
+                volume_quote=1000.0 * price,
+                open=price - change,
+            )
+            mock_candles.append(candle)
+            current_date += timedelta(days=1)
+
+        return mock_candles, virtual, target_date
 
     def test_virtual_rsi_calculation_validity(self, get_virtual_data):
         """Test VIRTUAL RSI calculation produces valid results.
@@ -244,41 +269,71 @@ class TestRSIDataRequirements:
 
     def test_rsi_requires_sufficient_data(self):
         """Test that RSI with insufficient data differs from RSI with sufficient data."""
-        load_dotenv()
-        conn = connect_to_sql()
-        symbols = fetch_symbols(conn)
-        virtual = next((s for s in symbols if s.symbol_name == "VIRTUAL"), None)
-
-        if not virtual:
-            pytest.skip("VIRTUAL symbol not found")
-
         target_date = datetime.now(UTC).date()
 
-        # Test with insufficient data (15 days)
-        candles_15 = fetch_daily_candles(
-            virtual,
-            target_date - timedelta(days=15),
-            target_date,
-            conn,
-        )
+        # Create mock candles for 15 days
+        start_15 = target_date - timedelta(days=15)
+        candles_15 = []
+        current_date = start_15
+        price = 100.0
+        random.seed(42)
+        while current_date <= target_date:
+            change = random.uniform(-2, 2)  # noqa: S311 - random used for test data generation, not cryptography
+            price += change
+            price = max(price, 0.01)
+            end_datetime = datetime.combine(current_date, datetime.max.time(), tzinfo=UTC)
+            candle = Candle(
+                symbol="VIRTUAL",
+                source=1,
+                end_date=end_datetime.isoformat(),
+                close=price,
+                high=price + abs(change) + 0.5,
+                low=max(price - abs(change) - 0.5, 0.01),
+                last=price,
+                volume=1000.0,
+                volume_quote=1000.0 * price,
+                open=price - change,
+            )
+            candles_15.append(candle)
+            current_date += timedelta(days=1)
+
         df_15 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_15])
         df_15 = df_15.set_index("Date")
         calculate_rsi_using_rma(df_15["close"])
 
-        # Test with sufficient data (30+ days)
-        candles_30 = fetch_daily_candles(
-            virtual,
-            target_date - timedelta(days=30),
-            target_date,
-            conn,
-        )
+        # Create mock candles for 30 days
+        start_30 = target_date - timedelta(days=30)
+        candles_30 = []
+        current_date = start_30
+        price = 100.0
+        random.seed(42)
+        while current_date <= target_date:
+            change = random.uniform(-2, 2)  # noqa: S311 - random used for test data generation, not cryptography
+            price += change
+            price = max(price, 0.01)
+            end_datetime = datetime.combine(current_date, datetime.max.time(), tzinfo=UTC)
+            candle = Candle(
+                symbol="VIRTUAL",
+                source=1,
+                end_date=end_datetime.isoformat(),
+                close=price,
+                high=price + abs(change) + 0.5,
+                low=max(price - abs(change) - 0.5, 0.01),
+                last=price,
+                volume=1000.0,
+                volume_quote=1000.0 * price,
+                open=price - change,
+            )
+            candles_30.append(candle)
+            current_date += timedelta(days=1)
+
         df_30 = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in candles_30])
         df_30 = df_30.set_index("Date")
         calculate_rsi_using_rma(df_30["close"])
 
-        # The values should differ significantly when data is insufficient
         # With proper data, Wilder's smoothing stabilizes
-        assert len(candles_30) >= 28, "Should fetch at least 28 days for accurate RSI"
+        assert len(candles_30) >= 28, "Should have at least 28 days for accurate RSI"
+        assert len(candles_15) == 16, "Should have 16 days for insufficient data"
 
 
 class TestRSIMethodComparison:
@@ -322,24 +377,40 @@ class TestRSIMethodComparison:
 
 def test_rsi_integration_with_database():
     """Integration test: Verify RSI calculation and storage workflow."""
-    load_dotenv()
-    conn = connect_to_sql()
-    symbols = fetch_symbols(conn)
+    target_date = datetime.now(UTC).date()
+    start_date = target_date - timedelta(days=30)
 
-    # Test with VIRTUAL if available
-    virtual = next((s for s in symbols if s.symbol_name == "VIRTUAL"), None)
+    # Create mock candles
+    mock_candles = []
+    current_date = start_date
+    price = 100.0
+    random.seed(42)
+    while current_date <= target_date:
+        change = random.uniform(-2, 2)  # noqa: S311 - random used for test data generation, not cryptography
+        price += change
+        price = max(price, 0.01)
+        end_datetime = datetime.combine(current_date, datetime.max.time(), tzinfo=UTC)
+        candle = Candle(
+            symbol="VIRTUAL",
+            source=1,
+            end_date=end_datetime.isoformat(),
+            close=price,
+            high=price + abs(change) + 0.5,
+            low=max(price - abs(change) - 0.5, 0.01),
+            last=price,
+            volume=1000.0,
+            volume_quote=1000.0 * price,
+            open=price - change,
+        )
+        mock_candles.append(candle)
+        current_date += timedelta(days=1)
 
-    if virtual:
-        target_date = datetime.now(UTC).date()
-        start_date = target_date - timedelta(days=30)
-        candles = fetch_daily_candles(virtual, start_date, target_date, conn)
-        table = create_rsi_table_for_symbol(virtual, candles, conn)
-
-        # Should return a valid PrettyTable or None
-        assert table is not None or table is None  # Valid outputs
-
-        if table:
-            pass
+    # For mock test, just verify that RSI calculation works on mock data
+    df = pd.DataFrame([{"Date": c.end_date, "close": c.close} for c in mock_candles])
+    df = df.set_index("Date")
+    rsi = calculate_rsi_using_rma(df["close"], periods=14)
+    assert not pd.isna(rsi.iloc[-1])
+    assert 0 <= rsi.iloc[-1] <= 100
 
 
 if __name__ == "__main__":
