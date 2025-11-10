@@ -104,18 +104,31 @@ class Test24HFiltering:
 
     def test_24h_filtering_with_cached_articles(self):
         """Test that cached articles are skipped."""
+        # Use times relative to "now" to ensure they're within 24h
+        now = datetime.now(UTC)
+
         # Create mock entries
         cached_entry = Mock()
         cached_entry.link = "https://example.com/cached"
         cached_entry.title = "Cached Article"
         cached_entry.published = "2025-11-07T12:00:00+00:00"
-        cached_entry.published_parsed = time.struct_time((2025, 11, 7, 12, 0, 0, -1, -1, -1))
+        # Set published_parsed to 2 hours ago
+        two_hours_ago = now - timedelta(hours=2)
+        cached_entry.published_parsed = time.struct_time((
+            two_hours_ago.year, two_hours_ago.month, two_hours_ago.day,
+            two_hours_ago.hour, two_hours_ago.minute, two_hours_ago.second, -1, -1, -1,
+        ))
 
         fresh_entry = Mock()
         fresh_entry.link = "https://example.com/fresh"
         fresh_entry.title = "Fresh Article"
         fresh_entry.published = "2025-11-07T13:00:00+00:00"
-        fresh_entry.published_parsed = time.struct_time((2025, 11, 7, 13, 0, 0, -1, -1, -1))
+        # Set published_parsed to 1 hour ago
+        one_hour_ago = now - timedelta(hours=1)
+        fresh_entry.published_parsed = time.struct_time((
+            one_hour_ago.year, one_hour_ago.month, one_hour_ago.day,
+            one_hour_ago.hour, one_hour_ago.minute, one_hour_ago.second, -1, -1, -1,
+        ))
 
         mock_feed = Mock()
         mock_feed.entries = [cached_entry, fresh_entry]
