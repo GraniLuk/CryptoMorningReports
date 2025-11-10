@@ -26,6 +26,7 @@ from slugify import slugify
 
 from infra.configuration import get_article_cache_root
 from infra.telegram_logging_handler import app_logger
+from news.rss_parser import CURRENT_REPORT_ARTICLE_LIMIT, get_news
 
 
 def parse_article_date(date_string: str) -> datetime:
@@ -374,11 +375,6 @@ def fetch_and_cache_articles_for_symbol(
         List of CachedArticle instances that mention the symbol,
         sorted by published date (newest first)
     """
-    from news.rss_parser import (  # noqa: PLC0415 - avoid circular dependency
-        CURRENT_REPORT_ARTICLE_LIMIT,
-        get_news,
-    )
-
     # Fetch fresh articles from RSS feeds (will cache new ones automatically)
     # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
     try:
