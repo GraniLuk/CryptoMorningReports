@@ -538,9 +538,16 @@ class TestComprehensiveLazyProcessing:
             nonlocal relevant_count
             relevant_count += 1
             title = f"Article {relevant_count}"
-            if relevant_count <= 5:  # First 5 are relevant
-                return (Mock(), {"title": title, "is_relevant": True})
-            return (Mock(), {"title": title, "is_relevant": False})
+            is_relevant = relevant_count <= 5  # First 5 are relevant
+            payload = {
+                "source": "test",
+                "title": title,
+                "link": f"https://test.com/article-{relevant_count}",
+                "is_relevant": is_relevant,
+                "relevance_score": 0.8 if is_relevant else 0.2,
+                "elapsed_time": 1.5,
+            }
+            return (Mock(), payload)
 
         with patch("news.rss_parser._process_feed_entry", side_effect=mock_process_entry), \
              patch("news.rss_parser.is_article_cache_enabled", return_value=False), \
