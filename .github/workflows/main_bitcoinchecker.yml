@@ -36,8 +36,6 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-          # Freeze dependencies to ensure version consistency
-          pip freeze > requirements.txt
 
       - name: Setup SQLite database for tests
         run: |
