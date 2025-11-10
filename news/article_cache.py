@@ -379,9 +379,7 @@ def fetch_and_cache_articles_for_symbol(
     # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
     try:
         get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
-    except Exception as e:  # noqa: BLE001
-        # Log error but continue - we can still return cached articles
-
+    except Exception as e:
         app_logger.warning(f"Error fetching fresh RSS articles: {e!s}")
 
     # Return all cached articles for the symbol
@@ -424,7 +422,7 @@ def cleanup_old_articles(max_age_hours: int = 24) -> int:
                 markdown_file.unlink()
                 deleted_count += 1
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             app_logger.warning(f"Error processing {markdown_file}: {e!s}")
 
     return deleted_count
@@ -482,8 +480,7 @@ def get_cache_statistics() -> dict[str, int | float | str]:
             if newest_time is None or published_dt > newest_time:
                 newest_time = published_dt
 
-        except Exception:  # noqa: BLE001
-            # Skip invalid articles
+        except Exception:
             pass
 
     # Calculate age in hours
