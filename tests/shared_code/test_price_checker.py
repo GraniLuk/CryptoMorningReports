@@ -506,7 +506,8 @@ def test_partially_filled_database():
     conn.close()
 
 
-def test_fully_updated_database():
+@patch("shared_code.binance.fetch_binance_daily_klines_batch")
+def test_fully_updated_database(mock_fetch):
     """TEST-047: Test with fully updated database (no fetch scenario)."""
     load_dotenv()
     conn = connect_to_sql()
@@ -519,32 +520,30 @@ def test_fully_updated_database():
     today = datetime.now(UTC).date()
     start_date = today - timedelta(days=2)
 
-    # Mock Binance API call for initial fetch
-    with patch("shared_code.binance.fetch_binance_daily_klines_batch") as mock_fetch:
-        # Create mock candles to return
-        mock_candles = []
-        current_time = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
-        for _ in range(3):
-            end_time = datetime.combine(current_time.date(), datetime.max.time(), tzinfo=UTC)
-            mock_candles.append(
-                Candle(
-                    end_date=end_time.isoformat(),
-                    source=SourceID.BINANCE.value,
-                    open=50000.0,
-                    close=50100.0,
-                    symbol=binance_symbol.symbol_name,
-                    low=49900.0,
-                    high=50200.0,
-                    last=50100.0,
-                    volume=1000.0,
-                    volume_quote=50000000.0,
-                ),
-            )
-            current_time += timedelta(days=1)
+    # Create mock candles to return
+    mock_candles = []
+    current_time = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
+    for _ in range(3):
+        end_time = datetime.combine(current_time.date(), datetime.max.time(), tzinfo=UTC)
+        mock_candles.append(
+            Candle(
+                end_date=end_time.isoformat(),
+                source=SourceID.BINANCE.value,
+                open=50000.0,
+                close=50100.0,
+                symbol=binance_symbol.symbol_name,
+                low=49900.0,
+                high=50200.0,
+                last=50100.0,
+                volume=1000.0,
+                volume_quote=50000000.0,
+            ),
+        )
+        current_time += timedelta(days=1)
 
-        mock_fetch.return_value = mock_candles
+    mock_fetch.return_value = mock_candles
 
-        fetch_daily_candles(binance_symbol, start_date, today, conn)
+    fetch_daily_candles(binance_symbol, start_date, today, conn)
 
     # Second fetch should use cache entirely (no API call needed)
     candles = fetch_daily_candles(binance_symbol, start_date, today, conn)
