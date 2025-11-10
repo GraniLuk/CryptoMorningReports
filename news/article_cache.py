@@ -425,11 +425,6 @@ def cleanup_old_articles(max_age_hours: int = 24) -> int:
                 deleted_count += 1
 
         except Exception as e:  # noqa: BLE001
-            # Log warning but continue cleanup
-            from infra.telegram_logging_handler import (  # noqa: PLC0415
-                app_logger,
-            )
-
             app_logger.warning(f"Error processing {markdown_file}: {e!s}")
 
     return deleted_count
@@ -487,7 +482,7 @@ def get_cache_statistics() -> dict[str, int | float | str]:
             if newest_time is None or published_dt > newest_time:
                 newest_time = published_dt
 
-        except Exception:  # noqa: BLE001,S110
+        except Exception:  # noqa: BLE001
             # Skip invalid articles
             pass
 
