@@ -304,34 +304,30 @@ def test_database_storage():
         today = datetime.now(UTC).date()
         start_date = today - timedelta(days=3)
 
-        # Mock Binance API call
-        with patch("shared_code.binance.BinanceClient") as mock_client_class:
-            mock_client = mock_client_class.return_value
-            mock_client.KLINE_INTERVAL_1DAY = "1d"
-
-            mock_klines = []
+        # Mock the Binance batch fetch function
+        with patch("shared_code.binance.fetch_binance_daily_klines_batch") as mock_fetch:
+            # Create mock candles to return
+            mock_candles = []
             current_time = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
             for _ in range(4):
-                open_time_ms = int(current_time.timestamp() * 1000)
-                mock_klines.append(
-                    [
-                        open_time_ms,
-                        "50000.0",
-                        "50200.0",
-                        "49900.0",
-                        "50100.0",
-                        "1000.0",
-                        open_time_ms + (24 * 60 * 60 * 1000),
-                        "50000000.0",
-                        100,
-                        "500.0",
-                        "25000000.0",
-                        "0",
-                    ],
+                end_time = datetime.combine(current_time.date(), datetime.max.time(), tzinfo=UTC)
+                mock_candles.append(
+                    Candle(
+                        end_date=end_time.isoformat(),
+                        source=SourceID.BINANCE.value,
+                        open=50000.0,
+                        close=50100.0,
+                        symbol=binance_symbol.symbol_name,
+                        low=49900.0,
+                        high=50200.0,
+                        last=50100.0,
+                        volume=1000.0,
+                        volume_quote=50000000.0,
+                    ),
                 )
                 current_time += timedelta(days=1)
 
-            mock_client.get_klines.return_value = mock_klines
+            mock_fetch.return_value = mock_candles
 
             candles_before = fetch_daily_candles(binance_symbol, start_date, today, conn)
             count_before = len(candles_before)
@@ -525,33 +521,29 @@ def test_fully_updated_database():
     start_date = today - timedelta(days=2)
 
     # Mock Binance API call for initial fetch
-    with patch("shared_code.binance.BinanceClient") as mock_client_class:
-        mock_client = mock_client_class.return_value
-        mock_client.KLINE_INTERVAL_1DAY = "1d"
-
-        mock_klines = []
+    with patch("shared_code.binance.fetch_binance_daily_klines_batch") as mock_fetch:
+        # Create mock candles to return
+        mock_candles = []
         current_time = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
         for _ in range(3):
-            open_time_ms = int(current_time.timestamp() * 1000)
-            mock_klines.append(
-                [
-                    open_time_ms,
-                    "50000.0",
-                    "50200.0",
-                    "49900.0",
-                    "50100.0",
-                    "1000.0",
-                    open_time_ms + (24 * 60 * 60 * 1000),
-                    "50000000.0",
-                    100,
-                    "500.0",
-                    "25000000.0",
-                    "0",
-                ],
+            end_time = datetime.combine(current_time.date(), datetime.max.time(), tzinfo=UTC)
+            mock_candles.append(
+                Candle(
+                    end_date=end_time.isoformat(),
+                    source=SourceID.BINANCE.value,
+                    open=50000.0,
+                    close=50100.0,
+                    symbol=binance_symbol.symbol_name,
+                    low=49900.0,
+                    high=50200.0,
+                    last=50100.0,
+                    volume=1000.0,
+                    volume_quote=50000000.0,
+                ),
             )
             current_time += timedelta(days=1)
 
-        mock_client.get_klines.return_value = mock_klines
+        mock_fetch.return_value = mock_candles
 
         fetch_daily_candles(binance_symbol, start_date, today, conn)
 

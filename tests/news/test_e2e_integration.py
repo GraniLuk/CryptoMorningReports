@@ -69,27 +69,47 @@ def test_rss_feed_fetching(mock_get_client):
         ),
     )
     mock_get_client.return_value = mock_client
-    print("📡 TEST 1: RSS Feed Fetching")
-    print("-" * 70)
 
-    try:
-        articles_json = get_news()
-        articles = json.loads(articles_json)
-        print(f"✅ Successfully fetched {len(articles)} articles from RSS feeds")
+    # Mock RSS feed parsing to avoid network calls
+    mock_feed_data = {
+        "entries": [
+            {
+                "title": "Bitcoin ETF Sees Record Inflows",
+                "link": "https://example.com/bitcoin-etf",
+                "published": "Wed, 10 Nov 2025 12:00:00 GMT",
+                "summary": "Bitcoin ETF inflows reach record levels",
+            },
+            {
+                "title": "Ethereum Network Upgrade Completed",
+                "link": "https://example.com/ethereum-upgrade",
+                "published": "Wed, 10 Nov 2025 10:00:00 GMT",
+                "summary": "Ethereum network upgrade successfully completed",
+            },
+        ],
+    }
 
-        if articles:
-            print("\n   Sample articles:")
-            for i, article in enumerate(articles[:3], 1):
-                symbols_list = article.get("symbols", [])
-                symbols_text = ", ".join(symbols_list) if symbols_list else "none"
-                print(f"   {i}. {article['title'][:60]}...")
-                print(f"      Source: {article['source']} | Symbols: {symbols_text}")
-        else:
-            print("⚠️  No articles fetched (RSS feeds may be rate-limited or down)")
+    with patch("feedparser.parse", return_value=mock_feed_data):
+        print("📡 TEST 1: RSS Feed Fetching")
+        print("-" * 70)
 
-    except (OSError, ValueError, ConnectionError, requests.RequestException) as e:
-        print(f"❌ RSS fetch failed: {e}")
-        print("   Continuing with manual test data...\n")
+        try:
+            articles_json = get_news()
+            articles = json.loads(articles_json)
+            print(f"✅ Successfully fetched {len(articles)} articles from RSS feeds")
+
+            if articles:
+                print("\n   Sample articles:")
+                for i, article in enumerate(articles[:3], 1):
+                    symbols_list = article.get("symbols", [])
+                    symbols_text = ", ".join(symbols_list) if symbols_list else "none"
+                    print(f"   {i}. {article['title'][:60]}...")
+                    print(f"      Source: {article['source']} | Symbols: {symbols_text}")
+            else:
+                print("⚠️  No articles fetched (RSS feeds may be rate-limited or down)")
+
+        except (OSError, ValueError, ConnectionError, requests.RequestException) as e:
+            print(f"❌ RSS fetch failed: {e}")
+            print("   Continuing with manual test data...\n")
 
 
 def test_manual_article_caching():
