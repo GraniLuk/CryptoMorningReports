@@ -45,7 +45,7 @@ def _resolve_pandoc_download_dir() -> str:
 
 
 def _ensure_pandoc_available():
-    global _pypandoc_module  # noqa: PLW0603
+    global _pypandoc_module  # noqa: PLW0603 - legitimate use for thread-safe lazy module initialization
     with _pypandoc_lock:
         if _pypandoc_module is not None:
             return _pypandoc_module
