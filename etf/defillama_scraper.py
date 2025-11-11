@@ -342,26 +342,72 @@ def parse_daily_stats(page_source: str) -> dict[str, float] | None:
 
 
 def parse_etf_table(
-    _page_source: str,
+    page_source: str,
     daily_stats: dict[str, float],
 ) -> list[dict[str, Any]] | None:
-    """Parse individual ETF data from the HTML table.
+    """Parse individual ETF data from JSON embedded in the DefiLlama page.
 
-    Extracts ticker, issuer, coin, flows, AUM, and volume for each ETF
-    from the table on the DefiLlama page.
+    The DefiLlama page embeds ETF data as JSON objects in the HTML source.
+    Example: {"ticker":"IBIT","timestamp":...,"asset":"bitcoin","issuer":"Blackrock",...}
 
     Args:
-        _page_source: HTML source of the page (unused - reserved for future implementation)
+        page_source: HTML source of the page
         daily_stats: Daily stats dictionary with total flows/AUM
 
     Returns:
         List of ETF data dictionaries or None if parsing fails
     """
-    # TODO: Implement table parsing logic
-    # This requires analyzing the actual HTML structure of the ETF table
-    # For now, return fallback data with daily stats
-    app_logger.debug("ETF table parsing not yet implemented - using fallback data")
-    return create_fallback_etf_data(daily_stats)
+    try:
+        etf_data_list = []
+        current_timestamp = int(datetime.now(UTC).timestamp())
+
+        # Regex to find JSON objects with ETF data embedded in HTML
+        # Pattern: {"ticker":"XXX",...,"asset":"bitcoin/ethereum",...,"issuer":"YYY",...}
+        json_pattern = (
+            r'\{"ticker":"([A-Z]+)"[^}]*"asset":"(bitcoin|ethereum)"'
+            r'[^}]*"issuer":"([^"]+)"[^}]*"aum":([0-9.]+)[^}]*"volume":([0-9.]+)[^}]*\}'
+        )
+
+        matches = re.finditer(json_pattern, page_source)
+
+        for match in matches:
+            ticker = match.group(1)
+            asset = match.group(2)
+            issuer = match.group(3)
+            aum_value = float(match.group(4))
+            volume_value = float(match.group(5))
+
+            # Map asset to coin
+            coin = "BTC" if asset == "bitcoin" else "ETH"
+
+            # Create ETF record
+            etf_data = {
+                "ticker": ticker,
+                "coin": coin,
+                "issuer": issuer,
+                "price": None,  # Not available from DefiLlama
+                "aum": aum_value,
+                "flows": 0.0,  # Individual flows not in JSON, only daily totals
+                "flowsChange": None,
+                "volume": volume_value,
+                "date": current_timestamp,
+            }
+
+            etf_data_list.append(etf_data)
+
+        if etf_data_list:
+            app_logger.info(f"✓ Parsed {len(etf_data_list)} individual ETF records from JSON")
+            return etf_data_list
+
+        # Fallback to summary data if no ETFs found
+        app_logger.warning("Could not parse individual ETF data - using summary data")
+        return create_fallback_etf_data(daily_stats)
+
+    except Exception as e:  # noqa: BLE001
+        app_logger.error(f"Error in parse_etf_table: {e!s}")
+        return create_fallback_etf_data(daily_stats)
+
+
 
 
 def create_fallback_etf_data(daily_stats: dict[str, float]) -> list[dict[str, Any]]:
