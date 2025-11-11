@@ -232,7 +232,7 @@ class TestETFRepository:
                         "flows_change": 10000000,
                         "volume": 200000000,
                         "fetch_date": current_date.isoformat(),
-                    }
+                    },
                 )
 
             for etf in test_etfs:
