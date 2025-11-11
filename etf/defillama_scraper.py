@@ -137,10 +137,15 @@ def create_chrome_driver() -> webdriver.Chrome:
 
 
 def scrape_defillama_etf() -> list[dict[str, Any]] | None:
-    """Scrape ETF data from DefiLlama dashboard.
+    """Scrape ETF data from DefiLlama dashboard with retry logic.
 
     Navigates to DefiLlama ETF page using Selenium, waits for Cloudflare
     challenge to complete, then extracts daily stats and ETF table data.
+
+    Implements exponential backoff retry logic for transient failures:
+    - Attempt 1: Immediate
+    - Attempt 2: 2 second delay
+    - Attempt 3: 4 second delay
 
     Returns:
         List of ETF data dictionaries with structure:
@@ -158,13 +163,70 @@ def scrape_defillama_etf() -> list[dict[str, Any]] | None:
             },
             ...
         ]
-        Returns None if scraping fails.
+        Returns None if all retry attempts fail.
 
     Example:
         >>> data = scrape_defillama_etf()
         >>> if data:
         ...     btc_etfs = [e for e in data if e["Coin"] == "BTC"]
         ...     print(f"Found {len(btc_etfs)} BTC ETFs")
+    """
+    max_retries = 3
+    base_delay = 2  # seconds
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            app_logger.info(
+                f"DefiLlama scraping attempt {attempt}/{max_retries}"
+                + (" (retrying after backoff)" if attempt > 1 else ""),
+            )
+
+            result = _scrape_defillama_etf_single_attempt()
+
+            if result:
+                if attempt > 1:
+                    app_logger.info(
+                        f"✓ Successfully scraped DefiLlama on attempt {attempt}/{max_retries}",
+                    )
+                return result
+            # If we got None but no exception, don't retry (Cloudflare block or no data)
+            app_logger.warning(
+                f"Attempt {attempt}/{max_retries} returned no data - not retrying",
+            )
+            return None  # noqa: TRY300
+
+        except (WebDriverException, TimeoutException) as e:
+            error_msg = str(e)
+
+            if attempt < max_retries:
+                delay = base_delay * (2 ** (attempt - 1))  # Exponential backoff: 2s, 4s, 8s
+                app_logger.warning(
+                    f"Attempt {attempt}/{max_retries} failed: {error_msg[:100]}... "
+                    f"Retrying in {delay}s",
+                )
+                time.sleep(delay)
+            else:
+                app_logger.error(
+                    f"All {max_retries} attempts failed. Last error: {error_msg[:200]}",
+                )
+                return None
+
+        except Exception as e:  # noqa: BLE001
+            # Unexpected errors - log and fail without retry
+            app_logger.error(f"Unexpected error during scraping: {e!s}")
+            return None
+
+    return None
+
+
+def _scrape_defillama_etf_single_attempt() -> list[dict[str, Any]] | None:
+    """Single attempt to scrape DefiLlama ETF data.
+
+    This is the actual scraping logic, called by scrape_defillama_etf()
+    which handles retries.
+
+    Returns:
+        List of ETF data dictionaries or None if scraping fails
     """
     driver = None
 
@@ -406,8 +468,6 @@ def parse_etf_table(
     except Exception as e:  # noqa: BLE001
         app_logger.error(f"Error in parse_etf_table: {e!s}")
         return create_fallback_etf_data(daily_stats)
-
-
 
 
 def create_fallback_etf_data(daily_stats: dict[str, float]) -> list[dict[str, Any]]:
