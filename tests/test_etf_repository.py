@@ -115,11 +115,11 @@ class TestETFRepository:
 
             assert row is not None
             assert row[1] == test_data["ticker"]  # Ticker
-            assert row[2] == test_data["coin"]    # Coin
+            assert row[2] == test_data["coin"]  # Coin
             assert row[3] == test_data["issuer"]  # Issuer
-            assert row[4] == test_data["price"]   # Price
-            assert row[5] == test_data["aum"]     # AUM
-            assert row[6] == test_data["flows"]   # Flows
+            assert row[4] == test_data["price"]  # Price
+            assert row[5] == test_data["aum"]  # AUM
+            assert row[6] == test_data["flows"]  # Flows
 
     def test_save_etf_flow_duplicate_update(self, mock_sqlite_conn):
         """Test that duplicate ETF entries update existing records."""
@@ -157,9 +157,12 @@ class TestETFRepository:
             assert flows == 75000000
 
     def test_get_latest_etf_flows(self, mock_sqlite_conn):
-        """Test retrieving latest ETF flows for a coin."""
+        """Test retrieving latest ETF flows for a coin (only today's data)."""
         with patch.dict(os.environ, {"DATABASE_TYPE": "sqlite"}):
             repo = ETFRepository(mock_sqlite_conn)
+
+            today = datetime.now(UTC).date().isoformat()
+            yesterday = (datetime.now(UTC).date() - timedelta(days=1)).isoformat()
 
             # Insert test data for different dates
             test_etfs = [
@@ -172,7 +175,7 @@ class TestETFRepository:
                     "flows": 50000000,
                     "flows_change": 10000000,
                     "volume": 200000000,
-                    "fetch_date": "2024-01-14",
+                    "fetch_date": yesterday,  # OLD data - should be ignored
                 },
                 {
                     "ticker": "IBIT",
@@ -183,21 +186,21 @@ class TestETFRepository:
                     "flows": 60000000,
                     "flows_change": 15000000,
                     "volume": 220000000,
-                    "fetch_date": "2024-01-15",
+                    "fetch_date": today,  # TODAY's data - should be returned
                 },
             ]
 
             for etf in test_etfs:
                 repo.save_etf_flow(**etf)
 
-            # Retrieve latest BTC flows
+            # Retrieve latest BTC flows (should only get TODAY's data)
             result = repo.get_latest_etf_flows("BTC")
 
             assert result is not None
             assert len(result) == 1
             assert result[0]["ticker"] == "IBIT"
             assert result[0]["flows"] == 60000000
-            assert result[0]["fetch_date"] == "2024-01-15"
+            assert result[0]["fetch_date"] == today  # Should be TODAY, not yesterday
 
     def test_get_latest_etf_flows_no_data(self, mock_sqlite_conn):
         """Test retrieving latest ETF flows when no data exists."""
@@ -218,17 +221,19 @@ class TestETFRepository:
 
             for i in range(7):
                 current_date = base_date + timedelta(days=i)
-                test_etfs.append({
-                    "ticker": "IBIT",
-                    "coin": "BTC",
-                    "issuer": "BlackRock",
-                    "price": 42.50 + i,
-                    "aum": 1000000000 + (i * 50000000),
-                    "flows": 50000000 + (i * 5000000),
-                    "flows_change": 10000000,
-                    "volume": 200000000,
-                    "fetch_date": current_date.isoformat(),
-                })
+                test_etfs.append(
+                    {
+                        "ticker": "IBIT",
+                        "coin": "BTC",
+                        "issuer": "BlackRock",
+                        "price": 42.50 + i,
+                        "aum": 1000000000 + (i * 50000000),
+                        "flows": 50000000 + (i * 5000000),
+                        "flows_change": 10000000,
+                        "volume": 200000000,
+                        "fetch_date": current_date.isoformat(),
+                    }
+                )
 
             for etf in test_etfs:
                 repo.save_etf_flow(**etf)

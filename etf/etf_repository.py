@@ -1,6 +1,7 @@
 """ETF (Exchange-Traded Fund) data repository for database operations."""
 
 import os
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from infra.telegram_logging_handler import app_logger
@@ -109,8 +110,7 @@ class ETFRepository:
 
             self.conn.commit()
             app_logger.info(
-                f"Saved ETF flow for {ticker} ({coin}): "
-                f"${flows:,.0f} flows on {fetch_date}",
+                f"Saved ETF flow for {ticker} ({coin}): ${flows:,.0f} flows on {fetch_date}",
             )
 
         except Exception as e:
@@ -121,42 +121,22 @@ class ETFRepository:
     def get_latest_etf_flows(self, coin: str) -> list[dict[str, str | float | None]] | None:
         """Get the most recent ETF flows for a specific coin.
 
+        IMPORTANT: Only returns data from TODAY. If no data exists for today,
+        returns None instead of falling back to old data.
+
         Args:
             coin: Coin type ('BTC' or 'ETH')
 
         Returns:
-            List of ETF flow dictionaries or None if no data found
+            List of ETF flow dictionaries for today, or None if no data found for today
         """
         cursor = self.conn.cursor()
 
         try:
-            # Get the most recent fetch date for this coin
-            date_query = """
-                SELECT FetchDate
-                FROM ETFFlows
-                WHERE Coin = ?
-                ORDER BY FetchDate DESC
-                LIMIT 1
-            """
+            # Get today's date
+            today = datetime.now(UTC).date().isoformat()
 
-            if not self.is_sqlite:
-                date_query = """
-                    SELECT TOP 1 FetchDate
-                    FROM ETFFlows
-                    WHERE Coin = ?
-                    ORDER BY FetchDate DESC
-                """
-
-            cursor.execute(date_query, (coin,))
-            date_row = cursor.fetchone()
-
-            if not date_row:
-                app_logger.info(f"No ETF data found for {coin}")
-                return None
-
-            latest_date = date_row[0]
-
-            # Get all ETF flows for this coin on the latest date
+            # Query for TODAY's data only (not the most recent date in DB)
             flows_query = """
                 SELECT Ticker, Issuer, Price, AUM, Flows, FlowsChange, Volume, FetchDate
                 FROM ETFFlows
@@ -164,10 +144,11 @@ class ETFRepository:
                 ORDER BY Flows DESC
             """
 
-            cursor.execute(flows_query, (coin, latest_date))
+            cursor.execute(flows_query, (coin, today))
             rows = cursor.fetchall()
 
             if not rows:
+                app_logger.info(f"No ETF data found for {coin} on {today}")
                 return None
 
             results = [
@@ -184,7 +165,7 @@ class ETFRepository:
                 for row in rows
             ]
 
-            app_logger.info(f"Retrieved {len(results)} ETF flows for {coin} on {latest_date}")
+            app_logger.info(f"Retrieved {len(results)} ETF flows for {coin} on {today}")
 
         except Exception as e:
             app_logger.error(f"Error fetching latest ETF flows for {coin}: {e!s}")
@@ -338,8 +319,7 @@ class ETFRepository:
             ]
 
             app_logger.info(
-                f"Retrieved ETF flows by issuer for {coin} on {fetch_date}: "
-                f"{len(results)} issuers",
+                f"Retrieved ETF flows by issuer for {coin} on {fetch_date}: {len(results)} issuers",
             )
 
         except Exception as e:
