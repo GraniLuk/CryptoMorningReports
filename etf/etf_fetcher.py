@@ -1,4 +1,4 @@
-"""ETF data fetcher using YFinance API integration."""
+"""ETF data fetcher with DefiLlama scraping and YFinance fallback."""
 
 import math
 from datetime import UTC, datetime
@@ -7,6 +7,7 @@ from typing import Any
 import pandas as pd
 import yfinance as yf
 
+from etf.defillama_scraper import scrape_defillama_etf
 from infra.telegram_logging_handler import app_logger
 
 
@@ -168,14 +169,31 @@ def _parse_ticker_data(
 
 
 def fetch_etf_data() -> list[dict[str, Any]] | None:
-    """Fetch ETF data from YFinance API.
+    """Fetch ETF data using DefiLlama scraping with YFinance fallback.
 
-    This is the main entry point for fetching ETF data. It uses YFinance's
-    batch download capability to fetch all ETF tickers in a single API call.
+    Tries to fetch complete ETF data (including flows and AUM) from DefiLlama
+    first. If that fails, falls back to YFinance which provides only price
+    and volume data.
 
     Returns:
-        List of ETF data dictionaries or None if failed
+        List of ETF data dictionaries or None if all sources failed
     """
+    # Try DefiLlama scraping first (complete data with flows and AUM)
+    app_logger.info("Attempting to fetch ETF data from DefiLlama...")
+    defillama_data = scrape_defillama_etf()
+
+    if defillama_data:
+        app_logger.info(
+            f"✓ Successfully fetched {len(defillama_data)} ETF records from DefiLlama "
+            "(includes flows and AUM data)",
+        )
+        return defillama_data
+
+    # Fallback to YFinance (limited data: price and volume only)
+    app_logger.warning(
+        "DefiLlama scraping failed - falling back to YFinance "
+        "(WARNING: YFinance does not provide flows/AUM data)",
+    )
     return fetch_yfinance_etf_data()
 
 
