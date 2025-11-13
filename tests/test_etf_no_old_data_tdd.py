@@ -108,10 +108,12 @@ class TestETFNoOldDataFallback:
 
         conn.close()
 
-    @patch("etf.etf_fetcher.yf.download")
+    @patch("etf.etf_fetcher.fetch_yfinance_etf_data")
+    @patch("etf.etf_fetcher.scrape_defillama_etf")
     def test_etf_report_shows_no_data_when_api_fails_and_no_today_data(
         self,
-        mock_download,
+        mock_scrape,
+        mock_yfinance,
         tmp_path,
     ):
         """Test 2: When API fails and NO today's data in DB → show 'No data' (not old data)."""
@@ -163,8 +165,9 @@ class TestETFNoOldDataFallback:
 
         wrapped_conn = MockConnection(conn)
 
-        # Simulate API failure
-        mock_download.side_effect = Exception("YFinance Rate Limited")
+        # Simulate both API failures (DefiLlama and YFinance fallback)
+        mock_scrape.side_effect = Exception("DefiLlama scraping failed")
+        mock_yfinance.return_value = None  # YFinance fallback also fails
 
         # Try to update ETF data (should fail)
         success = update_etf_data(wrapped_conn)  # type: ignore[arg-type]
