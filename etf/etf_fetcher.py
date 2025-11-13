@@ -180,14 +180,17 @@ def fetch_etf_data() -> list[dict[str, Any]] | None:
     """
     # Try DefiLlama scraping first (complete data with flows and AUM)
     app_logger.info("Attempting to fetch ETF data from DefiLlama...")
-    defillama_data = scrape_defillama_etf()
+    try:
+        defillama_data = scrape_defillama_etf()
 
-    if defillama_data:
-        app_logger.info(
-            f"✓ Successfully fetched {len(defillama_data)} ETF records from DefiLlama "
-            "(includes flows and AUM data)",
-        )
-        return defillama_data
+        if defillama_data:
+            app_logger.info(
+                f"✓ Successfully fetched {len(defillama_data)} ETF records from DefiLlama "
+                "(includes flows and AUM data)",
+            )
+            return defillama_data
+    except Exception as e:  # noqa: BLE001
+        app_logger.warning(f"DefiLlama scraping encountered error: {e!s}")
 
     # Fallback to YFinance (limited data: price and volume only)
     app_logger.warning(

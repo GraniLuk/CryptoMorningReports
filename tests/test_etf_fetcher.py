@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pandas as pd
-
 from etf.etf_fetcher import (
     _safe_float_parse,
     fetch_etf_data,
@@ -15,78 +13,101 @@ from etf.etf_fetcher import (
 class TestETFFetcher:
     """Test cases for ETF fetcher functions."""
 
-    @patch("etf.etf_fetcher.yf.download")
-    def test_fetch_etf_data_success(self, mock_download):
-        """Test successful API fetch."""
-        # Mock successful response from yfinance with multi-index columns
-
-        # YFinance returns multi-indexed columns: (ticker, field)
-        # Create sample data for IBIT and ETHE
-        dates = pd.date_range("2024-01-15", periods=1)
-        mock_data = pd.DataFrame(
+    @patch("etf.etf_fetcher.scrape_defillama_etf")
+    def test_fetch_etf_data_success(self, mock_scrape):
+        """Test successful API fetch from DefiLlama."""
+        # Mock successful response from DefiLlama scraper
+        mock_data = [
             {
-                ("IBIT", "Close"): [42.50],
-                ("IBIT", "Volume"): [200000000],
-                ("ETHE", "Close"): [25.30],
-                ("ETHE", "Volume"): [100000000],
+                "Ticker": "IBIT",
+                "Coin": "BTC",
+                "Issuer": "Blackrock",
+                "Price": None,
+                "AUM": 81884166749.0,
+                "Flows": 0.0,
+                "FlowsChange": None,
+                "Volume": 1876045860.0,
+                "Date": 1762959436,
             },
-            index=dates,
-        )
+            {
+                "Ticker": "BTC_TOTAL",
+                "Coin": "BTC",
+                "Issuer": "Total",
+                "Price": None,
+                "AUM": 112046212026.0,
+                "Flows": 524000000.0,
+                "FlowsChange": None,
+                "Volume": 0.0,
+                "Date": 1762959436,
+            },
+        ]
 
-        mock_download.return_value = mock_data
+        mock_scrape.return_value = mock_data
 
         result = fetch_etf_data()
 
         assert result is not None
         assert len(result) == 2
-        # Find IBIT and ETHE in results (order may vary)
+        # Find IBIT and BTC_TOTAL in results
         ibit = next((r for r in result if r["Ticker"] == "IBIT"), None)
-        ethe = next((r for r in result if r["Ticker"] == "ETHE"), None)
+        btc_total = next((r for r in result if r["Ticker"] == "BTC_TOTAL"), None)
         assert ibit is not None
-        assert ethe is not None
-        assert ibit["Price"] == 42.50
-        assert ethe["Price"] == 25.30
+        assert btc_total is not None
+        assert ibit["AUM"] == 81884166749.0
+        assert btc_total["Flows"] == 524000000.0
 
-    @patch("etf.etf_fetcher.yf.download")
-    def test_fetch_etf_data_http_error(self, mock_download):
-        """Test API fetch with error - should return None (no mock fallback)."""
-        # Simulate yfinance raising an exception
-        mock_download.side_effect = Exception("YFinance error")
+    @patch("etf.etf_fetcher.fetch_yfinance_etf_data")
+    @patch("etf.etf_fetcher.scrape_defillama_etf")
+    def test_fetch_etf_data_http_error(self, mock_scrape, mock_yfinance):
+        """Test API fetch with error - should fallback to YFinance."""
+        # Simulate DefiLlama scraper raising an exception
+        mock_scrape.side_effect = Exception("Scraping error")
 
-        result = fetch_etf_data()
-
-        # Should return None on error (we removed mock data fallback)
-        assert result is None
-
-    @patch("etf.etf_fetcher.yf.download")
-    def test_fetch_etf_data_timeout(self, mock_download):
-        """Test API fetch with timeout - should return None (no mock fallback)."""
-        mock_download.side_effect = Exception("Timeout")
+        # Mock YFinance fallback returning None (also failed)
+        mock_yfinance.return_value = None
 
         result = fetch_etf_data()
 
-        # Should return None on error (we removed mock data fallback)
+        # Should return None when both sources fail
         assert result is None
+        # Verify YFinance fallback was attempted
+        mock_yfinance.assert_called_once()
 
-    @patch("etf.etf_fetcher.yf.download")
-    def test_fetch_etf_data_invalid_json(self, mock_download):
-        """Test API fetch with invalid data - should return None (no mock fallback)."""
-        # Simulate yfinance returning invalid data (e.g., not a DataFrame)
-        mock_download.return_value = None
+    @patch("etf.etf_fetcher.fetch_yfinance_etf_data")
+    @patch("etf.etf_fetcher.scrape_defillama_etf")
+    def test_fetch_etf_data_timeout(self, mock_scrape, mock_yfinance):
+        """Test API fetch with timeout - should fallback to YFinance."""
+        mock_scrape.side_effect = Exception("Timeout")
+
+        # Mock YFinance fallback returning None (also failed)
+        mock_yfinance.return_value = None
 
         result = fetch_etf_data()
 
-        # Should return None on error (we removed mock data fallback)
+        # Should return None when both sources fail
+        assert result is None
+        # Verify YFinance fallback was attempted
+        mock_yfinance.assert_called_once()
+
+    @patch("etf.etf_fetcher.scrape_defillama_etf")
+    def test_fetch_etf_data_invalid_json(self, mock_scrape):
+        """Test API fetch with invalid data - should return None."""
+        # Simulate scraper returning None
+        mock_scrape.return_value = None
+
+        result = fetch_etf_data()
+
+        # Should return None
         assert result is None
 
-    @patch("etf.etf_fetcher.yf.download")
-    def test_fetch_defillama_etf_data_empty_response(self, mock_download):
+    @patch("etf.etf_fetcher.scrape_defillama_etf")
+    def test_fetch_defillama_etf_data_empty_response(self, mock_scrape):
         """Test API fetch with empty response."""
-        mock_download.return_value = pd.DataFrame([])
+        mock_scrape.return_value = []
 
         result = fetch_etf_data()
 
-        # Empty DataFrame should return None (not empty list)
+        # Empty list should return None
         assert result is None
 
     def test_parse_etf_data(self):

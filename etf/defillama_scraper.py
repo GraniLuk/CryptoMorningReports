@@ -17,6 +17,7 @@ Key Features:
 - Value parsing for amounts like "$1.2m", "$114.612b"
 """
 
+import json
 import re
 import time
 from datetime import UTC, datetime
@@ -281,10 +282,10 @@ def _scrape_defillama_etf_single_attempt() -> list[dict[str, Any]] | None:
 
     except WebDriverException as e:
         app_logger.error(f"WebDriver error during scraping: {e!s}")
-        return None
-    except Exception as e:  # noqa: BLE001
+        raise  # Re-raise to allow retry logic to handle it
+    except Exception as e:
         app_logger.error(f"Unexpected error during DefiLlama scraping: {e!s}")
-        return None
+        raise  # Re-raise unexpected errors
     finally:
         # Always close the browser
         if driver:
@@ -341,10 +342,10 @@ def parse_defillama_page(page_source: str) -> list[dict[str, Any]] | None:
 
 
 def parse_daily_stats(page_source: str) -> dict[str, float] | None:
-    """Parse daily stats (flows and AUM) from page HTML.
+    """Parse daily stats (flows and AUM) from JSON embedded in page.
 
-    Extracts BTC and ETH daily flows and total AUM from the page.
-    The page displays flows and AUM separately for Bitcoin and Ethereum.
+    Extracts BTC and ETH daily flows and total AUM from the embedded JSON data.
+    The page embeds data in a <script> tag with id="__NEXT_DATA__".
 
     Args:
         page_source: HTML source of the page
@@ -354,52 +355,38 @@ def parse_daily_stats(page_source: str) -> dict[str, float] | None:
         or None if parsing fails
     """
     try:
-        # Look for Bitcoin and Ethereum sections
-        # The HTML has values separated by newlines/tags:
-        # "Bitcoin" ... "Flows" ... "$1.2m" ... "AUM" ... "$114.612b"
-        # "Ethereum" ... "Flows" ... "$0" ... "AUM" ... "$17.183b"
+        # Find the embedded JSON data in the <script id="__NEXT_DATA__"> tag
+        # This contains accurate data including proper signs for negative flows
+        json_pattern = r'<script id="__NEXT_DATA__" type="application/json">(.+?)</script>'
+        json_match = re.search(json_pattern, page_source, re.DOTALL)
 
-        # Extract Bitcoin section first (ends before "Ethereum")
-        btc_section = re.search(
-            r"Bitcoin[\s\S]*?Flows[\s\S]*?\$([\d.]+[kmb]?)[\s\S]*?AUM[\s\S]*?\$([\d.]+[kmb]?)[\s\S]*?(?=Ethereum)",
-            page_source,
-            re.IGNORECASE,
-        )
-
-        if not btc_section:
-            app_logger.debug("Could not find Bitcoin section in page")
+        if not json_match:
+            app_logger.debug("Could not find __NEXT_DATA__ script tag")
             return None
 
-        # Now extract Ethereum section (starts after Bitcoin stats)
-        # Find where Bitcoin AUM value is, then search for Ethereum after that
-        btc_aum_pos = btc_section.end()
-        remaining_page = page_source[btc_aum_pos:]
+        json_data = json.loads(json_match.group(1))
 
-        eth_section = re.search(
-            r"Ethereum[\s\S]*?Flows[\s\S]*?\$([\d.]+[kmb]?)[\s\S]*?AUM[\s\S]*?\$([\d.]+[kmb]?)",
-            remaining_page,
-            re.IGNORECASE,
-        )
+        # Navigate to totalsByAsset: props -> pageProps -> totalsByAsset
+        page_props = json_data.get("props", {}).get("pageProps", {})
+        totals_by_asset = page_props.get("totalsByAsset", {})
 
-        if not eth_section:
-            app_logger.debug("Could not find Ethereum section in page")
+        if not totals_by_asset:
+            app_logger.debug("Could not find totalsByAsset in JSON data")
             return None
 
-        # Parse values
-        btc_flows = parse_flow_value(f"${btc_section.group(1)}")
-        btc_aum = parse_flow_value(f"${btc_section.group(2)}")
-        eth_flows = parse_flow_value(f"${eth_section.group(1)}")
-        eth_aum = parse_flow_value(f"${eth_section.group(2)}")
+        # Extract Bitcoin and Ethereum totals
+        btc_data = totals_by_asset.get("bitcoin", {})
+        eth_data = totals_by_asset.get("ethereum", {})
 
-        return {  # noqa: TRY300
-            "btc_flows": btc_flows or 0.0,
-            "btc_aum": btc_aum or 0.0,
-            "eth_flows": eth_flows or 0.0,
-            "eth_aum": eth_aum or 0.0,
+        return {
+            "btc_flows": float(btc_data.get("flows", 0)),
+            "btc_aum": float(btc_data.get("aum", 0)),
+            "eth_flows": float(eth_data.get("flows", 0)),
+            "eth_aum": float(eth_data.get("aum", 0)),
         }
 
     except Exception as e:  # noqa: BLE001
-        app_logger.debug(f"Error parsing daily stats: {e!s}")
+        app_logger.debug(f"Error parsing daily stats from JSON: {e!s}")
         return None
 
 
@@ -442,24 +429,35 @@ def parse_etf_table(
             # Map asset to coin
             coin = "BTC" if asset == "bitcoin" else "ETH"
 
-            # Create ETF record
+            # Create ETF record (using titlecase keys to match etf_fetcher.py parser)
             etf_data = {
-                "ticker": ticker,
-                "coin": coin,
-                "issuer": issuer,
-                "price": None,  # Not available from DefiLlama
-                "aum": aum_value,
-                "flows": 0.0,  # Individual flows not in JSON, only daily totals
-                "flowsChange": None,
-                "volume": volume_value,
-                "date": current_timestamp,
+                "Ticker": ticker,
+                "Coin": coin,
+                "Issuer": issuer,
+                "Price": None,  # Not available from DefiLlama
+                "AUM": aum_value,
+                "Flows": 0.0,  # Individual flows not in JSON, only daily totals
+                "FlowsChange": None,
+                "Volume": volume_value,
+                "Date": current_timestamp,
             }
 
             etf_data_list.append(etf_data)
 
         if etf_data_list:
             app_logger.info(f"✓ Parsed {len(etf_data_list)} individual ETF records from JSON")
-            return etf_data_list
+
+            # Add summary records with aggregate daily flows
+            # Individual ETFs don't have per-ETF flows, only the daily totals are available
+            summary_records = create_fallback_etf_data(daily_stats)
+            app_logger.info(
+                f"✓ Adding summary records with daily flows: "
+                f"BTC ${daily_stats.get('btc_flows', 0):,.0f}, "
+                f"ETH ${daily_stats.get('eth_flows', 0):,.0f}",
+            )
+
+            # Return both individual ETFs and summary records
+            return etf_data_list + summary_records
 
         # Fallback to summary data if no ETFs found
         app_logger.warning("Could not parse individual ETF data - using summary data")
