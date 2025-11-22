@@ -394,10 +394,10 @@ def parse_etf_table(
     page_source: str,
     daily_stats: dict[str, float],
 ) -> list[dict[str, Any]] | None:
-    """Parse individual ETF data from JSON embedded in the DefiLlama page.
+    """Parse individual ETF data from the DefiLlama page.
 
-    The DefiLlama page embeds ETF data as JSON objects in the HTML source.
-    Example: {"ticker":"IBIT","timestamp":...,"asset":"bitcoin","issuer":"Blackrock",...}
+    Extracts individual ETF flows from the table by parsing the page's embedded data.
+    The page shows individual ETF flows in the table, which we need to parse properly.
 
     Args:
         page_source: HTML source of the page
@@ -410,8 +410,61 @@ def parse_etf_table(
         etf_data_list = []
         current_timestamp = int(datetime.now(UTC).timestamp())
 
-        # Regex to find JSON objects with ETF data embedded in HTML
-        # Pattern: {"ticker":"XXX",...,"asset":"bitcoin/ethereum",...,"issuer":"YYY",...}
+        # Try to parse individual ETF data with flows from the table
+        # Pattern: Look for table rows with ticker, issuer, flows, AUM, volume
+        # The table format: Ticker | Issuer | Coin | Flows | AUM | Volume
+
+        # First, try to extract from the __NEXT_DATA__ JSON which has complete data
+        json_pattern = r'<script id="__NEXT_DATA__" type="application/json">(.+?)</script>'
+        json_match = re.search(json_pattern, page_source, re.DOTALL)
+
+        if json_match:
+            json_data = json.loads(json_match.group(1))
+            page_props = json_data.get("props", {}).get("pageProps", {})
+
+            # ETF data is in the "snapshot" key (not "etfs")
+            etf_list = page_props.get("snapshot", [])
+
+            if etf_list:
+                app_logger.info(f"Found {len(etf_list)} ETFs in __NEXT_DATA__ snapshot")
+
+                for etf_item in etf_list:
+                    ticker = etf_item.get("ticker")
+                    asset = etf_item.get("asset", "").lower()
+                    issuer = etf_item.get("issuer", "Unknown")
+                    aum = etf_item.get("aum", 0)
+                    flows = etf_item.get("flows", 0)  # Individual ETF flows
+                    volume = etf_item.get("volume", 0)
+
+                    if not ticker or asset not in ["bitcoin", "ethereum"]:
+                        app_logger.debug(
+                            f"Skipping ETF entry: ticker={ticker}, asset={asset}, issuer={issuer} (reason: missing ticker or unsupported asset type)"
+                        )
+                        continue
+
+                    coin = "BTC" if asset == "bitcoin" else "ETH"
+
+                    etf_data = {
+                        "Ticker": ticker,
+                        "Coin": coin,
+                        "Issuer": issuer,
+                        "Price": None,
+                        "AUM": float(aum) if aum else 0.0,
+                        "Flows": float(flows) if flows else 0.0,
+                        "FlowsChange": None,
+                        "Volume": float(volume) if volume else 0.0,
+                        "Date": current_timestamp,
+                    }
+
+                    etf_data_list.append(etf_data)
+            else:
+                app_logger.warning("Parsed __NEXT_DATA__ but found no ETFs in snapshot; falling back to regex extraction.")
+        else:
+            app_logger.warning("Could not find __NEXT_DATA__ script tag in page source; falling back to regex extraction.")
+                return etf_data_list
+
+        # Fallback: Use regex pattern to extract from HTML if __NEXT_DATA__ parsing failed
+        app_logger.warning("Could not parse from __NEXT_DATA__, trying regex fallback")
         json_pattern = (
             r'\{"ticker":"([A-Z]+)"[^}]*"asset":"(bitcoin|ethereum)"'
             r'[^}]*"issuer":"([^"]+)"[^}]*"aum":([0-9.]+)[^}]*"volume":([0-9.]+)[^}]*\}'
@@ -426,17 +479,15 @@ def parse_etf_table(
             aum_value = float(match.group(4))
             volume_value = float(match.group(5))
 
-            # Map asset to coin
             coin = "BTC" if asset == "bitcoin" else "ETH"
 
-            # Create ETF record (using titlecase keys to match etf_fetcher.py parser)
             etf_data = {
                 "Ticker": ticker,
                 "Coin": coin,
                 "Issuer": issuer,
-                "Price": None,  # Not available from DefiLlama
+                "Price": None,
                 "AUM": aum_value,
-                "Flows": 0.0,  # Individual flows not in JSON, only daily totals
+                "Flows": 0.0,  # Individual flows not available via regex
                 "FlowsChange": None,
                 "Volume": volume_value,
                 "Date": current_timestamp,
@@ -445,22 +496,11 @@ def parse_etf_table(
             etf_data_list.append(etf_data)
 
         if etf_data_list:
-            app_logger.info(f"✓ Parsed {len(etf_data_list)} individual ETF records from JSON")
+            app_logger.info(f"✓ Parsed {len(etf_data_list)} individual ETF records from HTML")
+            return etf_data_list
 
-            # Add summary records with aggregate daily flows
-            # Individual ETFs don't have per-ETF flows, only the daily totals are available
-            summary_records = create_fallback_etf_data(daily_stats)
-            app_logger.info(
-                f"✓ Adding summary records with daily flows: "
-                f"BTC ${daily_stats.get('btc_flows', 0):,.0f}, "
-                f"ETH ${daily_stats.get('eth_flows', 0):,.0f}",
-            )
-
-            # Return both individual ETFs and summary records
-            return etf_data_list + summary_records
-
-        # Fallback to summary data if no ETFs found
-        app_logger.warning("Could not parse individual ETF data - using summary data")
+        # If we got here, no individual ETF data was found - use summary only
+        app_logger.warning("Could not parse individual ETF data - using summary data only")
         return create_fallback_etf_data(daily_stats)
 
     except Exception as e:  # noqa: BLE001
