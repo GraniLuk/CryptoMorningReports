@@ -438,7 +438,8 @@ def parse_etf_table(
 
                     if not ticker or asset not in ["bitcoin", "ethereum"]:
                         app_logger.debug(
-                            f"Skipping ETF entry: ticker={ticker}, asset={asset}, issuer={issuer} (reason: missing ticker or unsupported asset type)"
+                            f"Skipping ETF entry: ticker={ticker}, asset={asset}, "
+                            f"issuer={issuer} (reason: missing ticker or unsupported asset type)",
                         )
                         continue
 
@@ -457,11 +458,22 @@ def parse_etf_table(
                     }
 
                     etf_data_list.append(etf_data)
-            else:
-                app_logger.warning("Parsed __NEXT_DATA__ but found no ETFs in snapshot; falling back to regex extraction.")
-        else:
-            app_logger.warning("Could not find __NEXT_DATA__ script tag in page source; falling back to regex extraction.")
+
+                app_logger.info(
+                    f"✓ Parsed {len(etf_data_list)} ETF records with individual flows "
+                    f"from __NEXT_DATA__",
+                )
                 return etf_data_list
+
+            app_logger.warning(
+                "Parsed __NEXT_DATA__ but found no ETFs in snapshot; "
+                "falling back to regex extraction.",
+            )
+        else:
+            app_logger.warning(
+                "Could not find __NEXT_DATA__ script tag in page source; "
+                "falling back to regex extraction.",
+            )
 
         # Fallback: Use regex pattern to extract from HTML if __NEXT_DATA__ parsing failed
         app_logger.warning("Could not parse from __NEXT_DATA__, trying regex fallback")
