@@ -9,7 +9,7 @@ configparser==7.1.0
 prettytable==3.14.0
 python-telegram-bot==22.5
 azure-data-tables==12.6.0
-azure-identity==1.19.0
+azure-identity==1.25.1
 azure-monitor-query==1.4.1
 requests==2.32.3
 aiohttp==3.11.12
