@@ -23,7 +23,7 @@ jobs:
       pull-requests: write  # Required for PR comments
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Python version
         uses: actions/setup-python@v6
