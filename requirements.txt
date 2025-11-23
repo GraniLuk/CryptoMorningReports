@@ -11,7 +11,7 @@ python-telegram-bot==22.5
 azure-data-tables==12.6.0
 azure-identity==1.25.1
 azure-monitor-query==1.4.1
-requests==2.32.3
+requests==2.32.5
 aiohttp==3.11.12
 python-dotenv==1.2.1
 python-binance==1.0.27
