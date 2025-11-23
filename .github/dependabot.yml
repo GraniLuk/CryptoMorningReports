@@ -12,6 +12,8 @@ updates:
     commit-message:
       prefix: "deps"
       include: "scope"
+    allow:
+      - dependency-name: "*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
