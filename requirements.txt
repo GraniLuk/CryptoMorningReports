@@ -31,7 +31,7 @@ ruff==0.14.3
 cryptography==46.0.3
 plotly==6.0.0
 google-generativeai==0.8.5
-ollama==0.6.0
+ollama==0.6.1
 pypandoc==1.15
 selenium>=4.15.0
 webdriver-manager>=4.0.0
