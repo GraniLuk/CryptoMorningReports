@@ -13,7 +13,7 @@ azure-identity==1.25.1
 azure-monitor-query==1.4.1
 requests==2.32.3
 aiohttp==3.11.12
-python-dotenv==1.0.1
+python-dotenv==1.2.1
 python-binance==1.0.27
 python-kucoin==2.2.0
 pyodbc==5.2.0
