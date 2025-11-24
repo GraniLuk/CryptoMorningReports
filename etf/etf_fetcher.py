@@ -183,12 +183,17 @@ def fetch_etf_data() -> list[dict[str, Any]] | None:
     try:
         defillama_data = scrape_defillama_etf()
 
-        if defillama_data:
-            app_logger.info(
-                f"✓ Successfully fetched {len(defillama_data)} ETF records from DefiLlama "
-                "(includes flows and AUM data)",
-            )
-            return defillama_data
+        # Check if we got data from DefiLlama
+        if defillama_data is not None:
+            if len(defillama_data) > 0:
+                app_logger.info(
+                    f"✓ Successfully fetched {len(defillama_data)} ETF records from DefiLlama "
+                    "(includes flows and AUM data)",
+                )
+                return defillama_data
+            # Empty list means successful scrape but no data - return empty list, don't fallback
+            app_logger.warning("DefiLlama returned empty data - no ETFs found")
+            return None
     except Exception as e:  # noqa: BLE001
         app_logger.warning(f"DefiLlama scraping encountered error: {e!s}")
 

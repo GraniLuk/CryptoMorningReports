@@ -89,16 +89,21 @@ class TestETFFetcher:
         # Verify YFinance fallback was attempted
         mock_yfinance.assert_called_once()
 
+    @patch("etf.etf_fetcher.fetch_yfinance_etf_data")
     @patch("etf.etf_fetcher.scrape_defillama_etf")
-    def test_fetch_etf_data_invalid_json(self, mock_scrape):
+    def test_fetch_etf_data_invalid_json(self, mock_scrape, mock_yfinance):
         """Test API fetch with invalid data - should return None."""
         # Simulate scraper returning None
         mock_scrape.return_value = None
+        # Mock YFinance fallback also returning None
+        mock_yfinance.return_value = None
 
         result = fetch_etf_data()
 
-        # Should return None
+        # Should return None when both sources fail
         assert result is None
+        # Verify YFinance fallback was attempted
+        mock_yfinance.assert_called_once()
 
     @patch("etf.etf_fetcher.scrape_defillama_etf")
     def test_fetch_defillama_etf_data_empty_response(self, mock_scrape):
@@ -107,7 +112,7 @@ class TestETFFetcher:
 
         result = fetch_etf_data()
 
-        # Empty list should return None
+        # Empty list means successful scrape but no data - should return None
         assert result is None
 
     def test_parse_etf_data(self):
