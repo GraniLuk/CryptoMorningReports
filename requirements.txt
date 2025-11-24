@@ -18,7 +18,7 @@ python-binance==1.0.27
 python-kucoin==2.2.0
 pyodbc==5.2.0
 pycoingecko==3.2.0
-yfinance==0.2.49
+yfinance==0.2.66
 twikit==2.3.3
 feedparser==6.0.11
 beautifulsoup4==4.14.2
