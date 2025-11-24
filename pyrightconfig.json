@@ -26,7 +26,7 @@
   "reportCallIssue": "error",
   "reportGeneralTypeIssues": "error",
   "reportAssignmentType": "error",
-  "pythonVersion": "3.11",
+  "pythonVersion": "3.13",
   "pythonPlatform": "All",
   "typeCheckingMode": "standard",
   "useLibraryCodeForTypes": true,

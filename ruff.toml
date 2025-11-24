@@ -1,8 +1,8 @@
 # Ruff configuration file
 # Docs: https://docs.astral.sh/ruff/
 
-# Target Python 3.11
-target-version = "py311"
+# Target Python 3.13
+target-version = "py313"
 
 # Line length to match common formatter settings
 line-length = 100

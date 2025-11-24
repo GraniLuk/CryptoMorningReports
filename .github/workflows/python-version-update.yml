@@ -1,0 +1,95 @@
+name: Check Python Version Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check-python-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get latest Python version
+        id: latest-python
+        run: |
+          # Get latest stable Python version from python.org
+          LATEST=$(curl -s https://www.python.org/downloads/ | grep -oP 'Python \K\d+\.\d+\.\d+' | head -1)
+          LATEST_MINOR=$(echo $LATEST | grep -oP '\d+\.\d+')
+          LATEST_SHORT=$(echo $LATEST_MINOR | tr -d '.')
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "minor=$LATEST_MINOR" >> $GITHUB_OUTPUT
+          echo "short=$LATEST_SHORT" >> $GITHUB_OUTPUT
+          echo "Latest Python version: $LATEST (py$LATEST_SHORT)"
+      
+      - name: Get current Python version
+        id: current-python
+        run: |
+          CURRENT=$(grep "PYTHON_VERSION:" .github/workflows/main_bitcoinchecker.yml | grep -oP '\d+\.\d+')
+          CURRENT_SHORT=$(echo $CURRENT | tr -d '.')
+          echo "minor=$CURRENT" >> $GITHUB_OUTPUT
+          echo "short=$CURRENT_SHORT" >> $GITHUB_OUTPUT
+          echo "Current Python version: $CURRENT (py$CURRENT_SHORT)"
+      
+      - name: Check if update needed
+        id: check-update
+        run: |
+          if [ "${{ steps.current-python.outputs.minor }}" != "${{ steps.latest-python.outputs.minor }}" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+            echo "✅ Update available: ${{ steps.current-python.outputs.minor }} → ${{ steps.latest-python.outputs.minor }}"
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+            echo "✅ Already using latest Python version"
+          fi
+      
+      - name: Update configuration files
+        if: steps.check-update.outputs.update_needed == 'true'
+        run: |
+          # Update GitHub Actions workflow
+          sed -i "s/PYTHON_VERSION: '${{ steps.current-python.outputs.minor }}'/PYTHON_VERSION: '${{ steps.latest-python.outputs.minor }}'/" .github/workflows/main_bitcoinchecker.yml
+          
+          # Update pyrightconfig.json
+          sed -i 's/"pythonVersion": "${{ steps.current-python.outputs.minor }}"/"pythonVersion": "${{ steps.latest-python.outputs.minor }}"/' pyrightconfig.json
+          
+          # Update ruff.toml
+          sed -i 's/target-version = "py${{ steps.current-python.outputs.short }}"/target-version = "py${{ steps.latest-python.outputs.short }}"/' ruff.toml
+          
+          # Update comment in ruff.toml
+          sed -i 's/# Target Python ${{ steps.current-python.outputs.minor }}/# Target Python ${{ steps.latest-python.outputs.minor }}/' ruff.toml
+      
+      - name: Create Pull Request
+        if: steps.check-update.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "deps(python): bump Python from ${{ steps.current-python.outputs.minor }} to ${{ steps.latest-python.outputs.minor }}"
+          title: "deps(python): Bump Python from ${{ steps.current-python.outputs.minor }} to ${{ steps.latest-python.outputs.minor }}"
+          body: |
+            Bumps Python version from ${{ steps.current-python.outputs.minor }} to ${{ steps.latest-python.outputs.minor }}.
+            
+            ## Changes
+            - Updated `.github/workflows/main_bitcoinchecker.yml`
+            - Updated `pyrightconfig.json`
+            - Updated `ruff.toml`
+            
+            ## Latest Python Release
+            Version: ${{ steps.latest-python.outputs.version }}
+            
+            ## Next Steps
+            After merging, you'll need to:
+            1. Install Python ${{ steps.latest-python.outputs.minor }} locally
+            2. Recreate your virtual environment
+            3. Test the application
+            
+            ---
+            🤖 This PR was automatically created by the Python Version Update workflow.
+          branch: deps/python-${{ steps.latest-python.outputs.short }}
+          labels: dependencies, python
+          assignees: GraniLuk
+          reviewers: GraniLuk
