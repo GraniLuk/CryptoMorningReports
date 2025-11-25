@@ -52,26 +52,10 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
         List of RSSEntry objects from all feeds, sorted by published_time (newest first)
     """
     feeds = {
-        "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content"},
-        "coindesk": {
-            "url": "https://www.coindesk.com/arc/outboundfeeds/rss",
-            "class": "document-body",
-        },
-        "newsBTC": {
-            "url": "https://www.newsbtc.com/feed",
-            "class": "entry-content",  # Updated from 'content-inner jeg_link_underline'
-        },
-        "coinJournal": {
-            "url": "https://coinjournal.net/feed",
-            "class": "post-article-content lg:col-span-8",
-        },
-        "coinpedia": {
-            "url": "https://coinpedia.org/feed",
-            "class": "entry-content entry clearfix",
-        },
-        "ambcrypto": {
-            "url": "https://ambcrypto.com/feed/",
-            "class": "single-post-main-middle",
+        "cointelegraph": {
+            "url": "https://cointelegraph.com/rss",
+            "class": "post-content",
+            "required_hashtags": ["bitcoin-price", "price-analysis"],
         },
     }
 
@@ -79,12 +63,14 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
     feed_stats = {}
 
     for source, feed_info in feeds.items():
+        required_hashtags = feed_info.get("required_hashtags")
         feed_entries = _collect_entries_from_feed(
             feed_url=feed_info["url"],
             source=source,
             class_name=feed_info["class"],
             cache_enabled=cache_enabled,
             current_time=current_time,
+            required_hashtags=required_hashtags,
         )
         all_entries.extend(feed_entries)
         feed_stats[source] = len(feed_entries)
@@ -101,6 +87,42 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
     return all_entries
 
 
+def _has_required_hashtags(article_link: str, required_hashtags: list[str]) -> bool:
+    """Check if article page contains at least one of the required hashtags.
+
+    Args:
+        article_link: URL of the article to check
+        required_hashtags: List of hashtags to look for
+            (e.g., ['bitcoin-price', 'price-analysis'])
+
+    Returns:
+        True if article contains at least one required hashtag, False otherwise
+    """
+    try:
+        response = requests.get(article_link, timeout=10)
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Find all links with href containing '/tags/'
+        tag_links = soup.find_all("a", href=True)
+
+        # Extract hashtag names from URLs
+        # (e.g., '/tags/bitcoin-price' -> 'bitcoin-price')
+        article_hashtags = set()
+        for link in tag_links:
+            href = link.get("href", "")  # type: ignore[union-attr]
+            if isinstance(href, str) and "/tags/" in href:
+                hashtag = href.split("/tags/")[-1].lower()
+                article_hashtags.add(hashtag)
+
+        # Check if any required hashtag is present
+        return bool(article_hashtags & set(required_hashtags))
+
+    except (requests.RequestException, AttributeError, ValueError, TypeError) as e:
+        app_logger.warning(f"Failed to check hashtags for {article_link}: {e!s}")
+        # On error, include the article (fail open rather than fail closed)
+        return True
+
+
 def _collect_entries_from_feed(
     *,
     feed_url: str,
@@ -108,6 +130,7 @@ def _collect_entries_from_feed(
     class_name: str,
     cache_enabled: bool,
     current_time: datetime,
+    required_hashtags: list[str] | None = None,
 ) -> list[RSSEntry]:
     """Collect entries from a single RSS feed.
 
@@ -117,6 +140,8 @@ def _collect_entries_from_feed(
         class_name: CSS class for content extraction
         cache_enabled: Whether caching is enabled
         current_time: Current datetime
+        required_hashtags: Optional list of hashtags to filter by
+            (e.g., ['bitcoin-price', 'price-analysis'])
 
     Returns:
         List of RSSEntry objects from this feed
@@ -141,6 +166,13 @@ def _collect_entries_from_feed(
                 entry=parsed_entry,
                 cache_enabled=cache_enabled,
                 current_time=current_time,
+            ):
+                continue
+
+            # Filter by hashtags if required (for Cointelegraph)
+            if required_hashtags and not _has_required_hashtags(
+                article_link=parsed_entry.link,
+                required_hashtags=required_hashtags,
             ):
                 continue
 
