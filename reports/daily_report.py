@@ -351,7 +351,7 @@ def _collect_relevant_news(
     if max_articles > 0:
         relevant_articles = relevant_articles[:max_articles]
 
-    included_links: set[str] = set()
+    included_links: set[str] = {article.link for article in relevant_articles}
 
     logger.info("Articles included in daily report: %s", [a.title for a in relevant_articles])
 
@@ -368,7 +368,6 @@ def _collect_relevant_news(
             max_content_chars=max_content_chars,
         )
         payload.append(serialized)
-        included_links.add(article.link)
         total_summary_chars += summary_chars
         total_content_chars += content_chars
         if truncated:
