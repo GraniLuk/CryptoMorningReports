@@ -5,10 +5,11 @@ from typing import TypeVar
 
 from infra.telegram_logging_handler import app_logger
 
-T = TypeVar('T')
+
+T = TypeVar("T")
 
 
-def retry_with_fallback_models(
+def retry_with_fallback_models(  # noqa: UP047
     models: list[str],
     request_func: Callable[[str], tuple[bool, T]],
     operation_name: str = "API request",
