@@ -61,7 +61,10 @@ def test_collect_relevant_news_limits_and_truncates(
     monkeypatch.setenv("NEWS_ARTICLE_MAX_CHARS", "60")
 
     with caplog.at_level("INFO"):
-        payload_json, stats = dr._collect_relevant_news(hours=12, logger=logging.getLogger())
+        payload_json, stats, included_links = dr._collect_relevant_news(
+            hours=12,
+            logger=logging.getLogger(),
+        )
 
     payload = json.loads(payload_json)
 
@@ -74,6 +77,7 @@ def test_collect_relevant_news_limits_and_truncates(
     assert payload[0]["summary"] == "Sum 1"
     assert payload[1]["summary"].startswith("Word")  # fallback summary
     assert payload[1]["content"].endswith("...")
+    assert included_links == {articles[0].link, articles[1].link}
     assert any("Truncated article" in message for message in caplog.messages)
 
 
@@ -96,7 +100,11 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setenv("DAILY_REPORT_EMAIL_RECIPIENTS", "test@example.com")
 
-    def fake_collect(*, hours: int, logger: Logger) -> tuple[str, dict[str, int]]:
+    def fake_collect(
+        *,
+        hours: int,
+        logger: Logger,
+    ) -> tuple[str, dict[str, int], set[str]]:
         collected["news_hours"] = hours
         return (
             '[{"source":"test"}]',
@@ -110,9 +118,23 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
                 "max_articles": 20,
                 "max_content_chars": 2600,
             },
+            {"https://example.com/article"},
         )
 
     monkeypatch.setattr(dr, "_collect_relevant_news", fake_collect)
+
+    def fake_build_sections(
+        *,
+        included_links: set[str],
+        stats: dict[str, float | int] | None,
+        hours: int,
+    ) -> tuple[str | None, str | None]:
+        collected["audit_included"] = included_links
+        collected["audit_hours"] = hours
+        collected["audit_stats_keys"] = sorted(stats.keys()) if stats else []
+        return ("plain audit", "markdown audit")
+
+    monkeypatch.setattr(dr, "_build_news_audit_sections", fake_build_sections)
     monkeypatch.setattr(
         dr,
         "get_aggregated_data",
@@ -141,7 +163,7 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
         symbol_name = "BTC"
         full_name = "Bitcoin"
 
-    result = asyncio.run(
+    analysis_result, news_meta = asyncio.run(
         dr._process_ai_analysis(
             ai_api_key="key",
             ai_api_type="gemini",
@@ -153,7 +175,15 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
         ),
     )
 
-    assert result == analysis_text
+    assert analysis_result.startswith(analysis_text)
+    assert "## News Audit Summary" in analysis_result
+    assert analysis_result.rstrip().endswith("markdown audit")
+    assert news_meta["included_links"] == {"https://example.com/article"}
+    assert news_meta["audit_plain"] == "plain audit"
+    assert news_meta["audit_markdown"] == "markdown audit"
     assert collected["news_hours"] == 24
+    assert collected["audit_hours"] == 24
+    assert collected["audit_included"] == {"https://example.com/article"}
+    assert "articles_available" in collected["audit_stats_keys"]
     assert collected.get("upload_calls")
     assert collected.get("email_calls")

@@ -16,7 +16,12 @@ from integrations.onedrive_uploader import (
 )
 from integrations.pandoc_converter import convert_markdown_to_epub_async
 from launchpool.launchpool_report import check_gempool_articles
-from news.article_cache import CachedArticle, cleanup_old_articles, get_cache_statistics
+from news.article_cache import (
+    CachedArticle,
+    cleanup_old_articles,
+    get_cache_statistics,
+    get_recent_articles,
+)
 from news.news_agent import (
     get_detailed_crypto_analysis_with_news,
     get_relevant_cached_articles,
@@ -100,9 +105,7 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
         # BTC ETF flows
         if btc_flows:
             total_btc_daily = sum(
-                float(etf.get("flows", 0) or 0)
-                for etf in btc_flows
-                if etf.get("flows") is not None
+                float(etf.get("flows", 0) or 0) for etf in btc_flows if etf.get("flows") is not None
             )
             btc_weekly_total = btc_weekly.get("total_flows", 0) if btc_weekly else 0
             lines.append(f"BTC ETF Daily Flows: ${total_btc_daily:,.0f}")
@@ -113,9 +116,7 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
         # ETH ETF flows
         if eth_flows:
             total_eth_daily = sum(
-                float(etf.get("flows", 0) or 0)
-                for etf in eth_flows
-                if etf.get("flows") is not None
+                float(etf.get("flows", 0) or 0) for etf in eth_flows if etf.get("flows") is not None
             )
             eth_weekly_total = eth_weekly.get("total_flows", 0) if eth_weekly else 0
             lines.append(f"ETH ETF Daily Flows: ${total_eth_daily:,.0f}")
@@ -148,13 +149,18 @@ async def _process_ai_analysis(
 ):
     """Process AI analysis with news and handle uploads/email."""
     analysis_reported_with_news = "Failed: Analysis with news not generated"
+    news_metadata: dict[str, object] = {
+        "included_links": set(),
+        "stats": {},
+        "hours": 24,
+    }
 
     if not ai_api_key:
         logger.error("No API key found for %s", ai_api_type)
-        return analysis_reported_with_news
+        return analysis_reported_with_news, news_metadata
 
     # Build filtered news payload from cached articles (already processed by Ollama earlier)
-    news_payload, news_stats = _collect_relevant_news(hours=24, logger=logger)
+    news_payload, news_stats, included_links = _collect_relevant_news(hours=24, logger=logger)
     logger.info(
         "News filtering stats - available: %d, truncated: %d, est_tokens: ~%d",
         news_stats["articles_available"],
@@ -163,6 +169,20 @@ async def _process_ai_analysis(
     )
     if news_stats["articles_available"] == 0:
         logger.warning("No relevant news articles available for AI analysis.")
+
+    audit_plain, audit_markdown = _build_news_audit_sections(
+        included_links=included_links,
+        stats=news_stats,
+        hours=24,
+    )
+
+    news_metadata = {
+        "included_links": included_links,
+        "stats": news_stats,
+        "hours": 24,
+        "audit_plain": audit_plain,
+        "audit_markdown": audit_markdown,
+    }
 
     aggregated_data = get_aggregated_data(conn)
 
@@ -245,6 +265,9 @@ async def _process_ai_analysis(
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             logger.warning("Failed to parse news payload for article list: %s", e)
 
+    if not analysis_reported_with_news.startswith("Failed") and audit_markdown:
+        analysis_reported_with_news += "\n\n## News Audit Summary\n\n" + audit_markdown
+
     # --- OneDrive Uploads ---
     if not analysis_reported_with_news.startswith("Failed"):
         onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}.md"
@@ -312,10 +335,14 @@ async def _process_ai_analysis(
                     today_date,
                 )
 
-    return analysis_reported_with_news
+    return analysis_reported_with_news, news_metadata
 
 
-def _collect_relevant_news(*, hours: int, logger: "Logger") -> tuple[str, dict[str, float | int]]:
+def _collect_relevant_news(
+    *,
+    hours: int,
+    logger: "Logger",
+) -> tuple[str, dict[str, float | int], set[str]]:
     """Collect relevant cached articles and prepare payload for AI consumption."""
     relevant_articles = get_relevant_cached_articles(hours=hours)
     total_available = len(relevant_articles)
@@ -323,6 +350,8 @@ def _collect_relevant_news(*, hours: int, logger: "Logger") -> tuple[str, dict[s
     max_articles = max(int(os.environ.get("NEWS_ARTICLE_LIMIT", "20")), 0)
     if max_articles > 0:
         relevant_articles = relevant_articles[:max_articles]
+
+    included_links: set[str] = set()
 
     logger.info("Articles included in daily report: %s", [a.title for a in relevant_articles])
 
@@ -339,16 +368,13 @@ def _collect_relevant_news(*, hours: int, logger: "Logger") -> tuple[str, dict[s
             max_content_chars=max_content_chars,
         )
         payload.append(serialized)
+        included_links.add(article.link)
         total_summary_chars += summary_chars
         total_content_chars += content_chars
         if truncated:
             truncated_count += 1
 
-    estimated_tokens = (
-        math.ceil((total_summary_chars + total_content_chars) / 4)
-        if payload
-        else 0
-    )
+    estimated_tokens = math.ceil((total_summary_chars + total_content_chars) / 4) if payload else 0
     avg_summary = (total_summary_chars / len(payload)) if payload else 0.0
     avg_content = (total_content_chars / len(payload)) if payload else 0.0
 
@@ -363,7 +389,104 @@ def _collect_relevant_news(*, hours: int, logger: "Logger") -> tuple[str, dict[s
         "max_content_chars": max_content_chars,
     }
 
-    return json.dumps(payload, indent=2), stats
+    return json.dumps(payload, indent=2), stats, included_links
+
+
+def _build_news_audit_sections(
+    *,
+    included_links: set[str],
+    stats: dict[str, float | int] | None,
+    hours: int,
+) -> tuple[str | None, str | None]:
+    """Build both plain-text and markdown summaries of news article decisions."""
+    articles = get_recent_articles(hours=hours)
+    if not articles:
+        return None, None
+
+    limit_default = 15
+    audit_limit_raw = os.environ.get("NEWS_ARTICLE_AUDIT_LIMIT", "").strip()
+    try:
+        audit_limit = int(audit_limit_raw) if audit_limit_raw else limit_default
+    except ValueError:
+        audit_limit = limit_default
+
+    if audit_limit <= 0:
+        audit_limit = len(articles)
+
+    selected_articles = articles[:audit_limit]
+
+    plain_lines: list[str] = [f"News Article Review (last {hours}h)"]
+    markdown_lines: list[str] = [f"**News Article Review (last {hours}h)**"]
+
+    if stats:
+        total_available = stats.get("articles_available", len(articles))
+        included_count = stats.get("articles_included", len(included_links))
+        truncated = stats.get("articles_truncated", 0)
+        plain_lines.append(
+            f"Total available: {total_available} | Included: {included_count} | Truncated: {truncated}",
+        )
+    else:
+        plain_lines.append(
+            f"Total available: {len(articles)} | Included: {len(included_links)}",
+        )
+
+    markdown_lines.append(
+        f"Total available: {stats.get('articles_available', len(articles)) if stats else len(articles)} | "
+        f"Included: {stats.get('articles_included', len(included_links)) if stats else len(included_links)}"
+        + (f" | Truncated: {stats.get('articles_truncated', 0)}" if stats else ""),
+    )
+
+    plain_lines.append("")
+    markdown_lines.append("")
+
+    for idx, article in enumerate(selected_articles, start=1):
+        score_val = article.relevance_score
+        score_str = f"{float(score_val):.2f}" if isinstance(score_val, (int, float)) else "N/A"
+        included_flag = "yes" if article.link in included_links else "no"
+        relevant_flag = "yes" if article.is_relevant else "no"
+        title = (article.title or "Untitled article").strip()
+        source = (article.source or "unknown source").strip()
+        url = article.link or "N/A"
+
+        plain_lines.append(
+            f"{idx}. Included: {included_flag} | Relevant: {relevant_flag} | Score: {score_str}",
+        )
+        plain_lines.append(f"   Source: {source}")
+        plain_lines.append(f"   Title: {title}")
+        plain_lines.append(f"   URL: {url}")
+
+        if idx != len(selected_articles):
+            plain_lines.append("")
+
+        include_marker = "YES" if included_flag == "yes" else "NO"
+        relevant_marker = "YES" if relevant_flag == "yes" else "NO"
+        url_display = url if url != "N/A" else ""
+        link_fragment = f"[{title}]({url})" if url_display else title
+        markdown_lines.append(
+            f"{idx}. Included: {include_marker} | Relevant: {relevant_marker} | Score: {score_str}"
+        )
+        markdown_lines.append(f"   • Source: {source}")
+        markdown_lines.append(f"   • Article: {link_fragment}")
+
+        if url_display:
+            markdown_lines.append(f"   • URL: {url}")
+        markdown_lines.append("")
+
+    if len(articles) > len(selected_articles):
+        plain_lines.append("")
+        plain_lines.append(
+            f"(Showing first {len(selected_articles)} of {len(articles)} recent articles. "
+            "Adjust NEWS_ARTICLE_AUDIT_LIMIT to include more.)",
+        )
+        markdown_lines.append(
+            f"(Showing first {len(selected_articles)} of {len(articles)} recent articles. "
+            "Adjust NEWS_ARTICLE_AUDIT_LIMIT to include more.)"
+        )
+
+    plain_text = "\n".join(plain_lines)
+    markdown_text = "\n".join(markdown_lines)
+
+    return plain_text, markdown_text
 
 
 def _serialize_article(
@@ -591,7 +714,7 @@ async def process_daily_report(  # noqa: PLR0915
     ai_api_type, ai_api_key = _configure_ai_api()
 
     # Process AI analysis with news
-    analysis_reported_with_news = await _process_ai_analysis(
+    analysis_report, news_metadata = await _process_ai_analysis(
         ai_api_key,
         ai_api_type,
         symbols,
@@ -600,6 +723,8 @@ async def process_daily_report(  # noqa: PLR0915
         today_date,
         logger,
     )
+
+    news_audit_plain = news_metadata.get("audit_plain")
 
     # Send all messages
     await send_telegram_message(
@@ -664,6 +789,15 @@ async def process_daily_report(  # noqa: PLR0915
         parse_mode=telegram_parse_mode,
     )
 
+    if isinstance(news_audit_plain, str) and news_audit_plain.strip():
+        await send_telegram_message(
+            enabled=telegram_enabled,
+            token=telegram_token,
+            chat_id=telegram_chat_id,
+            message=news_audit_plain,
+            parse_mode=None,
+        )
+
     if launchpool_report:
         message_part3 = f"New Launchpool Report: <pre>{launchpool_report}</pre>"
         await send_telegram_message(
@@ -675,13 +809,13 @@ async def process_daily_report(  # noqa: PLR0915
         )
 
     # Send the detailed analysis with news as a Telegram document (last message)
-    if not analysis_reported_with_news.startswith("Failed"):
+    if not analysis_report.startswith("Failed"):
         try:
             await send_telegram_document(
                 enabled=telegram_enabled,
                 token=telegram_token,
                 chat_id=telegram_chat_id,
-                file_bytes=analysis_reported_with_news.encode("utf-8"),
+                file_bytes=analysis_report.encode("utf-8"),
                 filename=f"CryptoAnalysisWithNews_{today_date}.md",
                 caption=f"Detailed Crypto Analysis with News {today_date}",
                 parse_mode=None,  # treat as plain text/markdown without Telegram parsing
