@@ -52,7 +52,11 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
         List of RSSEntry objects from all feeds, sorted by published_time (newest first)
     """
     feeds = {
-        "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content", "disabled": False},
+        "decrypt": {
+            "url": "https://decrypt.co/feed",
+            "class": "post-content",
+            "disabled": True,
+        },
         "coindesk": {
             "url": "https://www.coindesk.com/arc/outboundfeeds/rss",
             "class": "document-body",
