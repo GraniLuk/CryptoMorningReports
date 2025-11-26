@@ -52,10 +52,37 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
         List of RSSEntry objects from all feeds, sorted by published_time (newest first)
     """
     feeds = {
+        "decrypt": {"url": "https://decrypt.co/feed", "class": "post-content", "disabled": False},
+        "coindesk": {
+            "url": "https://www.coindesk.com/arc/outboundfeeds/rss",
+            "class": "document-body",
+            "disabled": True,
+        },
+        "newsBTC": {
+            "url": "https://www.newsbtc.com/feed",
+            "class": "entry-content",  # Updated from 'content-inner jeg_link_underline'
+            "disabled": True,
+        },
+        "coinJournal": {
+            "url": "https://coinjournal.net/feed",
+            "class": "post-article-content lg:col-span-8",
+            "disabled": True,
+        },
+        "coinpedia": {
+            "url": "https://coinpedia.org/feed",
+            "class": "entry-content entry clearfix",
+            "disabled": True,
+        },
+        "ambcrypto": {
+            "url": "https://ambcrypto.com/feed/",
+            "class": "single-post-main-middle",
+            "disabled": True,
+        },
         "cointelegraph": {
             "url": "https://cointelegraph.com/rss",
             "class": "post-content",
             "required_hashtags": ["bitcoin-price", "price-analysis"],
+            "disabled": False,
         },
     }
 
@@ -63,6 +90,8 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
     feed_stats = {}
 
     for source, feed_info in feeds.items():
+        if feed_info.get("disabled", False):
+            continue
         required_hashtags = feed_info.get("required_hashtags")
         feed_entries = _collect_entries_from_feed(
             feed_url=feed_info["url"],
