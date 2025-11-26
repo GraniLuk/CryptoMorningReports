@@ -24,9 +24,55 @@ from pathlib import Path
 import frontmatter
 import yaml
 from slugify import slugify
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from infra.configuration import get_article_cache_root
 from infra.telegram_logging_handler import app_logger
+
+
+TRACKING_QUERY_KEYS = {
+    "fbclid",
+    "gclid",
+    "mc_cid",
+    "mc_eid",
+    "ref",
+}
+
+
+def normalize_article_link(link: str) -> str:
+    """Normalize article URLs by stripping tracking params and fragments."""
+    if not isinstance(link, str):
+        return ""
+
+    stripped = link.strip()
+    if not stripped:
+        return ""
+
+    parsed = urlsplit(stripped)
+
+    # Filter out known tracking parameters and normalize ordering
+    query_pairs = parse_qsl(parsed.query, keep_blank_values=True)
+    filtered_pairs = [
+        (key, value)
+        for key, value in query_pairs
+        if not key.lower().startswith("utm_") and key.lower() not in TRACKING_QUERY_KEYS
+    ]
+    filtered_pairs.sort()
+    normalized_query = urlencode(filtered_pairs)
+
+    normalized_path = parsed.path or ""
+    if normalized_path.endswith("/") and normalized_path != "/":
+        normalized_path = normalized_path.rstrip("/")
+
+    normalized_parts = (
+        parsed.scheme.lower(),
+        parsed.netloc.lower(),
+        normalized_path,
+        normalized_query,
+        "",
+    )
+
+    return urlunsplit(normalized_parts)
 
 
 def parse_article_date(date_string: str) -> datetime:
@@ -86,6 +132,11 @@ class CachedArticle:
     is_relevant: bool = False
     processed_at: str | None = None
     analysis_notes: str = ""
+    normalized_link: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.normalized_link:
+            self.normalized_link = normalize_article_link(self.link)
 
 
 def get_cache_directory() -> Path:
@@ -149,11 +200,15 @@ def save_article_to_cache(article: CachedArticle) -> Path:
     filename = get_article_filename(article)
     filepath = cache_dir / filename
 
+    if not article.normalized_link:
+        article.normalized_link = normalize_article_link(article.link)
+
     # Create frontmatter metadata
     metadata = {
         "source": article.source,
         "title": article.title,
         "link": article.link,
+        "normalized_link": article.normalized_link or normalize_article_link(article.link),
         "published": article.published,
         "fetched": article.fetched,
         "symbols": article.symbols,
@@ -217,10 +272,16 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
 
         content_value = post.content if isinstance(post.content, str) else str(post.content)
 
+        link_value = str(post.get("link", ""))
+        normalized_link_value = post.get("normalized_link", "")
+        normalized_link = normalize_article_link(
+            str(normalized_link_value) if isinstance(normalized_link_value, str) else link_value,
+        )
+
         return CachedArticle(
             source=str(post.get("source", "")),
             title=str(post.get("title", "")),
-            link=str(post.get("link", "")),
+            link=link_value,
             published=str(post.get("published", "")),
             fetched=str(post.get("fetched", "")),
             content=content_value,
@@ -231,6 +292,7 @@ def load_article_from_cache(filepath: Path) -> CachedArticle | None:
             is_relevant=is_relevant,
             processed_at=processed_at,
             analysis_notes=analysis_notes,
+            normalized_link=normalized_link,
         )
     except (OSError, ValueError, KeyError, yaml.YAMLError):
         return None
@@ -265,8 +327,11 @@ def article_exists_in_cache(link: str) -> bool:
     Returns:
         True if article exists in cache, False otherwise
     """
-    cached_articles = get_cached_articles()
-    return any(article.link == link for article in cached_articles)
+    normalized_target = normalize_article_link(link)
+    if not normalized_target:
+        return False
+
+    return any(article.normalized_link == normalized_target for article in get_cached_articles())
 
 
 def get_articles_for_symbol(
