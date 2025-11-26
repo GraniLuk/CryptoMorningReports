@@ -20,11 +20,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import frontmatter
 import yaml
 from slugify import slugify
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from infra.configuration import get_article_cache_root
 from infra.telegram_logging_handler import app_logger
