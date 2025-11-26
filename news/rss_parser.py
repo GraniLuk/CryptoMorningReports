@@ -1,10 +1,10 @@
 """RSS feed parsing and news article extraction."""
 
+import calendar
 import json
 import time  # Added for struct_time type checking
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from time import mktime
 
 import feedparser
 import requests
@@ -620,7 +620,7 @@ def _extract_entry_fields(entry: object) -> tuple[str, str, str]:
 def _resolve_published_time(entry: object, fallback: datetime) -> datetime:
     published_parsed = getattr(entry, "published_parsed", None)
     if isinstance(published_parsed, time.struct_time):
-        return datetime.fromtimestamp(mktime(published_parsed), tz=UTC)
+        return datetime.fromtimestamp(calendar.timegm(published_parsed), tz=UTC)
     return fallback
 
 
