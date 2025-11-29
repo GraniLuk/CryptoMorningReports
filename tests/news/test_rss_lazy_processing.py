@@ -416,7 +416,10 @@ class TestComprehensiveLazyProcessing:
         return entries
 
     def test_comprehensive_cross_feed_sorting(self):
-        """Test that articles from the active feed (cointelegraph) are properly sorted by date (newest first)."""
+        """Test that articles from the active feed (cointelegraph) are properly.
+
+        sorted by date (newest first).
+        """
         base_time = datetime.now(UTC)
 
         # Create mock feed for the only active feed (cointelegraph)
@@ -814,7 +817,9 @@ class TestComprehensiveLazyProcessing:
         # Mock articles that would be cached during RSS processing
         mock_cached_articles = [
             Mock(
-                title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC),
+                title="Bitcoin ETF approval news",
+                symbols=["BTC"],
+                published_time=datetime.now(UTC),
             ),
             Mock(
                 title="Ethereum upgrade completed",
@@ -822,7 +827,9 @@ class TestComprehensiveLazyProcessing:
                 published_time=datetime.now(UTC),
             ),
             Mock(
-                title="Solana network congestion", symbols=["SOL"], published_time=datetime.now(UTC),
+                title="Solana network congestion",
+                symbols=["SOL"],
+                published_time=datetime.now(UTC),
             ),
         ]
 
