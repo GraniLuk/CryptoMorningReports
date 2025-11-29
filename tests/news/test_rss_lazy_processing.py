@@ -245,34 +245,20 @@ class TestCollectAllRSSEntries:
         # Mock _collect_entries_from_feed to return entries for each feed
         current_time = datetime.now(UTC)
 
-        # Create mock entries with different published times
-        old_entry = RSSEntry(
-            source="coindesk",
-            title="Old Article",
-            link="https://coindesk.com/old",
-            published_time=current_time - timedelta(hours=2),
-            published_str="old",
-            class_name="test",
-            raw_entry=Mock(),
-        )
-
-        new_entry = RSSEntry(
-            source="decrypt",
-            title="New Article",
-            link="https://decrypt.co/new",
+        # Create mock entry for the only active feed (cointelegraph)
+        cointelegraph_entry = RSSEntry(
+            source="cointelegraph",
+            title="Cointelegraph Article",
+            link="https://cointelegraph.com/article",
             published_time=current_time - timedelta(minutes=30),
-            published_str="new",
+            published_str="recent",
             class_name="test",
             raw_entry=Mock(),
         )
 
+        # Only cointelegraph is enabled, so only one call to _collect_entries_from_feed
         mock_collect_feed.side_effect = [
-            [old_entry],  # coindesk
-            [new_entry],  # decrypt
-            [],  # newsBTC
-            [],  # coinJournal
-            [],  # coinpedia
-            [],  # ambcrypto
+            [cointelegraph_entry],  # cointelegraph (only active feed)
         ]
 
         result = _collect_all_rss_entries(
@@ -280,16 +266,16 @@ class TestCollectAllRSSEntries:
             current_time=current_time,
         )
 
-        # Should have collected 2 entries
-        assert len(result) == 2
-        # Should be sorted by published_time descending (newest first)
-        assert result[0].title == "New Article"  # newer
-        assert result[1].title == "Old Article"  # older
+        # Should have collected 1 entry from the only active feed
+        assert len(result) == 1
+        assert result[0].title == "Cointelegraph Article"
+        assert result[0].source == "cointelegraph"
 
         # Verify logger was called with stats
         mock_logger.info.assert_called_once()
         log_call = mock_logger.info.call_args[0][0]
-        assert "Collected 2 RSS entries from 6 feeds" in log_call
+        assert "Collected 1 RSS entries from 7 feeds" in log_call
+        assert "cointelegraph=1" in log_call
 
     @patch("news.rss_parser.feedparser")
     @patch("news.rss_parser._collect_entries_from_feed")
@@ -414,17 +400,12 @@ class TestComprehensiveLazyProcessing:
         return entries
 
     def test_comprehensive_cross_feed_sorting(self):
-        """Test that 60 articles across 6 feeds are properly sorted by date (newest first)."""
+        """Test that articles from the active feed (cointelegraph) are properly sorted by date (newest first)."""
         base_time = datetime.now(UTC)
 
-        # Create mock feeds with different base times to test cross-feed sorting
+        # Create mock feed for the only active feed (cointelegraph)
         feed_data = {
-            "decrypt": {"count": 10, "base_offset": timedelta(hours=0)},      # newest
-            "coindesk": {"count": 10, "base_offset": timedelta(hours=1)},     # 1 hour older
-            "newsBTC": {"count": 10, "base_offset": timedelta(hours=2)},      # 2 hours older
-            "coinJournal": {"count": 10, "base_offset": timedelta(hours=3)},  # 3 hours older
-            "coinpedia": {"count": 10, "base_offset": timedelta(hours=4)},    # 4 hours older
-            "ambcrypto": {"count": 10, "base_offset": timedelta(hours=5)},    # oldest
+            "cointelegraph": {"count": 10, "base_offset": timedelta(hours=0)},  # active feed
         }
 
         mock_feeds = {}
@@ -436,41 +417,25 @@ class TestComprehensiveLazyProcessing:
             )
 
         with patch("news.rss_parser.feedparser.parse") as mock_feedparser, \
-             patch("news.rss_parser._collect_entries_from_feed") as mock_collect_feed:
+             patch("news.rss_parser._collect_entries_from_feed") as mock_collect_feed, \
+             patch("news.rss_parser._has_required_hashtags") as mock_hashtags:
 
-            # Mock feedparser to return our mock feeds
+            # Mock feedparser to return our mock feed
             def feedparser_side_effect(url):
-                if "decrypt.co" in url:
-                    return mock_feeds["decrypt"]
-                if "coindesk.com" in url:
-                    return mock_feeds["coindesk"]
-                if "newsbtc.com" in url:
-                    return mock_feeds["newsBTC"]
-                if "coinjournal.net" in url:
-                    return mock_feeds["coinJournal"]
-                if "coinpedia.org" in url:
-                    return mock_feeds["coinpedia"]
-                if "ambcrypto.com" in url:
-                    return mock_feeds["ambcrypto"]
+                if "cointelegraph.com" in url:
+                    return mock_feeds["cointelegraph"]
                 return Mock(entries=[])
 
             mock_feedparser.side_effect = feedparser_side_effect
 
-            # Mock _collect_entries_from_feed to return all entries for each feed
+            # Mock hashtag checking to allow all articles through
+            mock_hashtags.return_value = True
+
+            # Mock _collect_entries_from_feed to return all entries for cointelegraph
             def collect_feed_side_effect(**kwargs):
                 source = None
-                if "decrypt.co" in kwargs["feed_url"]:
-                    source = "decrypt"
-                elif "coindesk.com" in kwargs["feed_url"]:
-                    source = "coindesk"
-                elif "newsbtc.com" in kwargs["feed_url"]:
-                    source = "newsBTC"
-                elif "coinjournal.net" in kwargs["feed_url"]:
-                    source = "coinJournal"
-                elif "coinpedia.org" in kwargs["feed_url"]:
-                    source = "coinpedia"
-                elif "ambcrypto.com" in kwargs["feed_url"]:
-                    source = "ambcrypto"
+                if "cointelegraph.com" in kwargs["feed_url"]:
+                    source = "cointelegraph"
 
                 if source and source in mock_feeds:
                     return [
@@ -492,8 +457,8 @@ class TestComprehensiveLazyProcessing:
             # Collect all entries
             result = _collect_all_rss_entries(cache_enabled=False, current_time=base_time)
 
-            # Should have collected entries from all feeds
-            assert len(result) == 60, f"Expected 60 entries, got {len(result)}"
+            # Should have collected entries from the active feed
+            assert len(result) == 10, f"Expected 10 entries, got {len(result)}"
 
             # Verify entries are sorted by published_time (newest first)
             for i in range(len(result) - 1):
@@ -502,10 +467,9 @@ class TestComprehensiveLazyProcessing:
                     f"entry {i+1} ({result[i+1].published_time})"
                 )
 
-            # Verify we have entries from all 6 sources
+            # Verify we have entries from cointelegraph
             sources_found = {entry.source for entry in result}
-            expected_sources = {"decrypt", "coindesk", "newsBTC", "coinJournal",
-                               "coinpedia", "ambcrypto"}
+            expected_sources = {"cointelegraph"}
             assert sources_found == expected_sources, (
                 f"Expected sources {expected_sources}, got {sources_found}"
             )
