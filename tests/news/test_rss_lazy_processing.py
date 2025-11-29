@@ -395,7 +395,7 @@ class TestComprehensiveLazyProcessing:
                     -1,
                     -1,
                     -1,
-                )
+                ),
             )
 
             # Add some content that might be relevant to crypto symbols
@@ -585,7 +585,7 @@ class TestComprehensiveLazyProcessing:
                     -1,
                     -1,
                     -1,
-                )
+                ),
             )
             mock_entries.append(entry)
 
@@ -672,7 +672,7 @@ class TestComprehensiveLazyProcessing:
                     -1,
                     -1,
                     -1,
-                )
+                ),
             )
             mock_entries.append(entry)
 
@@ -738,7 +738,7 @@ class TestComprehensiveLazyProcessing:
             return []
 
         with patch.object(
-            article_cache, "get_articles_for_symbol", side_effect=mock_get_side_effect
+            article_cache, "get_articles_for_symbol", side_effect=mock_get_side_effect,
         ):
             # Test BTC filtering
             btc_articles = article_cache.get_articles_for_symbol("BTC", hours=24)
@@ -814,7 +814,7 @@ class TestComprehensiveLazyProcessing:
         # Mock articles that would be cached during RSS processing
         mock_cached_articles = [
             Mock(
-                title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC)
+                title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC),
             ),
             Mock(
                 title="Ethereum upgrade completed",
@@ -822,7 +822,7 @@ class TestComprehensiveLazyProcessing:
                 published_time=datetime.now(UTC),
             ),
             Mock(
-                title="Solana network congestion", symbols=["SOL"], published_time=datetime.now(UTC)
+                title="Solana network congestion", symbols=["SOL"], published_time=datetime.now(UTC),
             ),
         ]
 
@@ -830,7 +830,7 @@ class TestComprehensiveLazyProcessing:
         # available for current reports
         with (
             patch(
-                "news.rss_parser.get_articles_for_symbol", return_value=mock_cached_articles
+                "news.rss_parser.get_articles_for_symbol", return_value=mock_cached_articles,
             ) as mock_get_articles,
             patch("news.rss_parser.get_news") as mock_get_news,
         ):
