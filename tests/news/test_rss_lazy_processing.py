@@ -741,7 +741,9 @@ class TestComprehensiveLazyProcessing:
             return []
 
         with patch.object(
-            article_cache, "get_articles_for_symbol", side_effect=mock_get_side_effect,
+            article_cache,
+            "get_articles_for_symbol",
+            side_effect=mock_get_side_effect,
         ):
             # Test BTC filtering
             btc_articles = article_cache.get_articles_for_symbol("BTC", hours=24)
@@ -837,7 +839,8 @@ class TestComprehensiveLazyProcessing:
         # available for current reports
         with (
             patch(
-                "news.rss_parser.get_articles_for_symbol", return_value=mock_cached_articles,
+                "news.rss_parser.get_articles_for_symbol",
+                return_value=mock_cached_articles,
             ) as mock_get_articles,
             patch("news.rss_parser.get_news") as mock_get_news,
         ):
