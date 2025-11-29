@@ -58,7 +58,7 @@ class GeminiClient(AIClient):
 
         try:
             configure_fn(api_key=self.api_key)
-            self.model: Any = generative_cls("gemini-2.5-flash-preview-09-2025")
+            self.model: Any = generative_cls("gemini-2.5-pro")
             app_logger.info("GeminiClient [__init__]: Gemini model initialized.")
         except Exception as e:
             msg = f"GeminiClient initialization failed: {e}"
