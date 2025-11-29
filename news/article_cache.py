@@ -135,6 +135,7 @@ class CachedArticle:
     normalized_link: str = ""
 
     def __post_init__(self) -> None:
+        """Normalize article link after initialization if not already set."""
         if not self.normalized_link:
             self.normalized_link = normalize_article_link(self.link)
 

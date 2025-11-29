@@ -138,6 +138,63 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
         return "ETF Flows: Data unavailable\n\n"
 
 
+def _build_analysis_context(
+    current_prices_section: str,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+) -> str:
+    """Build complete analysis context with prices, indicators, and ETF flows."""
+    aggregated_data = get_aggregated_data(conn)
+
+    def format_aggregated(agg_list: list) -> str:
+        if not agg_list:
+            return "No aggregated indicator data available.\n"
+        header = (
+            "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | "
+            "Range% | OI | OI Value | Fund Rate\n"
+            "-------|-----|-------|------|-------|------|--------|-----|------|"
+            "--------|----|-----------|-----------\n"
+        )
+        lines = []
+        for row in agg_list:
+            try:
+                oi_str = f"{row.get("OpenInterest", 0):,.0f}" if row.get("OpenInterest") else "N/A"
+                oi_val_str = (
+                    f"${row.get("OpenInterestValue", 0):,.0f}"
+                    if row.get("OpenInterestValue")
+                    else "N/A"
+                )
+                fr_str = f"{row.get("FundingRate", 0):.4f}%" if row.get("FundingRate") else "N/A"
+
+                lines.append(
+                    f"{row.get('SymbolName', ''):>6} | "
+                    f"{row.get('RSI', '')!s:>4} | "
+                    f"{row.get('RSIClosePrice', ''):>6} | "
+                    f"{row.get('MA50', ''):>5} | "
+                    f"{row.get('MA200', ''):>6} | "
+                    f"{row.get('EMA50', ''):>6} | "
+                    f"{row.get('EMA200', ''):>7} | "
+                    f"{row.get('LowPrice', ''):>5} | "
+                    f"{row.get('HighPrice', ''):>6} | "
+                    f"{row.get('RangePercent', ''):>6} | "
+                    f"{oi_str:>10} | "
+                    f"{oi_val_str:>11} | "
+                    f"{fr_str:>11}",
+                )
+            except (KeyError, ValueError, TypeError) as e:
+                lines.append(f"Row format error: {e}")
+        note = (
+            "Aggregated Indicators "
+            "(showing most recent values from last 7 days of data for trend analysis)"
+        )
+        newline = "\n"
+        return f"{note}:{newline}<pre>{header}{newline.join(lines)}</pre>{newline}{newline}"
+
+    aggregated_formatted = format_aggregated(aggregated_data)
+    aggregated_with_prices = current_prices_section + aggregated_formatted
+    etf_flows_section = _build_etf_flows_section(conn)
+    return aggregated_with_prices + etf_flows_section
+
+
 async def _process_ai_analysis(
     ai_api_key,
     ai_api_type,
@@ -184,61 +241,7 @@ async def _process_ai_analysis(
         "audit_markdown": audit_markdown,
     }
 
-    aggregated_data = get_aggregated_data(conn)
-
-    # Reuse current_prices_section also for the news-enhanced analysis by
-    # prepending it to aggregated indicators
-    def format_aggregated(agg_list: list) -> str:
-        if not agg_list:
-            return "No aggregated indicator data available.\n"
-        header = (
-            "Symbol | RSI | Close | MA50 | MA200 | EMA50 | EMA200 | Low | High | "
-            "Range% | OI | OI Value | Fund Rate\n"
-            "-------|-----|-------|------|-------|------|--------|-----|------|"
-            "--------|----|-----------|-----------\n"
-        )
-        lines = []
-        for row in agg_list:
-            try:
-                # Format Open Interest and Funding Rate with proper handling of None values
-                oi_str = f"{row.get('OpenInterest', 0):,.0f}" if row.get("OpenInterest") else "N/A"
-                oi_val_str = (
-                    f"${row.get('OpenInterestValue', 0):,.0f}"
-                    if row.get("OpenInterestValue")
-                    else "N/A"
-                )
-                fr_str = f"{row.get('FundingRate', 0):.4f}%" if row.get("FundingRate") else "N/A"
-
-                lines.append(
-                    f"{row.get('SymbolName', ''):>6} | "
-                    f"{row.get('RSI', '')!s:>4} | "
-                    f"{row.get('RSIClosePrice', ''):>6} | "
-                    f"{row.get('MA50', ''):>5} | "
-                    f"{row.get('MA200', ''):>6} | "
-                    f"{row.get('EMA50', ''):>6} | "
-                    f"{row.get('EMA200', ''):>7} | "
-                    f"{row.get('LowPrice', ''):>5} | "
-                    f"{row.get('HighPrice', ''):>6} | "
-                    f"{row.get('RangePercent', ''):>6} | "
-                    f"{oi_str:>10} | "
-                    f"{oi_val_str:>11} | "
-                    f"{fr_str:>11}",
-                )
-            except (KeyError, ValueError, TypeError) as e:
-                lines.append(f"Row format error: {e}")
-        note = (
-            "Aggregated Indicators "
-            "(showing most recent values from last 7 days of data for trend analysis)"
-        )
-        newline = "\n"
-        return f"{note}:{newline}<pre>{header}{newline.join(lines)}</pre>{newline}{newline}"
-
-    aggregated_formatted = format_aggregated(aggregated_data)
-    aggregated_with_prices = current_prices_section + aggregated_formatted
-
-    # Add ETF flows data for institutional sentiment analysis
-    etf_flows_section = _build_etf_flows_section(conn)
-    aggregated_with_prices += etf_flows_section
+    aggregated_with_prices = _build_analysis_context(current_prices_section, conn)
 
     analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
         ai_api_key,
@@ -425,17 +428,25 @@ def _build_news_audit_sections(
         included_count = stats.get("articles_included", len(included_links))
         truncated = stats.get("articles_truncated", 0)
         plain_lines.append(
-            f"Total available: {total_available} | Included: {included_count} | Truncated: {truncated}",
+            f"Total available: {total_available} | Included: {included_count} | "
+            f"Truncated: {truncated}",
         )
     else:
         plain_lines.append(
             f"Total available: {len(articles)} | Included: {len(included_links)}",
         )
 
+    total_avail = (
+        stats.get("articles_available", len(articles)) if stats else len(articles)
+    )
+    total_incl = (
+        stats.get("articles_included", len(included_links))
+        if stats
+        else len(included_links)
+    )
+    truncated_info = f" | Truncated: {stats.get("articles_truncated", 0)}" if stats else ""
     markdown_lines.append(
-        f"Total available: {stats.get('articles_available', len(articles)) if stats else len(articles)} | "
-        f"Included: {stats.get('articles_included', len(included_links)) if stats else len(included_links)}"
-        + (f" | Truncated: {stats.get('articles_truncated', 0)}" if stats else ""),
+        f"Total available: {total_avail} | Included: {total_incl}{truncated_info}",
     )
 
     plain_lines.append("")
@@ -465,7 +476,7 @@ def _build_news_audit_sections(
         url_display = url if url != "N/A" else ""
         link_fragment = f"[{title}]({url})" if url_display else title
         markdown_lines.append(
-            f"{idx}. Included: {include_marker} | Relevant: {relevant_marker} | Score: {score_str}"
+            f"{idx}. Included: {include_marker} | Relevant: {relevant_marker} | Score: {score_str}",
         )
         markdown_lines.append(f"   • Source: {source}")
         markdown_lines.append(f"   • Article: {link_fragment}")
@@ -482,7 +493,7 @@ def _build_news_audit_sections(
         )
         markdown_lines.append(
             f"(Showing first {len(selected_articles)} of {len(articles)} recent articles. "
-            "Adjust NEWS_ARTICLE_AUDIT_LIMIT to include more.)"
+            "Adjust NEWS_ARTICLE_AUDIT_LIMIT to include more.)",
         )
 
     plain_text = "\n".join(plain_lines)
