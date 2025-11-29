@@ -280,7 +280,9 @@ class TestCollectAllRSSEntries:
     @patch("news.rss_parser.feedparser")
     @patch("news.rss_parser._collect_entries_from_feed")
     def test_collect_all_rss_entries_empty_feeds(
-        self, mock_collect_feed, _mock_feedparser,
+        self,
+        mock_collect_feed,
+        _mock_feedparser,
     ):
         """Test collection when all feeds return empty results."""
         mock_collect_feed.return_value = []
@@ -302,7 +304,11 @@ class TestCollectEntriesFromFeed:
     @patch("news.rss_parser._is_entry_processable")
     @patch("news.rss_parser.app_logger")
     def test_collect_entries_from_feed_success(
-        self, _mock_logger, mock_is_processable, mock_parse_entry, mock_feedparser,
+        self,
+        _mock_logger,
+        mock_is_processable,
+        mock_parse_entry,
+        mock_feedparser,
     ):
         """Test successful collection from a single feed."""
         # Mock feed with entries
@@ -375,25 +381,35 @@ class TestComprehensiveLazyProcessing:
             published_time = base_time - timedelta(minutes=i * 30)  # 30 min intervals
 
             entry = Mock()
-            entry.title = f"{source.upper()} Article {i+1}: Crypto Market Update"
-            entry.link = f"https://{source.lower()}.com/article-{i+1}"
+            entry.title = f"{source.upper()} Article {i + 1}: Crypto Market Update"
+            entry.link = f"https://{source.lower()}.com/article-{i + 1}"
             entry.published = published_time.isoformat()
-            entry.published_parsed = time.struct_time((
-                published_time.year, published_time.month, published_time.day,
-                published_time.hour, published_time.minute, published_time.second,
-                -1, -1, -1,
-            ))
+            entry.published_parsed = time.struct_time(
+                (
+                    published_time.year,
+                    published_time.month,
+                    published_time.day,
+                    published_time.hour,
+                    published_time.minute,
+                    published_time.second,
+                    -1,
+                    -1,
+                    -1,
+                )
+            )
 
             # Add some content that might be relevant to crypto symbols
             if i % 3 == 0:
-                entry.summary = ("Bitcoin and Ethereum showing strong performance in today's "
-                                "market. BTC up 5%, ETH up 3%.")
+                entry.summary = (
+                    "Bitcoin and Ethereum showing strong performance in today's "
+                    "market. BTC up 5%, ETH up 3%."
+                )
             elif i % 3 == 1:
-                entry.summary = ("New developments in DeFi space with innovative protocols "
-                                "emerging.")
+                entry.summary = "New developments in DeFi space with innovative protocols emerging."
             else:
-                entry.summary = ("Market analysis shows increased institutional interest in "
-                                "digital assets.")
+                entry.summary = (
+                    "Market analysis shows increased institutional interest in digital assets."
+                )
 
             entries.append(entry)
 
@@ -413,13 +429,16 @@ class TestComprehensiveLazyProcessing:
             feed_time = base_time - config["base_offset"]
             mock_feeds[source] = Mock()
             mock_feeds[source].entries = self.create_mock_feed_entries(
-                source, config["count"], feed_time,
+                source,
+                config["count"],
+                feed_time,
             )
 
-        with patch("news.rss_parser.feedparser.parse") as mock_feedparser, \
-             patch("news.rss_parser._collect_entries_from_feed") as mock_collect_feed, \
-             patch("news.rss_parser._has_required_hashtags") as mock_hashtags:
-
+        with (
+            patch("news.rss_parser.feedparser.parse") as mock_feedparser,
+            patch("news.rss_parser._collect_entries_from_feed") as mock_collect_feed,
+            patch("news.rss_parser._has_required_hashtags") as mock_hashtags,
+        ):
             # Mock feedparser to return our mock feed
             def feedparser_side_effect(url):
                 if "cointelegraph.com" in url:
@@ -464,7 +483,7 @@ class TestComprehensiveLazyProcessing:
             for i in range(len(result) - 1):
                 assert result[i].published_time >= result[i + 1].published_time, (
                     f"Entry {i} ({result[i].published_time}) should be newer than "
-                    f"entry {i+1} ({result[i+1].published_time})"
+                    f"entry {i + 1} ({result[i + 1].published_time})"
                 )
 
             # Verify we have entries from cointelegraph
@@ -486,8 +505,8 @@ class TestComprehensiveLazyProcessing:
 
             entry = RSSEntry(
                 source="test",
-                title=f"Article {i+1}",
-                link=f"https://test.com/article-{i+1}",
+                title=f"Article {i + 1}",
+                link=f"https://test.com/article-{i + 1}",
                 published_time=published_time,
                 published_str=published_time.isoformat(),
                 class_name="test-class",
@@ -513,10 +532,11 @@ class TestComprehensiveLazyProcessing:
             }
             return (Mock(), payload)
 
-        with patch("news.rss_parser._process_feed_entry", side_effect=mock_process_entry), \
-             patch("news.rss_parser.is_article_cache_enabled", return_value=False), \
-             patch("news.rss_parser._load_symbols_for_detection", return_value=["BTC"]):
-
+        with (
+            patch("news.rss_parser._process_feed_entry", side_effect=mock_process_entry),
+            patch("news.rss_parser.is_article_cache_enabled", return_value=False),
+            patch("news.rss_parser._load_symbols_for_detection", return_value=["BTC"]),
+        ):
             relevant_articles, total_processed = _process_entries_until_target(
                 entries=entries,
                 current_time=base_time,
@@ -536,7 +556,7 @@ class TestComprehensiveLazyProcessing:
             )
 
             # Verify the articles are the first 5 (most recent)
-            expected_titles = [f"Article {i+1}" for i in range(5)]
+            expected_titles = [f"Article {i + 1}" for i in range(5)]
             actual_titles = [article["title"] for article in relevant_articles]
             assert actual_titles == expected_titles, (
                 f"Expected {expected_titles}, got {actual_titles}"
@@ -551,27 +571,32 @@ class TestComprehensiveLazyProcessing:
         mock_entries = []
         for i in range(5):
             entry = Mock()
-            entry.title = f"Cached Article {i+1}"
-            entry.link = f"https://test.com/cached-{i+1}"
+            entry.title = f"Cached Article {i + 1}"
+            entry.link = f"https://test.com/cached-{i + 1}"
             entry.published = (base_time - timedelta(hours=i)).isoformat()
-            entry.published_parsed = time.struct_time((
-                (base_time - timedelta(hours=i)).year,
-                (base_time - timedelta(hours=i)).month,
-                (base_time - timedelta(hours=i)).day,
-                (base_time - timedelta(hours=i)).hour,
-                (base_time - timedelta(hours=i)).minute,
-                (base_time - timedelta(hours=i)).second,
-                -1, -1, -1,
-            ))
+            entry.published_parsed = time.struct_time(
+                (
+                    (base_time - timedelta(hours=i)).year,
+                    (base_time - timedelta(hours=i)).month,
+                    (base_time - timedelta(hours=i)).day,
+                    (base_time - timedelta(hours=i)).hour,
+                    (base_time - timedelta(hours=i)).minute,
+                    (base_time - timedelta(hours=i)).second,
+                    -1,
+                    -1,
+                    -1,
+                )
+            )
             mock_entries.append(entry)
 
         mock_feed = Mock()
         mock_feed.entries = mock_entries
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser._parse_rss_entry") as mock_parse, \
-             patch("news.rss_parser.article_exists_in_cache") as mock_cache_check:
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser._parse_rss_entry") as mock_parse,
+            patch("news.rss_parser.article_exists_in_cache") as mock_cache_check,
+        ):
             # Mock parsing to return RSSEntry objects
             def parse_side_effect(entry, source, class_name, current_time):
                 published_time = datetime.fromisoformat(entry.published)
@@ -585,11 +610,13 @@ class TestComprehensiveLazyProcessing:
                     class_name=class_name,
                     raw_entry=entry,
                 )
+
             mock_parse.side_effect = parse_side_effect
 
             # Mock cache check - first 2 are cached, last 3 are not
             def cache_side_effect(link):
                 return "cached-1" in link or "cached-2" in link
+
             mock_cache_check.side_effect = cache_side_effect
 
             result = _collect_entries_from_feed(
@@ -624,8 +651,8 @@ class TestComprehensiveLazyProcessing:
         mock_entries = []
         for i in range(5):
             entry = Mock()
-            entry.title = f"Age Test Article {i+1}"
-            entry.link = f"https://test.com/age-{i+1}"
+            entry.title = f"Age Test Article {i + 1}"
+            entry.link = f"https://test.com/age-{i + 1}"
             # Article 0: 1 hour old (should be included)
             # Article 1: 12 hours old (should be included)
             # Article 2: 25 hours old (should be excluded)
@@ -634,20 +661,29 @@ class TestComprehensiveLazyProcessing:
             ages_hours = [1, 12, 25, 48, 2]
             published_time = base_time - timedelta(hours=ages_hours[i])
             entry.published = published_time.isoformat()
-            entry.published_parsed = time.struct_time((
-                published_time.year, published_time.month, published_time.day,
-                published_time.hour, published_time.minute, published_time.second,
-                -1, -1, -1,
-            ))
+            entry.published_parsed = time.struct_time(
+                (
+                    published_time.year,
+                    published_time.month,
+                    published_time.day,
+                    published_time.hour,
+                    published_time.minute,
+                    published_time.second,
+                    -1,
+                    -1,
+                    -1,
+                )
+            )
             mock_entries.append(entry)
 
         mock_feed = Mock()
         mock_feed.entries = mock_entries
 
-        with patch("news.rss_parser.feedparser.parse", return_value=mock_feed), \
-             patch("news.rss_parser._parse_rss_entry") as mock_parse, \
-             patch("news.rss_parser.article_exists_in_cache", return_value=False):
-
+        with (
+            patch("news.rss_parser.feedparser.parse", return_value=mock_feed),
+            patch("news.rss_parser._parse_rss_entry") as mock_parse,
+            patch("news.rss_parser.article_exists_in_cache", return_value=False),
+        ):
             # Mock parsing to return RSSEntry objects
             def parse_side_effect(entry, source, class_name, current_time):
                 published_time = datetime.fromisoformat(entry.published)
@@ -661,6 +697,7 @@ class TestComprehensiveLazyProcessing:
                     class_name=class_name,
                     raw_entry=entry,
                 )
+
             mock_parse.side_effect = parse_side_effect
 
             result = _collect_entries_from_feed(
@@ -683,6 +720,7 @@ class TestComprehensiveLazyProcessing:
 
     def test_symbol_specific_filtering(self):
         """Test that articles are properly filtered by cryptocurrency symbol."""
+
         # Mock the function to return different results based on symbol
         def mock_get_side_effect(symbol, **kwargs):
             if symbol.upper() == "BTC":
@@ -699,8 +737,9 @@ class TestComprehensiveLazyProcessing:
                 return [Mock(title="Solana ecosystem grows rapidly", symbols=["SOL"])]
             return []
 
-        with patch.object(article_cache, "get_articles_for_symbol",
-                         side_effect=mock_get_side_effect):
+        with patch.object(
+            article_cache, "get_articles_for_symbol", side_effect=mock_get_side_effect
+        ):
             # Test BTC filtering
             btc_articles = article_cache.get_articles_for_symbol("BTC", hours=24)
             assert len(btc_articles) == 2, f"Expected 2 BTC articles, got {len(btc_articles)}"
@@ -712,8 +751,10 @@ class TestComprehensiveLazyProcessing:
             eth_articles = article_cache.get_articles_for_symbol("ETH", hours=24)
             assert len(eth_articles) == 2, f"Expected 2 ETH articles, got {len(eth_articles)}"
             eth_titles = [article.title for article in eth_articles]
-            expected_eth = ["Ethereum network upgrade completed",
-                           "BTC and ETH correlation analysis"]
+            expected_eth = [
+                "Ethereum network upgrade completed",
+                "BTC and ETH correlation analysis",
+            ]
             assert eth_titles == expected_eth, f"Expected {expected_eth}, got {eth_titles}"
 
             # Test SOL filtering
@@ -739,9 +780,10 @@ class TestComprehensiveLazyProcessing:
         assert rss_parser.CURRENT_REPORT_ARTICLE_LIMIT == 5
 
         # Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT
-        with patch("news.rss_parser.get_articles_for_symbol") as mock_get_articles, \
-             patch("news.rss_parser.get_news") as mock_get_news:
-
+        with (
+            patch("news.rss_parser.get_articles_for_symbol") as mock_get_articles,
+            patch("news.rss_parser.get_news") as mock_get_news,
+        ):
             mock_get_news.return_value = None
             mock_get_articles.return_value = []
 
@@ -771,20 +813,27 @@ class TestComprehensiveLazyProcessing:
         """Test that lazy processing properly integrates with shared cache for current reports."""
         # Mock articles that would be cached during RSS processing
         mock_cached_articles = [
-            Mock(title="Bitcoin ETF approval news", symbols=["BTC"],
-                 published_time=datetime.now(UTC)),
-            Mock(title="Ethereum upgrade completed", symbols=["ETH"],
-                 published_time=datetime.now(UTC)),
-            Mock(title="Solana network congestion", symbols=["SOL"],
-                 published_time=datetime.now(UTC)),
+            Mock(
+                title="Bitcoin ETF approval news", symbols=["BTC"], published_time=datetime.now(UTC)
+            ),
+            Mock(
+                title="Ethereum upgrade completed",
+                symbols=["ETH"],
+                published_time=datetime.now(UTC),
+            ),
+            Mock(
+                title="Solana network congestion", symbols=["SOL"], published_time=datetime.now(UTC)
+            ),
         ]
 
         # Test the integration: lazy processing should cache articles that are then
         # available for current reports
-        with patch("news.rss_parser.get_articles_for_symbol",
-                   return_value=mock_cached_articles) as mock_get_articles, \
-             patch("news.rss_parser.get_news") as mock_get_news:
-
+        with (
+            patch(
+                "news.rss_parser.get_articles_for_symbol", return_value=mock_cached_articles
+            ) as mock_get_articles,
+            patch("news.rss_parser.get_news") as mock_get_news,
+        ):
             mock_get_news.return_value = None  # RSS processing completes without error
 
             # Simulate current report requesting articles for BTC
