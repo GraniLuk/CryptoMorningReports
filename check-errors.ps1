@@ -90,10 +90,10 @@ if ($TaskInfo -and $TaskInfo.LastTaskResult -ne 0 -and $TaskInfo.LastTaskResult 
         }
         else {
             Write-Host "ℹ️  No specific error patterns found in last run log section." -ForegroundColor Gray
-            Write-Host "   Showing last 20 lines of the last run for manual inspection:" -ForegroundColor Gray
+            Write-Host "   Showing last 80 lines of the last run for manual inspection:" -ForegroundColor Gray
             Write-Host ""
             
-            $lastRunLines | Select-Object -Last 20 | ForEach-Object {
+            $lastRunLines | Select-Object -Last 80 | ForEach-Object {
                 Write-Host "  $_" -ForegroundColor DarkGray
             }
             
