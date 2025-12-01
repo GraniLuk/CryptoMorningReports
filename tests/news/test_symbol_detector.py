@@ -69,81 +69,60 @@ def create_test_symbols() -> TestSymbols:
     )
 
 
-def test_detect_full_name():
+def test_detect_full_name(subtests):
     """Test detection of full cryptocurrency names."""
     symbols = create_test_symbols()
     test_symbols = [symbols.btc, symbols.eth, symbols.sol]
 
-    # Test single mention
-    text = "Bitcoin reached a new all-time high today"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    print("✅ Full name detection test passed (Bitcoin -> BTC)")
+    test_cases = [
+        ("Bitcoin reached a new all-time high today", ["BTC"], "Bitcoin -> BTC"),
+        ("Ethereum and Solana both saw significant gains", ["ETH", "SOL"], "multiple symbols"),
+        ("bitcoin and ETHEREUM are leading the market", ["BTC", "ETH"], "case insensitive"),
+    ]
 
-    # Test multiple mentions
-    text = "Ethereum and Solana both saw significant gains"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "ETH" in detected
-    assert "SOL" in detected
-    print("✅ Full name detection test passed (multiple symbols)")
-
-    # Test case insensitivity
-    text = "bitcoin and ETHEREUM are leading the market"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    assert "ETH" in detected
-    print("✅ Case insensitive detection test passed")
+    for text, expected_symbols, desc in test_cases:
+        with subtests.test(desc=desc, text=text[:40]):
+            detected = detect_symbols_in_text(text, test_symbols)
+            for expected in expected_symbols:
+                assert expected in detected, f"{expected} not detected in: {text}"
+            print(f"✅ Full name detection test passed ({desc})")
 
 
-def test_detect_symbol_name():
+def test_detect_symbol_name(subtests):
     """Test detection of short symbol names (BTC, ETH, etc.)."""
     symbols = create_test_symbols()
     test_symbols = [symbols.btc, symbols.eth, symbols.sol]
 
-    # Test single symbol
-    text = "BTC price surged 10% today"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    print("✅ Symbol name detection test passed (BTC)")
+    test_cases = [
+        ("BTC price surged 10% today", ["BTC"], "single symbol"),
+        ("BTC and ETH are leading, while SOL follows", ["BTC", "ETH", "SOL"], "multiple symbols"),
+        ("btc and eth prices are rising", ["BTC", "ETH"], "case insensitive"),
+    ]
 
-    # Test multiple symbols
-    text = "BTC and ETH are leading, while SOL follows"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    assert "ETH" in detected
-    assert "SOL" in detected
-    print("✅ Symbol name detection test passed (multiple)")
-
-    # Test case insensitivity
-    text = "btc and eth prices are rising"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    assert "ETH" in detected
-    print("✅ Case insensitive symbol detection test passed")
+    for text, expected_symbols, desc in test_cases:
+        with subtests.test(desc=desc, text=text[:40]):
+            detected = detect_symbols_in_text(text, test_symbols)
+            for expected in expected_symbols:
+                assert expected in detected, f"{expected} not detected in: {text}"
+            print(f"✅ Symbol name detection test passed ({desc})")
 
 
-def test_detect_variations():
+def test_detect_variations(subtests):
     """Test detection of common variations like Bitcoin's, BTC/USD, etc."""
     symbols = create_test_symbols()
     test_symbols = [symbols.btc, symbols.eth]
 
-    # Possessive form
-    text = "Bitcoin's price has increased dramatically"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    print("✅ Possessive form detection test passed (Bitcoin's)")
+    test_cases = [
+        ("Bitcoin's price has increased dramatically", "BTC", "possessive form"),
+        ("BTC/USD trading pair shows strong momentum", "BTC", "trading pair"),
+        ("Ethereum-based tokens are gaining traction", "ETH", "based variation"),
+    ]
 
-    # Trading pair format
-    text = "BTC/USD trading pair shows strong momentum"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "BTC" in detected
-    print("✅ Trading pair detection test passed (BTC/USD)")
-
-    # Based variation
-    text = "Ethereum-based tokens are gaining traction"
-    detected = detect_symbols_in_text(text, test_symbols)
-    assert "ETH" in detected
-    print("✅ Variation detection test passed (Ethereum-based)")
+    for text, expected_symbol, desc in test_cases:
+        with subtests.test(variation=desc, text=text[:40]):
+            detected = detect_symbols_in_text(text, test_symbols)
+            assert expected_symbol in detected, f"{expected_symbol} not detected in: {text}"
+            print(f"✅ Variation detection test passed ({desc})")
 
 
 def test_false_positive_prevention():
@@ -211,7 +190,7 @@ def test_context_boost_calculation():
     print(f"  No-context boost: {boost:.2f}")
 
 
-def test_multiple_symbol_detection():
+def test_multiple_symbol_detection(subtests):
     """Test detecting multiple symbols in complex text."""
     symbols = create_test_symbols()
     test_symbols = [symbols.btc, symbols.eth, symbols.sol]
@@ -224,44 +203,51 @@ def test_multiple_symbol_detection():
 
     detected = detect_symbols_in_text(text, test_symbols)
 
-    # Should detect all three symbols
-    assert "BTC" in detected
-    assert "ETH" in detected
-    assert "SOL" in detected
+    # Test each symbol independently
+    expected_symbols = ["BTC", "ETH", "SOL"]
+    for symbol in expected_symbols:
+        with subtests.test(symbol=symbol):
+            assert symbol in detected, f"{symbol} not detected in complex text"
 
     print(f"✅ Multiple symbol detection test passed: {detected}")
 
 
-def test_real_world_article_examples():
+def test_real_world_article_examples(subtests):
     """Test with realistic article headlines and content."""
     symbols = create_test_symbols()
     test_symbols = [symbols.btc, symbols.eth, symbols.sol, symbols.ada]
 
-    # Example 1: CoinDesk-style headline
-    article1 = """
+    articles = [
+        (
+            "CoinDesk-style headline",
+            """
     Bitcoin Surges Past $100K as Institutional Adoption Accelerates
 
     Bitcoin reached a new all-time high today, breaking through the $100,000
     barrier. Ethereum also saw gains, with ETH trading 5% higher. Analysts
     attribute the surge to increased institutional investment.
-    """
-    detected1 = detect_symbols_in_text(article1, test_symbols)
-    assert "BTC" in detected1
-    assert "ETH" in detected1
-    print(f"✅ Real article test 1 passed: {detected1}")
-
-    # Example 2: Comparison article
-    article2 = """
+    """,
+            ["BTC", "ETH"],
+        ),
+        (
+            "Comparison article",
+            """
     Solana vs Cardano: Which Alt coin Will Perform Better?
 
     Both Solana and Cardano have shown strong fundamentals, but SOL has
     outperformed ADA in recent weeks. Technical analysis suggests continued
     growth for both blockchain platforms.
-    """
-    detected2 = detect_symbols_in_text(article2, test_symbols)
-    assert "SOL" in detected2
-    assert "ADA" in detected2
-    print(f"✅ Real article test 2 passed: {detected2}")
+    """,
+            ["SOL", "ADA"],
+        ),
+    ]
+
+    for article_type, article_text, expected_symbols in articles:
+        with subtests.test(article_type=article_type):
+            detected = detect_symbols_in_text(article_text, test_symbols)
+            for symbol in expected_symbols:
+                assert symbol in detected, f"{symbol} not detected in {article_type}"
+            print(f"✅ Real article test passed ({article_type}): {detected}")
 
 
 def test_empty_and_edge_cases():

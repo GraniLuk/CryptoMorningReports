@@ -115,7 +115,7 @@ class TestETFFetcher:
         # Empty list means successful scrape but no data - should return None
         assert result is None
 
-    def test_parse_etf_data(self):
+    def test_parse_etf_data(self, subtests):
         """Test parsing ETF data into organized structure."""
         raw_data = [
             {
@@ -155,31 +155,40 @@ class TestETFFetcher:
 
         result = parse_etf_data(raw_data)
 
-        assert "BTC" in result
-        assert "ETH" in result
-        assert len(result["BTC"]) == 2
-        assert len(result["ETH"]) == 1
+        # Test coin presence
+        with subtests.test(msg="BTC coin presence"):
+            assert "BTC" in result
+        with subtests.test(msg="ETH coin presence"):
+            assert "ETH" in result
+        with subtests.test(msg="BTC ETF count"):
+            assert len(result["BTC"]) == 2
+        with subtests.test(msg="ETH ETF count"):
+            assert len(result["ETH"]) == 1
 
-        # Check BTC ETFs
+        # Check each BTC ETF independently
         btc_etfs = result["BTC"]
-        ibit = next(etf for etf in btc_etfs if etf["ticker"] == "IBIT")
-        assert ibit["coin"] == "BTC"
-        assert ibit["issuer"] == "BlackRock"
-        assert ibit["price"] == 42.50
-        assert ibit["flows"] == 50000000
-        assert ibit["fetch_date"] == "2024-01-15"
+        for ticker in ["IBIT", "FBTC"]:
+            with subtests.test(ticker=ticker, coin="BTC"):
+                etf = next((e for e in btc_etfs if e["ticker"] == ticker), None)
+                assert etf is not None, f"ETF {ticker} not found"
+                assert etf["coin"] == "BTC"
+                if ticker == "IBIT":
+                    assert etf["issuer"] == "BlackRock"
+                    assert etf["price"] == 42.50
+                    assert etf["flows"] == 50000000
+                    assert etf["fetch_date"] == "2024-01-15"
+                elif ticker == "FBTC":
+                    assert etf["issuer"] == "Fidelity"
+                    assert etf["flows"] == 30000000
 
-        fbtc = next(etf for etf in btc_etfs if etf["ticker"] == "FBTC")
-        assert fbtc["issuer"] == "Fidelity"
-        assert fbtc["flows"] == 30000000
-
-        # Check ETH ETFs
-        eth_etfs = result["ETH"]
-        assert len(eth_etfs) == 1
-        ethe = eth_etfs[0]
-        assert ethe["ticker"] == "ETHE"
-        assert ethe["coin"] == "ETH"
-        assert ethe["issuer"] == "Grayscale"
+        # Check ETH ETF
+        with subtests.test(ticker="ETHE", coin="ETH"):
+            eth_etfs = result["ETH"]
+            assert len(eth_etfs) == 1
+            ethe = eth_etfs[0]
+            assert ethe["ticker"] == "ETHE"
+            assert ethe["coin"] == "ETH"
+            assert ethe["issuer"] == "Grayscale"
 
     def test_parse_etf_data_invalid_coin(self):
         """Test parsing ETF data with invalid coin type."""
@@ -270,23 +279,31 @@ class TestETFFetcher:
         assert eth_stats["total_flows"] == 25000000
         assert eth_stats["total_aum"] == 500000000
 
-    def test_safe_float_parse(self):
+    def test_safe_float_parse(self, subtests):
         """Test safe float parsing with various inputs."""
         # Valid numbers
-        assert _safe_float_parse(42.5) == 42.5
-        assert _safe_float_parse("42.5") == 42.5
-        assert _safe_float_parse(100) == 100.0
+        valid_cases = [
+            (42.5, 42.5, "float"),
+            ("42.5", 42.5, "string"),
+            (100, 100.0, "int"),
+            ("  42.5  ", 42.5, "whitespace"),
+            (0, 0.0, "zero"),
+            (-42.5, -42.5, "negative"),
+        ]
+        for input_val, expected, desc in valid_cases:
+            with subtests.test(input=input_val, desc=desc):
+                assert _safe_float_parse(input_val) == expected
 
         # Invalid/None values
-        assert _safe_float_parse(None) is None
-        assert _safe_float_parse("") is None
-        assert _safe_float_parse("nan") is None
-        assert _safe_float_parse("NaN") is None
-        assert _safe_float_parse("null") is None
-        assert _safe_float_parse(float("nan")) is None
-        assert _safe_float_parse(float("inf")) is None
-
-        # Edge cases
-        assert _safe_float_parse("  42.5  ") == 42.5  # Whitespace
-        assert _safe_float_parse(0) == 0.0
-        assert _safe_float_parse(-42.5) == -42.5
+        invalid_cases = [
+            (None, "None"),
+            ("", "empty string"),
+            ("nan", "nan string"),
+            ("NaN", "NaN string"),
+            ("null", "null string"),
+            (float("nan"), "nan float"),
+            (float("inf"), "inf float"),
+        ]
+        for input_val, desc in invalid_cases:
+            with subtests.test(input=input_val, desc=desc):
+                assert _safe_float_parse(input_val) is None

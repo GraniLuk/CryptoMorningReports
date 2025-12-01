@@ -249,7 +249,7 @@ class TestETFRepository:
             assert result["start_date"] == base_date.isoformat()
             assert result["end_date"] == (base_date + timedelta(days=6)).isoformat()
 
-    def test_get_etf_flows_by_issuer(self, mock_sqlite_conn):
+    def test_get_etf_flows_by_issuer(self, mock_sqlite_conn, subtests):
         """Test retrieving ETF flows grouped by issuer."""
         with patch.dict(os.environ, {"DATABASE_TYPE": "sqlite"}):
             repo = ETFRepository(mock_sqlite_conn)
@@ -286,15 +286,20 @@ class TestETFRepository:
             # Get flows by issuer
             result = repo.get_etf_flows_by_issuer("BTC", "2024-01-15")
 
-            assert result is not None
-            assert len(result) == 2
+            with subtests.test(msg="Result exists"):
+                assert result is not None
+            with subtests.test(msg="Issuer count"):
+                assert len(result) == 2
 
-            # Find BlackRock entry
-            blackrock = next(r for r in result if r["issuer"] == "BlackRock")
-            assert blackrock["total_flows"] == 50000000
-            assert blackrock["etf_count"] == 1
+            # Test each issuer independently
+            expected_issuers = {
+                "BlackRock": {"total_flows": 50000000, "etf_count": 1},
+                "Fidelity": {"total_flows": 30000000, "etf_count": 1},
+            }
 
-            # Find Fidelity entry
-            fidelity = next(r for r in result if r["issuer"] == "Fidelity")
-            assert fidelity["total_flows"] == 30000000
-            assert fidelity["etf_count"] == 1
+            for issuer_name, expected in expected_issuers.items():
+                with subtests.test(issuer=issuer_name):
+                    issuer_data = next((r for r in result if r["issuer"] == issuer_name), None)
+                    assert issuer_data is not None, f"Issuer {issuer_name} not found"
+                    assert issuer_data["total_flows"] == expected["total_flows"]
+                    assert issuer_data["etf_count"] == expected["etf_count"]

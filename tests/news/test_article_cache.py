@@ -114,7 +114,7 @@ def test_save_and_load_article():
     print("✅ Save and load article test passed")
 
 
-def test_get_cached_articles():
+def test_get_cached_articles(subtests):
     """Test retrieving all cached articles."""
     # Create multiple test articles with unique links
     articles = [
@@ -155,13 +155,16 @@ def test_get_cached_articles():
 
     # Retrieve cached articles
     cached_articles = get_cached_articles()
-
-    # Verify we got at least our 3 articles back (might have more from other tests)
     cached_links = {article.link for article in cached_articles}
     original_links = {article.link for article in articles}
 
-    # Check that all our test articles are in the cache
-    assert original_links.issubset(cached_links), "Not all test articles found in cache"
+    # Test each article independently
+    for article in articles:
+        with subtests.test(source=article.source, symbol=article.symbols[0]):
+            assert article.link in cached_links, f"Article {article.link} not found in cache"
+
+    with subtests.test(msg="All articles present"):
+        assert original_links.issubset(cached_links), "Not all test articles found in cache"
 
     # Cleanup - remove just the files we created
     for filepath in filepaths:
