@@ -339,10 +339,6 @@ def test_ensure_cache_directory_unwritable_root():
 
 def run_all_tests():
     """Run all article cache tests using pytest."""
-    import sys
-
-    import pytest
-
     # Run tests with pytest to ensure fixtures work properly
     sys.exit(pytest.main([__file__, "-v"]))
 
