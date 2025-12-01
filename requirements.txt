@@ -12,7 +12,7 @@ azure-data-tables==12.7.0
 azure-identity==1.25.1
 azure-monitor-query==2.0.0
 requests==2.32.5
-aiohttp==3.11.12
+aiohttp==3.13.2
 python-dotenv==1.2.1
 python-binance==1.0.32
 python-kucoin==2.2.0
@@ -21,7 +21,7 @@ pycoingecko==3.2.0
 yfinance==0.2.66
 twikit==2.3.3
 feedparser==6.0.12
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
 python-frontmatter==1.1.0
 python-slugify==8.0.4
 pytest==9.0.1
