@@ -20,7 +20,7 @@ pyodbc==5.3.0
 pycoingecko==3.2.0
 yfinance==0.2.66
 twikit==2.3.3
-feedparser==6.0.11
+feedparser==6.0.12
 beautifulsoup4==4.14.2
 python-frontmatter==1.1.0
 python-slugify==8.0.4
