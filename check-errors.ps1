@@ -34,7 +34,7 @@ if ($Task) {
     Write-Host ""
 }
 
-# Search for errors, exceptions, failures
+# Define error patterns
 $ErrorPatterns = @(
     "ERROR",
     "Error:",
@@ -43,8 +43,66 @@ $ErrorPatterns = @(
     "Failed",
     "failed",
     "Exit code: [1-9]",  # Non-zero exit codes
-    "CRITICAL"
+    "CRITICAL",
+    "violations",
+    "limit:",
+    "Please retry"
 )
+
+# If last run had error, show errors from last run
+if ($TaskInfo -and $TaskInfo.LastTaskResult -ne 0 -and $TaskInfo.LastTaskResult -ne 267009) {
+    Write-Host "🔍 Analyzing errors from last run..." -ForegroundColor Yellow
+    Write-Host ""
+    
+    # Find all "Task ended:" lines
+    $taskEndedMatches = Select-String -Path $LogFile -Pattern "Task ended:"
+    
+    if ($taskEndedMatches) {
+        $lastTaskEnded = $taskEndedMatches | Select-Object -Last 1
+        $prevTaskEnded = $taskEndedMatches | Select-Object -Last 2 | Select-Object -First 1
+        
+        $startLine = if ($prevTaskEnded) { $prevTaskEnded.LineNumber } else { 1 }
+        $endLine = $lastTaskEnded.LineNumber
+        
+        # Get log content
+        $logContent = Get-Content $LogFile
+        
+        # Extract lines for last run
+        $lastRunLines = $logContent[($startLine - 1)..($endLine - 1)]
+        
+        # Search for errors in last run
+        $errorPattern = $ErrorPatterns -join '|'
+        $errorsInLastRun = $lastRunLines | Select-String -Pattern $errorPattern
+        
+        if ($errorsInLastRun) {
+            Write-Host "⚠️  Errors found in last run:" -ForegroundColor Red
+            Write-Host "─────────────────────────────────────────────────────────────" -ForegroundColor Red
+            Write-Host ""
+            
+            foreach ($error in $errorsInLastRun) {
+                Write-Host "Line $($error.LineNumber):" -ForegroundColor Yellow
+                Write-Host "  $($error.Line)" -ForegroundColor Red
+                Write-Host ""
+            }
+            
+            Write-Host "─────────────────────────────────────────────────────────────" -ForegroundColor Red
+            Write-Host ""
+        }
+        else {
+            Write-Host "ℹ️  No specific error patterns found in last run log section." -ForegroundColor Gray
+            Write-Host "   Showing last 20 lines of the last run for manual inspection:" -ForegroundColor Gray
+            Write-Host ""
+            
+            $lastRunLines | Select-Object -Last 20 | ForEach-Object {
+                Write-Host "  $_" -ForegroundColor DarkGray
+            }
+            
+            Write-Host ""
+        }
+    }
+}
+
+# Search for errors, exceptions, failures
 
 $ErrorsFound = @()
 
