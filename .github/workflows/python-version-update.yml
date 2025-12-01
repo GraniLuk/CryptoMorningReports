@@ -14,7 +14,7 @@ jobs:
       pull-requests: write
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Get latest Python version
         id: latest-python
@@ -65,7 +65,7 @@ jobs:
       
       - name: Create Pull Request
         if: steps.check-update.outputs.update_needed == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "deps(python): bump Python from ${{ steps.current-python.outputs.minor }} to ${{ steps.latest-python.outputs.minor }}"
