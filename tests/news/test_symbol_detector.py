@@ -5,7 +5,10 @@ system accurately identifies cryptocurrency mentions with appropriate confidence
 scoring to avoid false positives.
 """
 
+import sys
 from dataclasses import dataclass
+
+import pytest
 
 from news.symbol_detector import (
     CONFIDENCE_THRESHOLD,
@@ -271,21 +274,9 @@ def test_empty_and_edge_cases():
 
 
 def run_all_tests():
-    """Run all symbol detection tests."""
-    print("\n🧪 Running Symbol Detection Tests\n" + "=" * 50)
-
-    test_detect_full_name()
-    test_detect_symbol_name()
-    test_detect_variations()
-    test_false_positive_prevention()
-    test_confidence_scoring()
-    test_context_boost_calculation()
-    test_multiple_symbol_detection()
-    test_real_world_article_examples()
-    test_empty_and_edge_cases()
-
-    print("\n" + "=" * 50)
-    print("✅ All symbol detection tests passed!\n")
+    """Run all symbol detection tests using pytest."""
+    # Run tests with pytest to ensure fixtures work properly
+    sys.exit(pytest.main([__file__, "-v"]))
 
 
 if __name__ == "__main__":

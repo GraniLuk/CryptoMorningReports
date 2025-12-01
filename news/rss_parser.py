@@ -142,7 +142,7 @@ def _has_required_hashtags(article_link: str, required_hashtags: list[str]) -> b
         # (e.g., '/tags/bitcoin-price' -> 'bitcoin-price')
         article_hashtags = set()
         for link in tag_links:
-            href = link.get("href", "")  # type: ignore[union-attr]
+            href = link.get("href", "")
             if isinstance(href, str) and "/tags/" in href:
                 hashtag = href.split("/tags/")[-1].lower()
                 article_hashtags.add(hashtag)

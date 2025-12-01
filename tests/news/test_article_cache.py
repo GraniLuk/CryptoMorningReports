@@ -338,24 +338,13 @@ def test_ensure_cache_directory_unwritable_root():
 
 
 def run_all_tests():
-    """Run all article cache tests."""
-    print("\n🧪 Running Article Cache Tests\n" + "=" * 50)
+    """Run all article cache tests using pytest."""
+    import sys
 
-    test_cache_directory_structure()
-    test_ensure_cache_directory()
-    test_article_filename_generation()
-    test_save_and_load_article()
-    test_get_cached_articles()
-    test_article_exists_in_cache()
-    test_load_nonexistent_article()
-    test_get_cached_articles_empty()
-    test_get_cache_directory_defaults_to_local_cache()
-    test_get_cache_directory_respects_env_override()
-    test_ensure_cache_directory_with_custom_root()
-    test_ensure_cache_directory_unwritable_root()
+    import pytest
 
-    print("\n" + "=" * 50)
-    print("✅ All article cache tests passed!\n")
+    # Run tests with pytest to ensure fixtures work properly
+    sys.exit(pytest.main([__file__, "-v"]))
 
 
 if __name__ == "__main__":
