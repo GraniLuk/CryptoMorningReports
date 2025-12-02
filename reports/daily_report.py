@@ -243,18 +243,31 @@ async def _process_ai_analysis(
 
     aggregated_with_prices = _build_analysis_context(current_prices_section, conn)
 
+    # Use None to let configured primary model be used for detailed analysis
+    # Fallback to secondary model will trigger automatically on rate limits
     analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
         ai_api_key,
         aggregated_with_prices,
         news_payload,
         ai_api_type,
         conn,
+        model=None,  # Use configured primary model (gemini-2.5-pro from .env)
     )
+    # Use configured secondary model for highlighting - simple categorization
+    # Get secondary model from environment for Gemini, None for other providers
+    secondary_model = None
+    if ai_api_type == "gemini":
+        secondary_model = os.environ.get(
+            "GEMINI_SECONDARY_MODEL",
+            "gemini-2.5-flash-preview-09-2025",
+        )
+    
     highlight_articles_message = highlight_articles(
         ai_api_key,
         symbols,
         news_payload,
         ai_api_type,
+        model=secondary_model,
     )
 
     # Add list of articles included in analysis

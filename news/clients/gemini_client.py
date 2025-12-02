@@ -3,7 +3,7 @@
 import json
 import re
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import google.generativeai as genai
 
@@ -28,11 +28,18 @@ if TYPE_CHECKING:
 class GeminiClient(AIClient):
     """Client for Google Gemini AI API."""
 
-    def __init__(self, api_key):
+    def __init__(
+        self,
+        api_key: str,
+        primary_model: str = "gemini-2.0-flash-exp",
+        secondary_model: str = "gemini-1.5-flash",
+    ):
         """Initialize Gemini client.
 
         Args:
             api_key (str): Google Gemini API key
+            primary_model (str): Primary model to use (default: gemini-2.0-flash-exp)
+            secondary_model (str): Fallback model for retries (default: gemini-1.5-flash)
 
         Raises:
             ValueError: If API key is missing
@@ -40,7 +47,12 @@ class GeminiClient(AIClient):
 
         """
         self.api_key = api_key
-        app_logger.info(f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}")
+        self.primary_model = primary_model
+        self.secondary_model = secondary_model
+        app_logger.info(
+            f"GeminiClient [__init__]: Initializing. API key provided: {bool(api_key)}, "
+            f"Primary model: {primary_model}, Secondary model: {secondary_model}",
+        )
 
         if not self.api_key:
             msg = "GeminiClient initialization failed: API key missing"
@@ -58,37 +70,85 @@ class GeminiClient(AIClient):
 
         try:
             configure_fn(api_key=self.api_key)
-            self.model: Any = generative_cls("gemini-2.5-pro")
-            app_logger.info("GeminiClient [__init__]: Gemini model initialized.")
+            self.generative_model_class = generative_cls
+            app_logger.info("GeminiClient [__init__]: Gemini SDK configured.")
         except Exception as e:
             msg = f"GeminiClient initialization failed: {e}"
             raise RuntimeError(msg) from e
 
-    def _generate_content(self, prompt: str | list[dict[str, str]]) -> str:
-        """Generate content using Gemini API.
+    def _generate_content(
+        self,
+        prompt: str | list[dict[str, str]],
+        model: str | None = None,
+    ) -> str:
+        """Generate content using Gemini API with retry-with-fallback support.
 
         Args:
             prompt: Combined system and user prompt; can be a single string or
                 a structured list of chat messages compatible with the Gemini SDK.
+            model: Specific model to use (if None, uses primary_model)
 
         Returns:
             str: Generated content or error message
 
         """
-        try:
-            response = self.model.generate_content(prompt)
-        except (ValueError, TypeError, AttributeError, ConnectionError, OSError) as e:
-            error_msg = f"Failed to get response from Gemini: {e!s}"
-            app_logger.exception(error_msg)
-            return error_msg
-        else:
-            if response.candidates and len(response.candidates) > 0:
-                content = response.text
-                app_logger.info(f"Successfully processed. Length: {len(content)} chars")
-                return content
-            error_msg = "Failed: No valid response from Gemini API"
-            app_logger.error(error_msg)
-            return error_msg
+        models_to_try = [model or self.primary_model, self.secondary_model]
+        # Remove duplicates while preserving order
+        models_to_try = list(dict.fromkeys(models_to_try))
+
+        for idx, model_name in enumerate(models_to_try):
+            is_last_attempt = idx == len(models_to_try) - 1
+            model_type = "PRIMARY" if idx == 0 else "SECONDARY (FALLBACK)"
+            app_logger.info(f"🤖 [{model_type}] Attempting generation with model: {model_name}")
+
+            try:
+                model_instance = self.generative_model_class(model_name)
+                response = model_instance.generate_content(prompt)
+            except Exception as e:  # noqa: BLE001 - Need to catch all Google API exceptions
+                # Catch all exceptions including google.api_core.exceptions.ResourceExhausted
+                error_msg = f"Failed with {model_name}: {e!s}"
+                app_logger.warning(error_msg)
+
+                # Check for rate limit errors (429, quota, resource exhausted)
+                error_str = str(e).lower()
+                error_type = type(e).__name__
+                if (
+                    "429" in error_str
+                    or "quota" in error_str
+                    or "rate limit" in error_str
+                    or "resourceexhausted" in error_type.lower()
+                ):
+                    app_logger.warning(f"⚠️  Rate limit/quota error detected with {model_name}")
+
+                if not is_last_attempt:
+                    app_logger.info(f"⚠️  Retrying with fallback model: {models_to_try[idx + 1]}")
+                    continue
+
+                app_logger.exception(f"All retry attempts exhausted: {error_msg}")
+                return f"Failed: {error_msg}"
+            else:
+                if response.candidates and len(response.candidates) > 0:
+                    content = response.text
+                    model_type = "PRIMARY" if idx == 0 else "SECONDARY (FALLBACK)"
+                    app_logger.info(
+                        f"✅ [{model_type}] Successfully processed with {model_name}. "
+                        f"Length: {len(content)} chars",
+                    )
+                    return content
+
+                error_msg = f"No valid response from Gemini API with {model_name}"
+                app_logger.warning(error_msg)
+
+                if not is_last_attempt:
+                    app_logger.info(f"⚠️  Retrying with fallback model: {models_to_try[idx + 1]}")
+                    continue
+
+                return f"Failed: {error_msg}"
+
+        return (
+            f"Failed: All retry attempts exhausted after trying models: "
+            f"{', '.join(models_to_try)}"
+        )
 
     def _identify_part_type(self, idx: int, text_content: str) -> str:
         """Identify the type of prompt part for logging purposes."""
@@ -167,9 +227,29 @@ class GeminiClient(AIClient):
         indicators_message: str,
         news_feeded: str,
         conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
+        model: str | None = None,
     ) -> str:
-        """Get detailed crypto analysis with news using Gemini API."""
+        """Get detailed crypto analysis with news using Gemini API.
+
+        Args:
+            indicators_message: Technical indicators data
+            news_feeded: JSON-formatted news articles
+            conn: Database connection for fetching candle data
+            model: Optional specific model to use (overrides primary_model)
+
+        Returns:
+            str: Generated analysis or error message
+
+        """
         start_time = time.time()
+        app_logger.info("=" * 80)
+        app_logger.info("📊 DETAILED CRYPTO ANALYSIS - Starting")
+        app_logger.info(
+            f"Configured models - Primary: {self.primary_model}, "
+            f"Secondary: {self.secondary_model}",
+        )
+        app_logger.info(f"Requested model for this call: {model or 'PRIMARY'}")
+        app_logger.info("=" * 80)
         app_logger.info("Starting detailed crypto analysis with news using Gemini")
         app_logger.info(f"Input news articles count: {len(news_feeded)}")
 
@@ -201,19 +281,41 @@ class GeminiClient(AIClient):
         app_logger.info("Sending request to Gemini API...")
         app_logger.info(f"{'=' * 80}\n")
 
-        result = self._generate_content(prompt_parts)
+        result = self._generate_content(prompt_parts, model=model)
         app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
         return result
 
-    def highlight_articles(self, user_crypto_list: list["Symbol"], news_feeded: str) -> str:
-        """Highlight articles based on user crypto list and news feed using Gemini API."""
+    def highlight_articles(
+        self,
+        user_crypto_list: list["Symbol"],
+        news_feeded: str,
+        model: str | None = None,
+    ) -> str:
+        """Highlight articles based on user crypto list and news feed using Gemini API.
+
+        Args:
+            user_crypto_list: List of Symbol objects representing user's crypto portfolio
+            news_feeded: JSON-formatted news articles
+            model: Optional specific model to use (overrides primary_model)
+
+        Returns:
+            str: Highlighted articles or error message
+
+        """
         symbol_names = [symbol.symbol_name for symbol in user_crypto_list]
-        app_logger.info("Starting article highlighting with Gemini")
-        app_logger.debug(f"Symbol names provided: {symbol_names}")
+        app_logger.info("=" * 80)
+        app_logger.info("🔍 ARTICLE HIGHLIGHTING - Starting")
+        app_logger.info(
+            f"Configured models - Primary: {self.primary_model}, "
+            f"Secondary: {self.secondary_model}",
+        )
+        app_logger.info(f"Requested model for this call: {model or 'PRIMARY'}")
+        app_logger.info(f"Symbol names provided: {symbol_names}")
+        app_logger.info("=" * 80)
 
         prompt = (
             f"{SYSTEM_PROMPT_HIGHLIGHT}\n\n"
             f"{USER_PROMPT_HIGHLIGHT.format(news_feeded=news_feeded, symbol_names=symbol_names)}"
         )
 
-        return self._generate_content(prompt)
+        return self._generate_content(prompt, model=model)

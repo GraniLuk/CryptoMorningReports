@@ -4,16 +4,25 @@ This module provides a factory function to create AI clients and maintains
 backward compatibility with legacy function interfaces.
 """
 
+import os
+
 from news.article_cache import CachedArticle, get_recent_articles
 from news.clients import GeminiClient, PerplexityClient
 
 
-def create_ai_client(api_type, api_key):
+def create_ai_client(
+    api_type,
+    api_key,
+    primary_model: str | None = None,
+    secondary_model: str | None = None,
+):
     """Create appropriate AI client based on type.
 
     Args:
         api_type (str): "perplexity" or "gemini"
         api_key (str): API key for the selected service
+        primary_model (str | None): Primary model to use (Gemini only)
+        secondary_model (str | None): Fallback model to use (Gemini only)
 
     Returns:
         AIClient: An instance of the appropriate AI client
@@ -22,22 +31,88 @@ def create_ai_client(api_type, api_key):
     if api_type.lower() == "perplexity":
         return PerplexityClient(api_key)
     if api_type.lower() == "gemini":
-        return GeminiClient(api_key)
+        # Get model configuration from environment or use defaults
+        primary = primary_model or os.environ.get(
+            "GEMINI_PRIMARY_MODEL",
+            "gemini-2.0-flash-exp",
+        )
+        secondary = secondary_model or os.environ.get(
+            "GEMINI_SECONDARY_MODEL",
+            "gemini-1.5-flash",
+        )
+        return GeminiClient(api_key, primary_model=primary, secondary_model=secondary)
     msg = f"Unsupported AI API type: {api_type}"
     raise ValueError(msg)
 
 
 def get_detailed_crypto_analysis_with_news(
-    api_key, indicators_message, news_feeded, api_type="perplexity", conn=None,
+    api_key,
+    indicators_message,
+    news_feeded,
+    api_type="perplexity",
+    conn=None,
+    model: str | None = None,
+    primary_model: str | None = None,
+    secondary_model: str | None = None,
 ):
-    """Get detailed cryptocurrency analysis combining indicators and news data."""
-    client = create_ai_client(api_type, api_key)
-    return client.get_detailed_crypto_analysis_with_news(indicators_message, news_feeded, conn)
+    """Get detailed cryptocurrency analysis combining indicators and news data.
+
+    Args:
+        api_key: API key for the AI service
+        indicators_message: Technical indicators data
+        news_feeded: JSON-formatted news articles
+        api_type: "perplexity" or "gemini"
+        conn: Database connection
+        model: Specific model to use for this request (Gemini only)
+        primary_model: Primary model for client creation (Gemini only)
+        secondary_model: Secondary/fallback model for client creation (Gemini only)
+
+    Returns:
+        str: Generated analysis or error message
+
+    """
+    client = create_ai_client(api_type, api_key, primary_model, secondary_model)
+    if isinstance(client, GeminiClient):
+        return client.get_detailed_crypto_analysis_with_news(
+            indicators_message,
+            news_feeded,
+            conn,
+            model=model,
+        )
+    return client.get_detailed_crypto_analysis_with_news(
+        indicators_message,
+        news_feeded,
+        conn,
+    )
 
 
-def highlight_articles(api_key, user_crypto_list, news_feeded, api_type="perplexity"):
-    """Highlight relevant articles from news feed based on user's crypto list."""
-    client = create_ai_client(api_type, api_key)
+def highlight_articles(
+    api_key,
+    user_crypto_list,
+    news_feeded,
+    api_type="perplexity",
+    model: str | None = None,
+    primary_model: str | None = None,
+    secondary_model: str | None = None,
+):
+    """Highlight relevant articles from news feed based on user's crypto list.
+
+    Args:
+        api_key: API key for the AI service
+        user_crypto_list: List of Symbol objects
+        news_feeded: JSON-formatted news articles
+        api_type: "perplexity" or "gemini"
+        model: Specific model to use for this request (Gemini only)
+        primary_model: Primary model for client creation (Gemini only)
+        secondary_model: Secondary/fallback model for client creation (Gemini only)
+
+    Returns:
+        str: Highlighted articles or error message
+
+    """
+    client = create_ai_client(api_type, api_key, primary_model, secondary_model)
+    if isinstance(client, GeminiClient):
+        return client.highlight_articles(user_crypto_list, news_feeded, model=model)
     return client.highlight_articles(user_crypto_list, news_feeded)
 
 
