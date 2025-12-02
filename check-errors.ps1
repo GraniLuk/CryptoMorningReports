@@ -72,16 +72,29 @@ if ($TaskInfo -and $TaskInfo.LastTaskResult -ne 0 -and $TaskInfo.LastTaskResult 
         
         # Search for errors in last run
         $errorPattern = $ErrorPatterns -join '|'
-        $errorsInLastRun = $lastRunLines | Select-String -Pattern $errorPattern
+        $errorsInLastRun = $lastRunLines | Select-String -Pattern $errorPattern -Context 10, 5
         
         if ($errorsInLastRun) {
             Write-Host "⚠️  Errors found in last run:" -ForegroundColor Red
             Write-Host "─────────────────────────────────────────────────────────────" -ForegroundColor Red
             Write-Host ""
             
-            foreach ($error in $errorsInLastRun) {
-                Write-Host "Line $($error.LineNumber):" -ForegroundColor Yellow
-                Write-Host "  $($error.Line)" -ForegroundColor Red
+            foreach ($err in $errorsInLastRun) {
+                Write-Host "Line $($err.LineNumber):" -ForegroundColor Yellow
+                
+                # Show context before
+                if ($err.Context.PreContext) {
+                    $err.Context.PreContext | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+                }
+                
+                # Show the error line itself
+                Write-Host "  $($err.Line)" -ForegroundColor Red
+                
+                # Show context after
+                if ($err.Context.PostContext) {
+                    $err.Context.PostContext | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+                }
+                
                 Write-Host ""
             }
             
@@ -107,7 +120,7 @@ if ($TaskInfo -and $TaskInfo.LastTaskResult -ne 0 -and $TaskInfo.LastTaskResult 
 $ErrorsFound = @()
 
 foreach ($pattern in $ErrorPatterns) {
-    $foundMatches = Select-String -Path $LogFile -Pattern $pattern -Context 2, 1
+    $foundMatches = Select-String -Path $LogFile -Pattern $pattern -Context 10, 5
     if ($foundMatches) {
         $ErrorsFound += $foundMatches
     }
