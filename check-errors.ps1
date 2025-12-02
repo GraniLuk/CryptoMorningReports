@@ -79,25 +79,12 @@ if ($TaskInfo -and $TaskInfo.LastTaskResult -ne 0 -and $TaskInfo.LastTaskResult 
             Write-Host "─────────────────────────────────────────────────────────────" -ForegroundColor Red
             Write-Host ""
             
-            foreach ($err in $errorsInLastRun) {
-                Write-Host "Line $($err.LineNumber):" -ForegroundColor Yellow
-                
-                # Show context before
-                if ($err.Context.PreContext) {
-                    $err.Context.PreContext | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
-                }
-                
-                # Show the error line itself
-                Write-Host "  $($err.Line)" -ForegroundColor Red
-                
-                # Show context after
-                if ($err.Context.PostContext) {
-                    $err.Context.PostContext | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
-                }
-                
-                Write-Host ""
-            }
+            Write-Host "Full log for last run (showing last 200 lines to capture complete error messages):" -ForegroundColor Yellow
+            Write-Host ""
             
+            $lastRunLines | Select-Object -Last 200 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+            
+            Write-Host ""
             Write-Host "─────────────────────────────────────────────────────────────" -ForegroundColor Red
             Write-Host ""
         }
@@ -120,7 +107,7 @@ if ($TaskInfo -and $TaskInfo.LastTaskResult -ne 0 -and $TaskInfo.LastTaskResult 
 $ErrorsFound = @()
 
 foreach ($pattern in $ErrorPatterns) {
-    $foundMatches = Select-String -Path $LogFile -Pattern $pattern -Context 10, 5
+    $foundMatches = Select-String -Path $LogFile -Pattern $pattern -Context 20, 10
     if ($foundMatches) {
         $ErrorsFound += $foundMatches
     }
