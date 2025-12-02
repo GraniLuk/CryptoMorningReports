@@ -155,11 +155,17 @@ if __name__ == "__main__":
     # Test with Perplexity
     if perplexity_api_key:
         highlighted_news = highlight_articles(
-            perplexity_api_key, user_crypto_list, news_feeded, "perplexity",
+            perplexity_api_key,
+            user_crypto_list,
+            news_feeded,
+            "perplexity",
         )
 
     # Test with Gemini
     if gemini_api_key:
         highlighted_news = highlight_articles(
-            gemini_api_key, user_crypto_list, news_feeded, "gemini",
+            gemini_api_key,
+            user_crypto_list,
+            news_feeded,
+            "gemini",
         )

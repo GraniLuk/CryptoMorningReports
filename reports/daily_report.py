@@ -157,13 +157,13 @@ def _build_analysis_context(
         lines = []
         for row in agg_list:
             try:
-                oi_str = f"{row.get("OpenInterest", 0):,.0f}" if row.get("OpenInterest") else "N/A"
+                oi_str = f"{row.get('OpenInterest', 0):,.0f}" if row.get("OpenInterest") else "N/A"
                 oi_val_str = (
-                    f"${row.get("OpenInterestValue", 0):,.0f}"
+                    f"${row.get('OpenInterestValue', 0):,.0f}"
                     if row.get("OpenInterestValue")
                     else "N/A"
                 )
-                fr_str = f"{row.get("FundingRate", 0):.4f}%" if row.get("FundingRate") else "N/A"
+                fr_str = f"{row.get('FundingRate', 0):.4f}%" if row.get("FundingRate") else "N/A"
 
                 lines.append(
                     f"{row.get('SymbolName', ''):>6} | "
@@ -261,7 +261,7 @@ async def _process_ai_analysis(
             "GEMINI_SECONDARY_MODEL",
             "gemini-2.5-flash-preview-09-2025",
         )
-    
+
     highlight_articles_message = highlight_articles(
         ai_api_key,
         symbols,
@@ -449,15 +449,11 @@ def _build_news_audit_sections(
             f"Total available: {len(articles)} | Included: {len(included_links)}",
         )
 
-    total_avail = (
-        stats.get("articles_available", len(articles)) if stats else len(articles)
-    )
+    total_avail = stats.get("articles_available", len(articles)) if stats else len(articles)
     total_incl = (
-        stats.get("articles_included", len(included_links))
-        if stats
-        else len(included_links)
+        stats.get("articles_included", len(included_links)) if stats else len(included_links)
     )
-    truncated_info = f" | Truncated: {stats.get("articles_truncated", 0)}" if stats else ""
+    truncated_info = f" | Truncated: {stats.get('articles_truncated', 0)}" if stats else ""
     markdown_lines.append(
         f"Total available: {total_avail} | Included: {total_incl}{truncated_info}",
     )

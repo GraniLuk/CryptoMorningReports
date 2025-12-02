@@ -146,8 +146,7 @@ class GeminiClient(AIClient):
                 return f"Failed: {error_msg}"
 
         return (
-            f"Failed: All retry attempts exhausted after trying models: "
-            f"{', '.join(models_to_try)}"
+            f"Failed: All retry attempts exhausted after trying models: {', '.join(models_to_try)}"
         )
 
     def _identify_part_type(self, idx: int, text_content: str) -> str:
@@ -245,8 +244,7 @@ class GeminiClient(AIClient):
         app_logger.info("=" * 80)
         app_logger.info("📊 DETAILED CRYPTO ANALYSIS - Starting")
         app_logger.info(
-            f"Configured models - Primary: {self.primary_model}, "
-            f"Secondary: {self.secondary_model}",
+            f"Configured models - Primary: {self.primary_model}, Secondary: {self.secondary_model}",
         )
         app_logger.info(f"Requested model for this call: {model or 'PRIMARY'}")
         app_logger.info("=" * 80)
@@ -306,8 +304,7 @@ class GeminiClient(AIClient):
         app_logger.info("=" * 80)
         app_logger.info("🔍 ARTICLE HIGHLIGHTING - Starting")
         app_logger.info(
-            f"Configured models - Primary: {self.primary_model}, "
-            f"Secondary: {self.secondary_model}",
+            f"Configured models - Primary: {self.primary_model}, Secondary: {self.secondary_model}",
         )
         app_logger.info(f"Requested model for this call: {model or 'PRIMARY'}")
         app_logger.info(f"Symbol names provided: {symbol_names}")
