@@ -379,25 +379,27 @@ def create_sqlite_database(db_path="./local_crypto.db"):
         "CumulativeVolumeDelta(SymbolID, IndicatorDate)",
     )
 
-    # Insert default symbols (with SourceID and CoinGeckoName for compatibility)
+    # Insert default symbols (with SourceID, CoinGeckoName, and IsActive for compatibility)
+    # Format: (SymbolName, FullName, SourceID, CoinGeckoName, IsActive)"
     default_symbols = [
-        ("BTC", "Bitcoin", 1, "bitcoin"),
-        ("ETH", "Ethereum", 1, "ethereum"),
-        ("XRP", "Ripple", 1, "ripple"),
-        ("SOL", "Solana", 1, "solana"),
-        ("ATOM", "Cosmos", 1, "cosmos"),
-        ("DOT", "Polkadot", 1, "polkadot"),
-        ("LINK", "Chainlink", 1, "chainlink"),
-        ("DOGE", "Dogecoin", 1, "dogecoin"),
-        ("TON", "Toncoin", 1, "the-open-network"),
-        ("HBAR", "Hedera", 1, "hedera-hashgraph"),
-        ("OSMO", "Osmosis", 1, "osmosis"),
-        ("VIRTUAL", "Virtual Protocol", 1, "virtual-protocol"),
+        ("BTC", "Bitcoin", 1, "bitcoin", 1),
+        ("ETH", "Ethereum", 1, "ethereum", 1),
+        ("XRP", "Ripple", 1, "ripple", 1),
+        ("SOL", "Solana", 1, "solana", 1),
+        ("ATOM", "Cosmos", 1, "cosmos", 1),
+        ("DOT", "Polkadot", 1, "polkadot", 1),
+        ("LINK", "Chainlink", 1, "chainlink", 1),
+        ("DOGE", "Dogecoin", 1, "dogecoin", 1),
+        ("TON", "Toncoin", 1, "the-open-network", 1),
+        ("HBAR", "Hedera", 1, "hedera-hashgraph", 1),
+        ("OSMO", "Osmosis", 1, "osmosis", 0),  # Inactive
+        ("VIRTUAL", "Virtual Protocol", 1, "virtual-protocol", 1),
+        ("BNB", "Binance Coin", 1, "binancecoin", 1),
     ]
 
     cursor.executemany(
         "INSERT OR IGNORE INTO Symbols (SymbolName, FullName, SourceID, "
-        "CoinGeckoName) VALUES (?, ?, ?, ?)",
+        "CoinGeckoName, IsActive) VALUES (?, ?, ?, ?, ?)",
         default_symbols,
     )
 
