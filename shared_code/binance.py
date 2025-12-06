@@ -419,6 +419,47 @@ CVD_RATE_LIMIT_DELAY = 0.5  # Delay between API calls to avoid rate limiting
 CVD_LARGE_TRADE_MULTIPLIER = 2.0
 
 
+class CVDHourlySnapshot:
+    """Data class for a single hour's CVD data."""
+
+    def __init__(
+        self,
+        symbol_id: int,
+        hour_timestamp: datetime,
+        cvd: float,
+        buy_volume: float,
+        sell_volume: float,
+        trade_count: int,
+        large_buy_count: int,
+        large_sell_count: int,
+        avg_trade_size: float,
+        last_trade_id: int | None = None,
+    ):
+        """Initialize hourly CVD snapshot."""
+        self.symbol_id = symbol_id
+        self.hour_timestamp = hour_timestamp
+        self.cvd = cvd
+        self.buy_volume = buy_volume
+        self.sell_volume = sell_volume
+        self.trade_count = trade_count
+        self.large_buy_count = large_buy_count
+        self.large_sell_count = large_sell_count
+        self.avg_trade_size = avg_trade_size
+        self.last_trade_id = last_trade_id
+
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return (
+            f"CVDHourlySnapshot(hour={self.hour_timestamp}, "
+            f"cvd={self.cvd:+,.0f}, trades={self.trade_count})"
+        )
+
+
+def _get_hour_start(dt: datetime) -> datetime:
+    """Round datetime down to start of hour."""
+    return dt.replace(minute=0, second=0, microsecond=0)
+
+
 def fetch_binance_cvd(  # noqa: PLR0912, PLR0915
     symbol: Symbol,
     hours: int = 24,
@@ -592,6 +633,214 @@ def fetch_binance_cvd(  # noqa: PLR0912, PLR0915
     except (KeyError, ValueError, TypeError, ConnectionError) as e:
         app_logger.error(f"Unexpected error fetching CVD for {symbol.symbol_name}: {e!s}")
         return None
+
+
+def fetch_cvd_trades_incremental(  # noqa: PLR0912, PLR0915
+    symbol: Symbol,
+    symbol_id: int,
+    start_time: datetime | None = None,
+    last_trade_id: int | None = None,
+    max_hours: int = 24,
+) -> list[CVDHourlySnapshot]:
+    """Fetch trades from Binance Futures and bucket them by hour.
+
+    This function fetches trades incrementally - if last_trade_id is provided,
+    it fetches only trades after that ID. Trades are bucketed by hour for
+    efficient storage and aggregation.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        symbol_id: Database ID for the symbol
+        start_time: Earliest time to fetch trades from (default: 24h ago)
+        last_trade_id: If provided, fetch only trades after this ID
+        max_hours: Maximum hours of data to fetch (default 24)
+
+    Returns:
+        List of CVDHourlySnapshot objects, one per hour with trades
+
+    """
+    client = BinanceClient()
+    now = datetime.now(UTC)
+
+    if start_time is None:
+        start_time = now - timedelta(hours=max_hours)
+
+    # Buckets: hour_timestamp -> {cvd, buy_vol, sell_vol, trades, etc.}
+    hourly_buckets: dict[datetime, dict] = {}
+
+    try:
+        all_trades = []
+
+        if last_trade_id is not None:
+            # Incremental fetch: get trades after the last known trade ID
+            # Use fromId parameter for efficient incremental fetching
+            from_id = last_trade_id + 1
+            while True:
+                params = {
+                    "symbol": symbol.binance_name,
+                    "fromId": from_id,
+                    "limit": CVD_TRADES_PER_REQUEST,
+                }
+
+                trades = client.futures_aggregate_trades(**params)
+
+                if not trades:
+                    break
+
+                all_trades.extend(trades)
+
+                # Check if we've caught up to current time
+                latest_trade_time = trades[-1]["T"]
+                if latest_trade_time >= int(now.timestamp() * 1000):
+                    break
+
+                # Continue from last trade ID
+                from_id = trades[-1]["a"] + 1
+
+                # Safety limit
+                if len(all_trades) > CVD_MAX_TRADES:
+                    app_logger.warning(
+                        f"CVD incremental fetch for {symbol.symbol_name}: "
+                        f"Hit {CVD_MAX_TRADES} trade limit",
+                    )
+                    break
+
+                time.sleep(CVD_RATE_LIMIT_DELAY)
+
+        else:
+            # Full fetch: get trades from start_time going forward
+            # Fetch backward from now to ensure we get all recent trades
+            end_time = int(now.timestamp() * 1000)
+            start_time_ms = int(start_time.timestamp() * 1000)
+
+            while True:
+                params = {
+                    "symbol": symbol.binance_name,
+                    "endTime": end_time,
+                    "limit": CVD_TRADES_PER_REQUEST,
+                }
+
+                trades = client.futures_aggregate_trades(**params)
+
+                if not trades:
+                    break
+
+                all_trades.extend(trades)
+
+                # Get earliest trade time to continue backward
+                earliest_trade_time = trades[0]["T"]
+
+                # Stop if we've gone past the start time
+                if earliest_trade_time <= start_time_ms:
+                    break
+
+                # Stop if we have enough trades
+                if len(trades) < CVD_TRADES_PER_REQUEST:
+                    break
+
+                # Safety limit
+                if len(all_trades) > CVD_MAX_TRADES:
+                    app_logger.warning(
+                        f"CVD full fetch for {symbol.symbol_name}: "
+                        f"Hit {CVD_MAX_TRADES} trade limit",
+                    )
+                    break
+
+                time.sleep(CVD_RATE_LIMIT_DELAY)
+
+                # Move end_time backward
+                end_time = earliest_trade_time - 1
+
+        if not all_trades:
+            app_logger.info(f"No new trades found for {symbol.symbol_name}")
+            return []
+
+        app_logger.info(
+            f"Fetched {len(all_trades)} trades for {symbol.symbol_name}",
+        )
+
+        # Calculate average trade size for large trade detection
+        trade_sizes = [float(t["q"]) * float(t["p"]) for t in all_trades]
+        overall_avg_size = sum(trade_sizes) / len(trade_sizes) if trade_sizes else 0
+        large_threshold = overall_avg_size * CVD_LARGE_TRADE_MULTIPLIER
+
+        # Bucket trades by hour
+        for trade in all_trades:
+            trade_time_ms = trade["T"]
+            trade_dt = datetime.fromtimestamp(trade_time_ms / 1000, tz=UTC)
+            hour_start = _get_hour_start(trade_dt)
+
+            if hour_start not in hourly_buckets:
+                hourly_buckets[hour_start] = {
+                    "cvd": 0.0,
+                    "buy_volume": 0.0,
+                    "sell_volume": 0.0,
+                    "trade_count": 0,
+                    "large_buy_count": 0,
+                    "large_sell_count": 0,
+                    "trade_sizes": [],
+                    "last_trade_id": 0,
+                }
+
+            bucket = hourly_buckets[hour_start]
+            qty = float(trade["q"])
+            price = float(trade["p"])
+            usd_value = qty * price
+            is_buyer_maker = trade["m"]
+            trade_id = trade["a"]
+
+            bucket["trade_sizes"].append(usd_value)
+            bucket["trade_count"] += 1
+            bucket["last_trade_id"] = max(bucket["last_trade_id"], trade_id)
+
+            if is_buyer_maker:
+                # Seller was taker = SELL
+                bucket["sell_volume"] += usd_value
+                bucket["cvd"] -= usd_value
+                if usd_value >= large_threshold:
+                    bucket["large_sell_count"] += 1
+            else:
+                # Buyer was taker = BUY
+                bucket["buy_volume"] += usd_value
+                bucket["cvd"] += usd_value
+                if usd_value >= large_threshold:
+                    bucket["large_buy_count"] += 1
+
+        # Convert buckets to CVDHourlySnapshot objects
+        snapshots = []
+        for hour_ts, bucket in sorted(hourly_buckets.items()):
+            avg_size = (
+                sum(bucket["trade_sizes"]) / len(bucket["trade_sizes"])
+                if bucket["trade_sizes"]
+                else 0
+            )
+            snapshots.append(
+                CVDHourlySnapshot(
+                    symbol_id=symbol_id,
+                    hour_timestamp=hour_ts,
+                    cvd=bucket["cvd"],
+                    buy_volume=bucket["buy_volume"],
+                    sell_volume=bucket["sell_volume"],
+                    trade_count=bucket["trade_count"],
+                    large_buy_count=bucket["large_buy_count"],
+                    large_sell_count=bucket["large_sell_count"],
+                    avg_trade_size=avg_size,
+                    last_trade_id=bucket["last_trade_id"],
+                ),
+            )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error fetching incremental CVD for {symbol.symbol_name}: {e.message}",
+        )
+        return []
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
+        app_logger.error(
+            f"Unexpected error fetching incremental CVD for {symbol.symbol_name}: {e!s}",
+        )
+        return []
+    else:
+        return snapshots
 
 
 def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:

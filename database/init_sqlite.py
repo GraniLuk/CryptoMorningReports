@@ -312,6 +312,28 @@ def create_sqlite_database(db_path="./local_crypto.db"):
         )
     """)
 
+    # Create CVDHourlySnapshots table for incremental CVD accumulation
+    # Stores hourly aggregates that can be summed for 1h/4h/24h windows
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS CVDHourlySnapshots (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            SymbolID INTEGER NOT NULL,
+            HourTimestamp TEXT NOT NULL,
+            CVD REAL NOT NULL DEFAULT 0,
+            BuyVolume REAL NOT NULL DEFAULT 0,
+            SellVolume REAL NOT NULL DEFAULT 0,
+            TradeCount INTEGER NOT NULL DEFAULT 0,
+            LargeBuyCount INTEGER NOT NULL DEFAULT 0,
+            LargeSellCount INTEGER NOT NULL DEFAULT 0,
+            AvgTradeSize REAL,
+            LastTradeId INTEGER,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (SymbolID) REFERENCES Symbols(SymbolID),
+            UNIQUE(SymbolID, HourTimestamp)
+        )
+    """)
+
     # Create ETFFlows table for ETF inflows/outflows tracking
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ETFFlows (

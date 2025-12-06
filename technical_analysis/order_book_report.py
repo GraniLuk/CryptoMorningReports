@@ -15,7 +15,11 @@ from datetime import UTC, datetime
 from prettytable import PrettyTable
 
 from infra.telegram_logging_handler import app_logger
-from shared_code.binance import fetch_binance_cvd, fetch_binance_order_book
+from shared_code.binance import (
+    CVDMetrics,
+    fetch_binance_order_book,
+    fetch_cvd_trades_incremental,
+)
 from source_repository import SourceID, Symbol
 from technical_analysis.repositories.cvd_repository import CVDRepository
 from technical_analysis.repositories.order_book_repository import OrderBookRepository
@@ -204,6 +208,9 @@ def fetch_cvd_report(
 ) -> PrettyTable:
     """Fetch Cumulative Volume Delta (order flow) for all symbols.
 
+    Uses incremental fetching with hourly snapshots for accurate 1h/4h/24h data.
+    Only fetches new trades since the last snapshot, then aggregates from DB.
+
     Args:
         symbols: List of Symbol objects to fetch data for
         conn: Database connection
@@ -245,7 +252,6 @@ def fetch_cvd_report(
     for idx, symbol in enumerate(binance_symbols):
         try:
             # Rate limit: wait between symbols to avoid hitting API limits
-            # Each symbol can use up to 100 API calls x 20 weight = 2000 weight
             if idx > 0:
                 app_logger.info(
                     f"CVD rate limit: waiting {CVD_DELAY_BETWEEN_SYMBOLS}s "
@@ -253,23 +259,73 @@ def fetch_cvd_report(
                 )
                 time.sleep(CVD_DELAY_BETWEEN_SYMBOLS)
 
-            metrics = fetch_binance_cvd(symbol, hours=24)
+            # Step 1: Check if we have existing data and get last trade ID
+            last_trade_id = repo.get_last_trade_id(symbol.symbol_id)
 
-            if metrics is None:
+            if last_trade_id:
+                app_logger.info(
+                    f"{symbol.symbol_name}: Incremental fetch from trade ID {last_trade_id}",
+                )
+            else:
+                app_logger.info(
+                    f"{symbol.symbol_name}: Full 24h fetch (no existing data)",
+                )
+
+            # Step 2: Fetch new trades and bucket by hour
+            snapshots = fetch_cvd_trades_incremental(
+                symbol=symbol,
+                symbol_id=symbol.symbol_id,
+                last_trade_id=last_trade_id,
+                max_hours=24,
+            )
+
+            # Step 3: Save hourly snapshots to database
+            if snapshots:
+                saved = repo.save_hourly_snapshots(snapshots)
+                app_logger.info(
+                    f"{symbol.symbol_name}: Saved {saved} hourly snapshots",
+                )
+
+            # Step 4: Aggregate from database for 1h, 4h, 24h windows
+            data_1h = repo.aggregate_cvd_for_hours(symbol.symbol_id, 1)
+            data_4h = repo.aggregate_cvd_for_hours(symbol.symbol_id, 4)
+            data_24h = repo.aggregate_cvd_for_hours(symbol.symbol_id, 24)
+
+            if not data_24h:
                 app_logger.warning(f"No CVD data available for {symbol.symbol_name}")
                 failed += 1
                 continue
 
-            # Save to database
-            repo.save_cvd_metrics(
-                symbol.symbol_id,
-                metrics,
-                indicator_date,
+            # Build CVDMetrics from aggregated data for saving to summary table
+            metrics = CVDMetrics(
+                symbol=symbol.symbol_name,
+                cvd_1h=data_1h["cvd"] if data_1h else 0,
+                cvd_4h=data_4h["cvd"] if data_4h else 0,
+                cvd_24h=data_24h["cvd"],
+                buy_volume_1h=data_1h["buy_volume"] if data_1h else 0,
+                sell_volume_1h=data_1h["sell_volume"] if data_1h else 0,
+                buy_volume_24h=data_24h["buy_volume"],
+                sell_volume_24h=data_24h["sell_volume"],
+                trade_count_1h=int(data_1h["trade_count"]) if data_1h else 0,
+                trade_count_24h=int(data_24h["trade_count"]),
+                avg_trade_size=data_24h["avg_trade_size"],
+                large_buy_count=int(data_24h["large_buy_count"]),
+                large_sell_count=int(data_24h["large_sell_count"]),
+                timestamp=indicator_date,
             )
+
+            # Save aggregated metrics to summary table
+            repo.save_cvd_metrics(symbol.symbol_id, metrics, indicator_date)
+
+            # Step 5: Cleanup old snapshots (keep 48h for flexibility)
+            repo.cleanup_old_snapshots(symbol.symbol_id, keep_hours=48)
 
             # Get indicator
             total_vol = metrics.buy_volume_24h + metrics.sell_volume_24h
             indicator = _get_cvd_indicator(metrics.cvd_24h, total_vol)
+
+            # Calculate hours of data we have
+            hour_count_24h = data_24h.get("hour_count", 0)
 
             # Add to table
             table.add_row(
@@ -284,6 +340,12 @@ def fetch_cvd_report(
                     str(metrics.large_buy_count),
                     str(metrics.large_sell_count),
                 ],
+            )
+
+            app_logger.info(
+                f"{symbol.symbol_name}: CVD 1h={metrics.cvd_1h:+,.0f}, "
+                f"4h={metrics.cvd_4h:+,.0f}, 24h={metrics.cvd_24h:+,.0f} "
+                f"({hour_count_24h}h of data)",
             )
 
             successful += 1
