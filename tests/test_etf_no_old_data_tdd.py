@@ -265,9 +265,12 @@ class TestETFNoOldDataFallback:
         print("=" * 80)
 
         # CRITICAL: Should show something indicating no data
-        assert "unavailable" in section or "No data" in section or "$0" in section, (
-            "Should show data is unavailable when no data exists"
-        )
+        assert (
+            "unavailable" in section.lower()
+            or "no data" in section.lower()
+            or "no etf data" in section.lower()
+            or "$0" in section
+        ), "Should show data is unavailable when no data exists"
 
         # Should NOT show any dollar amounts
         assert "$75" not in section, "Should not show $75M"

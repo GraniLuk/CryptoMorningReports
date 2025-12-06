@@ -136,11 +136,11 @@ class ETFRepository:
             rows = cursor.fetchall()
             coins = [row[0] for row in rows if row[0]]
             app_logger.info(f"Found {len(coins)} coins with ETF data: {coins}")
-            return coins
-
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             app_logger.error(f"Error fetching available ETF coins: {e!s}")
             return []
+        else:
+            return coins
 
     def get_latest_etf_flows(self, coin: str) -> list[dict[str, str | float | None]] | None:
         """Get the most recent ETF flows for a specific coin.
