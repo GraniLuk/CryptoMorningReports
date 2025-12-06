@@ -7,10 +7,11 @@ import json
 import logging
 from datetime import UTC, datetime
 from logging import Logger
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
+from infra.sql_connection import SQLiteConnectionWrapper
 from news.article_cache import CachedArticle
 from reports import daily_report as dr
 
@@ -163,13 +164,14 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
         symbol_name = "BTC"
         full_name = "Bitcoin"
 
+    # Use typing.cast to satisfy static typing for test doubles
     analysis_result, news_meta = asyncio.run(
         dr._process_ai_analysis(
             ai_api_key="key",
             ai_api_type="gemini",
-            symbols=[DummySymbol()],
+            symbols=cast(list[dr.Symbol], [DummySymbol()]),
             current_prices_section="Prices\n",
-            conn=object(),
+            conn=cast(SQLiteConnectionWrapper, object()),
             today_date="2025-11-04",
             logger=dr.app_logger,
         ),

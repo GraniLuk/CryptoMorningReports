@@ -1,4 +1,4 @@
-# Wrapper script for running the daily report (PM) from Task Scheduler
+pyright# Wrapper script for running the daily report (PM) from Task Scheduler
 # This ensures proper logging and error handling
 
 $ScriptPath = $PSScriptRoot
