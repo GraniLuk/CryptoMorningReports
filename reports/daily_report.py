@@ -41,6 +41,12 @@ from technical_analysis.derivatives_report import fetch_derivatives_report
 from technical_analysis.macd_report import calculate_macd
 from technical_analysis.marketcap_report import fetch_marketcap_report
 from technical_analysis.moving_averages_report import calculate_indicators
+from technical_analysis.order_book_report import (
+    build_cvd_ai_context,
+    build_order_book_ai_context,
+    fetch_cvd_report,
+    fetch_order_book_report,
+)
 from technical_analysis.price_change_report import fetch_price_change_report
 from technical_analysis.price_range_report import fetch_range_price
 from technical_analysis.reports.rsi_daily import create_rsi_table
@@ -192,7 +198,29 @@ def _build_analysis_context(
     aggregated_formatted = format_aggregated(aggregated_data)
     aggregated_with_prices = current_prices_section + aggregated_formatted
     etf_flows_section = _build_etf_flows_section(conn)
-    return aggregated_with_prices + etf_flows_section
+    order_book_section = _build_order_book_section(conn)
+    return aggregated_with_prices + etf_flows_section + order_book_section
+
+
+def _build_order_book_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper") -> str:
+    """Build order book liquidity and CVD section for AI analysis context.
+
+    Args:
+        conn: Database connection
+
+    Returns:
+        Formatted order book and CVD section for AI analysis
+    """
+    try:
+        from source_repository import fetch_symbols  # noqa: PLC0415
+
+        symbols = fetch_symbols(conn)
+        order_book_context = build_order_book_ai_context(symbols, conn)
+        cvd_context = build_cvd_ai_context(symbols, conn)
+        return order_book_context + "\n\n" + cvd_context + "\n\n"
+    except Exception as e:  # noqa: BLE001
+        app_logger.error(f"Error building order book section: {e!s}")
+        return "Order Book Data: Unavailable\n\n"
 
 
 async def _process_ai_analysis(
@@ -672,6 +700,8 @@ async def process_daily_report(  # noqa: PLR0915
     )
     sopr_table = fetch_sopr_metrics(conn)
     derivatives_table = fetch_derivatives_report(symbols, conn)
+    order_book_table = fetch_order_book_report(symbols, conn)
+    cvd_table = fetch_cvd_report(symbols, conn)
     etf_summary_table = fetch_etf_summary_report(conn)
 
     # Format messages
@@ -730,6 +760,8 @@ async def process_daily_report(  # noqa: PLR0915
     derivatives_report = (
         f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
     )
+    order_book_report = f"Order Book Liquidity: <pre>{order_book_table}</pre>"
+    cvd_report = f"Order Flow (CVD): <pre>{cvd_table}</pre>"
     etf_report = f"ETF Institutional Flows: <pre>{etf_summary_table}</pre>"
 
     # Configure AI API settings
@@ -800,6 +832,22 @@ async def process_daily_report(  # noqa: PLR0915
         token=telegram_token,
         chat_id=telegram_chat_id,
         message=derivatives_report,
+        parse_mode=telegram_parse_mode,
+    )
+
+    await send_telegram_message(
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=order_book_report,
+        parse_mode=telegram_parse_mode,
+    )
+
+    await send_telegram_message(
+        enabled=telegram_enabled,
+        token=telegram_token,
+        chat_id=telegram_chat_id,
+        message=cvd_report,
         parse_mode=telegram_parse_mode,
     )
 

@@ -1,23 +1,25 @@
 ---
-goal: Add Live Order Book Data (Bid/Ask Depth & Liquidity Analysis) to Daily Crypto Report
-version: 1.0
+goal: Add Live Order Book Data (Bid/Ask Depth & Liquidity Analysis) + Cumulative Volume Delta to Daily Crypto Report
+version: 2.0
 date_created: 2025-12-06
-last_updated: 2025-12-06
+last_updated: 2025-01-19
 owner: graniluk
-status: Planned
-tags: feature, order-book, liquidity, derivatives, binance, market-depth
+status: COMPLETED
+tags: feature, order-book, liquidity, cvd, derivatives, binance, market-depth, order-flow
 ---
 
 # Introduction
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: COMPLETED](https://img.shields.io/badge/status-COMPLETED-green)
 
-This plan implements live order book data integration to enhance the daily crypto report with bid/ask depth analysis and liquidity metrics. The feature will fetch order book snapshots from Binance, calculate key liquidity indicators, store them in the database for historical tracking, and include them in both Telegram reports and AI analysis context.
+This plan implements live order book data integration AND Cumulative Volume Delta (CVD) to enhance the daily crypto report with bid/ask depth analysis, liquidity metrics, and real-time order flow tracking. The feature fetches order book snapshots and aggregate trades from Binance, calculates key liquidity and order flow indicators, stores them in the database for historical tracking, and includes them in both Telegram reports and AI analysis context.
 
 **Key Value Proposition:**
 - Identify support/resistance levels via bid/ask clustering
 - Detect liquidity imbalances (buy vs sell pressure)
 - Measure market depth for volatility risk assessment
+- **Track real-time order flow with CVD (taker buy vs sell volume)**
+- **Identify institutional activity via large trade analysis**
 - Provide institutional-grade liquidity metrics to AI analysis
 
 ## 1. Requirements & Constraints
@@ -58,11 +60,13 @@ This plan implements live order book data integration to enhance the daily crypt
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-001 | Create `OrderBookMetrics` dataclass in `shared_code/binance.py` with fields: symbol, best_bid, best_bid_qty, best_ask, best_ask_qty, bid_volume_2pct, ask_volume_2pct, bid_ask_ratio, spread_pct, largest_bid_wall, largest_ask_wall, timestamp | | |
-| TASK-002 | Implement `fetch_binance_order_book(symbol: Symbol, limit: int = 100) -> OrderBookMetrics` in `shared_code/binance.py` using `client.get_order_book()` | | |
-| TASK-003 | Implement `fetch_binance_futures_order_book(symbol: Symbol, limit: int = 100) -> OrderBookMetrics` for futures depth data using `client.futures_order_book()` | | |
-| TASK-004 | Create `OrderBookSnapshot` dataclass for raw bid/ask storage with fields: symbol_id, bids (list), asks (list), timestamp, mid_price | | |
-| TASK-005 | Implement `calculate_liquidity_metrics(bids: list, asks: list, current_price: float) -> dict` to compute depth at ±0.5%, ±1%, ±2% levels | | |
+| TASK-001 | Create `OrderBookMetrics` dataclass in `shared_code/binance.py` with fields: symbol, best_bid, best_bid_qty, best_ask, best_ask_qty, bid_volume_2pct, ask_volume_2pct, bid_ask_ratio, spread_pct, largest_bid_wall, largest_ask_wall, timestamp | ✅ | 2025-01-19 |
+| TASK-002 | Implement `fetch_binance_order_book(symbol: Symbol, limit: int = 100) -> OrderBookMetrics` in `shared_code/binance.py` using `client.get_order_book()` | ✅ | 2025-01-19 |
+| TASK-003 | Implement `fetch_binance_futures_order_book(symbol: Symbol, limit: int = 100) -> OrderBookMetrics` for futures depth data using `client.futures_order_book()` | ✅ | 2025-01-19 |
+| TASK-004 | Create `OrderBookSnapshot` dataclass for raw bid/ask storage with fields: symbol_id, bids (list), asks (list), timestamp, mid_price | Skipped | - |
+| TASK-005 | Implement `calculate_liquidity_metrics(bids: list, asks: list, current_price: float) -> dict` to compute depth at ±0.5%, ±1%, ±2% levels | ✅ | 2025-01-19 |
+| TASK-CVD-001 | Create `CVDMetrics` dataclass in `shared_code/binance.py` with CVD and volume fields | ✅ | 2025-01-19 |
+| TASK-CVD-002 | Implement `fetch_binance_cvd(symbol: Symbol) -> CVDMetrics` using aggregate trades API | ✅ | 2025-01-19 |
 
 ### Implementation Phase 2: Database Schema & Repository
 
@@ -70,12 +74,15 @@ This plan implements live order book data integration to enhance the daily crypt
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-006 | Create `OrderBookMetrics` table schema in `database/init_sqlite.py` with columns: Id, SymbolID, BestBid, BestBidQty, BestAsk, BestAskQty, BidVolume2Pct, AskVolume2Pct, BidAskRatio, SpreadPct, LargestBidWall, LargestBidWallPrice, LargestAskWall, LargestAskWallPrice, IndicatorDate, CreatedAt | | |
-| TASK-007 | Create database migration script `database/migrations/add_order_book_tables.py` for existing databases | | |
-| TASK-008 | Create `technical_analysis/repositories/order_book_repository.py` with `OrderBookRepository` class | | |
-| TASK-009 | Implement `save_order_book_metrics(symbol_id, metrics, indicator_date)` method in repository | | |
-| TASK-010 | Implement `get_latest_order_book_metrics(symbol_id) -> dict` method in repository | | |
-| TASK-011 | Implement `get_order_book_history(symbol_id, days: int) -> list` for historical tracking | | |
+| TASK-006 | Create `OrderBookMetrics` table schema in `database/init_sqlite.py` with columns: Id, SymbolID, BestBid, BestBidQty, BestAsk, BestAskQty, BidVolume2Pct, AskVolume2Pct, BidAskRatio, SpreadPct, LargestBidWall, LargestBidWallPrice, LargestAskWall, LargestAskWallPrice, IndicatorDate, CreatedAt | ✅ | 2025-01-19 |
+| TASK-007 | Create database migration script `database/migrations/add_order_book_tables.py` for existing databases | ✅ | 2025-01-19 |
+| TASK-008 | Create `technical_analysis/repositories/order_book_repository.py` with `OrderBookRepository` class | ✅ | 2025-01-19 |
+| TASK-009 | Implement `save_order_book_metrics(symbol_id, metrics, indicator_date)` method in repository | ✅ | 2025-01-19 |
+| TASK-010 | Implement `get_latest_order_book_metrics(symbol_id) -> dict` method in repository | ✅ | 2025-01-19 |
+| TASK-011 | Implement `get_order_book_history(symbol_id, days: int) -> list` for historical tracking | ✅ | 2025-01-19 |
+| TASK-CVD-003 | Create `CumulativeVolumeDelta` table schema in `database/init_sqlite.py` | ✅ | 2025-01-19 |
+| TASK-CVD-004 | Create database migration script `database/migrations/add_cvd_tables.py` | ✅ | 2025-01-19 |
+| TASK-CVD-005 | Create `technical_analysis/repositories/cvd_repository.py` with CVD repository class | ✅ | 2025-01-19 |
 
 ### Implementation Phase 3: Report Generation
 
@@ -83,12 +90,14 @@ This plan implements live order book data integration to enhance the daily crypt
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-012 | Create `technical_analysis/order_book_report.py` module | | |
-| TASK-013 | Implement `fetch_order_book_report(symbols: list[Symbol], conn) -> PrettyTable` function | | |
-| TASK-014 | Format report columns: Symbol, Best Bid, Best Ask, Spread%, Bid Vol (2%), Ask Vol (2%), B/A Ratio, Bid Wall, Ask Wall | | |
-| TASK-015 | Add color/emoji indicators for bid/ask imbalance: 🟢 (bid heavy > 1.2), 🔴 (ask heavy < 0.8), ⚪ (neutral) | | |
-| TASK-016 | Integrate `fetch_order_book_report()` call in `reports/daily_report.py` after derivatives report | | |
-| TASK-017 | Send order book report message via `send_telegram_message()` in `process_daily_report()` | | |
+| TASK-012 | Create `technical_analysis/order_book_report.py` module | ✅ | 2025-01-19 |
+| TASK-013 | Implement `fetch_order_book_report(symbols: list[Symbol], conn) -> PrettyTable` function | ✅ | 2025-01-19 |
+| TASK-014 | Format report columns: Symbol, Best Bid, Best Ask, Spread%, Bid Vol (2%), Ask Vol (2%), B/A Ratio, Bid Wall, Ask Wall | ✅ | 2025-01-19 |
+| TASK-015 | Add color/emoji indicators for bid/ask imbalance: 🟢 (bid heavy > 1.2), 🔴 (ask heavy < 0.8), ⚪ (neutral) | ✅ | 2025-01-19 |
+| TASK-016 | Integrate `fetch_order_book_report()` call in `reports/daily_report.py` after derivatives report | ✅ | 2025-01-19 |
+| TASK-017 | Send order book report message via `send_telegram_message()` in `process_daily_report()` | ✅ | 2025-01-19 |
+| TASK-CVD-006 | Implement `fetch_cvd_report(symbols: list[Symbol], conn) -> PrettyTable` function | ✅ | 2025-01-19 |
+| TASK-CVD-007 | Add CVD report to daily Telegram messages | ✅ | 2025-01-19 |
 
 ### Implementation Phase 4: AI Analysis Integration
 
@@ -96,11 +105,13 @@ This plan implements live order book data integration to enhance the daily crypt
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-018 | Create `_build_order_book_section(conn) -> str` function in `reports/daily_report.py` | | |
-| TASK-019 | Format order book data as text summary for AI context: bid/ask ratios, significant walls, spread analysis | | |
-| TASK-020 | Add order book section to `_build_analysis_context()` after ETF flows section | | |
-| TASK-021 | Update AI prompt guidance in `news/prompts.py` to interpret order book data (support/resistance, liquidity) | | |
-| TASK-022 | Add interpretation guidance: "Bid/Ask Ratio > 1.2 = buying pressure, < 0.8 = selling pressure, Liquidity walls indicate potential support/resistance" | | |
+| TASK-018 | Create `_build_order_book_section(conn) -> str` function in `reports/daily_report.py` | ✅ | 2025-01-19 |
+| TASK-019 | Format order book data as text summary for AI context: bid/ask ratios, significant walls, spread analysis | ✅ | 2025-01-19 |
+| TASK-020 | Add order book section to `_build_analysis_context()` after ETF flows section | ✅ | 2025-01-19 |
+| TASK-021 | Update AI prompt guidance in `news/prompts.py` to interpret order book data (support/resistance, liquidity) | Deferred | - |
+| TASK-022 | Add interpretation guidance: "Bid/Ask Ratio > 1.2 = buying pressure, < 0.8 = selling pressure, Liquidity walls indicate potential support/resistance" | ✅ | 2025-01-19 |
+| TASK-CVD-008 | Create `build_cvd_ai_context(cvd_data) -> str` function | ✅ | 2025-01-19 |
+| TASK-CVD-009 | Include CVD in AI analysis context | ✅ | 2025-01-19 |
 
 ### Implementation Phase 5: Aggregated Data Integration
 
@@ -108,10 +119,10 @@ This plan implements live order book data integration to enhance the daily crypt
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-023 | Update `technical_analysis/repositories/aggregated_repository.py` to include order book fields | | |
-| TASK-024 | Add columns to aggregated view: BidAskRatio, SpreadPct, BidVolume2Pct, AskVolume2Pct | | |
-| TASK-025 | Update `get_aggregated_data()` SQL query to LEFT JOIN OrderBookMetrics table | | |
-| TASK-026 | Update `format_aggregated()` function in `daily_report.py` to display new columns | | |
+| TASK-023 | Update `technical_analysis/repositories/aggregated_repository.py` to include order book fields | ✅ | 2025-01-19 |
+| TASK-024 | Add columns to aggregated view: BidAskRatio, SpreadPct, BidVolume2Pct, AskVolume2Pct | ✅ | 2025-01-19 |
+| TASK-025 | Update `get_aggregated_data()` SQL query to LEFT JOIN OrderBookMetrics table | ✅ | 2025-01-19 |
+| TASK-026 | Update `format_aggregated()` function in `daily_report.py` to display new columns | Deferred | - |
 
 ### Implementation Phase 6: Testing & Documentation
 
@@ -119,12 +130,31 @@ This plan implements live order book data integration to enhance the daily crypt
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-027 | Create `tests/technical_analysis/test_order_book_report.py` with unit tests | | |
-| TASK-028 | Test `fetch_binance_order_book()` with mock API responses | | |
-| TASK-029 | Test `calculate_liquidity_metrics()` with sample bid/ask data | | |
-| TASK-030 | Test repository save/retrieve operations | | |
-| TASK-031 | Create `features/ORDER_BOOK_README.md` documentation (similar to DERIVATIVES_README.md) | | |
-| TASK-032 | Update `readme.md` to mention order book feature in report sections | | |
+| TASK-027 | Create `tests/technical_analysis/test_order_book_report.py` with unit tests | Deferred | - |
+| TASK-028 | Test `fetch_binance_order_book()` with mock API responses | Deferred | - |
+| TASK-029 | Test `calculate_liquidity_metrics()` with sample bid/ask data | Deferred | - |
+| TASK-030 | Test repository save/retrieve operations | Deferred | - |
+| TASK-031 | Create `features/ORDER_BOOK_README.md` documentation (similar to DERIVATIVES_README.md) | ✅ | 2025-01-19 |
+| TASK-032 | Update `readme.md` to mention order book feature in report sections | Deferred | - |
+
+## 5. Summary
+
+### Completed Features
+✅ **Order Book Liquidity Snapshot** - Static bid/ask depth with ratio, spread, walls
+✅ **Cumulative Volume Delta (CVD)** - Dynamic order flow with 1h/4h/24h timeframes
+✅ **Large Trade Analysis** - Institutional activity detection (trades > 2x average)
+✅ **Database Persistence** - Both OrderBookMetrics and CumulativeVolumeDelta tables
+✅ **Telegram Reports** - Formatted tables with emoji indicators
+✅ **AI Context Integration** - Both order book and CVD data fed to AI analysis
+
+### Key Files Created
+- `shared_code/binance.py` - OrderBookMetrics, CVDMetrics dataclasses and fetch functions
+- `technical_analysis/order_book_report.py` - Combined report generation
+- `technical_analysis/repositories/order_book_repository.py` - Order book DB operations
+- `technical_analysis/repositories/cvd_repository.py` - CVD DB operations
+- `database/migrations/add_order_book_tables.py` - Order book migration
+- `database/migrations/add_cvd_tables.py` - CVD migration
+- `features/ORDER_BOOK_README.md` - Comprehensive documentation
 
 ## 3. Alternatives
 

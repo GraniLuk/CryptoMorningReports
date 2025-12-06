@@ -102,6 +102,464 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
         return None
 
 
+class OrderBookMetrics:
+    """Data class for order book liquidity metrics."""
+
+    def __init__(
+        self,
+        symbol: str,
+        best_bid: float,
+        best_bid_qty: float,
+        best_ask: float,
+        best_ask_qty: float,
+        spread_pct: float,
+        bid_volume_2pct: float,
+        ask_volume_2pct: float,
+        bid_ask_ratio: float,
+        largest_bid_wall: float,
+        largest_bid_wall_price: float,
+        largest_ask_wall: float,
+        largest_ask_wall_price: float,
+        depth_levels: dict,
+        timestamp: datetime,
+    ):
+        """Initialize order book metrics with liquidity data."""
+        self.symbol = symbol
+        self.best_bid = best_bid
+        self.best_bid_qty = best_bid_qty
+        self.best_ask = best_ask
+        self.best_ask_qty = best_ask_qty
+        self.spread_pct = spread_pct
+        self.bid_volume_2pct = bid_volume_2pct
+        self.ask_volume_2pct = ask_volume_2pct
+        self.bid_ask_ratio = bid_ask_ratio
+        self.largest_bid_wall = largest_bid_wall
+        self.largest_bid_wall_price = largest_bid_wall_price
+        self.largest_ask_wall = largest_ask_wall
+        self.largest_ask_wall_price = largest_ask_wall_price
+        self.depth_levels = depth_levels  # {"0.5%": {"bid": x, "ask": y}, "1%": {...}, "2%": {...}}
+        self.timestamp = timestamp
+
+    def __repr__(self):
+        """Return a string representation of the OrderBookMetrics object."""
+        return (
+            f"OrderBookMetrics(symbol={self.symbol}, "
+            f"spread={self.spread_pct:.4f}%, "
+            f"bid_ask_ratio={self.bid_ask_ratio:.2f}, "
+            f"bid_vol_2pct=${self.bid_volume_2pct:,.0f}, "
+            f"ask_vol_2pct=${self.ask_volume_2pct:,.0f})"
+        )
+
+
+def _calculate_order_book_metrics(
+    symbol_name: str,
+    bids: list,
+    asks: list,
+    current_price: float,
+) -> OrderBookMetrics | None:
+    """Calculate liquidity metrics from raw order book data.
+
+    Args:
+        symbol_name: Symbol name (e.g., "BTC")
+        bids: List of [price, quantity] bid orders (highest first)
+        asks: List of [price, quantity] ask orders (lowest first)
+        current_price: Current market price for USD value calculation
+
+    Returns:
+        OrderBookMetrics object with calculated liquidity data
+
+    """
+    if not bids or not asks:
+        return None
+
+    try:
+        # Best bid/ask
+        best_bid = float(bids[0][0])
+        best_bid_qty = float(bids[0][1])
+        best_ask = float(asks[0][0])
+        best_ask_qty = float(asks[0][1])
+
+        # Mid-price and spread
+        mid_price = (best_bid + best_ask) / 2
+        spread_pct = ((best_ask - best_bid) / mid_price) * 100 if mid_price > 0 else 0
+
+        # Calculate volume at different price levels
+        def calc_volume_at_level(orders: list, mid: float, pct: float, is_bid: bool) -> float:
+            """Calculate total USD volume within pct% of mid-price."""
+            total_volume = 0.0
+            for price_str, qty_str in orders:
+                price = float(price_str)
+                qty = float(qty_str)
+                if is_bid:
+                    # For bids, include orders above (mid * (1 - pct/100))
+                    if price >= mid * (1 - pct / 100):
+                        total_volume += price * qty
+                else:
+                    # For asks, include orders below (mid * (1 + pct/100))
+                    if price <= mid * (1 + pct / 100):
+                        total_volume += price * qty
+            return total_volume
+
+        # Calculate depth at multiple levels
+        depth_levels = {}
+        for pct in [0.5, 1.0, 2.0]:
+            bid_vol = calc_volume_at_level(bids, mid_price, pct, is_bid=True)
+            ask_vol = calc_volume_at_level(asks, mid_price, pct, is_bid=False)
+            depth_levels[f"{pct}%"] = {"bid": bid_vol, "ask": ask_vol}
+
+        bid_volume_2pct = depth_levels["2.0%"]["bid"]
+        ask_volume_2pct = depth_levels["2.0%"]["ask"]
+
+        # Bid/Ask ratio (avoid division by zero)
+        bid_ask_ratio = bid_volume_2pct / ask_volume_2pct if ask_volume_2pct > 0 else 0
+
+        # Find largest walls (orders > 2x average within 2% range)
+        def find_largest_wall(orders: list, mid: float, pct: float, is_bid: bool) -> tuple:
+            """Find the largest single order within pct% of mid-price."""
+            largest_value = 0.0
+            largest_price = 0.0
+            for price_str, qty_str in orders:
+                price = float(price_str)
+                qty = float(qty_str)
+                order_value = price * qty
+                if is_bid:
+                    if price >= mid * (1 - pct / 100) and order_value > largest_value:
+                        largest_value = order_value
+                        largest_price = price
+                else:
+                    if price <= mid * (1 + pct / 100) and order_value > largest_value:
+                        largest_value = order_value
+                        largest_price = price
+            return largest_value, largest_price
+
+        largest_bid_wall, largest_bid_wall_price = find_largest_wall(
+            bids,
+            mid_price,
+            2.0,
+            is_bid=True,
+        )
+        largest_ask_wall, largest_ask_wall_price = find_largest_wall(
+            asks,
+            mid_price,
+            2.0,
+            is_bid=False,
+        )
+
+        return OrderBookMetrics(
+            symbol=symbol_name,
+            best_bid=best_bid,
+            best_bid_qty=best_bid_qty,
+            best_ask=best_ask,
+            best_ask_qty=best_ask_qty,
+            spread_pct=spread_pct,
+            bid_volume_2pct=bid_volume_2pct,
+            ask_volume_2pct=ask_volume_2pct,
+            bid_ask_ratio=bid_ask_ratio,
+            largest_bid_wall=largest_bid_wall,
+            largest_bid_wall_price=largest_bid_wall_price,
+            largest_ask_wall=largest_ask_wall,
+            largest_ask_wall_price=largest_ask_wall_price,
+            depth_levels=depth_levels,
+            timestamp=datetime.now(UTC),
+        )
+
+    except (IndexError, ValueError, TypeError, ZeroDivisionError) as e:
+        app_logger.error(f"Error calculating order book metrics for {symbol_name}: {e!s}")
+        return None
+
+
+def fetch_binance_order_book(symbol: Symbol, limit: int = 100) -> OrderBookMetrics | None:
+    """Fetch order book depth from Binance Spot API.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        limit: Number of price levels to fetch (default 100, max 5000)
+               Weight: 1-100=5, 101-500=25, 501-1000=50, 1001-5000=250
+
+    Returns:
+        OrderBookMetrics object if successful, None otherwise
+
+    """
+    client = BinanceClient()
+
+    try:
+        # Fetch order book depth
+        depth = client.get_order_book(symbol=symbol.binance_name, limit=limit)
+
+        bids = depth.get("bids", [])
+        asks = depth.get("asks", [])
+
+        # Get current price for USD calculations
+        ticker = client.get_ticker(symbol=symbol.binance_name)
+        current_price = float(ticker.get("lastPrice", 0))
+
+        return _calculate_order_book_metrics(
+            symbol_name=symbol.symbol_name,
+            bids=bids,
+            asks=asks,
+            current_price=current_price,
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(f"Error fetching order book for {symbol.symbol_name}: {e.message}")
+        return None
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
+        app_logger.error(f"Unexpected error fetching order book for {symbol.symbol_name}: {e!s}")
+        return None
+
+
+def fetch_binance_futures_order_book(symbol: Symbol, limit: int = 100) -> OrderBookMetrics | None:
+    """Fetch order book depth from Binance Futures API.
+
+    Args:
+        symbol: Symbol object with binance_name property
+        limit: Number of price levels to fetch (default 100)
+
+    Returns:
+        OrderBookMetrics object if successful, None otherwise
+
+    """
+    client = BinanceClient()
+
+    try:
+        # Fetch futures order book depth
+        depth = client.futures_order_book(symbol=symbol.binance_name, limit=limit)
+
+        bids = depth.get("bids", [])
+        asks = depth.get("asks", [])
+
+        # Get current futures price
+        ticker = client.futures_ticker(symbol=symbol.binance_name)
+        current_price = float(ticker.get("lastPrice", 0))
+
+        return _calculate_order_book_metrics(
+            symbol_name=symbol.symbol_name,
+            bids=bids,
+            asks=asks,
+            current_price=current_price,
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(
+            f"Error fetching futures order book for {symbol.symbol_name}: {e.message}",
+        )
+        return None
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
+        app_logger.error(
+            f"Unexpected error fetching futures order book for {symbol.symbol_name}: {e!s}",
+        )
+        return None
+
+
+class CVDMetrics:
+    """Data class for Cumulative Volume Delta (order flow) metrics."""
+
+    def __init__(
+        self,
+        symbol: str,
+        cvd_1h: float,
+        cvd_4h: float,
+        cvd_24h: float,
+        buy_volume_1h: float,
+        sell_volume_1h: float,
+        buy_volume_24h: float,
+        sell_volume_24h: float,
+        trade_count_1h: int,
+        trade_count_24h: int,
+        avg_trade_size: float,
+        large_buy_count: int,
+        large_sell_count: int,
+        timestamp: datetime,
+    ):
+        """Initialize CVD metrics with order flow data."""
+        self.symbol = symbol
+        self.cvd_1h = cvd_1h  # CVD for last 1 hour
+        self.cvd_4h = cvd_4h  # CVD for last 4 hours
+        self.cvd_24h = cvd_24h  # CVD for last 24 hours
+        self.buy_volume_1h = buy_volume_1h
+        self.sell_volume_1h = sell_volume_1h
+        self.buy_volume_24h = buy_volume_24h
+        self.sell_volume_24h = sell_volume_24h
+        self.trade_count_1h = trade_count_1h
+        self.trade_count_24h = trade_count_24h
+        self.avg_trade_size = avg_trade_size
+        self.large_buy_count = large_buy_count  # Trades > 2x average
+        self.large_sell_count = large_sell_count
+        self.timestamp = timestamp
+
+    def __repr__(self):
+        """Return a string representation of the CVDMetrics object."""
+        return (
+            f"CVDMetrics(symbol={self.symbol}, "
+            f"cvd_1h={self.cvd_1h:+,.0f}, "
+            f"cvd_24h={self.cvd_24h:+,.0f}, "
+            f"buy_vol_24h=${self.buy_volume_24h:,.0f}, "
+            f"sell_vol_24h=${self.sell_volume_24h:,.0f})"
+        )
+
+
+# CVD threshold for "large" trade multiplier
+CVD_LARGE_TRADE_MULTIPLIER = 2.0
+
+
+def fetch_binance_cvd(symbol: Symbol, hours: int = 24) -> CVDMetrics | None:
+    """Fetch Cumulative Volume Delta from Binance aggregate trades.
+
+    CVD = Sum of (buy volume - sell volume) over time.
+    - Positive CVD = net buying pressure (bullish)
+    - Negative CVD = net selling pressure (bearish)
+
+    Uses aggregate trades endpoint which includes isBuyerMaker field:
+    - isBuyerMaker=True: Seller was the taker (sell order)
+    - isBuyerMaker=False: Buyer was the taker (buy order)
+
+    Args:
+        symbol: Symbol object with binance_name property
+        hours: Number of hours to analyze (default 24, max recommended 24)
+
+    Returns:
+        CVDMetrics object if successful, None otherwise
+
+    """
+    client = BinanceClient()
+
+    try:
+        # Calculate time ranges
+        now = datetime.now(UTC)
+        start_time_24h = int((now - timedelta(hours=hours)).timestamp() * 1000)
+        start_time_4h = int((now - timedelta(hours=4)).timestamp() * 1000)
+        start_time_1h = int((now - timedelta(hours=1)).timestamp() * 1000)
+
+        # Fetch aggregate trades for the period
+        # Note: API returns max 1000 trades per call, we may need multiple calls
+        all_trades = []
+        last_trade_id = None
+
+        # Fetch trades in batches (limit 1000 per call)
+        while True:
+            params = {
+                "symbol": symbol.binance_name,
+                "startTime": start_time_24h,
+                "limit": 1000,
+            }
+            if last_trade_id:
+                params["fromId"] = last_trade_id + 1
+                del params["startTime"]
+
+            trades = client.get_aggregate_trades(**params)
+
+            if not trades:
+                break
+
+            all_trades.extend(trades)
+            last_trade_id = trades[-1]["a"]  # 'a' is aggregate trade ID
+
+            # Stop if we have enough trades or reached time limit
+            if len(trades) < 1000:
+                break
+
+            # Safety limit to prevent infinite loops
+            if len(all_trades) > 50000:
+                app_logger.warning(
+                    f"CVD fetch for {symbol.symbol_name}: Hit 50k trade limit",
+                )
+                break
+
+        if not all_trades:
+            app_logger.warning(f"No aggregate trades found for {symbol.symbol_name}")
+            return None
+
+        # Process trades and calculate CVD
+        cvd_1h = 0.0
+        cvd_4h = 0.0
+        cvd_24h = 0.0
+        buy_volume_1h = 0.0
+        sell_volume_1h = 0.0
+        buy_volume_24h = 0.0
+        sell_volume_24h = 0.0
+        trade_count_1h = 0
+        trade_count_24h = 0
+        trade_sizes = []
+
+        for trade in all_trades:
+            trade_time = trade["T"]  # Trade time in ms
+            qty = float(trade["q"])  # Quantity
+            price = float(trade["p"])  # Price
+            is_buyer_maker = trade["m"]  # True = seller was taker (sell)
+            usd_value = qty * price
+
+            trade_sizes.append(usd_value)
+            trade_count_24h += 1
+
+            # Determine buy vs sell
+            # isBuyerMaker=True means the buyer was maker, so taker was seller (SELL)
+            # isBuyerMaker=False means the seller was maker, so taker was buyer (BUY)
+            if is_buyer_maker:
+                # Seller was taker = SELL
+                sell_volume_24h += usd_value
+                cvd_24h -= usd_value
+            else:
+                # Buyer was taker = BUY
+                buy_volume_24h += usd_value
+                cvd_24h += usd_value
+
+            # 4h window
+            if trade_time >= start_time_4h:
+                if is_buyer_maker:
+                    cvd_4h -= usd_value
+                else:
+                    cvd_4h += usd_value
+
+            # 1h window
+            if trade_time >= start_time_1h:
+                trade_count_1h += 1
+                if is_buyer_maker:
+                    sell_volume_1h += usd_value
+                    cvd_1h -= usd_value
+                else:
+                    buy_volume_1h += usd_value
+                    cvd_1h += usd_value
+
+        # Calculate average trade size and count large trades
+        avg_trade_size = sum(trade_sizes) / len(trade_sizes) if trade_sizes else 0
+        large_threshold = avg_trade_size * CVD_LARGE_TRADE_MULTIPLIER
+
+        large_buy_count = 0
+        large_sell_count = 0
+
+        for trade in all_trades:
+            usd_value = float(trade["q"]) * float(trade["p"])
+            if usd_value >= large_threshold:
+                if trade["m"]:  # Seller was taker
+                    large_sell_count += 1
+                else:
+                    large_buy_count += 1
+
+        return CVDMetrics(
+            symbol=symbol.symbol_name,
+            cvd_1h=cvd_1h,
+            cvd_4h=cvd_4h,
+            cvd_24h=cvd_24h,
+            buy_volume_1h=buy_volume_1h,
+            sell_volume_1h=sell_volume_1h,
+            buy_volume_24h=buy_volume_24h,
+            sell_volume_24h=sell_volume_24h,
+            trade_count_1h=trade_count_1h,
+            trade_count_24h=trade_count_24h,
+            avg_trade_size=avg_trade_size,
+            large_buy_count=large_buy_count,
+            large_sell_count=large_sell_count,
+            timestamp=now,
+        )
+
+    except BinanceAPIException as e:
+        app_logger.error(f"Error fetching CVD for {symbol.symbol_name}: {e.message}")
+        return None
+    except (KeyError, ValueError, TypeError, ConnectionError) as e:
+        app_logger.error(f"Unexpected error fetching CVD for {symbol.symbol_name}: {e!s}")
+        return None
+
+
 def fetch_binance_price(symbol: Symbol) -> TickerPrice | None:
     """Fetch price data from Binance exchange."""
     # Initialize the client

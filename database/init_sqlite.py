@@ -264,6 +264,54 @@ def create_sqlite_database(db_path="./local_crypto.db"):
         )
     """)
 
+    # Create OrderBookMetrics table for liquidity data
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS OrderBookMetrics (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            SymbolID INTEGER NOT NULL,
+            BestBid REAL,
+            BestBidQty REAL,
+            BestAsk REAL,
+            BestAskQty REAL,
+            SpreadPct REAL,
+            BidVolume2Pct REAL,
+            AskVolume2Pct REAL,
+            BidAskRatio REAL,
+            LargestBidWall REAL,
+            LargestBidWallPrice REAL,
+            LargestAskWall REAL,
+            LargestAskWallPrice REAL,
+            IndicatorDate TEXT NOT NULL,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (SymbolID) REFERENCES Symbols(SymbolID),
+            UNIQUE(SymbolID, IndicatorDate)
+        )
+    """)
+
+    # Create CumulativeVolumeDelta table for order flow data
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS CumulativeVolumeDelta (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            SymbolID INTEGER NOT NULL,
+            CVD1h REAL,
+            CVD4h REAL,
+            CVD24h REAL,
+            BuyVolume1h REAL,
+            SellVolume1h REAL,
+            BuyVolume24h REAL,
+            SellVolume24h REAL,
+            TradeCount1h INTEGER,
+            TradeCount24h INTEGER,
+            AvgTradeSize REAL,
+            LargeBuyCount INTEGER,
+            LargeSellCount INTEGER,
+            IndicatorDate TEXT NOT NULL,
+            CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (SymbolID) REFERENCES Symbols(SymbolID),
+            UNIQUE(SymbolID, IndicatorDate)
+        )
+    """)
+
     # Create ETFFlows table for ETF inflows/outflows tracking
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ETFFlows (
@@ -322,6 +370,14 @@ def create_sqlite_database(db_path="./local_crypto.db"):
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_etf_coin_date ON ETFFlows(Coin, FetchDate)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_etf_ticker_date ON ETFFlows(Ticker, FetchDate)")
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_orderbook_symbol_date ON "
+        "OrderBookMetrics(SymbolID, IndicatorDate)",
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cvd_symbol_date ON "
+        "CumulativeVolumeDelta(SymbolID, IndicatorDate)",
+    )
 
     # Insert default symbols (with SourceID and CoinGeckoName for compatibility)
     default_symbols = [

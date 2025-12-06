@@ -41,6 +41,8 @@ def get_aggregated_data(conn):
         UNION
         SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM FundingRate
         UNION
+        SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate FROM OrderBookMetrics
+        UNION
         SELECT dc.SymbolID, DATE(dc.Date) as IndicatorDate
         FROM DailyCandles dc
     ) AS all_dates
@@ -102,6 +104,14 @@ LatestFundingRate AS (
            ) as rn
     FROM FundingRate
 ),
+LatestOrderBook AS (
+    SELECT SymbolID, DATE(IndicatorDate) as IndicatorDate, BidAskRatio, SpreadPct,
+           BidVolume2Pct, AskVolume2Pct, LargestBidWall, LargestAskWall,
+           ROW_NUMBER() OVER (
+               PARTITION BY SymbolID, DATE(IndicatorDate) ORDER BY IndicatorDate DESC
+           ) as rn
+    FROM OrderBookMetrics
+),
 LatestDailyCandles AS (
     SELECT dc.SymbolID, DATE(dc.Date) as IndicatorDate, dc.Close, dc.Id as CandleId,
            ROW_NUMBER() OVER (
@@ -130,7 +140,13 @@ SELECT
     oi.OpenInterest,
     oi.OpenInterestValue,
     fr.FundingRate,
-    fr.FundingTime
+    fr.FundingTime,
+    ob.BidAskRatio,
+    ob.SpreadPct,
+    ob.BidVolume2Pct,
+    ob.AskVolume2Pct,
+    ob.LargestBidWall,
+    ob.LargestAskWall
 FROM Symbols s
 INNER JOIN Last7Dates d ON s.SymbolID = d.SymbolID AND d.rn <= 7
 LEFT JOIN LatestDailyCandles dc
@@ -150,6 +166,8 @@ LEFT JOIN LatestOpenInterest oi
 ON s.SymbolID = oi.SymbolID AND oi.IndicatorDate = d.IndicatorDate AND oi.rn = 1
 LEFT JOIN LatestFundingRate fr
 ON s.SymbolID = fr.SymbolID AND fr.IndicatorDate = d.IndicatorDate AND fr.rn = 1
+LEFT JOIN LatestOrderBook ob
+ON s.SymbolID = ob.SymbolID AND ob.IndicatorDate = d.IndicatorDate AND ob.rn = 1
 ORDER BY s.SymbolName, d.IndicatorDate DESC
 
             """
