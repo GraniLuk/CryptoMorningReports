@@ -1,11 +1,11 @@
-# Schedule Crypto Daily Report - Windows Task Scheduler Setup
-# This script creates a scheduled task to run the daily report every day at 4:00 AM
+# Schedule CVD Updates - Windows Task Scheduler Setup
+# This script creates scheduled tasks to update CVD data multiple times per day
+# for accurate 1h/4h/24h CVD accumulation
 
-$TaskName = "CryptoDailyReport"
-$TaskDescription = "Runs crypto daily report with fresh market data analysis"
+$TaskName = "CryptoCVDUpdate"
+$TaskDescription = "Updates CVD (Cumulative Volume Delta) hourly snapshots for accurate order flow tracking"
 $ScriptPath = $PSScriptRoot
-$WrapperScript = Join-Path $ScriptPath "run-daily-task.ps1"
-$PythonScriptPath = Join-Path $ScriptPath "local_runner.py"
+$WrapperScript = Join-Path $ScriptPath "run-cvd-update.ps1"
 $VenvPython = Join-Path $ScriptPath ".venv\Scripts\python.exe"
 
 # Check if running as Administrator
@@ -25,18 +25,13 @@ if (-not $isAdmin) {
 
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "   📅 Crypto Daily Report - Task Scheduler Setup" -ForegroundColor Green
+Write-Host "   📊 CVD Update - Task Scheduler Setup" -ForegroundColor Green
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host ""
 
 # Verify paths exist
 if (-not (Test-Path $WrapperScript)) {
-    Write-Host "❌ Error: run-daily-task.ps1 not found at: $WrapperScript" -ForegroundColor Red
-    exit 1
-}
-
-if (-not (Test-Path $PythonScriptPath)) {
-    Write-Host "❌ Error: local_runner.py not found at: $PythonScriptPath" -ForegroundColor Red
+    Write-Host "❌ Error: run-cvd-update.ps1 not found at: $WrapperScript" -ForegroundColor Red
     exit 1
 }
 
@@ -47,7 +42,6 @@ if (-not (Test-Path $VenvPython)) {
 }
 
 Write-Host "✓ Found wrapper: $WrapperScript" -ForegroundColor Green
-Write-Host "✓ Found script: $PythonScriptPath" -ForegroundColor Green
 Write-Host "✓ Found Python: $VenvPython" -ForegroundColor Green
 Write-Host ""
 
@@ -68,14 +62,22 @@ if ($ExistingTask) {
     }
 }
 
-# Create scheduled task action - Use PowerShell wrapper for better logging
+# Create scheduled task action
 $Action = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$WrapperScript`"" `
     -WorkingDirectory $ScriptPath
 
-# Create trigger - Daily at 5:00 AM
-$Trigger = New-ScheduledTaskTrigger -Daily -At "04:00AM"
+# Create multiple triggers - every 4 hours for good 24h coverage
+# This ensures we have fresh data for 1h, 4h, and 24h windows
+$Triggers = @(
+    (New-ScheduledTaskTrigger -Daily -At "00:00AM"),  # Midnight
+    (New-ScheduledTaskTrigger -Daily -At "04:00AM"),  # 4 AM (before daily report)
+    (New-ScheduledTaskTrigger -Daily -At "08:00AM"),  # 8 AM
+    (New-ScheduledTaskTrigger -Daily -At "12:00PM"),  # Noon
+    (New-ScheduledTaskTrigger -Daily -At "04:00PM"),  # 4 PM
+    (New-ScheduledTaskTrigger -Daily -At "08:00PM")   # 8 PM
+)
 
 # Create settings
 $Settings = New-ScheduledTaskSettingsSet `
@@ -83,7 +85,8 @@ $Settings = New-ScheduledTaskSettingsSet `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
     -RunOnlyIfNetworkAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 2)
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 30) `
+    -MultipleInstances IgnoreNew
 
 # Get current user
 $Principal = New-ScheduledTaskPrincipal `
@@ -97,47 +100,49 @@ try {
         -TaskName $TaskName `
         -Description $TaskDescription `
         -Action $Action `
-        -Trigger $Trigger `
+        -Trigger $Triggers `
         -Settings $Settings `
         -Principal $Principal `
         -Force | Out-Null
     
     Write-Host ""
     Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-    Write-Host "   ✅ Task Scheduled Successfully!" -ForegroundColor Green
+    Write-Host "   ✅ CVD Update Task Scheduled Successfully!" -ForegroundColor Green
     Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "📋 Task Details:" -ForegroundColor Cyan
     Write-Host "  Name:        $TaskName" -ForegroundColor Gray
-    Write-Host "  Schedule:    Daily at 4:00 AM" -ForegroundColor Gray
     Write-Host "  User:        $env:USERNAME" -ForegroundColor Gray
-    Write-Host "  Script:      $PythonScriptPath" -ForegroundColor Gray
-    Write-Host "  Python:      $VenvPython" -ForegroundColor Gray
+    Write-Host "  Script:      $WrapperScript" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "🔍 What happens at 4:00 AM daily:" -ForegroundColor Cyan
-    Write-Host "  1. Updates latest 3 days of market data from Binance" -ForegroundColor Gray
-    Write-Host "  2. Calculates fresh RSI, MA, MACD indicators" -ForegroundColor Gray
-    Write-Host "  3. Uses accumulated CVD data from hourly snapshots" -ForegroundColor Gray
-    Write-Host "  4. Generates AI analysis with real-time news" -ForegroundColor Gray
-    Write-Host "  5. Sends report to Telegram" -ForegroundColor Gray
-    Write-Host "  6. Creates EPUB and emails to Kindle" -ForegroundColor Gray
+    Write-Host "⏰ Schedule (6 times daily):" -ForegroundColor Cyan
+    Write-Host "  • 12:00 AM (midnight)" -ForegroundColor Gray
+    Write-Host "  • 04:00 AM (before daily report)" -ForegroundColor Gray
+    Write-Host "  • 08:00 AM" -ForegroundColor Gray
+    Write-Host "  • 12:00 PM (noon)" -ForegroundColor Gray
+    Write-Host "  • 04:00 PM" -ForegroundColor Gray
+    Write-Host "  • 08:00 PM" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "💡 For accurate 24h CVD data, also run:" -ForegroundColor Yellow
-    Write-Host "  .\setup-cvd-schedule.ps1  # Schedules CVD updates every 4 hours" -ForegroundColor White
+    Write-Host "📊 What each update does:" -ForegroundColor Cyan
+    Write-Host "  1. Fetches NEW trades since last update (incremental)" -ForegroundColor Gray
+    Write-Host "  2. Buckets trades by hour" -ForegroundColor Gray
+    Write-Host "  3. Saves hourly CVD snapshots to database" -ForegroundColor Gray
+    Write-Host "  4. Cleans up snapshots older than 48 hours" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "💡 Benefits:" -ForegroundColor Cyan
+    Write-Host "  • Accurate 1h/4h/24h CVD from accumulated hourly data" -ForegroundColor Gray
+    Write-Host "  • Light API usage (only fetches new trades)" -ForegroundColor Gray
+    Write-Host "  • Daily report at 4AM will have full 24h of CVD data" -ForegroundColor Gray
     Write-Host ""
     Write-Host "📝 Useful Commands:" -ForegroundColor Cyan
-    Write-Host "  Check status:   .\check-task-status.ps1" -ForegroundColor Gray
-    Write-Host "  View log:       Get-Content task_runner.log -Tail 50" -ForegroundColor Gray
-    Write-Host "  Live log:       Get-Content task_runner.log -Wait -Tail 50" -ForegroundColor Gray
+    Write-Host "  View log:       Get-Content cvd_update.log -Tail 50" -ForegroundColor Gray
     Write-Host "  Run now:        Start-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host "  View task:      Get-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host "  Disable task:   Disable-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
-    Write-Host "  Enable task:    Enable-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host "  Remove task:    Unregister-ScheduledTask -TaskName '$TaskName'" -ForegroundColor Gray
     Write-Host ""
     Write-Host "💡 To test the task now, run:" -ForegroundColor Yellow
     Write-Host "  Start-ScheduledTask -TaskName '$TaskName'" -ForegroundColor White
-    Write-Host "  .\check-task-status.ps1  # Check if it's running" -ForegroundColor White
     Write-Host ""
     
 }
