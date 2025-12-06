@@ -258,7 +258,7 @@ class OrderBookRepository:
                         "largest_ask_wall": row[10],
                         "largest_ask_wall_price": row[11],
                         "indicator_date": row[12],
-                    }
+                    },
                 )
 
         except Exception as e:

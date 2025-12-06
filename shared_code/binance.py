@@ -194,10 +194,9 @@ def _calculate_order_book_metrics(
                     # For bids, include orders above (mid * (1 - pct/100))
                     if price >= mid * (1 - pct / 100):
                         total_volume += price * qty
-                else:
-                    # For asks, include orders below (mid * (1 + pct/100))
-                    if price <= mid * (1 + pct / 100):
-                        total_volume += price * qty
+                # For asks, include orders below (mid * (1 + pct/100))
+                elif price <= mid * (1 + pct / 100):
+                    total_volume += price * qty
             return total_volume
 
         # Calculate depth at multiple levels
@@ -226,10 +225,9 @@ def _calculate_order_book_metrics(
                     if price >= mid * (1 - pct / 100) and order_value > largest_value:
                         largest_value = order_value
                         largest_price = price
-                else:
-                    if price <= mid * (1 + pct / 100) and order_value > largest_value:
-                        largest_value = order_value
-                        largest_price = price
+                elif price <= mid * (1 + pct / 100) and order_value > largest_value:
+                    largest_value = order_value
+                    largest_price = price
             return largest_value, largest_price
 
         largest_bid_wall, largest_bid_wall_price = find_largest_wall(

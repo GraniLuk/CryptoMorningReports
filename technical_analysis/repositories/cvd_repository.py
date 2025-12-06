@@ -253,7 +253,7 @@ class CVDRepository:
                         "large_buy_count": row[10],
                         "large_sell_count": row[11],
                         "indicator_date": row[12],
-                    }
+                    },
                 )
 
         except Exception as e:
