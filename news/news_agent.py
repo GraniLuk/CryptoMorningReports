@@ -4,18 +4,27 @@ This module provides a factory function to create AI clients and maintains
 backward compatibility with legacy function interfaces.
 """
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from news.article_cache import CachedArticle, get_recent_articles
 from news.clients import GeminiClient, PerplexityClient
 
 
+if TYPE_CHECKING:
+    import pyodbc
+
+    from infra.sql_connection import SQLiteConnectionWrapper
+
+
 def create_ai_client(
-    api_type,
-    api_key,
+    api_type: str,
+    api_key: str,
     primary_model: str | None = None,
     secondary_model: str | None = None,
-):
+) -> GeminiClient | PerplexityClient:
     """Create appropriate AI client based on type.
 
     Args:
@@ -46,15 +55,15 @@ def create_ai_client(
 
 
 def get_detailed_crypto_analysis_with_news(
-    api_key,
-    indicators_message,
-    news_feeded,
-    api_type="perplexity",
-    conn=None,
+    api_key: str,
+    indicators_message: str,
+    news_feeded: str,
+    api_type: str = "perplexity",
+    conn: pyodbc.Connection | SQLiteConnectionWrapper | None = None,
     model: str | None = None,
     primary_model: str | None = None,
     secondary_model: str | None = None,
-):
+) -> str:
     """Get detailed cryptocurrency analysis combining indicators and news data.
 
     Args:
@@ -87,14 +96,14 @@ def get_detailed_crypto_analysis_with_news(
 
 
 def highlight_articles(
-    api_key,
-    user_crypto_list,
-    news_feeded,
-    api_type="perplexity",
+    api_key: str,
+    user_crypto_list: list,
+    news_feeded: str,
+    api_type: str = "perplexity",
     model: str | None = None,
     primary_model: str | None = None,
     secondary_model: str | None = None,
-):
+) -> str:
     """Highlight relevant articles from news feed based on user's crypto list.
 
     Args:

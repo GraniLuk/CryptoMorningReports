@@ -242,24 +242,24 @@ class OrderBookRepository:
             cursor.execute(query, (symbol_id, days_param))
             rows = cursor.fetchall()
 
-            for row in rows:
-                results.append(
-                    {
-                        "best_bid": row[0],
-                        "best_bid_qty": row[1],
-                        "best_ask": row[2],
-                        "best_ask_qty": row[3],
-                        "spread_pct": row[4],
-                        "bid_volume_2pct": row[5],
-                        "ask_volume_2pct": row[6],
-                        "bid_ask_ratio": row[7],
-                        "largest_bid_wall": row[8],
-                        "largest_bid_wall_price": row[9],
-                        "largest_ask_wall": row[10],
-                        "largest_ask_wall_price": row[11],
-                        "indicator_date": row[12],
-                    },
-                )
+            results.extend(
+                {
+                    "best_bid": row[0],
+                    "best_bid_qty": row[1],
+                    "best_ask": row[2],
+                    "best_ask_qty": row[3],
+                    "spread_pct": row[4],
+                    "bid_volume_2pct": row[5],
+                    "ask_volume_2pct": row[6],
+                    "bid_ask_ratio": row[7],
+                    "largest_bid_wall": row[8],
+                    "largest_bid_wall_price": row[9],
+                    "largest_ask_wall": row[10],
+                    "largest_ask_wall_price": row[11],
+                    "indicator_date": row[12],
+                }
+                for row in rows
+            )
 
         except Exception as e:
             app_logger.error(f"Error fetching order book history: {e!s}")

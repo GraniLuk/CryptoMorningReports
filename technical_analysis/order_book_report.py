@@ -453,18 +453,18 @@ if __name__ == "__main__":
     conn = connect_to_sql()
     symbols = fetch_symbols(conn)
 
-    print("=== Order Book Report ===")
+    print("=== Order Book Report ===")  # noqa: T201
     table = fetch_order_book_report(symbols, conn)
-    print(table)
+    print(table)  # noqa: T201
 
-    print("\n=== CVD Report ===")
+    print("\n=== CVD Report ===")  # noqa: T201
     cvd_table = fetch_cvd_report(symbols, conn)
-    print(cvd_table)
+    print(cvd_table)  # noqa: T201
 
-    print("\n--- Order Book AI Context ---")
+    print("\n--- Order Book AI Context ---")  # noqa: T201
     ai_context = build_order_book_ai_context(symbols, conn)
-    print(ai_context)
+    print(ai_context)  # noqa: T201
 
-    print("\n--- CVD AI Context ---")
+    print("\n--- CVD AI Context ---")  # noqa: T201
     cvd_context = build_cvd_ai_context(symbols, conn)
-    print(cvd_context)
+    print(cvd_context)  # noqa: T201

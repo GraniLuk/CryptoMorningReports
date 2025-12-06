@@ -92,7 +92,7 @@ if __name__ == "__main__":
     success = migrate_add_cvd_table(db_path)
 
     if success:
-        print("✅ CVD Migration completed successfully")
+        app_logger.info("✅ CVD Migration completed successfully")
     else:
-        print("❌ CVD Migration failed. Please check the logs above.")
+        app_logger.error("❌ CVD Migration failed. Please check the logs above.")
         sys.exit(1)

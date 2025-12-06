@@ -237,28 +237,27 @@ class CVDRepository:
 
             cursor.execute(query, (symbol_id, days_param))
 
-            for row in cursor.fetchall():
-                results.append(
-                    {
-                        "cvd_1h": row[0],
-                        "cvd_4h": row[1],
-                        "cvd_24h": row[2],
-                        "buy_volume_1h": row[3],
-                        "sell_volume_1h": row[4],
-                        "buy_volume_24h": row[5],
-                        "sell_volume_24h": row[6],
-                        "trade_count_1h": row[7],
-                        "trade_count_24h": row[8],
-                        "avg_trade_size": row[9],
-                        "large_buy_count": row[10],
-                        "large_sell_count": row[11],
-                        "indicator_date": row[12],
-                    },
-                )
+            results.extend(
+                {
+                    "cvd_1h": row[0],
+                    "cvd_4h": row[1],
+                    "cvd_24h": row[2],
+                    "buy_volume_1h": row[3],
+                    "sell_volume_1h": row[4],
+                    "buy_volume_24h": row[5],
+                    "sell_volume_24h": row[6],
+                    "trade_count_1h": row[7],
+                    "trade_count_24h": row[8],
+                    "avg_trade_size": row[9],
+                    "large_buy_count": row[10],
+                    "large_sell_count": row[11],
+                    "indicator_date": row[12],
+                }
+                for row in cursor.fetchall()
+            )
 
         except Exception as e:
             app_logger.error(f"Error fetching CVD history: {e!s}")
             raise
 
-        return results
         return results

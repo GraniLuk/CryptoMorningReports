@@ -92,7 +92,7 @@ if __name__ == "__main__":
     success = migrate_add_order_book_table(db_path)
 
     if success:
-        print("✅ Migration completed successfully")
+        app_logger.info("✅ Migration completed successfully")
     else:
-        print("❌ Migration failed. Please check the logs above.")
+        app_logger.error("❌ Migration failed. Please check the logs above.")
         sys.exit(1)

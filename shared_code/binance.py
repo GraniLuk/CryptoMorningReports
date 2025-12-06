@@ -105,7 +105,7 @@ def fetch_binance_futures_metrics(symbol: Symbol) -> FuturesMetrics | None:
 class OrderBookMetrics:
     """Data class for order book liquidity metrics."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         symbol: str,
         best_bid: float,
@@ -155,7 +155,7 @@ def _calculate_order_book_metrics(
     symbol_name: str,
     bids: list,
     asks: list,
-    current_price: float,
+    current_price: float,  # noqa: ARG001
 ) -> OrderBookMetrics | None:
     """Calculate liquidity metrics from raw order book data.
 
@@ -184,7 +184,13 @@ def _calculate_order_book_metrics(
         spread_pct = ((best_ask - best_bid) / mid_price) * 100 if mid_price > 0 else 0
 
         # Calculate volume at different price levels
-        def calc_volume_at_level(orders: list, mid: float, pct: float, is_bid: bool) -> float:
+        def calc_volume_at_level(
+            orders: list,
+            mid: float,
+            pct: float,
+            *,
+            is_bid: bool,
+        ) -> float:
             """Calculate total USD volume within pct% of mid-price."""
             total_volume = 0.0
             for price_str, qty_str in orders:
@@ -213,7 +219,13 @@ def _calculate_order_book_metrics(
         bid_ask_ratio = bid_volume_2pct / ask_volume_2pct if ask_volume_2pct > 0 else 0
 
         # Find largest walls (orders > 2x average within 2% range)
-        def find_largest_wall(orders: list, mid: float, pct: float, is_bid: bool) -> tuple:
+        def find_largest_wall(
+            orders: list,
+            mid: float,
+            pct: float,
+            *,
+            is_bid: bool,
+        ) -> tuple:
             """Find the largest single order within pct% of mid-price."""
             largest_value = 0.0
             largest_price = 0.0
@@ -352,7 +364,7 @@ def fetch_binance_futures_order_book(symbol: Symbol, limit: int = 100) -> OrderB
 class CVDMetrics:
     """Data class for Cumulative Volume Delta (order flow) metrics."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         symbol: str,
         cvd_1h: float,
@@ -396,11 +408,19 @@ class CVDMetrics:
         )
 
 
+# CVD API constants
+CVD_TRADES_PER_REQUEST = 1000  # Max trades per API call
+CVD_MAX_TRADES = 50000  # Safety limit to prevent infinite loops
+
+
 # CVD threshold for "large" trade multiplier
 CVD_LARGE_TRADE_MULTIPLIER = 2.0
 
 
-def fetch_binance_cvd(symbol: Symbol, hours: int = 24) -> CVDMetrics | None:
+def fetch_binance_cvd(  # noqa: PLR0912, PLR0915
+    symbol: Symbol,
+    hours: int = 24,
+) -> CVDMetrics | None:
     """Fetch Cumulative Volume Delta from Binance aggregate trades.
 
     CVD = Sum of (buy volume - sell volume) over time.
@@ -438,7 +458,7 @@ def fetch_binance_cvd(symbol: Symbol, hours: int = 24) -> CVDMetrics | None:
             params = {
                 "symbol": symbol.binance_name,
                 "startTime": start_time_24h,
-                "limit": 1000,
+                "limit": CVD_TRADES_PER_REQUEST,
             }
             if last_trade_id:
                 params["fromId"] = last_trade_id + 1
@@ -453,13 +473,13 @@ def fetch_binance_cvd(symbol: Symbol, hours: int = 24) -> CVDMetrics | None:
             last_trade_id = trades[-1]["a"]  # 'a' is aggregate trade ID
 
             # Stop if we have enough trades or reached time limit
-            if len(trades) < 1000:
+            if len(trades) < CVD_TRADES_PER_REQUEST:
                 break
 
             # Safety limit to prevent infinite loops
-            if len(all_trades) > 50000:
+            if len(all_trades) > CVD_MAX_TRADES:
                 app_logger.warning(
-                    f"CVD fetch for {symbol.symbol_name}: Hit 50k trade limit",
+                    f"CVD fetch for {symbol.symbol_name}: Hit {CVD_MAX_TRADES} trade limit",
                 )
                 break
 
