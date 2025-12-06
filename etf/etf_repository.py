@@ -118,6 +118,30 @@ class ETFRepository:
             self.conn.rollback()
             raise
 
+    def get_available_etf_coins(self) -> list[str]:
+        """Get list of all coins that have ETF flow data.
+
+        Returns:
+            List of coin symbols (e.g., ['BTC', 'ETH', 'SOL'])
+        """
+        cursor = self.conn.cursor()
+
+        try:
+            query = """
+                SELECT DISTINCT Coin
+                FROM ETFFlows
+                ORDER BY Coin
+            """
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            coins = [row[0] for row in rows if row[0]]
+            app_logger.info(f"Found {len(coins)} coins with ETF data: {coins}")
+            return coins
+
+        except Exception as e:
+            app_logger.error(f"Error fetching available ETF coins: {e!s}")
+            return []
+
     def get_latest_etf_flows(self, coin: str) -> list[dict[str, str | float | None]] | None:
         """Get the most recent ETF flows for a specific coin.
 

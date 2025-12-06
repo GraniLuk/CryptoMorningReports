@@ -76,17 +76,27 @@ missing in "Data Gaps & Reliability" and avoid forced conclusions.
 """
 
 USER_PROMPT_ANALYSIS_NEWS = """\
-Instructions:\n- Use ONLY the information provided in the current message chunks
+Instructions:
+- Use ONLY the information provided in the current message chunks
 (news, indicators, price data) supplied for this analysis. Treat any other metric
 (on-chain specifics, derivatives data like funding/open interest, order flow,
 liquidity map, sentiment indices) as MISSING unless it is explicitly inferable
-from the given indicators text.\n- Follow the SYSTEM prompt' s required 9 sections
-exactly.\n- Choose at most one PRIMARY trade setup unless two have distinctly
-different uncorrelated drivers; otherwise limit to one to reduce overexposure.\n-
-If symbols are ambiguous from the data, state ambiguity before proposing a setup.\n
+from the given indicators text.
+- Follow the SYSTEM prompt's required 10 sections exactly.
+- IMPORTANT: Analyze ALL provided symbols equally without bias toward any specific
+  cryptocurrency (including BTC/ETH). Identify the BEST trading opportunity based
+  on technical setup quality, risk/reward ratio, and conviction level.
+- Choose at most one PRIMARY trade setup unless two have distinctly
+  different uncorrelated drivers; otherwise limit to one to reduce overexposure.
+- Rank all symbols by trading opportunity quality in the Market Overview section.
+- If symbols are ambiguous from the data, state ambiguity before proposing a setup.
 - Explicitly list every assumption you introduce that is not directly stated in the
-inputs.\n- If nothing reaches high conviction, output a "No high-conviction setup"
-message instead of forcing a trade.\n\nProceed with the structured analysis now.\n"""
+  inputs.
+- If nothing reaches high conviction, output a "No high-conviction setup"
+  message instead of forcing a trade.
+
+Proceed with the structured analysis now.
+"""
 
 
 def build_analysis_user_messages(
@@ -136,30 +146,35 @@ provide deep insights, detailed explanations, and comprehensive analysis of mark
 trends, technical indicators, and on-chain metrics. Only consider the articles
 provided in the input.
 
-Categorize your analysis into:
-    1. Bitcoin
-    2. Ethereum
-    3. Other cryptocurrencies from a provided list
-    4. Other cryptocurrencies not from the list
+Focus on identifying the best trading opportunities across ALL cryptocurrencies,
+not just major ones like Bitcoin or Ethereum. Evaluate each article based on its
+actionable trading insights and potential opportunity quality.
+
+Categorize your analysis by the cryptocurrencies mentioned in the articles,
+prioritizing those with the strongest trading signals or opportunities.
 
 Format all responses using Markdown syntax.
 """
 
 USER_PROMPT_HIGHLIGHT = """\
 From the following news articles {news_feeded}, highlight the most insightful and
-detailed ones. Categorize your analysis as follows:
+detailed ones. Focus on identifying the BEST trading opportunities across all
+cryptocurrencies.
 
-1. Bitcoin
-2. Ethereum
-3. Other cryptocurrencies from this list: {symbol_names}
-4. Other cryptocurrencies not from the list: {symbol_names}
+Categorize your analysis by cryptocurrency, considering these from the user's
+watchlist: {symbol_names}
 
-For each category, prioritize articles that:
+Also include any other cryptocurrencies mentioned that show strong trading signals.
+
+For each cryptocurrency, prioritize articles that:
 1. Offer in-depth technical analysis with clear explanations of resistance/support levels.
 2. Provide comprehensive on-chain analysis with interpretation of key metrics.
 3. Include statistical data, charts, or graphs to support their analysis.
-4. Discuss cryptocurrencies with high growth potential (especially for categories 3 and 4).
+4. Discuss cryptocurrencies with high growth potential and strong trading setups.
 5. Explain complex market dynamics or new technological developments in the crypto space.
+
+Rank the highlighted articles by trading opportunity quality, with the strongest
+opportunities listed first regardless of market cap or popularity of the asset.
 
 For each highlighted article, provide a brief explanation of its key insights and
 include the URL. If there are no significant articles for a category, state that

@@ -89,6 +89,8 @@ def _configure_ai_api():
 def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper") -> str:
     """Build ETF flows section for AI analysis context.
 
+    Dynamically fetches ETF data for all available coins (not just BTC/ETH).
+
     Args:
         conn: Database connection
 
@@ -98,37 +100,29 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
     try:
         repo = ETFRepository(conn)
 
-        # Get BTC and ETH ETF flows
-        btc_flows = repo.get_latest_etf_flows("BTC")
-        eth_flows = repo.get_latest_etf_flows("ETH")
-
-        # Get weekly aggregated flows
-        btc_weekly = repo.get_weekly_etf_flows("BTC", days=7)
-        eth_weekly = repo.get_weekly_etf_flows("ETH", days=7)
+        # Get all available coins with ETF data
+        available_coins = repo.get_available_etf_coins()
+        if not available_coins:
+            return "ETF Flows: No ETF data available\n\n"
 
         lines = ["ETF Institutional Flows (Daily & 7-Day Aggregates):"]
 
-        # BTC ETF flows
-        if btc_flows:
-            total_btc_daily = sum(
-                float(etf.get("flows", 0) or 0) for etf in btc_flows if etf.get("flows") is not None
-            )
-            btc_weekly_total = btc_weekly.get("total_flows", 0) if btc_weekly else 0
-            lines.append(f"BTC ETF Daily Flows: ${total_btc_daily:,.0f}")
-            lines.append(f"BTC ETF 7-Day Total: ${btc_weekly_total:,.0f}")
-        else:
-            lines.append("BTC ETF Daily Flows: No data available")
+        # Process each coin dynamically
+        for coin in available_coins:
+            flows = repo.get_latest_etf_flows(coin)
+            weekly = repo.get_weekly_etf_flows(coin, days=7)
 
-        # ETH ETF flows
-        if eth_flows:
-            total_eth_daily = sum(
-                float(etf.get("flows", 0) or 0) for etf in eth_flows if etf.get("flows") is not None
-            )
-            eth_weekly_total = eth_weekly.get("total_flows", 0) if eth_weekly else 0
-            lines.append(f"ETH ETF Daily Flows: ${total_eth_daily:,.0f}")
-            lines.append(f"ETH ETF 7-Day Total: ${eth_weekly_total:,.0f}")
-        else:
-            lines.append("ETH ETF Daily Flows: No data available")
+            if flows:
+                total_daily = sum(
+                    float(etf.get("flows", 0) or 0)
+                    for etf in flows
+                    if etf.get("flows") is not None
+                )
+                weekly_total = weekly.get("total_flows", 0) if weekly else 0
+                lines.append(f"{coin} ETF Daily Flows: ${total_daily:,.0f}")
+                lines.append(f"{coin} ETF 7-Day Total: ${weekly_total:,.0f}")
+            else:
+                lines.append(f"{coin} ETF Daily Flows: No data available")
 
         # Add interpretation guidance
         lines.append("")
@@ -708,18 +702,14 @@ async def process_daily_report(  # noqa: PLR0915
     today_date = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # --- Current Prices Section (added to indicators message) ---
-    def build_current_prices_section(symbols: list[Symbol], limit: int = 12) -> str:
+    def build_current_prices_section(symbols: list[Symbol], limit: int = 20) -> str:
         """Build a current prices snapshot for inclusion in analysis prompt.
 
-        Prioritizes BTC & ETH, then fills remaining slots with other symbols.
+        Includes all active symbols sorted alphabetically for comprehensive analysis.
         Returns an HTML-formatted <pre> block consistent with other sections.
         """
-        # Reorder symbols so BTC/ETH first
-        priority = ["BTC", "ETH"]
-        ordered = sorted(
-            symbols,
-            key=lambda s: (0 if s.symbol_name in priority else 1, s.symbol_name),
-        )[:limit]
+        # Sort alphabetically - no priority given to any specific symbols
+        ordered = sorted(symbols, key=lambda s: s.symbol_name)[:limit]
         lines = [
             "Symbol  | Last        | 24h Low     | 24h High    | Range% | FromLow% | FromHigh%",
         ]
@@ -756,7 +746,7 @@ async def process_daily_report(  # noqa: PLR0915
     volume_report = f"Volume Report: <pre>{volume_table}</pre>"
     marketcap_report = f"Market Cap Report: <pre>{marketcap_table}</pre>"
     stepn_report = f"StepN Report: <pre>{stepn_table}</pre>"
-    sopr_report = f"SOPR bitcoin report: <pre>{sopr_table}</pre>" if sopr_table else None
+    sopr_report = f"SOPR Report (BTC on-chain): <pre>{sopr_table}</pre>" if sopr_table else None
     derivatives_report = (
         f"Derivatives Report (Open Interest & Funding Rate): <pre>{derivatives_table}</pre>"
     )
