@@ -1,6 +1,7 @@
 """Fetch and save Order Book liquidity data and CVD for symbols."""
 
 import sys
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,11 @@ if TYPE_CHECKING:
 VOLUME_BILLION = 1_000_000_000
 VOLUME_MILLION = 1_000_000
 VOLUME_THOUSAND = 1_000
+
+# CVD rate limiting - wait between symbols to avoid API rate limits
+# Binance Futures has 2400 weight/min limit, each API call = 20 weight
+# Max 120 calls per minute (2400/20), so we need ~0.5s delay per call
+CVD_DELAY_BETWEEN_SYMBOLS = 3  # seconds - short delay to let rate limit recover
 
 # Constants for bid/ask ratio interpretation
 RATIO_BUY_PRESSURE = 1.2
@@ -233,13 +239,20 @@ def fetch_cvd_report(
     indicator_date = datetime.now(UTC)
     successful = 0
     failed = 0
+    binance_symbols = [s for s in symbols if s.source_id == SourceID.BINANCE]
+    total_symbols = len(binance_symbols)
 
-    for symbol in symbols:
-        # Only fetch for Binance symbols
-        if symbol.source_id != SourceID.BINANCE:
-            continue
-
+    for idx, symbol in enumerate(binance_symbols):
         try:
+            # Rate limit: wait between symbols to avoid hitting API limits
+            # Each symbol can use up to 100 API calls x 20 weight = 2000 weight
+            if idx > 0:
+                app_logger.info(
+                    f"CVD rate limit: waiting {CVD_DELAY_BETWEEN_SYMBOLS}s "
+                    f"before {symbol.symbol_name} ({idx + 1}/{total_symbols})",
+                )
+                time.sleep(CVD_DELAY_BETWEEN_SYMBOLS)
+
             metrics = fetch_binance_cvd(symbol, hours=24)
 
             if metrics is None:

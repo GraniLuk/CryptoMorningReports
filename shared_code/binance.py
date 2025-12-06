@@ -1,5 +1,6 @@
 """Binance API integration for cryptocurrency data fetching."""
 
+import time
 from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
@@ -410,7 +411,8 @@ class CVDMetrics:
 
 # CVD API constants
 CVD_TRADES_PER_REQUEST = 1000  # Max trades per API call
-CVD_MAX_TRADES = 50000  # Safety limit to prevent infinite loops
+CVD_MAX_TRADES = 100000  # Safety limit (100 API calls per symbol)
+CVD_RATE_LIMIT_DELAY = 0.5  # Delay between API calls to avoid rate limiting
 
 
 # CVD threshold for "large" trade multiplier
@@ -421,15 +423,18 @@ def fetch_binance_cvd(  # noqa: PLR0912, PLR0915
     symbol: Symbol,
     hours: int = 24,
 ) -> CVDMetrics | None:
-    """Fetch Cumulative Volume Delta from Binance aggregate trades.
+    """Fetch Cumulative Volume Delta from Binance Futures aggregate trades.
 
     CVD = Sum of (buy volume - sell volume) over time.
     - Positive CVD = net buying pressure (bullish)
     - Negative CVD = net selling pressure (bearish)
 
-    Uses aggregate trades endpoint which includes isBuyerMaker field:
+    Uses Futures aggregate trades endpoint which includes isBuyerMaker field:
     - isBuyerMaker=True: Seller was the taker (sell order)
     - isBuyerMaker=False: Buyer was the taker (buy order)
+
+    Note: Uses Futures API for more accurate institutional-level CVD data.
+    Futures volume is typically 10-50x higher than spot.
 
     Args:
         symbol: Symbol object with binance_name property
@@ -448,29 +453,34 @@ def fetch_binance_cvd(  # noqa: PLR0912, PLR0915
         start_time_4h = int((now - timedelta(hours=4)).timestamp() * 1000)
         start_time_1h = int((now - timedelta(hours=1)).timestamp() * 1000)
 
-        # Fetch aggregate trades for the period
+        # Fetch aggregate trades for the period from Futures API
         # Note: API returns max 1000 trades per call, we may need multiple calls
+        # Fetch from most recent trades backward to ensure we capture 1h and 4h windows
         all_trades = []
-        last_trade_id = None
+        end_time = int(now.timestamp() * 1000)
 
-        # Fetch trades in batches (limit 1000 per call)
+        # Fetch trades in batches (limit 1000 per call), going backward in time
         while True:
             params = {
                 "symbol": symbol.binance_name,
-                "startTime": start_time_24h,
+                "endTime": end_time,
                 "limit": CVD_TRADES_PER_REQUEST,
             }
-            if last_trade_id:
-                params["fromId"] = last_trade_id + 1
-                del params["startTime"]
 
-            trades = client.get_aggregate_trades(**params)
+            # Use Futures aggregate trades instead of Spot
+            trades = client.futures_aggregate_trades(**params)
 
             if not trades:
                 break
 
             all_trades.extend(trades)
-            last_trade_id = trades[-1]["a"]  # 'a' is aggregate trade ID
+
+            # Get earliest trade time to continue backward
+            earliest_trade_time = trades[0]["T"]
+
+            # Stop if we've gone past the 24h window
+            if earliest_trade_time <= start_time_24h:
+                break
 
             # Stop if we have enough trades or reached time limit
             if len(trades) < CVD_TRADES_PER_REQUEST:
@@ -482,6 +492,12 @@ def fetch_binance_cvd(  # noqa: PLR0912, PLR0915
                     f"CVD fetch for {symbol.symbol_name}: Hit {CVD_MAX_TRADES} trade limit",
                 )
                 break
+
+            # Rate limit: small delay between API calls to avoid hitting 2400 weight/min limit
+            time.sleep(CVD_RATE_LIMIT_DELAY)
+
+            # Move end_time backward for next batch
+            end_time = earliest_trade_time - 1
 
         if not all_trades:
             app_logger.warning(f"No aggregate trades found for {symbol.symbol_name}")
