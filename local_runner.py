@@ -45,12 +45,13 @@ async def main():
             sys.exit(1)
 
     # Get run_id for daily reports (second argument if provided)
-    if report_type == "daily" and len(sys.argv) > 2:
-        run_id = sys.argv[2].upper()
+    run_id_arg_index = 2
+    if report_type == "daily" and len(sys.argv) > run_id_arg_index:
+        run_id = sys.argv[run_id_arg_index].upper()
         if run_id not in ["AM", "PM"]:
             app_logger.error(
                 "Invalid run_id '%s'. Use 'AM' or 'PM'.\nExample: python local_runner.py daily PM",
-                sys.argv[2],
+                sys.argv[run_id_arg_index],
             )
             sys.exit(1)
 

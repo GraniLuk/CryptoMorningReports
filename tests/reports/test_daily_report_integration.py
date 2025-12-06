@@ -181,8 +181,8 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
     assert news_meta["included_links"] == {"https://example.com/article"}
     assert news_meta["audit_plain"] == "plain audit"
     assert news_meta["audit_markdown"] == "markdown audit"
-    assert collected["news_hours"] == 24
-    assert collected["audit_hours"] == 24
+    assert collected["news_hours"] == 12  # Changed from 24 to 12 for twice-daily runs
+    assert collected["audit_hours"] == 12  # Changed from 24 to 12 for twice-daily runs
     assert collected["audit_included"] == {"https://example.com/article"}
     assert "articles_available" in collected["audit_stats_keys"]
     assert collected.get("upload_calls")

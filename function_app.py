@@ -21,7 +21,7 @@ load_dotenv()
 app = func.FunctionApp()
 
 
-async def run_report(report_type="daily", run_id: str = "AM"):
+async def run_report(report_type: str = "daily", run_id: str = "AM"):
     """Run the specified type of cryptocurrency report (daily or weekly).
 
     Args:

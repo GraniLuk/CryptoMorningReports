@@ -216,19 +216,29 @@ def _build_order_book_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper
 
 
 async def _process_ai_analysis(
-    ai_api_key,
-    ai_api_type,
-    symbols,
-    current_prices_section,
-    conn,
-    today_date,
-    logger,
+    ai_api_key: str,
+    ai_api_type: str,
+    symbols: list["Symbol"],
+    current_prices_section: str,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+    today_date: str,
+    logger: "Logger",
     run_id: str = "AM",
-):
+) -> tuple[str, dict[str, object]]:
     """Process AI analysis with news and handle uploads/email.
 
     Args:
+        ai_api_key: API key for AI provider
+        ai_api_type: Type of AI API ('perplexity' or 'gemini')
+        symbols: List of cryptocurrency symbols to analyze
+        current_prices_section: Formatted current prices section for analysis
+        conn: Database connection
+        today_date: Current date string in YYYY-MM-DD format
+        logger: Logger instance for logging
         run_id: Identifier for the run - 'AM' for morning, 'PM' for evening
+
+    Returns:
+        Tuple of (analysis report string, news metadata dict)
     """
     analysis_reported_with_news = "Failed: Analysis with news not generated"
     news_metadata: dict[str, object] = {
@@ -593,12 +603,12 @@ def _fallback_summary(content: str, max_chars: int = 320) -> str:
 
 
 async def process_daily_report(  # noqa: PLR0915
-    conn,
-    telegram_enabled,
-    telegram_token,
-    telegram_chat_id,
+    conn: "pyodbc.Connection | SQLiteConnectionWrapper",
+    telegram_enabled: bool,  # noqa: FBT001
+    telegram_token: str,
+    telegram_chat_id: str,
     run_id: str = "AM",
-):
+) -> None:
     """Process and send the daily cryptocurrency report via Telegram.
 
     Args:
