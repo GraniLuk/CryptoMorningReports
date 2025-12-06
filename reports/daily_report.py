@@ -114,9 +114,7 @@ def _build_etf_flows_section(conn: "pyodbc.Connection | SQLiteConnectionWrapper"
 
             if flows:
                 total_daily = sum(
-                    float(etf.get("flows", 0) or 0)
-                    for etf in flows
-                    if etf.get("flows") is not None
+                    float(etf.get("flows", 0) or 0) for etf in flows if etf.get("flows") is not None
                 )
                 weekly_total = weekly.get("total_flows", 0) if weekly else 0
                 lines.append(f"{coin} ETF Daily Flows: ${total_daily:,.0f}")

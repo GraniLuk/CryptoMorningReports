@@ -39,7 +39,6 @@ MANDATORY OUTPUT SECTIONS (exact order, Markdown headings):
 8. Risk & Position Management (stops, invalidation logic, example position size
    formula using generic risk fraction)
 9. Data Gaps & Reliability (list all items you marked MISSING)
-10. JSON Summary (machine-readable; valid JSON)
 
 Trade Setup Rules:
 - Each setup: symbol, direction (LONG/SHORT), thesis, entry zone (or condition),
@@ -60,12 +59,6 @@ Risk Guidance:
   state so but still show formula.
 - Highlight if expected value (conceptual) < 0 → caution / no trade.
 
-JSON Summary Requirements:
-- Keys: symbols_analyzed, chosen_primary_symbol (or null), setups (array),
-  scenarios (array), missing_data (array), notes.
-- Use null instead of empty string for unknown scalar values. Do not include
-  commentary outside JSON in that section.
-
 Style:
 - Information-dense, precise, no fluff, proper Markdown.
 - Clearly state assumptions.
@@ -82,7 +75,7 @@ Instructions:
 (on-chain specifics, derivatives data like funding/open interest, order flow,
 liquidity map, sentiment indices) as MISSING unless it is explicitly inferable
 from the given indicators text.
-- Follow the SYSTEM prompt's required 10 sections exactly.
+- Follow the SYSTEM prompt's required 9 sections exactly.
 - IMPORTANT: Analyze ALL provided symbols equally without bias toward any specific
   cryptocurrency (including BTC/ETH). Identify the BEST trading opportunity based
   on technical setup quality, risk/reward ratio, and conviction level.
