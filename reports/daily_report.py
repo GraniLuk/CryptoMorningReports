@@ -223,13 +223,18 @@ async def _process_ai_analysis(
     conn,
     today_date,
     logger,
+    run_id: str = "AM",
 ):
-    """Process AI analysis with news and handle uploads/email."""
+    """Process AI analysis with news and handle uploads/email.
+
+    Args:
+        run_id: Identifier for the run - 'AM' for morning, 'PM' for evening
+    """
     analysis_reported_with_news = "Failed: Analysis with news not generated"
     news_metadata: dict[str, object] = {
         "included_links": set(),
         "stats": {},
-        "hours": 24,
+        "hours": 12,
     }
 
     if not ai_api_key:
@@ -237,7 +242,7 @@ async def _process_ai_analysis(
         return analysis_reported_with_news, news_metadata
 
     # Build filtered news payload from cached articles (already processed by Ollama earlier)
-    news_payload, news_stats, included_links = _collect_relevant_news(hours=24, logger=logger)
+    news_payload, news_stats, included_links = _collect_relevant_news(hours=12, logger=logger)
     logger.info(
         "News filtering stats - available: %d, truncated: %d, est_tokens: ~%d",
         news_stats["articles_available"],
@@ -250,13 +255,13 @@ async def _process_ai_analysis(
     audit_plain, audit_markdown = _build_news_audit_sections(
         included_links=included_links,
         stats=news_stats,
-        hours=24,
+        hours=12,
     )
 
     news_metadata = {
         "included_links": included_links,
         "stats": news_stats,
-        "hours": 24,
+        "hours": 12,
         "audit_plain": audit_plain,
         "audit_markdown": audit_markdown,
     }
@@ -306,7 +311,7 @@ async def _process_ai_analysis(
 
     # --- OneDrive Uploads ---
     if not analysis_reported_with_news.startswith("Failed"):
-        onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}.md"
+        onedrive_filename_analysis_with_news = f"CryptoAnalysisWithNews_{today_date}_{run_id}.md"
         await upload_to_onedrive(
             filename=onedrive_filename_analysis_with_news,
             content=analysis_reported_with_news,
@@ -318,7 +323,7 @@ async def _process_ai_analysis(
             epub_bytes = await convert_markdown_to_epub_async(
                 analysis_reported_with_news,
                 metadata={
-                    "title": f"Crypto Analysis with News {today_date}",
+                    "title": f"Crypto Analysis with News {today_date} ({run_id})",
                     "author": "Crypto Morning Reports Bot",
                     "date": today_date,
                 },
@@ -337,13 +342,13 @@ async def _process_ai_analysis(
             else:
                 email_body = (
                     "Hi,\n\n"
-                    "Please find attached the EPUB version of today's detailed "
+                    f"Please find attached the EPUB version of the {run_id} "
                     "crypto analysis with news.\n\n"
                     "Regards,\n"
                     "Crypto Morning Reports Bot"
                 )
                 email_sent = await send_email_with_epub_attachment(
-                    subject=f"Crypto Analysis with News {today_date}",
+                    subject=f"Crypto Analysis with News {today_date} ({run_id})",
                     body=email_body,
                     attachment_bytes=epub_bytes,
                     attachment_filename=epub_filename,
@@ -354,7 +359,7 @@ async def _process_ai_analysis(
 
         # Save highlighted articles in "news" subfolder
         if not highlight_articles_message.startswith("Failed"):
-            onedrive_filename_highlights = f"HighlightedNews_{today_date}.md"
+            onedrive_filename_highlights = f"HighlightedNews_{today_date}_{run_id}.md"
             highlights_saved_to_onedrive = await upload_to_onedrive(
                 filename=onedrive_filename_highlights,
                 content=highlight_articles_message,
@@ -592,21 +597,30 @@ async def process_daily_report(  # noqa: PLR0915
     telegram_enabled,
     telegram_token,
     telegram_chat_id,
+    run_id: str = "AM",
 ):
-    """Process and send the daily cryptocurrency report via Telegram."""
+    """Process and send the daily cryptocurrency report via Telegram.
+
+    Args:
+        conn: Database connection
+        telegram_enabled: Whether Telegram messaging is enabled
+        telegram_token: Telegram bot token
+        telegram_chat_id: Target Telegram chat ID
+        run_id: Identifier for the run - 'AM' for morning, 'PM' for evening
+    """
     logger = app_logger
 
     # Get configured Telegram parse mode
     telegram_parse_mode = get_telegram_parse_mode()
-    logger.info("Using Telegram parse mode: %s", telegram_parse_mode)
+    logger.info("Using Telegram parse mode: %s (Run: %s)", telegram_parse_mode, run_id)
 
     symbols = fetch_symbols(conn)
     logger.info("Processing %d symbols for daily report...", len(symbols))
 
-    # 🧹 CLEANUP OLD CACHED ARTICLES - Remove articles older than 24 hours
+    # 🧹 CLEANUP OLD CACHED ARTICLES - Remove articles older than 12 hours
     logger.info("🧹 Cleaning up old cached articles...")
     try:
-        deleted_count = cleanup_old_articles(max_age_hours=24)
+        deleted_count = cleanup_old_articles(max_age_hours=12)
         stats = get_cache_statistics()
         logger.info(
             "✓ Cleanup complete: %d articles deleted, %d remain (%.2f MB)",
@@ -732,7 +746,7 @@ async def process_daily_report(  # noqa: PLR0915
 
     current_prices_section = build_current_prices_section(symbols)
 
-    message_part1 = f"Crypto Report: {today_date}\n" + current_prices_section
+    message_part1 = f"Crypto Report: {today_date} ({run_id})\n" + current_prices_section
     message_part1 += f"24h Range Report:\n<pre>{range_table}</pre>"
     message_part1 += f"Price Change Report: <pre>{pricechange_table}</pre>\n\n"
     message_part1 += f"RSI Report: <pre>{rsi_table}</pre>\n\n"
@@ -764,6 +778,7 @@ async def process_daily_report(  # noqa: PLR0915
         conn,
         today_date,
         logger,
+        run_id=run_id,
     )
 
     news_audit_plain = news_metadata.get("audit_plain")
@@ -874,8 +889,8 @@ async def process_daily_report(  # noqa: PLR0915
                 token=telegram_token,
                 chat_id=telegram_chat_id,
                 file_bytes=analysis_report.encode("utf-8"),
-                filename=f"CryptoAnalysisWithNews_{today_date}.md",
-                caption=f"Detailed Crypto Analysis with News {today_date}",
+                filename=f"CryptoAnalysisWithNews_{today_date}_{run_id}.md",
+                caption=f"Detailed Crypto Analysis with News {today_date} ({run_id})",
                 parse_mode=None,  # treat as plain text/markdown without Telegram parsing
             )
         except (OSError, ValueError, TypeError, KeyError) as doc_err:
