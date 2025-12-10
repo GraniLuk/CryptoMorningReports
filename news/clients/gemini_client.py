@@ -128,13 +128,27 @@ class GeminiClient(AIClient):
                 return f"Failed: {error_msg}"
             else:
                 if response.candidates and len(response.candidates) > 0:
-                    content = response.text
-                    model_type = "PRIMARY" if idx == 0 else "SECONDARY (FALLBACK)"
-                    app_logger.info(
-                        f"✅ [{model_type}] Successfully processed with {model_name}. "
-                        f"Length: {len(content)} chars",
-                    )
-                    return content
+                    try:
+                        content = response.text
+                        model_type = "PRIMARY" if idx == 0 else "SECONDARY (FALLBACK)"
+                        app_logger.info(
+                            f"✅ [{model_type}] Successfully processed with {model_name}. "
+                            f"Length: {len(content)} chars",
+                        )
+                    except ValueError as e:
+                        # Handle case where response has candidates but no valid text
+                        error_msg = f"Invalid response from Gemini API with {model_name}: {e!s}"
+                        app_logger.warning(error_msg)
+
+                        if not is_last_attempt:
+                            app_logger.info(
+                                f"⚠️  Retrying with fallback model: {models_to_try[idx + 1]}",
+                            )
+                            continue
+
+                        return f"Failed: {error_msg}"
+                    else:
+                        return content
 
                 error_msg = f"No valid response from Gemini API with {model_name}"
                 app_logger.warning(error_msg)
