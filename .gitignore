@@ -65,3 +65,4 @@ local_crypto.db-wal
 *.db.backup_*
 news/cache
 task_runner.log
+cvd_update.log
