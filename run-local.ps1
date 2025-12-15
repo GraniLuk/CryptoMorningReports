@@ -63,17 +63,43 @@ $env:LOG_LEVEL = $LogLevel
 Write-Host "📝 Log level set to: $LogLevel" -ForegroundColor Blue
 
 # Run the local runner
-if ($ReportType -eq 'current' -or ($ReportType -eq 'offline' -and $Symbol)) {
+# Normalize ReportType and support shorthand for AM/PM
+$normalizedReportType = if ($null -ne $ReportType) { $ReportType.ToLower() } else { 'daily' }
+
+# If user passes just AM or PM as the first argument, treat as daily report with run_id
+if ($normalizedReportType -in @('am', 'pm')) {
+    $runId = $normalizedReportType.ToUpper()
+    Write-Host "🚀 Running daily report with run id: $runId" -ForegroundColor Green
+    python local_runner.py daily $runId
+    Write-Host "" 
+    # Removed duplicate "✅ Done!" message
+    exit 0
+}
+
+if ($normalizedReportType -eq 'current' -or ($normalizedReportType -eq 'offline' -and $Symbol)) {
     if ([string]::IsNullOrEmpty($Symbol)) {
         Write-Host "❌ Error: Symbol required" -ForegroundColor Red
         Write-Host "Usage: .\run-local.ps1 current BTC" -ForegroundColor Yellow
         Write-Host "   or: .\run-local.ps1 offline BTC" -ForegroundColor Yellow
         exit 1
     }
-    python local_runner.py $ReportType $Symbol
+    python local_runner.py $normalizedReportType $Symbol
 }
 else {
-    python local_runner.py $ReportType
+    # For daily/weekly, allow passing AM/PM as second parameter
+    if ($normalizedReportType -eq 'daily' -and -not [string]::IsNullOrEmpty($Symbol)) {
+        $runIdCandidate = ($Symbol ?? '').ToUpper()
+        if ($runIdCandidate -in @('AM', 'PM')) {
+            python local_runner.py daily $runIdCandidate
+        }
+        else {
+            # If second parameter is not AM/PM treat it as symbol for current report
+            python local_runner.py daily
+        }
+    }
+    else {
+        python local_runner.py $normalizedReportType
+    }
 }
 
 Write-Host ""
