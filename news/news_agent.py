@@ -43,11 +43,11 @@ def create_ai_client(
         # Get model configuration from environment or use defaults
         primary = primary_model or os.environ.get(
             "GEMINI_PRIMARY_MODEL",
-            "gemini-2.0-flash-exp",
+            "gemini-2.5-flash",
         )
         secondary = secondary_model or os.environ.get(
             "GEMINI_SECONDARY_MODEL",
-            "gemini-1.5-flash",
+            "gemini-2.0-flash",
         )
         return GeminiClient(api_key, primary_model=primary, secondary_model=secondary)
     msg = f"Unsupported AI API type: {api_type}"

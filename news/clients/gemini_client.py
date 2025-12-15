@@ -5,7 +5,8 @@ import re
 import time
 from typing import TYPE_CHECKING
 
-import google.generativeai as genai
+from google import genai  # type: ignore[import-untyped]
+from google.genai import types  # type: ignore[import-untyped]
 
 from infra.telegram_logging_handler import app_logger
 from news.clients.base_client import AIClient
@@ -31,15 +32,15 @@ class GeminiClient(AIClient):
     def __init__(
         self,
         api_key: str,
-        primary_model: str = "gemini-2.0-flash-exp",
-        secondary_model: str = "gemini-1.5-flash",
+        primary_model: str = "gemini-2.5-flash",
+        secondary_model: str = "gemini-2.0-flash",
     ):
         """Initialize Gemini client.
 
         Args:
             api_key (str): Google Gemini API key
-            primary_model (str): Primary model to use (default: gemini-2.0-flash-exp)
-            secondary_model (str): Fallback model for retries (default: gemini-1.5-flash)
+            primary_model (str): Primary model to use (default: gemini-2.5-flash)
+            secondary_model (str): Fallback model for retries (default: gemini-2.0-flash)
 
         Raises:
             ValueError: If API key is missing
@@ -58,20 +59,11 @@ class GeminiClient(AIClient):
             msg = "GeminiClient initialization failed: API key missing"
             raise ValueError(msg)
 
-        configure_fn = getattr(genai, "configure", None)
-        if not callable(configure_fn):
-            msg = "genai.configure not available in google.generativeai module"
-            raise TypeError(msg)
-
-        generative_cls = getattr(genai, "GenerativeModel", None)
-        if generative_cls is None:
-            msg = "GenerativeModel not available in google.generativeai module"
-            raise RuntimeError(msg)
-
         try:
-            configure_fn(api_key=self.api_key)
-            self.generative_model_class = generative_cls
-            app_logger.info("GeminiClient [__init__]: Gemini SDK configured.")
+            # Create a new client instance for each GeminiClient
+            # This is simple and sufficient for twice-daily usage
+            self.client = genai.Client(api_key=self.api_key)
+            app_logger.info("GeminiClient [__init__]: Gemini SDK client created.")
         except Exception as e:
             msg = f"GeminiClient initialization failed: {e}"
             raise RuntimeError(msg) from e
@@ -102,8 +94,20 @@ class GeminiClient(AIClient):
             app_logger.info(f"🤖 [{model_type}] Attempting generation with model: {model_name}")
 
             try:
-                model_instance = self.generative_model_class(model_name)
-                response = model_instance.generate_content(prompt)
+                # Convert prompt format for new SDK
+                if isinstance(prompt, str):
+                    # Simple string prompt
+                    response = self.client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
+                else:
+                    # Structured prompt with multiple parts
+                    # New SDK expects list of Content objects or compatible dicts
+                    response = self.client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
             except Exception as e:  # noqa: BLE001 - Need to catch all Google API exceptions
                 # Catch all exceptions including google.api_core.exceptions.ResourceExhausted
                 error_msg = f"Failed with {model_name}: {e!s}"
