@@ -6,7 +6,6 @@ import time
 from typing import TYPE_CHECKING
 
 from google import genai  # type: ignore[import-untyped]
-from google.genai import types  # type: ignore[import-untyped]
 
 from infra.telegram_logging_handler import app_logger
 from news.clients.base_client import AIClient
