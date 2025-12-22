@@ -170,7 +170,9 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
     # Patch functions - must patch where they're imported in daily_report, not where they're defined
     monkeypatch.setattr(dr, "send_epub_report_via_email", fake_send_epub_report_via_email)
     monkeypatch.setattr(
-        dr, "save_highlighted_articles_to_onedrive", fake_save_highlighted_articles_to_onedrive,
+        dr,
+        "save_highlighted_articles_to_onedrive",
+        fake_save_highlighted_articles_to_onedrive,
     )
     monkeypatch.setattr(dr, "append_article_list_to_analysis", fake_append_article_list)
 
