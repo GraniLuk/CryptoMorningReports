@@ -147,17 +147,32 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
     analysis_text = "AI analysis content"
     highlight_text = "Bullet highlights"
 
-    def fake_analysis(*_args: Any, **_kwargs: Any) -> str:
-        return analysis_text
+    def fake_analysis(*_args: Any, **_kwargs: Any) -> tuple[str, str]:
+        return analysis_text, "gemini-2.5-pro"
 
     def fake_highlight(*_args: Any, **_kwargs: Any) -> str:
         return highlight_text
+
+    async def fake_send_epub_report_via_email(*args: Any, **kwargs: Any) -> None:
+        collected.setdefault("email_calls", []).append((args, kwargs))
+
+    async def fake_save_highlighted_articles_to_onedrive(*args: Any, **kwargs: Any) -> None:
+        collected.setdefault("highlights_calls", []).append((args, kwargs))
+
+    def fake_append_article_list(*args: Any, **kwargs: Any) -> str:
+        # Return the first arg (analysis) unchanged for simplicity
+        return args[0] if args else ""
 
     monkeypatch.setattr(dr, "get_detailed_crypto_analysis_with_news", fake_analysis)
     monkeypatch.setattr(dr, "highlight_articles", fake_highlight)
     monkeypatch.setattr(dr, "upload_to_onedrive", fake_upload_to_onedrive)
     monkeypatch.setattr(dr, "convert_markdown_to_epub_async", fake_convert_markdown_to_epub_async)
-    monkeypatch.setattr(dr, "send_email_with_epub_attachment", fake_send_email_with_epub_attachment)
+    # Patch functions - must patch where they're imported in daily_report, not where they're defined
+    monkeypatch.setattr(dr, "send_epub_report_via_email", fake_send_epub_report_via_email)
+    monkeypatch.setattr(
+        dr, "save_highlighted_articles_to_onedrive", fake_save_highlighted_articles_to_onedrive
+    )
+    monkeypatch.setattr(dr, "append_article_list_to_analysis", fake_append_article_list)
 
     class DummySymbol:
         symbol_id = 1
@@ -177,7 +192,9 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
         ),
     )
 
-    assert analysis_result.startswith(analysis_text)
+    # Analysis result now includes model info prefix: "Generated using {model} model\n\n{analysis}"
+    assert "Generated using gemini-2.5-pro model" in analysis_result
+    assert analysis_text in analysis_result
     assert "## News Audit Summary" in analysis_result
     assert analysis_result.rstrip().endswith("markdown audit")
     assert news_meta["included_links"] == {"https://example.com/article"}
