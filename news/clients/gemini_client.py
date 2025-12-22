@@ -6,6 +6,7 @@ import time
 from typing import TYPE_CHECKING
 
 from google import genai
+from google.genai import types
 
 from infra.telegram_logging_handler import app_logger
 from news.clients.base_client import AIClient
@@ -95,17 +96,28 @@ class GeminiClient(AIClient):
             try:
                 # Convert prompt format for new SDK
                 if isinstance(prompt, str):
-                    # Simple string prompt
+                    # Simple string prompt with high thinking for best analysis
                     response = self.client.models.generate_content(
                         model=model_name,
                         contents=prompt,
+                        config=types.GenerateContentConfig(
+                            thinking_config=types.ThinkingConfig(
+                                thinking_level=types.ThinkingLevel.HIGH,
+                            ),
+                        ),
                     )
                 else:
                     # Structured prompt with multiple parts
                     # New SDK expects list of Content objects or compatible dicts
+                    # Use high thinking level for maximum reasoning depth in crypto analysis
                     response = self.client.models.generate_content(
                         model=model_name,
                         contents=prompt,
+                        config=types.GenerateContentConfig(
+                            thinking_config=types.ThinkingConfig(
+                                thinking_level=types.ThinkingLevel.HIGH,
+                            ),
+                        ),
                     )
             except Exception as e:  # noqa: BLE001 - Need to catch all Google API exceptions
                 # Catch all exceptions including google.api_core.exceptions.ResourceExhausted
