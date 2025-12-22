@@ -93,12 +93,6 @@ def test_process_ai_analysis_uses_filtered_payload(monkeypatch: pytest.MonkeyPat
     async def fake_convert_markdown_to_epub_async(*_args: Any, **_kwargs: Any) -> bytes:
         return b"epub-bytes"
 
-    async def fake_send_email_with_epub_attachment(*args: Any, **kwargs: Any) -> bool:
-        collected.setdefault("email_calls", []).append((args, kwargs))
-        return True
-
-    monkeypatch.setenv("DAILY_REPORT_EMAIL_RECIPIENTS", "test@example.com")
-
     monkeypatch.setenv("DAILY_REPORT_EMAIL_RECIPIENTS", "test@example.com")
 
     def fake_collect(
