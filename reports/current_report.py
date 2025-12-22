@@ -364,7 +364,8 @@ async def _generate_ai_analysis(
                 prompt = f"{SYSTEM_PROMPT_SITUATION}\n\n{formatted_prompt}"
                 # Use the client's _generate_content method which includes retry logic
                 # Use secondary model (gemini-2.0-flash) for situation reports - simpler analysis
-                return ai_client._generate_content(prompt, model="gemini-2.0-flash")
+                result, _ = ai_client._generate_content(prompt, model="gemini-2.0-flash")
+                return result
 
         except Exception:
             error_msg = "Failed to get crypto situation analysis from Gemini"

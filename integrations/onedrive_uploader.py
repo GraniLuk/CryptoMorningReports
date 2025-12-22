@@ -58,3 +58,36 @@ async def upload_to_onedrive(filename: str, content: str, folder_path: str) -> b
     except Exception:
         logger.exception("An unexpected error occurred during OneDrive upload for '%s'", filename)
         return False
+
+
+async def save_highlighted_articles_to_onedrive(
+    highlight_message: str,
+    today_date: str,
+    run_id: str,
+) -> None:
+    """Save highlighted articles to OneDrive news folder.
+
+    Args:
+        highlight_message: Highlighted articles content
+        today_date: Current date string
+        run_id: Run identifier (AM/PM)
+    """
+    if highlight_message.startswith("Failed"):
+        return
+
+    onedrive_filename_highlights = f"HighlightedNews_{today_date}_{run_id}.md"
+    highlights_saved = await upload_to_onedrive(
+        filename=onedrive_filename_highlights,
+        content=highlight_message,
+        folder_path="news",
+    )
+    if highlights_saved:
+        app_logger.info(
+            "Highlighted articles for %s saved to OneDrive news folder.",
+            today_date,
+        )
+    else:
+        app_logger.warning(
+            "Failed to save highlighted articles for %s to OneDrive.",
+            today_date,
+        )

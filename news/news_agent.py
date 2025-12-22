@@ -6,6 +6,7 @@ backward compatibility with legacy function interfaces.
 
 from __future__ import annotations
 
+import json
 import os
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,8 @@ from news.clients import GeminiClient, PerplexityClient
 
 
 if TYPE_CHECKING:
+    from logging import Logger
+
     import pyodbc
 
     from infra.sql_connection import SQLiteConnectionWrapper
@@ -129,6 +132,35 @@ def get_relevant_cached_articles(hours: int = 24) -> list[CachedArticle]:
     """Retrieve cached articles that remain relevant after AI preprocessing."""
     cached_articles = get_recent_articles(hours=hours)
     return [article for article in cached_articles if article.is_relevant]
+
+
+def append_article_list_to_analysis(
+    analysis: str,
+    news_payload: str,
+    logger: Logger,
+) -> str:
+    """Append list of articles to analysis report.
+
+    Args:
+        analysis: Analysis report text
+        news_payload: JSON string of news articles
+        logger: Logger instance
+
+    Returns:
+        Analysis report with article list appended
+    """
+    if analysis.startswith("Failed"):
+        return analysis
+
+    try:
+        articles = json.loads(news_payload)
+        article_list = "\n\n## Articles Included in Analysis\n\n" + "\n".join(
+            f"- {art['title']} ({art['source']})" for art in articles
+        )
+        return analysis + article_list
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        logger.warning("Failed to parse news payload for article list: %s", e)
+        return analysis
 
 
 if __name__ == "__main__":

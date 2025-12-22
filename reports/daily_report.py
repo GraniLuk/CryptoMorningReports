@@ -10,9 +10,10 @@ from etf.etf_report import fetch_etf_summary_report, update_etf_data
 from etf.etf_repository import ETFRepository
 from infra.configuration import get_telegram_parse_mode
 from infra.telegram_logging_handler import app_logger
-from integrations.email_sender import send_email_with_epub_attachment
+from integrations.email_sender import send_epub_report_via_email
 from integrations.onedrive_uploader import (
-    upload_to_onedrive,  # Import for OneDrive uploads
+    save_highlighted_articles_to_onedrive,
+    upload_to_onedrive,
 )
 from integrations.pandoc_converter import convert_markdown_to_epub_async
 from launchpool.launchpool_report import check_gempool_articles
@@ -23,6 +24,7 @@ from news.article_cache import (
     get_recent_articles,
 )
 from news.news_agent import (
+    append_article_list_to_analysis,
     get_detailed_crypto_analysis_with_news,
     get_relevant_cached_articles,
     highlight_articles,
@@ -312,15 +314,11 @@ async def _process_ai_analysis(
     )
 
     # Add list of articles included in analysis
-    if not analysis_reported_with_news.startswith("Failed"):
-        try:
-            articles = json.loads(news_payload)
-            article_list = "\n\n## Articles Included in Analysis\n\n" + "\n".join(
-                f"- {art['title']} ({art['source']})" for art in articles
-            )
-            analysis_reported_with_news += article_list
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            logger.warning("Failed to parse news payload for article list: %s", e)
+    analysis_reported_with_news = append_article_list_to_analysis(
+        analysis_reported_with_news,
+        news_payload,
+        logger,
+    )
 
     if not analysis_reported_with_news.startswith("Failed") and audit_markdown:
         analysis_reported_with_news += "\n\n## News Audit Summary\n\n" + audit_markdown
@@ -347,50 +345,10 @@ async def _process_ai_analysis(
         except RuntimeError as convert_err:
             logger.warning("Failed to convert analysis markdown to EPUB: %s", convert_err)
         else:
-            recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
-            recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
-
-            if not recipients:
-                logger.info(
-                    "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; "
-                    "skipping email dispatch.",
-                )
-            else:
-                email_body = (
-                    "Hi,\n\n"
-                    f"Please find attached the EPUB version of the {run_id} "
-                    "crypto analysis with news.\n\n"
-                    "Regards,\n"
-                    "Crypto Morning Reports Bot"
-                )
-                email_sent = await send_email_with_epub_attachment(
-                    subject=f"Crypto Analysis with News {today_date} ({run_id})",
-                    body=email_body,
-                    attachment_bytes=epub_bytes,
-                    attachment_filename=epub_filename,
-                    recipients=recipients,
-                )
-                if not email_sent:
-                    logger.warning("Failed to send EPUB analysis report via email.")
+            await send_epub_report_via_email(epub_bytes, epub_filename, today_date, run_id)
 
         # Save highlighted articles in "news" subfolder
-        if not highlight_articles_message.startswith("Failed"):
-            onedrive_filename_highlights = f"HighlightedNews_{today_date}_{run_id}.md"
-            highlights_saved_to_onedrive = await upload_to_onedrive(
-                filename=onedrive_filename_highlights,
-                content=highlight_articles_message,
-                folder_path="news",
-            )
-            if highlights_saved_to_onedrive:
-                logger.info(
-                    "Highlighted articles for %s saved to OneDrive news folder.",
-                    today_date,
-                )
-            else:
-                logger.warning(
-                    "Failed to save highlighted articles for %s to OneDrive.",
-                    today_date,
-                )
+        await save_highlighted_articles_to_onedrive(highlight_articles_message, today_date, run_id)
 
     return analysis_reported_with_news, news_metadata
 

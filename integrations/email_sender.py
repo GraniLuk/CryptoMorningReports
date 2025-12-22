@@ -85,3 +85,44 @@ async def send_email_with_epub_attachment(
         app_logger.info("Sent EPUB report email to %s", ", ".join(recipient_list))
         return True
     return False
+
+
+async def send_epub_report_via_email(
+    epub_bytes: bytes,
+    epub_filename: str,
+    today_date: str,
+    run_id: str,
+) -> None:
+    """Send EPUB analysis report via email to configured recipients.
+
+    Args:
+        epub_bytes: EPUB file content as bytes
+        epub_filename: Name for the EPUB attachment
+        today_date: Current date string
+        run_id: Run identifier (AM/PM)
+    """
+    recipients_env = os.environ.get("DAILY_REPORT_EMAIL_RECIPIENTS", "")
+    recipients = [addr.strip() for addr in recipients_env.split(",") if addr.strip()]
+
+    if not recipients:
+        app_logger.info(
+            "No recipients configured in DAILY_REPORT_EMAIL_RECIPIENTS; skipping email dispatch.",
+        )
+        return
+
+    email_body = (
+        "Hi,\n\n"
+        f"Please find attached the EPUB version of the {run_id} "
+        "crypto analysis with news.\n\n"
+        "Regards,\n"
+        "Crypto Morning Reports Bot"
+    )
+    email_sent = await send_email_with_epub_attachment(
+        subject=f"Crypto Analysis with News {today_date} ({run_id})",
+        body=email_body,
+        attachment_bytes=epub_bytes,
+        attachment_filename=epub_filename,
+        recipients=recipients,
+    )
+    if not email_sent:
+        app_logger.warning("Failed to send EPUB analysis report via email.")
