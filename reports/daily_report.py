@@ -280,7 +280,7 @@ async def _process_ai_analysis(
 
     # Use None to let configured primary model be used for detailed analysis
     # Fallback to secondary model will trigger automatically on rate limits
-    analysis_reported_with_news = get_detailed_crypto_analysis_with_news(
+    analysis_reported_with_news, model_used = get_detailed_crypto_analysis_with_news(
         ai_api_key,
         aggregated_with_prices,
         news_payload,
@@ -288,6 +288,12 @@ async def _process_ai_analysis(
         conn,
         model=None,  # Use configured primary model (gemini-2.5-pro from .env)
     )
+
+    # Add model information at the beginning
+    if not analysis_reported_with_news.startswith("Failed"):
+        model_info = f"Generated using {model_used} model\n\n"
+        analysis_reported_with_news = model_info + analysis_reported_with_news
+
     # Use configured secondary model for highlighting - simple categorization
     # Get secondary model from environment for Gemini, None for other providers
     secondary_model = None

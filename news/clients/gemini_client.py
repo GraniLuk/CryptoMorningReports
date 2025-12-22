@@ -71,7 +71,7 @@ class GeminiClient(AIClient):
         self,
         prompt: str | list[dict[str, str]],
         model: str | None = None,
-    ) -> str:
+    ) -> tuple[str, str]:
         """Generate content using Gemini API with retry-with-fallback support.
 
         Args:
@@ -128,11 +128,21 @@ class GeminiClient(AIClient):
                     continue
 
                 app_logger.exception(f"All retry attempts exhausted: {error_msg}")
-                return f"Failed: {error_msg}"
+                return f"Failed: {error_msg}", model_name
             else:
                 if response.candidates and len(response.candidates) > 0:
                     try:
                         content = response.text
+                        if content is None:
+                            error_msg = f"Empty response from Gemini API with {model_name}"
+                            app_logger.warning(error_msg)
+                            if not is_last_attempt:
+                                app_logger.info(
+                                    f"⚠️  Retrying with fallback model: {models_to_try[idx + 1]}",
+                                )
+                                continue
+                            return f"Failed: {error_msg}", model_name
+
                         model_type = "PRIMARY" if idx == 0 else "SECONDARY (FALLBACK)"
                         app_logger.info(
                             f"✅ [{model_type}] Successfully processed with {model_name}. "
@@ -149,9 +159,9 @@ class GeminiClient(AIClient):
                             )
                             continue
 
-                        return f"Failed: {error_msg}"
+                        return f"Failed: {error_msg}", model_name
                     else:
-                        return content
+                        return content, model_name
 
                 error_msg = f"No valid response from Gemini API with {model_name}"
                 app_logger.warning(error_msg)
@@ -160,10 +170,12 @@ class GeminiClient(AIClient):
                     app_logger.info(f"⚠️  Retrying with fallback model: {models_to_try[idx + 1]}")
                     continue
 
-                return f"Failed: {error_msg}"
+                return f"Failed: {error_msg}", model_name
 
+        last_model = models_to_try[-1] if models_to_try else "unknown"
         return (
-            f"Failed: All retry attempts exhausted after trying models: {', '.join(models_to_try)}"
+            f"Failed: All retry attempts exhausted after trying models: {', '.join(models_to_try)}",
+            last_model,
         )
 
     def _identify_part_type(self, idx: int, text_content: str) -> str:
@@ -244,7 +256,7 @@ class GeminiClient(AIClient):
         news_feeded: str,
         conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
         model: str | None = None,
-    ) -> str:
+    ) -> tuple[str, str]:
         """Get detailed crypto analysis with news using Gemini API.
 
         Args:
@@ -254,7 +266,7 @@ class GeminiClient(AIClient):
             model: Optional specific model to use (overrides primary_model)
 
         Returns:
-            str: Generated analysis or error message
+            tuple[str, str]: (Generated analysis or error message, model_used)
 
         """
         start_time = time.time()
@@ -296,9 +308,9 @@ class GeminiClient(AIClient):
         app_logger.info("Sending request to Gemini API...")
         app_logger.info(f"{'=' * 80}\n")
 
-        result = self._generate_content(prompt_parts, model=model)
+        result, model_used = self._generate_content(prompt_parts, model=model)
         app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
-        return result
+        return result, model_used
 
     def highlight_articles(
         self,
@@ -332,4 +344,5 @@ class GeminiClient(AIClient):
             f"{USER_PROMPT_HIGHLIGHT.format(news_feeded=news_feeded, symbol_names=symbol_names)}"
         )
 
-        return self._generate_content(prompt, model=model)
+        result, _ = self._generate_content(prompt, model=model)
+        return result

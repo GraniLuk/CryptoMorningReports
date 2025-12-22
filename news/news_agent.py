@@ -63,7 +63,7 @@ def get_detailed_crypto_analysis_with_news(
     model: str | None = None,
     primary_model: str | None = None,
     secondary_model: str | None = None,
-) -> str:
+) -> tuple[str, str]:
     """Get detailed cryptocurrency analysis combining indicators and news data.
 
     Args:
@@ -77,7 +77,7 @@ def get_detailed_crypto_analysis_with_news(
         secondary_model: Secondary/fallback model for client creation (Gemini only)
 
     Returns:
-        str: Generated analysis or error message
+        tuple[str, str]: (Generated analysis or error message, model_used)
 
     """
     client = create_ai_client(api_type, api_key, primary_model, secondary_model)

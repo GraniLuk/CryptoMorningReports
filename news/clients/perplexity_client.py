@@ -76,8 +76,12 @@ class PerplexityClient(AIClient):
         indicators_message: str,
         news_feeded: str,
         conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
-    ) -> str:
-        """Get detailed crypto analysis with news using Perplexity API."""
+    ) -> tuple[str, str]:
+        """Get detailed crypto analysis with news using Perplexity API.
+
+        Returns:
+            tuple[str, str]: (Generated analysis or error message, model_used)
+        """
         start_time = time.time()
         app_logger.info("Starting detailed crypto analysis with news using Perplexity")
         app_logger.debug(f"Input news articles count: {len(news_feeded)}")
@@ -102,7 +106,8 @@ class PerplexityClient(AIClient):
         result = retry_with_fallback_models(models, request_func, "Crypto analysis with news")
 
         app_logger.debug(f"Processing time: {time.time() - start_time:.2f} seconds")
-        return result
+        # Perplexity uses sonar-deep-research model
+        return result, "sonar-deep-research"
 
     def highlight_articles(self, user_crypto_list: list["Symbol"], news_feeded: str) -> str:
         """Highlight articles based on user crypto list and news feed."""

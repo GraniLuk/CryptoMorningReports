@@ -20,7 +20,7 @@ class AIClient(ABC):
         indicators_message: str,
         news_feeded: str,
         conn: "pyodbc.Connection | SQLiteConnectionWrapper | None" = None,
-    ) -> str:
+    ) -> tuple[str, str]:
         """Get detailed crypto analysis with news context.
 
         Args:
@@ -29,7 +29,7 @@ class AIClient(ABC):
             conn (object, optional): Database connection object
 
         Returns:
-            str: Analysis result or error message
+            tuple[str, str]: (Analysis result or error message, model_used)
 
         """
 
