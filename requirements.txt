@@ -14,7 +14,7 @@ azure-monitor-query==2.0.0
 requests==2.32.5
 aiohttp==3.13.2
 python-dotenv==1.2.1
-python-binance==1.0.33
+python-binance==1.0.34
 python-kucoin==2.2.0
 pyodbc==5.3.0
 pycoingecko==3.2.0
