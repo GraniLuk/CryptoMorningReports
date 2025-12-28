@@ -79,13 +79,26 @@ def fetch_sopr_metrics(
     table.align["Value"] = "r"  # Right align values
 
     for metric, data in metrics.items():
-        value = float(data.get("sopr") or data.get("sthSopr") or data.get("lthSopr"))
+        value = data.get("sopr") or data.get("sthSopr") or data.get("lthSopr")
+        if value is None:
+            app_logger.warning(f"No value found for {metric}, skipping")
+            continue
+        value = float(value)
         table.add_row([metric, f"{value:.4f}"])
 
     # Save results to database
     if conn:
-        save_sopr_results(conn, metrics)
-        app_logger.info("SOPR metrics fetched and saved successfully")
+        # Filter out metrics with no valid values
+        filtered_metrics = {
+            name: data
+            for name, data in metrics.items()
+            if (data.get("sopr") or data.get("sthSopr") or data.get("lthSopr")) is not None
+        }
+        if filtered_metrics:
+            save_sopr_results(conn, filtered_metrics)
+            app_logger.info("SOPR metrics fetched and saved successfully")
+        else:
+            app_logger.warning("No valid SOPR metrics to save")
 
     return table
 
