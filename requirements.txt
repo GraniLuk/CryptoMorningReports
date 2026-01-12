@@ -29,7 +29,7 @@ pytest-cov==7.0.0
 pytest-timeout==2.4.0
 ruff==0.14.10
 cryptography==46.0.3
-plotly==6.5.0
+plotly==6.5.1
 google-genai==1.57.0
 ollama==0.6.1
 pypandoc==1.16.2
