@@ -1,5 +1,5 @@
 # Schedule Crypto Daily Report - Windows Task Scheduler Setup
-# This script creates scheduled tasks to run the daily report twice a day (4 AM and 4 PM)
+# This script creates scheduled tasks to run the daily report twice a day (5 AM and 5 PM)
 
 $TaskNameAM = "CryptoDailyReport_AM"
 $TaskNamePM = "CryptoDailyReport_PM"
@@ -91,9 +91,9 @@ $ActionPM = New-ScheduledTaskAction `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$WrapperScriptPM`"" `
     -WorkingDirectory $ScriptPath
 
-# Create triggers - AM at 4:00 AM, PM at 4:00 PM
-$TriggerAM = New-ScheduledTaskTrigger -Daily -At "04:00AM"
-$TriggerPM = New-ScheduledTaskTrigger -Daily -At "04:00PM"
+# Create triggers - AM at 5:00 AM, PM at 5:00 PM
+$TriggerAM = New-ScheduledTaskTrigger -Daily -At "05:00AM"
+$TriggerPM = New-ScheduledTaskTrigger -Daily -At "05:00PM"
 
 # Create settings
 $Settings = New-ScheduledTaskSettingsSet `
@@ -138,13 +138,13 @@ try {
     Write-Host "📋 Task Details:" -ForegroundColor Cyan
     Write-Host "  Morning Task:  $TaskNameAM" -ForegroundColor Gray
     Write-Host "  Evening Task:  $TaskNamePM" -ForegroundColor Gray
-    Write-Host "  AM Schedule:   Daily at 4:00 AM" -ForegroundColor Gray
-    Write-Host "  PM Schedule:   Daily at 4:00 PM" -ForegroundColor Gray
+    Write-Host "  AM Schedule:   Daily at 5:00 AM" -ForegroundColor Gray
+    Write-Host "  PM Schedule:   Daily at 5:00 PM" -ForegroundColor Gray
     Write-Host "  User:          $env:USERNAME" -ForegroundColor Gray
     Write-Host "  Script:        $PythonScriptPath" -ForegroundColor Gray
     Write-Host "  Python:        $VenvPython" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "🔍 What happens at 4:00 AM and 4:00 PM daily:" -ForegroundColor Cyan
+    Write-Host "🔍 What happens at 5:00 AM and 5:00 PM daily:" -ForegroundColor Cyan
     Write-Host "  1. Updates latest market data from Binance (cached if already fetched)" -ForegroundColor Gray
     Write-Host "  2. Calculates fresh RSI, MA, MACD indicators" -ForegroundColor Gray
     Write-Host "  3. Fetches live derivatives and order book data" -ForegroundColor Gray
