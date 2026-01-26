@@ -7,7 +7,7 @@ pandas==2.3.3
 pandas-stubs==2.3.3.260113
 configparser==7.2.0
 prettytable==3.17.0
-python-telegram-bot==22.5
+python-telegram-bot==22.6
 azure-data-tables==12.7.0
 azure-identity==1.25.1
 azure-monitor-query==2.0.0
