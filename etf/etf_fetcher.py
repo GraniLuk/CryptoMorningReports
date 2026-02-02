@@ -13,9 +13,9 @@ from infra.telegram_logging_handler import app_logger
 
 # Configure yfinance with new config method (v1.0+)
 # Enable retries for transient network errors with exponential backoff
-yf.config.network.retries = 3  # type: ignore[attr-defined]
+# yf.config.network.retries = 3  # type: ignore[attr-defined]
 # Enable debug logging for troubleshooting network issues
-yf.config.debug.logging = False  # type: ignore[attr-defined]
+# yf.config.debug.logging = False  # type: ignore[attr-defined]
 
 
 # ETF ticker symbols by coin type
@@ -56,6 +56,10 @@ def fetch_yfinance_etf_data() -> list[dict[str, Any]] | None:
         List of ETF data dictionaries or None if failed
     """
     try:
+        # Configure yfinance settings for this session
+        yf.config.network.retries = 3  # type: ignore[attr-defined]
+        yf.config.debug.logging = False  # type: ignore[attr-defined]
+
         app_logger.info("Fetching ETF data from YFinance API (batch mode)...")
 
         # Combine all tickers
@@ -183,6 +187,7 @@ def fetch_etf_data() -> list[dict[str, Any]] | None:
     and volume data.
 
     Returns:
+
         List of ETF data dictionaries or None if all sources failed
     """
     # Try DefiLlama scraping first (complete data with flows and AUM)
