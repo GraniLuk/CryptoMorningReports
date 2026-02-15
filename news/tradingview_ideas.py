@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
-from typing import Iterable
 
 import requests
 from bs4 import BeautifulSoup
@@ -69,12 +69,18 @@ def _extract_ideas_from_html(
     symbol_pair: str,
 ) -> list[dict[str, str]]:
     soup = BeautifulSoup(html, "html.parser")
-    idea_links = soup.find_all("a", href=True)
-
     symbol_slug = symbol_pair.strip().upper()
 
     ideas: list[dict[str, str]] = []
     seen: set[str] = set()
+
+    _extend_from_json(soup, base_url, symbol_slug, ideas, seen)
+    _extend_from_slug_pattern(html, base_url, symbol_slug, ideas, seen)
+
+    if ideas:
+        return ideas
+
+    idea_links = soup.find_all("a", href=True)
 
     for link in idea_links:
         href = link.get("href", "")
@@ -96,6 +102,109 @@ def _extract_ideas_from_html(
         seen.add(full_url)
 
     return ideas
+
+
+def _extend_from_json(
+    soup: BeautifulSoup,
+    base_url: str,
+    symbol_slug: str,
+    ideas: list[dict[str, str]],
+    seen: set[str],
+) -> None:
+    for script in soup.find_all("script"):
+        script_text = script.string
+        if not script_text:
+            continue
+
+        payloads = _load_json_candidates(script_text)
+        for payload in payloads:
+            for title, url in _extract_chart_links_from_json(payload, symbol_slug):
+                full_url = url if url.startswith("http") else base_url + url
+                if full_url in seen:
+                    continue
+                ideas.append({"title": title, "url": full_url})
+                seen.add(full_url)
+
+
+def _load_json_candidates(script_text: str) -> list[object]:
+    script_text = script_text.strip()
+    if not script_text:
+        return []
+
+    candidates = []
+    try:
+        candidates.append(json.loads(script_text))
+    except json.JSONDecodeError:
+        pass
+
+    # Heuristic: look for embedded JSON assignment blocks.
+    match = re.search(r"(\{.*\}|\[.*\])", script_text, flags=re.DOTALL)
+    if match:
+        try:
+            candidates.append(json.loads(match.group(1)))
+        except json.JSONDecodeError:
+            pass
+
+    return candidates
+
+
+def _extract_chart_links_from_json(
+    payload: object,
+    symbol_slug: str,
+) -> list[tuple[str, str]]:
+    matches: list[tuple[str, str]] = []
+    for node in _walk_json(payload):
+        if not isinstance(node, dict):
+            continue
+        url = node.get("url") or node.get("link")
+        if not isinstance(url, str):
+            continue
+        if f"/chart/{symbol_slug}/" not in url:
+            continue
+        title = _coerce_title(node)
+        matches.append((title, url))
+    return matches
+
+
+def _coerce_title(node: dict) -> str:
+    for key in ("title", "headline", "name"):
+        value = node.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return "TradingView Idea"
+
+
+def _walk_json(payload: object) -> list[object]:
+    stack = [payload]
+    nodes: list[object] = []
+    while stack:
+        node = stack.pop()
+        nodes.append(node)
+        if isinstance(node, dict):
+            stack.extend(node.values())
+        elif isinstance(node, list):
+            stack.extend(node)
+    return nodes
+
+
+def _extend_from_slug_pattern(
+    html: str,
+    base_url: str,
+    symbol_slug: str,
+    ideas: list[dict[str, str]],
+    seen: set[str],
+) -> None:
+    pattern = re.compile(
+        rf"/chart/{re.escape(symbol_slug)}/[A-Za-z0-9]+-[A-Za-z0-9\-]+/",
+    )
+
+    for match in pattern.finditer(html):
+        href = match.group(0)
+        full_url = base_url + href
+        if full_url in seen:
+            continue
+        ideas.append({"title": _derive_title_from_href(href), "url": full_url})
+        seen.add(full_url)
 
 
 def _extract_link_title(link) -> str:

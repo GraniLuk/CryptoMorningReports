@@ -325,7 +325,7 @@ def format_tradingview_ideas_for_telegram(ideas: list[dict[str, str]]) -> str:
         title = idea.get("title", "TradingView Idea")
         url = idea.get("url", "")
         if url:
-            formatted += f"{i}. <a href=\"{url}\">{title}</a>\n"
+            formatted += f'{i}. <a href="{url}">{title}</a>\n'
         else:
             formatted += f"{i}. {title}\n"
     return formatted
