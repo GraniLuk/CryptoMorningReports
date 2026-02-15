@@ -787,15 +787,15 @@ class TestComprehensiveLazyProcessing:
         # Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT
         with (
             patch("news.rss_parser.get_articles_for_symbol") as mock_get_articles,
-            patch("news.rss_parser.get_news") as mock_get_news,
+            patch("news.rss_parser.get_news_for_symbol") as mock_get_news,
         ):
             mock_get_news.return_value = None
             mock_get_articles.return_value = []
 
             result = fetch_and_cache_articles_for_symbol("BTC", hours=24)
 
-            # Verify get_news was called with CURRENT_REPORT_ARTICLE_LIMIT
-            mock_get_news.assert_called_once_with(target_relevant=5)
+            # Verify get_news_for_symbol was called with CURRENT_REPORT_ARTICLE_LIMIT
+            mock_get_news.assert_called_once_with("BTC", target_relevant=5)
 
             # Verify get_articles_for_symbol was called with correct parameters
             mock_get_articles.assert_called_once_with("BTC", 24)
@@ -842,15 +842,15 @@ class TestComprehensiveLazyProcessing:
                 "news.rss_parser.get_articles_for_symbol",
                 return_value=mock_cached_articles,
             ) as mock_get_articles,
-            patch("news.rss_parser.get_news") as mock_get_news,
+            patch("news.rss_parser.get_news_for_symbol") as mock_get_news,
         ):
             mock_get_news.return_value = None  # RSS processing completes without error
 
             # Simulate current report requesting articles for BTC
             result = fetch_and_cache_articles_for_symbol("BTC", hours=24)
 
-            # Verify that get_news was called (lazy processing triggered)
-            mock_get_news.assert_called_once_with(target_relevant=3)  # Default limit
+            # Verify that get_news_for_symbol was called (lazy processing triggered)
+            mock_get_news.assert_called_once_with("BTC", target_relevant=3)  # Default limit
 
             # Verify that get_articles_for_symbol was called to retrieve from cache
             mock_get_articles.assert_called_once_with("BTC", 24)

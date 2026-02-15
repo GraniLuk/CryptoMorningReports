@@ -225,6 +225,8 @@ def _process_entries_until_target(
     cache_enabled: bool,
     symbols_list: list,
     target_relevant: int,
+    required_symbols: list[str] | None = None,
+    focus_symbols: list[str] | None = None,
 ) -> tuple[list[dict[str, object]], int]:
     """Process RSS entries until target number of relevant articles are found.
 
@@ -234,6 +236,8 @@ def _process_entries_until_target(
         cache_enabled: Whether article caching is enabled
         symbols_list: List of symbols for detection
         target_relevant: Target number of relevant articles to find
+        required_symbols: If provided, only count articles that mention these symbols
+        focus_symbols: If provided, focus AI relevance scoring on these symbols
 
     Returns:
         Tuple of (relevant_articles, total_processed)
@@ -253,6 +257,8 @@ def _process_entries_until_target(
             current_time=current_time,
             cache_enabled=cache_enabled,
             symbols_list=symbols_list,
+            required_symbols=required_symbols,
+            focus_symbols=focus_symbols,
         )
 
         if processed is None:
@@ -377,6 +383,73 @@ def get_news(target_relevant: int | None = None) -> str:
     return json.dumps(relevant_articles, indent=2)
 
 
+def get_news_for_symbol(symbol: str, target_relevant: int | None = None) -> str:
+    """Fetch news articles for a specific symbol using all feeds.
+
+    This uses the same lazy processing pipeline as get_news(), but only counts
+    articles as relevant if they include the target symbol. It also focuses
+    the AI relevance scoring on the target symbol.
+
+    Args:
+        symbol: Cryptocurrency symbol to target (e.g., 'BTC', 'ETH')
+        target_relevant: Number of relevant articles to find. If None, uses NEWS_ARTICLE_LIMIT.
+
+    Returns:
+        JSON string containing a list of newly cached relevant articles.
+    """
+    if target_relevant is None:
+        target_relevant = NEWS_ARTICLE_LIMIT
+
+    normalized_symbol = symbol.strip().upper()
+    if not normalized_symbol:
+        return json.dumps([], indent=2)
+
+    start_time = datetime.now(UTC)
+    current_time = datetime.now(UTC)
+    cache_enabled = is_article_cache_enabled()
+    symbols_list = _load_symbols_for_detection(cache_enabled=cache_enabled)
+
+    all_entries = _collect_all_rss_entries(
+        cache_enabled=cache_enabled,
+        current_time=current_time,
+    )
+
+    relevant_articles, total_processed = _process_entries_until_target(
+        entries=all_entries,
+        current_time=current_time,
+        cache_enabled=cache_enabled,
+        symbols_list=symbols_list,
+        target_relevant=target_relevant,
+        required_symbols=[normalized_symbol],
+        focus_symbols=[normalized_symbol],
+    )
+
+    end_time = datetime.now(UTC)
+    total_time = end_time - start_time
+    articles_found = len(relevant_articles)
+
+    app_logger.info(
+        "RSS symbol processing completed: %s %d/%d target articles found, "
+        "%d articles processed in %.1fs (avg: %.1fs per article)",
+        normalized_symbol,
+        articles_found,
+        target_relevant,
+        total_processed,
+        total_time.total_seconds(),
+        total_time.total_seconds() / max(total_processed, 1),
+    )
+
+    if articles_found < target_relevant:
+        app_logger.warning(
+            "RSS symbol processing: Only found %d/%d target articles for %s.",
+            articles_found,
+            target_relevant,
+            normalized_symbol,
+        )
+
+    return json.dumps(relevant_articles, indent=2)
+
+
 def fetch_and_cache_articles_for_symbol(
     symbol: str,
     hours: int = 24,
@@ -399,7 +472,7 @@ def fetch_and_cache_articles_for_symbol(
     # Fetch fresh articles from RSS feeds (will cache new ones automatically)
     # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
     try:
-        get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
+        get_news_for_symbol(symbol, target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
     except (OSError, ValueError, KeyError) as e:
         app_logger.warning(f"Error fetching fresh RSS articles: {e!s}")
 
@@ -575,6 +648,8 @@ def _process_feed_entry(
     current_time: datetime,
     cache_enabled: bool,
     symbols_list: list,
+    required_symbols: list[str] | None = None,
+    focus_symbols: list[str] | None = None,
 ) -> tuple[CachedArticle | None, dict[str, object] | None] | None:
     entry_link, entry_title, entry_published = _extract_entry_fields(entry)
 
@@ -593,7 +668,8 @@ def _process_feed_entry(
         symbols_list=symbols_list,
     )
 
-    focus_symbols = [symbol.symbol_name for symbol in symbols_list] if symbols_list else None
+    if focus_symbols is None:
+        focus_symbols = [symbol.symbol_name for symbol in symbols_list] if symbols_list else None
     enrichment = _enrich_article_with_ai(
         title=entry_title,
         full_content=full_content,
@@ -638,7 +714,12 @@ def _process_feed_entry(
             analysis_notes=enrichment.notes,
         )
 
-    relevant_payload = article_payload if enrichment.is_relevant else None
+    matches_required = True
+    if required_symbols:
+        required_set = {symbol.upper() for symbol in required_symbols if symbol}
+        matches_required = bool(required_set.intersection(normalized_symbols))
+
+    relevant_payload = article_payload if enrichment.is_relevant and matches_required else None
 
     return cached_article, relevant_payload
 

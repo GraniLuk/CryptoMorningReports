@@ -160,9 +160,12 @@ def test_summarize_article_builds_prompt(
 
     client = oc.OllamaClient()
     captured: dict[str, Any] = {}
-    client.generate_text = lambda prompt, temperature: captured.update(  # type: ignore[method-assign]
-        {"prompt": prompt, "temperature": temperature, "result": "summary"},
-    ) or "summary"
+    client.generate_text = (
+        lambda prompt, temperature: captured.update(  # type: ignore[method-assign]
+            {"prompt": prompt, "temperature": temperature, "result": "summary"},
+        )
+        or "summary"
+    )
 
     result = client.summarize_article(
         title="  Flash Crash ",
@@ -177,4 +180,3 @@ def test_summarize_article_builds_prompt(
     assert "Flash Crash" in prompt_text
     assert "BTC broke support." in prompt_text
     assert "210 words" in prompt_text
-

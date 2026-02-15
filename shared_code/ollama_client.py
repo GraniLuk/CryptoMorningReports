@@ -103,7 +103,10 @@ def get_ollama_client() -> OllamaClient:
 
 
 def _resolve_settings(
-    *, host: str | None, model: str | None, timeout: float | None,
+    *,
+    host: str | None,
+    model: str | None,
+    timeout: float | None,
 ) -> OllamaSettings:
     base_settings = get_ollama_settings()
 
@@ -130,4 +133,3 @@ def _load_ollama() -> ModuleType:
             "Add 'ollama' to requirements.txt and install dependencies."
         )
         raise OllamaClientError(message) from exc
-

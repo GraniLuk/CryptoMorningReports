@@ -351,7 +351,9 @@ class TestCurrentReportLimits:
     @patch("news.rss_parser.get_news")
     @patch("news.rss_parser.get_articles_for_symbol")
     def test_fetch_and_cache_articles_for_symbol_integration(
-        self, mock_get_articles, mock_get_news,
+        self,
+        mock_get_articles,
+        mock_get_news,
     ):
         """Test that fetch_and_cache_articles_for_symbol uses CURRENT_REPORT_ARTICLE_LIMIT."""
         # Mock the dependencies

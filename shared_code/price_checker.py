@@ -177,25 +177,37 @@ def _fetch_missing_candles_batch(
     if symbol.source_id == SourceID.BINANCE:
         if timeframe == "hourly":
             from shared_code.binance import fetch_binance_hourly_klines_batch  # noqa: PLC0415
+
             return fetch_binance_hourly_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1],
+                symbol,
+                missing_timestamps[0],
+                missing_timestamps[-1],
             )
         if timeframe == "fifteen_min":
             from shared_code.binance import fetch_binance_fifteen_min_klines_batch  # noqa: PLC0415
+
             return fetch_binance_fifteen_min_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1],
+                symbol,
+                missing_timestamps[0],
+                missing_timestamps[-1],
             )
 
     if symbol.source_id == SourceID.KUCOIN:
         if timeframe == "hourly":
             from shared_code.kucoin import fetch_kucoin_hourly_klines_batch  # noqa: PLC0415
+
             return fetch_kucoin_hourly_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1],
+                symbol,
+                missing_timestamps[0],
+                missing_timestamps[-1],
             )
         if timeframe == "fifteen_min":
             from shared_code.kucoin import fetch_kucoin_fifteen_min_klines_batch  # noqa: PLC0415
+
             return fetch_kucoin_fifteen_min_klines_batch(
-                symbol, missing_timestamps[0], missing_timestamps[-1],
+                symbol,
+                missing_timestamps[0],
+                missing_timestamps[-1],
             )
 
     # Fallback to individual fetching for unsupported sources

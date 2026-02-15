@@ -18,6 +18,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 class UnexpectedIndexTypeError(TypeError):
     """Raised when iterating over unexpected index types."""
+
     def __init__(self, idx):
         """Initialize the exception with the unexpected index value."""
         self.index = idx

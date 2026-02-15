@@ -93,7 +93,9 @@ Proceed with the structured analysis now.
 
 
 def build_analysis_user_messages(
-    news_feeded: str, indicators_message: str, price_data: str,
+    news_feeded: str,
+    indicators_message: str,
+    price_data: str,
 ) -> list[str]:
     """Create ordered user message chunks for analysis prompts.
 

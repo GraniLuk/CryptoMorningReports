@@ -65,7 +65,9 @@ def process_article_with_ollama(
     elapsed_time = time.perf_counter() - start_time
 
     return _build_processing_result(
-        payload, fallback_content=normalized_content, elapsed_time=elapsed_time,
+        payload,
+        fallback_content=normalized_content,
+        elapsed_time=elapsed_time,
     )
 
 

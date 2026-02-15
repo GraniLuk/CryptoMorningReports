@@ -26,6 +26,7 @@ from technical_analysis.rsi import calculate_rsi_using_rma
 
 class DataFrameIndexError(TypeError):
     """Raised when DataFrame index is not the expected type."""
+
     def __init__(self, expected: str = "DatetimeIndex"):
         """Initialize the exception with the expected index type."""
         self.expected = expected
@@ -34,6 +35,7 @@ class DataFrameIndexError(TypeError):
 
 class UnexpectedIndexTypeError(TypeError):
     """Raised when iterating over unexpected index types."""
+
     def __init__(self, idx):
         """Initialize the exception with the unexpected index value."""
         self.index = idx
