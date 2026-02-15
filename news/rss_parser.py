@@ -104,9 +104,7 @@ def _collect_all_rss_entries(
     for source, feed_info in feeds.items():
         if feed_info.get("disabled", False) and not include_disabled:
             continue
-        required_hashtags = (
-            feed_info.get("required_hashtags") if apply_hashtag_filter else None
-        )
+        required_hashtags = feed_info.get("required_hashtags") if apply_hashtag_filter else None
         feed_entries = _collect_entries_from_feed(
             feed_url=feed_info["url"],
             source=source,
@@ -362,8 +360,6 @@ def get_news(target_relevant: int | None = None) -> str:
     all_entries = _collect_all_rss_entries(
         cache_enabled=cache_enabled,
         current_time=current_time,
-        include_disabled=True,
-        apply_hashtag_filter=False,
     )
 
     # Phase 2: Process entries in sorted order until we have enough relevant articles
@@ -426,6 +422,8 @@ def get_news_for_symbol(symbol: str, target_relevant: int | None = None) -> str:
     all_entries = _collect_all_rss_entries(
         cache_enabled=cache_enabled,
         current_time=current_time,
+        include_disabled=True,
+        apply_hashtag_filter=False,
     )
 
     relevant_articles, total_processed = _process_entries_until_target(
