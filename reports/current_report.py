@@ -13,6 +13,7 @@ from infra.telegram_logging_handler import app_logger
 from news.article_cache import CachedArticle
 from news.news_agent import GeminiClient, create_ai_client
 from news.rss_parser import fetch_and_cache_articles_for_symbol
+from news.tradingview_ideas import fetch_tradingview_ideas
 from shared_code.telegram import (
     ARTICLE_CONTENT_PREVIEW_LENGTH,
     convert_ai_markdown_to_telegram_html,
@@ -117,6 +118,9 @@ Input Data:
 
 - RECENT NEWS ARTICLES (LAST 24 HOURS):
   {news_articles}
+
+- RECENT TRADINGVIEW IDEAS:
+    {tradingview_ideas}
 
 CRITICAL: You MUST actively use the news articles above to enhance your analysis.
 Don't just summarize them - integrate their insights into your trading decisions.
@@ -293,6 +297,37 @@ def format_articles_for_prompt(articles: list[CachedArticle]) -> str:
         formatted += f"   Summary: {content_preview}\n"
         formatted += f"   URL: {article.link}\n"
 
+    return formatted
+
+
+def format_tradingview_ideas_for_prompt(ideas: list[dict[str, str]]) -> str:
+    """Format TradingView ideas for AI prompt."""
+    if not ideas:
+        return "No recent TradingView ideas available"
+
+    formatted = ""
+    for i, idea in enumerate(ideas, 1):
+        title = idea.get("title", "TradingView Idea")
+        url = idea.get("url", "")
+        formatted += f"\n{i}. {title}\n"
+        if url:
+            formatted += f"   URL: {url}\n"
+    return formatted
+
+
+def format_tradingview_ideas_for_telegram(ideas: list[dict[str, str]]) -> str:
+    """Format TradingView ideas for Telegram output (HTML)."""
+    if not ideas:
+        return ""
+
+    formatted = "<b>💡 TradingView Ideas</b>\n\n"
+    for i, idea in enumerate(ideas, 1):
+        title = idea.get("title", "TradingView Idea")
+        url = idea.get("url", "")
+        if url:
+            formatted += f"{i}. <a href=\"{url}\">{title}</a>\n"
+        else:
+            formatted += f"{i}. {title}\n"
     return formatted
 
 
@@ -474,6 +509,23 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
     # Format articles for the AI prompt
     articles_formatted = format_articles_for_prompt(articles)
 
+    tradingview_ideas = fetch_tradingview_ideas(symbol_name)
+    tradingview_formatted = format_tradingview_ideas_for_prompt(tradingview_ideas)
+    if tradingview_ideas:
+        logger.info(
+            "Fetched %d TradingView ideas for %s",
+            len(tradingview_ideas),
+            symbol_name,
+        )
+        for idea in tradingview_ideas:
+            logger.info(
+                "TradingView idea: %s (%s)",
+                idea.get("title", "TradingView Idea"),
+                idea.get("url", ""),
+            )
+    else:
+        logger.info("No TradingView ideas found for %s", symbol_name)
+
     # Generate current data snapshot for AI prompt
     current_data_snapshot = get_current_data_for_ai_prompt(symbol, conn)
 
@@ -510,6 +562,7 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
             fifteen_min_rsi=fifteen_min_rsi_formatted,
             moving_averages=moving_averages_formatted,
             news_articles=articles_formatted,
+            tradingview_ideas=tradingview_formatted,
         )
 
         # Generate AI analysis using helper function
@@ -538,11 +591,14 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
 
         # Format articles for HTML output using imported function
         articles_html = format_articles_for_telegram(articles)
+        tradingview_html = format_tradingview_ideas_for_telegram(tradingview_ideas)
 
         # Combine all parts of the report
         full_report = report_title + report_date + current_data_html + "\n" + analysis_html
         if articles_html:
             full_report += "\n" + articles_html
+        if tradingview_html:
+            full_report += "\n" + tradingview_html
 
         logger.info("Successfully generated HTML situation report for %s", symbol_name)
 
