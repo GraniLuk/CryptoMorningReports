@@ -348,7 +348,7 @@ class TestCurrentReportLimits:
         call_args = mock_process.call_args
         assert call_args[1]["target_relevant"] == 7
 
-    @patch("news.rss_parser.get_news")
+    @patch("news.rss_parser.get_news_for_symbol")
     @patch("news.rss_parser.get_articles_for_symbol")
     def test_fetch_and_cache_articles_for_symbol_integration(
         self,
@@ -363,8 +363,8 @@ class TestCurrentReportLimits:
         # Call the function
         result = fetch_and_cache_articles_for_symbol("BTC", hours=24)
 
-        # Verify get_news was called with CURRENT_REPORT_ARTICLE_LIMIT
-        mock_get_news.assert_called_once_with(target_relevant=3)  # Default value
+        # Verify get_news_for_symbol was called with CURRENT_REPORT_ARTICLE_LIMIT
+        mock_get_news.assert_called_once_with("BTC", target_relevant=3)  # Default value
 
         # Verify get_articles_for_symbol was called with correct parameters
         mock_get_articles.assert_called_once_with("BTC", 24)
