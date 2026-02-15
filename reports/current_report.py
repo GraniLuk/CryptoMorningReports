@@ -443,6 +443,17 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
 
     symbols = [symbol]
 
+    # Fetch recent news articles for the symbol (if caching is enabled)
+    # This will fetch fresh RSS articles and cache new ones, then return all articles
+    articles = []
+    if is_article_cache_enabled():
+        try:
+            articles = fetch_and_cache_articles_for_symbol(symbol_name, hours=24)
+            logger.info("Found %d cached articles for %s", len(articles), symbol_name)
+        except Exception:
+            logger.exception("Error fetching cached articles for %s", symbol_name)
+            articles = []
+
     # Calculate date ranges using UTC time
     now = datetime.now(UTC)
     half_year_ago = now - timedelta(days=180)
@@ -476,17 +487,6 @@ async def generate_crypto_situation_report(conn, symbol_name):  # noqa: PLR0915,
 
     # Fetch moving averages data for the symbol
     moving_averages = fetch_moving_averages_for_symbol(conn, symbol.symbol_id, lookback_days=7)
-
-    # Fetch recent news articles for the symbol (if caching is enabled)
-    # This will fetch fresh RSS articles and cache new ones, then return all articles
-    articles = []
-    if is_article_cache_enabled():
-        try:
-            articles = fetch_and_cache_articles_for_symbol(symbol_name, hours=24)
-            logger.info("Found %d cached articles for %s", len(articles), symbol_name)
-        except Exception:
-            logger.exception("Error fetching cached articles for %s", symbol_name)
-            articles = []
 
     # Check if we have data
     if not daily_candles or not hourly_candles or not fifteen_min_candles:
