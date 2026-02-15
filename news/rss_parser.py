@@ -41,12 +41,20 @@ class RSSEntry:
     raw_entry: object
 
 
-def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> list[RSSEntry]:
+def _collect_all_rss_entries(
+    *,
+    cache_enabled: bool,
+    current_time: datetime,
+    include_disabled: bool = False,
+    apply_hashtag_filter: bool = True,
+) -> list[RSSEntry]:
     """Collect RSS entries from all feeds without processing them.
 
     Args:
         cache_enabled: Whether article caching is enabled
         current_time: Current datetime for age filtering
+        include_disabled: Whether to include feeds marked as disabled
+        apply_hashtag_filter: Whether to apply required hashtag filters
 
     Returns:
         List of RSSEntry objects from all feeds, sorted by published_time (newest first)
@@ -94,9 +102,11 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
     feed_stats = {}
 
     for source, feed_info in feeds.items():
-        if feed_info.get("disabled", False):
+        if feed_info.get("disabled", False) and not include_disabled:
             continue
-        required_hashtags = feed_info.get("required_hashtags")
+        required_hashtags = (
+            feed_info.get("required_hashtags") if apply_hashtag_filter else None
+        )
         feed_entries = _collect_entries_from_feed(
             feed_url=feed_info["url"],
             source=source,
@@ -113,8 +123,10 @@ def _collect_all_rss_entries(*, cache_enabled: bool, current_time: datetime) -> 
 
     total_entries = len(all_entries)
     app_logger.info(
-        f"Collected {total_entries} RSS entries from {len(feeds)} feeds: "
-        f"{', '.join(f'{source}={count}' for source, count in feed_stats.items())}",
+        "Collected %d RSS entries from %d feeds: %s",
+        total_entries,
+        len(feed_stats),
+        ", ".join(f"{source}={count}" for source, count in feed_stats.items()),
     )
 
     return all_entries
@@ -350,6 +362,8 @@ def get_news(target_relevant: int | None = None) -> str:
     all_entries = _collect_all_rss_entries(
         cache_enabled=cache_enabled,
         current_time=current_time,
+        include_disabled=True,
+        apply_hashtag_filter=False,
     )
 
     # Phase 2: Process entries in sorted order until we have enough relevant articles
