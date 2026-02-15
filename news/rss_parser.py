@@ -313,6 +313,29 @@ def _process_entries_until_target(
     return relevant_articles, total_processed
 
 
+def _title_mentions_required_symbols(
+    title: str,
+    *,
+    required_symbols: list[str] | None,
+    symbols_list: list,
+) -> bool:
+    if not required_symbols:
+        return False
+
+    required_set = {symbol.upper() for symbol in required_symbols if symbol}
+    if not required_set:
+        return False
+
+    if symbols_list:
+        detected = detect_symbols_in_text(title, symbols_list)
+        detected_set = {symbol.upper() for symbol in detected}
+        if detected_set.intersection(required_set):
+            return True
+
+    title_upper = title.upper()
+    return any(symbol in title_upper for symbol in required_set)
+
+
 def _estimate_time_saved(processed: int, total_available: int, actual_time: float) -> float:
     """Estimate time saved by early stopping.
 
@@ -426,8 +449,29 @@ def get_news_for_symbol(symbol: str, target_relevant: int | None = None) -> str:
         apply_hashtag_filter=False,
     )
 
+    title_matches = [
+        entry
+        for entry in all_entries
+        if _title_mentions_required_symbols(
+            entry.title,
+            required_symbols=[normalized_symbol],
+            symbols_list=symbols_list,
+        )
+    ]
+
+    entries_to_process = all_entries
+    if len(title_matches) >= target_relevant:
+        entries_to_process = title_matches
+        app_logger.info(
+            "RSS symbol processing: %s found in %d/%d titles; "
+            "skipping non-matching entries to avoid AI processing.",
+            normalized_symbol,
+            len(title_matches),
+            len(all_entries),
+        )
+
     relevant_articles, total_processed = _process_entries_until_target(
-        entries=all_entries,
+        entries=entries_to_process,
         current_time=current_time,
         cache_enabled=cache_enabled,
         symbols_list=symbols_list,
