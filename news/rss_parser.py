@@ -754,10 +754,7 @@ def _process_feed_entry(
     # enrichment.is_relevant is False.
     is_relevant_for_output = enrichment.is_relevant or bool(required_symbols)
 
-    if matches_required and is_relevant_for_output:
-        relevant_payload = article_payload
-    else:
-        relevant_payload = None
+    relevant_payload = article_payload if matches_required and is_relevant_for_output else None
     return cached_article, relevant_payload
 
 

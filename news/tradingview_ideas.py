@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -9,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from infra.telegram_logging_handler import app_logger
 
@@ -19,6 +20,7 @@ DEFAULT_IDEAS_LIMIT = 3
 DEFAULT_IDEAS_URL_TEMPLATE = "https://www.tradingview.com/symbols/{symbol}/ideas/?sort=recent"
 MAX_IDEA_CONTENT_CHARS = 6000
 MAX_IDEA_LOOKBACK_HOURS = 24
+MIN_IDEA_BODY_LENGTH = 200
 
 
 def fetch_tradingview_ideas(symbol: str) -> list[dict[str, str]]:
@@ -73,8 +75,7 @@ def fetch_tradingview_ideas(symbol: str) -> list[dict[str, str]]:
 
     ideas = ideas[:ideas_limit]
     _enrich_ideas_with_content(ideas, content_limit=content_limit)
-    ideas = _filter_recent_ideas(ideas, hours=MAX_IDEA_LOOKBACK_HOURS)
-    return ideas
+    return _filter_recent_ideas(ideas, hours=MAX_IDEA_LOOKBACK_HOURS)
 
 
 def _extract_ideas_from_html(
@@ -147,18 +148,14 @@ def _load_json_candidates(script_text: str) -> list[object]:
         return []
 
     candidates = []
-    try:
+    with contextlib.suppress(json.JSONDecodeError):
         candidates.append(json.loads(script_text))
-    except json.JSONDecodeError:
-        pass
 
     # Heuristic: look for embedded JSON assignment blocks.
     match = re.search(r"(\{.*\}|\[.*\])", script_text, flags=re.DOTALL)
     if match:
-        try:
+        with contextlib.suppress(json.JSONDecodeError):
             candidates.append(json.loads(match.group(1)))
-        except json.JSONDecodeError:
-            pass
 
     return candidates
 
@@ -222,7 +219,7 @@ def _extend_from_slug_pattern(
         seen.add(full_url)
 
 
-def _extract_link_title(link) -> str:
+def _extract_link_title(link: Tag) -> str:
     aria_label = link.get("aria-label", "")
     if isinstance(aria_label, str) and aria_label.strip():
         return aria_label.strip()
@@ -311,13 +308,13 @@ def _extract_idea_body_from_dom(soup: BeautifulSoup) -> str:
         for parent in keyword_node.parents:
             if parent.name in ("div", "section", "article"):
                 text = parent.get_text(" ", strip=True)
-                if len(text) >= 200:
+                if len(text) >= MIN_IDEA_BODY_LENGTH:
                     return text
 
     candidates = []
     for tag in soup.find_all(["div", "section", "article"]):
         text = tag.get_text(" ", strip=True)
-        if len(text) >= 200 and "#" in text:
+        if len(text) >= MIN_IDEA_BODY_LENGTH and "#" in text:
             candidates.append(text)
 
     if not candidates:
