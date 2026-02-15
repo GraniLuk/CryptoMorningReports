@@ -730,9 +730,34 @@ def _process_feed_entry(
     if required_symbols:
         required_set = {symbol.upper() for symbol in required_symbols if symbol}
         matches_required = bool(required_set.intersection(normalized_symbols))
+        if not matches_required:
+            title_lower = entry_title.lower()
+            link_lower = entry_link.lower()
+            symbol_map = {
+                symbol.symbol_name.upper(): symbol.full_name
+                for symbol in symbols_list
+                if hasattr(symbol, "symbol_name") and hasattr(symbol, "full_name")
+            }
+            required_terms = set()
+            for symbol in required_set:
+                required_terms.add(symbol.lower())
+                full_name = symbol_map.get(symbol)
+                if full_name:
+                    required_terms.add(str(full_name).lower())
+            matches_required = any(
+                term in title_lower or term in link_lower for term in required_terms
+            )
 
-    relevant_payload = article_payload if enrichment.is_relevant and matches_required else None
+    # When required_symbols are provided, we intentionally treat an explicit
+    # symbol filter as stronger than the AI relevance flag: any article that
+    # matches the required symbols is considered relevant, even if
+    # enrichment.is_relevant is False.
+    is_relevant_for_output = enrichment.is_relevant or bool(required_symbols)
 
+    if matches_required and is_relevant_for_output:
+        relevant_payload = article_payload
+    else:
+        relevant_payload = None
     return cached_article, relevant_payload
 
 
