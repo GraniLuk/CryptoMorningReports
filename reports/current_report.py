@@ -309,9 +309,12 @@ def format_tradingview_ideas_for_prompt(ideas: list[dict[str, str]]) -> str:
     for i, idea in enumerate(ideas, 1):
         title = idea.get("title", "TradingView Idea")
         url = idea.get("url", "")
+        content = idea.get("content", "")
         formatted += f"\n{i}. {title}\n"
         if url:
             formatted += f"   URL: {url}\n"
+        if content:
+            formatted += f"   Summary: {content}\n"
     return formatted
 
 

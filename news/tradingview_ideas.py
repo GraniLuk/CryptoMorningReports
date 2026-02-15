@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 import re
+from datetime import UTC, datetime, timedelta
+from email.utils import parsedate_to_datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,6 +17,8 @@ from infra.telegram_logging_handler import app_logger
 DEFAULT_SYMBOL_SUFFIX = "USDT"
 DEFAULT_IDEAS_LIMIT = 3
 DEFAULT_IDEAS_URL_TEMPLATE = "https://www.tradingview.com/symbols/{symbol}/ideas/?sort=recent"
+MAX_IDEA_CONTENT_CHARS = 6000
+MAX_IDEA_LOOKBACK_HOURS = 24
 
 
 def fetch_tradingview_ideas(symbol: str) -> list[dict[str, str]]:
@@ -32,10 +36,18 @@ def fetch_tradingview_ideas(symbol: str) -> list[dict[str, str]]:
 
     symbol_suffix = os.getenv("TRADINGVIEW_IDEAS_SYMBOL_SUFFIX", DEFAULT_SYMBOL_SUFFIX)
     ideas_limit_raw = os.getenv("TRADINGVIEW_IDEAS_LIMIT", str(DEFAULT_IDEAS_LIMIT))
+    content_limit_raw = os.getenv(
+        "TRADINGVIEW_IDEA_CONTENT_CHARS",
+        str(MAX_IDEA_CONTENT_CHARS),
+    )
     try:
         ideas_limit = max(1, int(ideas_limit_raw))
     except ValueError:
         ideas_limit = DEFAULT_IDEAS_LIMIT
+    try:
+        content_limit = max(0, int(content_limit_raw))
+    except ValueError:
+        content_limit = MAX_IDEA_CONTENT_CHARS
 
     symbol_pair = f"{symbol.strip().upper()}{symbol_suffix}"
     if not symbol_pair.strip():
@@ -59,7 +71,10 @@ def fetch_tradingview_ideas(symbol: str) -> list[dict[str, str]]:
     if not ideas:
         return []
 
-    return ideas[:ideas_limit]
+    ideas = ideas[:ideas_limit]
+    _enrich_ideas_with_content(ideas, content_limit=content_limit)
+    ideas = _filter_recent_ideas(ideas, hours=MAX_IDEA_LOOKBACK_HOURS)
+    return ideas
 
 
 def _extract_ideas_from_html(
@@ -221,6 +236,156 @@ def _derive_title_from_href(href: str) -> str:
     if match:
         return match.group(1).replace("-", " ").strip()
     return "TradingView Idea"
+
+
+def _enrich_ideas_with_content(
+    ideas: list[dict[str, str]],
+    *,
+    content_limit: int,
+) -> None:
+    for idea in ideas:
+        url = idea.get("url", "")
+        if not url:
+            idea["content"] = ""
+            continue
+        content, published_at = _fetch_idea_content(url, content_limit=content_limit)
+        idea["content"] = content
+        if published_at is not None:
+            idea["published_at"] = published_at.isoformat()
+
+
+def _fetch_idea_content(url: str, *, content_limit: int) -> tuple[str, datetime | None]:
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        app_logger.warning("TradingView idea request failed: %s", exc)
+        return "", None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    published_at = _extract_published_time(soup)
+
+    dom_text = _extract_idea_body_from_dom(soup)
+    if dom_text:
+        return _truncate_text(dom_text, content_limit), published_at
+
+    article = soup.find("article")
+    if article:
+        text = " ".join(paragraph.get_text(" ", strip=True) for paragraph in article.find_all("p"))
+        if text:
+            return _truncate_text(text, content_limit), published_at
+
+    meta_description = _get_meta_description(soup)
+    if meta_description:
+        return _truncate_text(meta_description, content_limit), published_at
+
+    return "", published_at
+
+
+def _get_meta_description(soup: BeautifulSoup) -> str:
+    meta = soup.find("meta", attrs={"property": "og:description"})
+    if meta and meta.get("content"):
+        return str(meta.get("content")).strip()
+
+    meta = soup.find("meta", attrs={"name": "description"})
+    if meta and meta.get("content"):
+        return str(meta.get("content")).strip()
+
+    return ""
+
+
+def _extract_idea_body_from_dom(soup: BeautifulSoup) -> str:
+    keywords = [
+        "Entry Price",
+        "Target 1",
+        "Stop Loss",
+        "Trade active",
+        "Trade closed",
+    ]
+
+    keyword_node = soup.find(
+        string=lambda text: isinstance(text, str) and any(k in text for k in keywords),
+    )
+    if keyword_node:
+        for parent in keyword_node.parents:
+            if parent.name in ("div", "section", "article"):
+                text = parent.get_text(" ", strip=True)
+                if len(text) >= 200:
+                    return text
+
+    candidates = []
+    for tag in soup.find_all(["div", "section", "article"]):
+        text = tag.get_text(" ", strip=True)
+        if len(text) >= 200 and "#" in text:
+            candidates.append(text)
+
+    if not candidates:
+        return ""
+
+    return max(candidates, key=len)
+
+
+def _extract_published_time(soup: BeautifulSoup) -> datetime | None:
+    time_tag = soup.find("time", attrs={"datetime": True})
+    if time_tag and time_tag.get("datetime"):
+        parsed = _parse_datetime(time_tag.get("datetime"))
+        if parsed:
+            return parsed
+
+    meta = soup.find("meta", attrs={"property": "article:published_time"})
+    if meta and meta.get("content"):
+        parsed = _parse_datetime(meta.get("content"))
+        if parsed:
+            return parsed
+
+    meta = soup.find("meta", attrs={"name": "article:published_time"})
+    if meta and meta.get("content"):
+        parsed = _parse_datetime(meta.get("content"))
+        if parsed:
+            return parsed
+
+    return None
+
+
+def _parse_datetime(value: str | None) -> datetime | None:
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            parsed = parsedate_to_datetime(value)
+        except (TypeError, ValueError):
+            return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def _truncate_text(text: str, limit: int) -> str:
+    cleaned = text.strip()
+    if limit <= 0 or len(cleaned) <= limit:
+        return cleaned
+    return cleaned[:limit].rstrip() + "..."
+
+
+def _filter_recent_ideas(
+    ideas: list[dict[str, str]],
+    *,
+    hours: int,
+) -> list[dict[str, str]]:
+    if not ideas:
+        return []
+
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
+    filtered: list[dict[str, str]] = []
+    for idea in ideas:
+        published_at = idea.get("published_at")
+        parsed = _parse_datetime(published_at) if isinstance(published_at, str) else None
+        if parsed and parsed >= cutoff:
+            filtered.append(idea)
+    return filtered
 
 
 __all__ = ["fetch_tradingview_ideas"]
