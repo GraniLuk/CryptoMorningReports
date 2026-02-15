@@ -50,8 +50,11 @@ def fetch_yfinance_etf_data() -> list[dict[str, Any]] | None:
     """
     try:
         # Configure yfinance settings for this session
-        yf.config.network.retries = 3  # type: ignore[attr-defined]
-        yf.config.debug.logging = False  # type: ignore[attr-defined]
+        if hasattr(yf, "config"):
+            if hasattr(yf.config, "network") and hasattr(yf.config.network, "retries"):
+                yf.config.network.retries = 3
+            if hasattr(yf.config, "debug") and hasattr(yf.config.debug, "logging"):
+                yf.config.debug.logging = False
 
         app_logger.info("Fetching ETF data from YFinance API (batch mode)...")
 

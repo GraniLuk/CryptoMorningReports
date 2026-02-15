@@ -29,7 +29,5 @@
   "pythonVersion": "3.13",
   "pythonPlatform": "All",
   "typeCheckingMode": "standard",
-  "useLibraryCodeForTypes": true,
-  "venvPath": ".",
-  "venv": ".venv"
+  "useLibraryCodeForTypes": true
 }

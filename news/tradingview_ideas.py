@@ -282,14 +282,31 @@ def _fetch_idea_content(url: str, *, content_limit: int) -> tuple[str, datetime 
 
 def _get_meta_description(soup: BeautifulSoup) -> str:
     meta = soup.find("meta", attrs={"property": "og:description"})
-    if meta and meta.get("content"):
-        return str(meta.get("content")).strip()
+    if meta:
+        content = _get_attr_str(meta, "content")
+        if content:
+            return content
 
     meta = soup.find("meta", attrs={"name": "description"})
-    if meta and meta.get("content"):
-        return str(meta.get("content")).strip()
+    if meta:
+        content = _get_attr_str(meta, "content")
+        if content:
+            return content
 
     return ""
+
+
+def _get_attr_str(tag: Tag, attribute: str) -> str | None:
+    value = tag.get(attribute)
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, str):
+                cleaned = item.strip()
+                if cleaned:
+                    return cleaned
+    return None
 
 
 def _extract_idea_body_from_dom(soup: BeautifulSoup) -> str:
@@ -325,20 +342,20 @@ def _extract_idea_body_from_dom(soup: BeautifulSoup) -> str:
 
 def _extract_published_time(soup: BeautifulSoup) -> datetime | None:
     time_tag = soup.find("time", attrs={"datetime": True})
-    if time_tag and time_tag.get("datetime"):
-        parsed = _parse_datetime(time_tag.get("datetime"))
+    if time_tag:
+        parsed = _parse_datetime(_get_attr_str(time_tag, "datetime"))
         if parsed:
             return parsed
 
     meta = soup.find("meta", attrs={"property": "article:published_time"})
-    if meta and meta.get("content"):
-        parsed = _parse_datetime(meta.get("content"))
+    if meta:
+        parsed = _parse_datetime(_get_attr_str(meta, "content"))
         if parsed:
             return parsed
 
     meta = soup.find("meta", attrs={"name": "article:published_time"})
-    if meta and meta.get("content"):
-        parsed = _parse_datetime(meta.get("content"))
+    if meta:
+        parsed = _parse_datetime(_get_attr_str(meta, "content"))
         if parsed:
             return parsed
 
