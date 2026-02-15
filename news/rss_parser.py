@@ -526,7 +526,7 @@ def fetch_and_cache_articles_for_symbol(
     # Fetch fresh articles from RSS feeds (will cache new ones automatically)
     # Use CURRENT_REPORT_ARTICLE_LIMIT for current reports instead of NEWS_ARTICLE_LIMIT
     try:
-        get_news(target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
+        get_news_for_symbol(symbol, target_relevant=CURRENT_REPORT_ARTICLE_LIMIT)
     except (OSError, ValueError, KeyError) as e:
         app_logger.warning(f"Error fetching fresh RSS articles: {e!s}")
 

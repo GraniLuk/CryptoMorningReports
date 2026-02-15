@@ -816,6 +816,12 @@ class TestComprehensiveLazyProcessing:
 
     def test_shared_cache_integration_lazy_processing(self):
         """Test that lazy processing properly integrates with shared cache for current reports."""
+        os.environ.pop("CURRENT_REPORT_ARTICLE_LIMIT", None)
+
+        importlib.reload(constants)
+        importlib.reload(rss_parser)
+        importlib.reload(article_cache)
+
         # Mock articles that would be cached during RSS processing
         mock_cached_articles = [
             Mock(

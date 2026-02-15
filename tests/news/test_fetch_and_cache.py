@@ -34,20 +34,23 @@ def mock_ollama_processing(monkeypatch: pytest.MonkeyPatch) -> Mock:
 
 
 @pytest.fixture
-def mock_get_news(monkeypatch: pytest.MonkeyPatch) -> Mock:
-    """Patch get_news to avoid real RSS fetching and web scraping."""
-    # Return empty JSON array - we don't need articles from get_news
+def mock_get_news_for_symbol(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    """Patch get_news_for_symbol to avoid real RSS fetching and web scraping."""
+    # Return empty JSON array - we don't need articles from get_news_for_symbol
     # because the test will use pre-existing cached articles
     mock_news = Mock(return_value="[]")
-    monkeypatch.setattr(rss_parser, "get_news", mock_news)
+    monkeypatch.setattr(rss_parser, "get_news_for_symbol", mock_news)
     return mock_news
 
 
-def test_fetch_and_cache_for_symbol(mock_ollama_processing: Mock, mock_get_news: Mock):
+def test_fetch_and_cache_for_symbol(
+    mock_ollama_processing: Mock,
+    mock_get_news_for_symbol: Mock,
+):
     """Test fetching fresh articles and caching them for a specific symbol."""
     # Ensure mocks are applied (fixtures are injected via parameters)
     assert mock_ollama_processing is not None
-    assert mock_get_news is not None
+    assert mock_get_news_for_symbol is not None
     print("\n🧪 Testing fetch_and_cache_articles_for_symbol with mocked Ollama")
     print("=" * 50)
 
@@ -105,6 +108,6 @@ if __name__ == "__main__":
 
     with (
         mock.patch.object(rss_parser, "process_article_with_ollama", mock_process),
-        mock.patch.object(rss_parser, "get_news", mock_news),
+        mock.patch.object(rss_parser, "get_news_for_symbol", mock_news),
     ):
         test_fetch_and_cache_for_symbol(mock_process, mock_news)
