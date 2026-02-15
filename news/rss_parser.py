@@ -120,11 +120,9 @@ def _collect_all_rss_entries(
     all_entries.sort(key=lambda entry: entry.published_time, reverse=True)
 
     total_entries = len(all_entries)
+    feed_stats_summary = ", ".join(f"{source}={count}" for source, count in feed_stats.items())
     app_logger.info(
-        "Collected %d RSS entries from %d feeds: %s",
-        total_entries,
-        len(feed_stats),
-        ", ".join(f"{source}={count}" for source, count in feed_stats.items()),
+        f"Collected {total_entries} RSS entries from {len(feeds)} feeds: {feed_stats_summary}",
     )
 
     return all_entries
