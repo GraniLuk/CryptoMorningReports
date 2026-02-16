@@ -3,6 +3,7 @@
 import json
 import math
 import os
+import re
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,7 @@ from news.news_agent import (
     highlight_articles,
 )
 from news.rss_parser import get_news
+from reports.current_report import generate_crypto_situation_report
 from shared_code.price_checker import (
     fetch_current_price,
     fetch_daily_candles,
@@ -64,6 +66,57 @@ if TYPE_CHECKING:
 
     from infra.sql_connection import SQLiteConnectionWrapper
     from source_repository import Symbol
+
+
+def _extract_best_symbol(
+    analysis_text: str,
+    valid_symbols: list[str],
+) -> dict[str, str] | None:
+    """Extract the best trading symbol from AI analysis text.
+
+    Looks for a BEST_SYMBOL_JSON tag in the analysis and parses the JSON payload.
+    Validates that the extracted symbol is in the list of active symbols.
+
+    Args:
+        analysis_text: Full AI analysis markdown text
+        valid_symbols: List of valid symbol names (e.g. ['BTC', 'ETH', 'XRP'])
+
+    Returns:
+        Dict with keys 'symbol', 'direction', 'confidence', 'reason' or None if
+        extraction fails or the symbol is not valid.
+    """
+    # Match BEST_SYMBOL_JSON: {...} anywhere in the text (last occurrence wins)
+    matches = re.findall(r"BEST_SYMBOL_JSON:\s*(\{[^}]+\})", analysis_text)
+    if not matches:
+        app_logger.warning("No BEST_SYMBOL_JSON tag found in AI analysis")
+        return None
+
+    raw_json = matches[-1]  # Use the last occurrence
+    try:
+        parsed = json.loads(raw_json)
+    except json.JSONDecodeError:
+        app_logger.warning("Failed to parse BEST_SYMBOL_JSON: %s", raw_json)
+        return None
+
+    symbol = parsed.get("symbol", "").upper().strip()
+    if not symbol:
+        app_logger.warning("BEST_SYMBOL_JSON has empty symbol field")
+        return None
+
+    if symbol not in valid_symbols:
+        app_logger.warning(
+            "Extracted symbol '%s' is not in active symbols: %s",
+            symbol,
+            valid_symbols,
+        )
+        return None
+
+    return {
+        "symbol": symbol,
+        "direction": parsed.get("direction", "NONE").upper(),
+        "confidence": parsed.get("confidence", "UNKNOWN").upper(),
+        "reason": parsed.get("reason", "No reason provided"),
+    }
 
 
 def _configure_ai_api():
@@ -869,6 +922,70 @@ async def process_daily_report(  # noqa: PLR0915
             )
         except (OSError, ValueError, TypeError, KeyError) as doc_err:
             logger.warning("Failed to send analysis with news as document: %s", doc_err)
+
+    # --- Auto-run Current Report for Best Symbol (AM only) ---
+    if run_id == "AM" and not analysis_report.startswith("Failed"):
+        valid_symbol_names = [s.symbol_name for s in symbols]
+        best = _extract_best_symbol(analysis_report, valid_symbol_names)
+
+        if best:
+            best_symbol = best["symbol"]
+            direction = best["direction"]
+            confidence = best["confidence"]
+            reason = best["reason"]
+
+            notify_msg = (
+                f"🎯 <b>Auto-running detailed analysis for {best_symbol}</b>\n"
+                f"Direction: {direction} | Confidence: {confidence}\n"
+                f"Reason: {reason}"
+            )
+            await send_telegram_message(
+                enabled=telegram_enabled,
+                token=telegram_token,
+                chat_id=telegram_chat_id,
+                message=notify_msg,
+                parse_mode=telegram_parse_mode,
+            )
+
+            logger.info(
+                "Auto-running current report for best symbol: %s (%s, %s)",
+                best_symbol,
+                direction,
+                confidence,
+            )
+            try:
+                await generate_crypto_situation_report(conn, best_symbol)
+                logger.info(
+                    "Successfully generated current report for %s",
+                    best_symbol,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to generate current report for %s",
+                    best_symbol,
+                )
+                await send_telegram_message(
+                    enabled=telegram_enabled,
+                    token=telegram_token,
+                    chat_id=telegram_chat_id,
+                    message=(
+                        f"⚠️ Failed to generate detailed report for {best_symbol}. "
+                        "Check logs for details."
+                    ),
+                    parse_mode=None,
+                )
+        else:
+            logger.warning("Could not extract best symbol from daily analysis")
+            await send_telegram_message(
+                enabled=telegram_enabled,
+                token=telegram_token,
+                chat_id=telegram_chat_id,
+                message=(
+                    "⚠️ Could not extract best trading symbol from daily analysis. "
+                    "Run current report manually via /crypto-situation?symbol=<SYMBOL>"
+                ),
+                parse_mode=None,
+            )
 
 
 if __name__ == "__main__":

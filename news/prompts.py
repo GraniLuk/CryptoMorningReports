@@ -88,6 +88,25 @@ from the given indicators text.
 - If nothing reaches high conviction, output a "No high-conviction setup"
   message instead of forcing a trade.
 
+MACHINE-READABLE OUTPUT (MANDATORY):
+After completing your full analysis, you MUST append the following line as the
+very last line of your response. This is used for automated downstream processing.
+The line must start with exactly "BEST_SYMBOL_JSON: " followed by a single-line
+JSON object. Pick the ONE symbol with the best intraday trading opportunity from
+your analysis:
+
+BEST_SYMBOL_JSON: {"symbol": "<TICKER>", "direction": "<LONG|SHORT|NONE>",
+"confidence": "<HIGH|MEDIUM|LOW>", "reason": "<one-line reason>"}
+
+Rules for BEST_SYMBOL_JSON:
+- "symbol" must be exactly one of the tickers provided in the data (e.g. BTC, ETH, XRP).
+- "direction" must be LONG, SHORT, or NONE (if no trade is recommended).
+- "confidence" must be HIGH, MEDIUM, or LOW.
+- "reason" is a single sentence explaining why this symbol was chosen.
+- If no high-conviction setup exists, still pick the relatively best opportunity
+  but set direction to NONE and confidence to LOW.
+- Do NOT wrap this line in code fences or any other formatting.
+
 Proceed with the structured analysis now.
 """
 
